@@ -100,6 +100,13 @@ class JimmxE2ETest(unittest.TestCase):
         self.assertTrue(len(o) > 0)
         self.assertIn('error', o[0])
 
+    def test_filtering(self):
+        beans = self.make_json_request()
+        self.assertNotIn('java_lang_Compilation_TotalCompilationTime', beans.keys(),
+                         'blacklist filtering failed')
+        self.assertIn('java_lang_ClassLoading_LoadedClassCount', beans.keys(),
+                         'whitelist filtering failed')
+
     def make_json_request(self):
         f = urllib.urlopen('http://localhost:5556')
         t = f.read()

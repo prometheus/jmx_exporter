@@ -1,12 +1,19 @@
 package com.typingduck.jmmix;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.Integer;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.mortbay.jetty.HttpConnection;
@@ -21,24 +28,39 @@ public class WebServer
 {
     public static void main(String[] args) throws Exception
     {
-        if (args.length < 2) {
-            System.err.println("Usage: WebServer <open-port>");
-            System.err.println("Usage: WebServer <open-port> <target-host:port>");
+        if (args.length < 3 || !args[1].equals("-c")) {
+            System.err.println("Usage: WebServer -c <json config>");
             System.exit(1);
         }
-        int port;
-        String target;
 
-        if (args.length < 3) {
-            port = Integer.parseInt(args[1]);
-            target = null;
-        } else {
-            port = Integer.parseInt(args[1]);
-            target = args[2];
+
+        JSONParser parser = new JSONParser();
+
+        JSONObject config = (JSONObject)parser.parse(new FileReader(args[2]));
+
+
+        int port = (int)(long)(Long)config.get("port");
+        String target = null;
+        if (config.containsKey("target")) {
+            target = (String)config.get("target");
+        }
+        List<String> whitelist = new LinkedList<String>();
+        if (config.containsKey("bean_whitelist")) {
+            JSONArray beanRegexs = (JSONArray) config.get("bean_whitelist");
+            for(Object beanRegex : beanRegexs) {
+                whitelist.add((String)beanRegex);
+            }
+        }
+        List<String> blacklist = new LinkedList<String>();
+        if (config.containsKey("bean_blacklist")) {
+            JSONArray beanRegexs = (JSONArray) config.get("bean_blacklist");
+            for(Object beanRegex : beanRegexs) {
+                blacklist.add((String)beanRegex);
+            }
         }
 
         Server server = new Server(port);
-        server.setHandler(new MetricsHandler(target));
+        server.setHandler(new MetricsHandler(target, whitelist, blacklist));
         server.start();
         server.join();
     }
@@ -51,9 +73,14 @@ public class WebServer
   */
 class MetricsHandler extends AbstractHandler {
     String jmx_target;
+    List<String> whitelist;
+    List<String> blacklist;
 
-    public MetricsHandler(String jmx_target) {
+    public MetricsHandler(String jmx_target,
+                          List<String> whitelist, List<String>blacklist) {
         this.jmx_target = jmx_target;
+        this.whitelist = whitelist;
+        this.blacklist = blacklist;
     }
 
     public void handle(String target,
@@ -80,7 +107,10 @@ class MetricsHandler extends AbstractHandler {
         io.println("[");
         try {
             PrometheusBeanFormatter formatter = new PrometheusBeanFormatter(io);
-            new JmxScraper(formatter).doScrape(trgt);
+            JmxScraper sc = new JmxScraper(formatter);
+            sc.setWhitelist(whitelist);
+            sc.setBlacklist(blacklist);
+            sc.doScrape(trgt);
             formatter.printJsonFormat("com.jmmx", "scraped", 1);
             io.flush();
         } catch (Exception e) {

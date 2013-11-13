@@ -15,7 +15,7 @@ TEST_OBJECTS=$(patsubst %.java,build/%.class,$(TEST_SOURCES))
 
 all: compile test
 
-JARS=jars/jetty-6.1.24.jar:jars/jetty-util-6.1.24.jar:jars/servlet-api-2.5.jar
+JARS=$(shell ls ${BASEDIR}/jars/*.jar | tr '\n' ':')
 
 compile: $(BUILDDIR) $(OBJECTS)
 

@@ -39,6 +39,8 @@ public class JmxScraper {
     }
 
     private MBeanFormatter formatter;
+    private List<String> whitelist;
+    private List<String> blacklist;
 
     public JmxScraper(MBeanFormatter formatter) {
         this.formatter = formatter;
@@ -60,8 +62,24 @@ public class JmxScraper {
         Set<ObjectName> mBeanNames =
             new TreeSet<ObjectName>(beanConn.queryNames(null, null));
 
-        for (ObjectName name : mBeanNames) {
-            scrapeBean(beanConn, name);
+        if (blacklist.size() > 0) {
+            for (ObjectName name : mBeanNames) {
+                String beanStr = name.toString();
+                if (!checkBlacklisted(beanStr) || checkWhitelisted(beanStr)) {
+                    scrapeBean(beanConn, name);
+                }
+            }
+        } else if (whitelist.size() > 0) {
+            for (ObjectName name : mBeanNames) {
+                String beanStr = name.toString();
+                if (checkWhitelisted(beanStr)) {
+                    scrapeBean(beanConn, name);
+                }
+            }
+        } else {
+            for (ObjectName name : mBeanNames) {
+                scrapeBean(beanConn, name);
+            }
         }
 
         jmxc.close();
@@ -218,6 +236,32 @@ public class JmxScraper {
 
     public static boolean isNumeric(Object value) {
         return value instanceof Number; 
+    }
+
+    public void setWhitelist(List<String> whitelist) {
+        this.whitelist = whitelist;
+    }
+
+    public void setBlacklist(List<String> blacklist) {
+        this.blacklist = blacklist;
+    }
+
+    private boolean checkBlacklisted(String name) throws Exception {
+        for (String regex : blacklist) {
+            if (name.matches(regex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkWhitelisted(String name) {
+        for (String regex : whitelist) {
+            if (name.matches(regex)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

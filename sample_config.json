@@ -1,0 +1,11 @@
+{
+    "port": 5556
+    "target": "localhost:5555",
+
+    "bean_blacklist": [
+        "java.lang:type=C.*"
+    ],
+    "bean_whitelist": [
+        "java.lang:type=Class.*"
+    ]
+}
