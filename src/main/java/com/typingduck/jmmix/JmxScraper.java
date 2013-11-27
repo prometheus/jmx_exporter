@@ -21,11 +21,17 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
 /**
  * JMX client that dumps all mBeans from a JMX instance.
  * (only returns values that are numeric or strings).
  */
 public class JmxScraper {
+
+    static Logger logger = Logger.getLogger("jmmix"); 
 
     public static interface MBeanFormatter {
         void recordBean(
@@ -50,7 +56,7 @@ public class JmxScraper {
       * Get a list of mbeans on host_port and scrape their values.
       */
     public void doScrape(String host_port) throws Exception {
-        System.out.println("scrape target: " + host_port);
+        logger.log(Level.INFO, "scrape target: " + host_port);
 
         // Connect it to the RMI connector server
         String url = "service:jmx:rmi:///jndi/rmi://" + host_port + "/jmxrmi";
@@ -272,7 +278,7 @@ public class JmxScraper {
             logScrape(mbeanName + "'_'" + attr.getName(), msg);
     }
     private static void logScrape(String name, String msg) {
-        System.out.println("scrape: '" + name + "': " + msg);
+        logger.log(Level.INFO, "scrape: '" + name + "': " + msg);
     }
 
     private static class StdoutWriter implements MBeanFormatter {
@@ -284,7 +290,7 @@ public class JmxScraper {
             String attrType,
             String attrDescription,
             Object value) {
-            System.out.println("Got: " + domain + beanProperties + attrKeys + attrType + ": " + value);
+            logger.log(Level.INFO, "Got: " + domain + beanProperties + attrKeys + attrType + ": " + value);
         }
     }
 
@@ -293,7 +299,7 @@ public class JmxScraper {
      */
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
-            System.err.println("usage: JmxScraper <target host:port>");
+            System.out.println("usage: JmxScraper <target host:port>");
             System.exit(1);
         }
         String host_port = args[1];
@@ -304,16 +310,3 @@ public class JmxScraper {
 
 }
 
-
-
-/*
-Copyright (c) 2013 typingduck
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-The Software shall be used for Good, not Evil.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/

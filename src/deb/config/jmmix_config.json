@@ -1,0 +1,9 @@
+{
+    "port": 5556
+    "target": "localhost:666",
+
+    "bean_blacklist": [
+    ],
+    "bean_whitelist": [
+    ]
+}

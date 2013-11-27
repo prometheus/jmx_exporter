@@ -3,4 +3,4 @@
 *.swp
 
 # compilation objects
-build/
+target/

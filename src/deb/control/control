@@ -1,0 +1,9 @@
+Package: [[name]]
+Version: [[version]]
+Section: misc
+Priority: optional
+Architecture: all
+Depends: sun-java6-jre | sun-java6-sdk | openjdk-6-jre | openjdk-6-jdk
+Maintainer: Conor Hennessy <conor@soundcloud.com>
+Description: expose jmx values as json webserver
+Distribution: development

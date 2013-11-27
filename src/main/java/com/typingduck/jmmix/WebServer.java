@@ -11,33 +11,37 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
+import org.eclipse.jetty.server.HttpConnection;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import org.mortbay.jetty.handler.AbstractHandler;
-import org.mortbay.jetty.HttpConnection;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.Server;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Simple webserver for exposing the values exported from JmxScraper.java.
  */
-public class WebServer
-{
+public class WebServer {
+
+    static Logger logger = Logger.getLogger("jmmix"); 
+
     public static void main(String[] args) throws Exception
     {
+		logger.setLevel(Level.WARNING);
         if (args.length < 3 || !args[1].equals("-c")) {
-            System.err.println("Usage: WebServer -c <json config>");
+            System.err.println("Usage: WebServer -c <jmmix json configuration file>");
+            logger.log(Level.SEVERE, "Usage: WebServer -c <jmmix json configuration file>");
             System.exit(1);
         }
-
 
         JSONParser parser = new JSONParser();
 
         JSONObject config = (JSONObject)parser.parse(new FileReader(args[2]));
-
 
         int port = (int)(long)(Long)config.get("port");
         String target = null;
@@ -76,6 +80,8 @@ class MetricsHandler extends AbstractHandler {
     List<String> whitelist;
     List<String> blacklist;
 
+    static Logger logger = Logger.getLogger("jmmix"); 
+
     public MetricsHandler(String jmx_target,
                           List<String> whitelist, List<String>blacklist) {
         this.jmx_target = jmx_target;
@@ -84,14 +90,10 @@ class MetricsHandler extends AbstractHandler {
     }
 
     public void handle(String target,
-                       HttpServletRequest request, HttpServletResponse response,
-                       int dispatch)
+                           Request baseRequest,
+                           HttpServletRequest request,
+                           HttpServletResponse response) 
             throws IOException, ServletException {
-
-        Request base_request = (request instanceof Request) ?
-                (Request)request :
-                HttpConnection.getCurrentConnection().getRequest();
-        base_request.setHandled(true);
         String trgt = jmx_target;
         if (null != request.getParameter("target")) {
             trgt = request.getParameter("target");
@@ -103,35 +105,22 @@ class MetricsHandler extends AbstractHandler {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_OK);
         response.addHeader("X-Prometheus-API-Version", "0.0.2");  // Prometheus specific
-        PrintWriter io = response.getWriter();
-        io.println("[");
+        baseRequest.setHandled(true);
+        PrintWriter json_out = response.getWriter();
+        json_out.println("[");
         try {
-            PrometheusBeanFormatter formatter = new PrometheusBeanFormatter(io);
+            PrometheusBeanFormatter formatter = new PrometheusBeanFormatter(json_out);
             JmxScraper sc = new JmxScraper(formatter);
             sc.setWhitelist(whitelist);
             sc.setBlacklist(blacklist);
             sc.doScrape(trgt);
             formatter.printJsonFormat("com.jmmx", "scraped", 1);
-            io.flush();
+            json_out.flush();
         } catch (Exception e) {
-            System.err.println("err:" + e);
-            io.println("{ \"error\": \"" + e.toString().replace("\n", " ").replace("\t", " ") + "\"}");
+            logger.log(Level.SEVERE, "err:" + e);
+            json_out.println("{ \"error\": \"" + e.toString().replace("\n", " ").replace("\t", " ") + "\"}");
             response.setStatus(500);
         }
-        io.println("]");
+        json_out.println("]");
     }
 }
-
-
-
-/*
-Copyright (c) 2013 typingduck
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-The Software shall be used for Good, not Evil.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/

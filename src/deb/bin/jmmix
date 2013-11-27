@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -jar /usr/share/jmmix/jmmix-*.jar -- -c /etc/jmmix/jmmix_config.json
