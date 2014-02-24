@@ -3,8 +3,16 @@ jmmix
 
 JMX to prometheus bridge.
 
-A webserver that exposes all mBeans of a JMX target in JSON format suitable
+A webserver that exposes mBeans of a JMX target in JSON format suitable
 for http://github.com/prometheus.
+
+# About
+A prometheus server makes a JSON request to a the jmmix server which then
+scrapes all beans of a target JMX port on another process. The target can
+either be statically configured in the configuration or passed in by
+prometheus server as a query string parameter.
+Jmmix can return all mBeans (that are numeric) or be configured with
+whitelist/blacklist behaviour.
 
 ## Building and Running
 
