@@ -21,7 +21,9 @@ See `run_jmx4prometheus_server.sh` for a sample script that runs the webserver.
 
 ## Testing
 
-`./tests/integration_test.py` to test.
+`./tests/integration_test.py` to test. This is a simple integration test that
+starts up a sample bean exposing process and runs jmx4prometheus to scrape it
+(Doesn't include the prometheus server integration).
 
 ## Installing
 
@@ -29,3 +31,6 @@ A Debian binary package is created as part of the build process and it can
 be used to install an executable into `/usr/local/bin/jmx4prometheus` with configuration
 in `/etc/jmx4prometheus/jmx4prometheus_config.json`.
 
+## TODO
+
+Need to replace the JSON exposing code with prometheus' own client side code.
