@@ -3,7 +3,7 @@
  * Exposes some some example mbeans that would want to be monitored
  * e.g. mbeans from Cassandra and Hadoop.
  */
-package com.typingduck.jmx4prometheus;
+package com.prometheus.jmx4prometheus;
 
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;

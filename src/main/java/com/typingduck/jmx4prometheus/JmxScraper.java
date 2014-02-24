@@ -1,4 +1,4 @@
-package com.typingduck.jmx4prometheus;
+package com.prometheus.jmx4prometheus;
 
 import java.io.PrintWriter;
 import java.util.HashMap;

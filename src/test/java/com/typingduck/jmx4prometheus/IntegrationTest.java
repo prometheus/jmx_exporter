@@ -1,4 +1,4 @@
-package com.typingduck.jmx4prometheus;
+package com.prometheus.jmx4prometheus;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
