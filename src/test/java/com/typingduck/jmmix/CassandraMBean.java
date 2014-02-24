@@ -1,7 +1,7 @@
 /*
  * Part of demo bean app Main.java.
  */
-package com.typingduck.jmmix;
+package com.typingduck.jmx4prometheus;
 
 import javax.management.*;
 import javax.management.MBeanServer;

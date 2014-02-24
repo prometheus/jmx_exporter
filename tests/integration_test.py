@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.7
 """
-Integration test of the jmmix webserver.
+Integration test of the jmx4prometheus webserver.
 
-Runs a sample Java app and jmmix webserver then tests some sample beans
+Runs a sample Java app and jmx4prometheus webserver then tests some sample beans
 in the resulting JSON.
 """
 
@@ -20,20 +20,20 @@ def setUpModule():
     global MBEAN_SERVER
     MBEAN_SERVER = subprocess.Popen(
             ['bash', dtry + '/run_sample_server.sh'], preexec_fn=os.setsid)
-    global JMMIX_SERVER
-    JMMIX_SERVER = subprocess.Popen(
-            ['bash', dtry + '/run_jmmix_server.sh'], preexec_fn=os.setsid)
+    global JMX_4_PROM_SERVER
+    JMX_4_PROM_SERVER = subprocess.Popen(
+            ['bash', dtry + '/run_jmx4prometheus_server.sh'], preexec_fn=os.setsid)
     time.sleep(1)
 
 
 def tearDownModule():
     os.killpg(MBEAN_SERVER.pid, signal.SIGTERM)
-    os.killpg(JMMIX_SERVER.pid, signal.SIGTERM)
+    os.killpg(JMX_4_PROM_SERVER.pid, signal.SIGTERM)
     MBEAN_SERVER.wait()
-    JMMIX_SERVER.wait()
+    JMX_4_PROM_SERVER.wait()
 
 
-class JimmxE2ETest(unittest.TestCase):
+class Jmx4PrometheusE2ETest(unittest.TestCase):
 
     def test_basic_json(self):
         self.assertTrue(self.make_json_request())

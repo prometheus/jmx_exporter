@@ -1,4 +1,4 @@
-package com.typingduck.jmmix;
+package com.typingduck.jmx4prometheus;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,14 +28,14 @@ import java.util.logging.Logger;
  */
 public class WebServer {
 
-    static Logger logger = Logger.getLogger("jmmix"); 
+    static Logger logger = Logger.getLogger("jmx4prometheus"); 
 
     public static void main(String[] args) throws Exception
     {
 		logger.setLevel(Level.WARNING);
         if (args.length < 3 || !args[1].equals("-c")) {
-            System.err.println("Usage: WebServer -c <jmmix json configuration file>");
-            logger.log(Level.SEVERE, "Usage: WebServer -c <jmmix json configuration file>");
+            System.err.println("Usage: WebServer -c <jmx4prometheus json configuration file>");
+            logger.log(Level.SEVERE, "Usage: WebServer -c <jmx4prometheus json configuration file>");
             System.exit(1);
         }
 
@@ -80,7 +80,7 @@ class MetricsHandler extends AbstractHandler {
     List<String> whitelist;
     List<String> blacklist;
 
-    static Logger logger = Logger.getLogger("jmmix"); 
+    static Logger logger = Logger.getLogger("jmx4prometheus"); 
 
     public MetricsHandler(String jmx_target,
                           List<String> whitelist, List<String>blacklist) {

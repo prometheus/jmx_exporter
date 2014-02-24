@@ -2,15 +2,15 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.typingduck.jmmix</groupId>
-  <artifactId>jmmix</artifactId>
+  <groupId>com.typingduck.jmx4prometheus</groupId>
+  <artifactId>jmx4prometheus</artifactId>
   <packaging>jar</packaging>
   <version>0.1</version>
-  <name>jmmix</name>
+  <name>jmx4prometheus</name>
   <description>
-    See https://github.com/typingduck/jmmix/blob/master/README.md
+    See https://github.com/typingduck/jmx4prometheus/blob/master/README.md
   </description>
-  <url>http://github.com/typingduck/jmmix</url>
+  <url>http://github.com/typingduck/jmx4prometheus</url>
 
   <dependencies>
 
@@ -63,7 +63,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.typingduck.jmmix.WebServer</mainClass>
+              <mainClass>com.typingduck.jmx4prometheus.WebServer</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -119,7 +119,7 @@
                   <type>file</type>
                   <mapper>
                     <type>perm</type>
-                    <prefix>/usr/share/jmmix</prefix>
+                    <prefix>/usr/share/jmx4prometheus</prefix>
                     <filemode>644</filemode>
                   </mapper>
                 </data>
@@ -129,12 +129,12 @@
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
-                    <prefix>/etc/jmmix</prefix>
+                    <prefix>/etc/jmx4prometheus</prefix>
                   </mapper>
                 </data>
 
                 <data>
-                  <src>${basedir}/src/deb/bin/jmmix</src>
+                  <src>${basedir}/src/deb/bin/jmx4prometheus</src>
                   <type>file</type>
                   <mapper>
                     <type>perm</type>

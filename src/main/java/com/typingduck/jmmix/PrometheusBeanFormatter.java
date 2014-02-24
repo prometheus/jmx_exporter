@@ -1,4 +1,4 @@
-package com.typingduck.jmmix;
+package com.typingduck.jmx4prometheus;
 
 import java.io.PrintWriter;
 import java.util.LinkedList;
