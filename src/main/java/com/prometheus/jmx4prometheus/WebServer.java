@@ -32,7 +32,7 @@ public class WebServer {
 
     public static void main(String[] args) throws Exception
     {
-		logger.setLevel(Level.WARNING);
+        logger.setLevel(Level.WARNING);
         if (args.length < 3 || !args[1].equals("-c")) {
             System.err.println("Usage: WebServer -c <jmx4prometheus json configuration file>");
             logger.log(Level.SEVERE, "Usage: WebServer -c <jmx4prometheus json configuration file>");
