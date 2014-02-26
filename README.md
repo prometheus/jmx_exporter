@@ -33,4 +33,6 @@ in `/etc/jmx4prometheus/jmx4prometheus_config.json`.
 
 ## TODO
 
-Need to replace the JSON exposing code with prometheus' own client side code.
+* Need to replace the JSON exposing code with prometheus' own client side code.
+* Add configurable logging  
+
