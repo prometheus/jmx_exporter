@@ -62,33 +62,35 @@ public class JmxScraper {
         String url = "service:jmx:rmi:///jndi/rmi://" + host_port + "/jmxrmi";
         JMXServiceURL serviceUrl = new JMXServiceURL(url);
         JMXConnector jmxc = JMXConnectorFactory.connect(serviceUrl, null);
-        MBeanServerConnection beanConn = jmxc.getMBeanServerConnection();
+        try {
+            MBeanServerConnection beanConn = jmxc.getMBeanServerConnection();
 
-        // Query MBean names
-        Set<ObjectName> mBeanNames =
-            new TreeSet<ObjectName>(beanConn.queryNames(null, null));
+            // Query MBean names
+            Set<ObjectName> mBeanNames =
+                new TreeSet<ObjectName>(beanConn.queryNames(null, null));
 
-        if (blacklist.size() > 0) {
-            for (ObjectName name : mBeanNames) {
-                String beanStr = name.toString();
-                if (!checkBlacklisted(beanStr) || checkWhitelisted(beanStr)) {
+            if (blacklist.size() > 0) {
+                for (ObjectName name : mBeanNames) {
+                    String beanStr = name.toString();
+                    if (!checkBlacklisted(beanStr) || checkWhitelisted(beanStr)) {
+                        scrapeBean(beanConn, name);
+                    }
+                }
+            } else if (whitelist.size() > 0) {
+                for (ObjectName name : mBeanNames) {
+                    String beanStr = name.toString();
+                    if (checkWhitelisted(beanStr)) {
+                        scrapeBean(beanConn, name);
+                    }
+                }
+            } else {
+                for (ObjectName name : mBeanNames) {
                     scrapeBean(beanConn, name);
                 }
             }
-        } else if (whitelist.size() > 0) {
-            for (ObjectName name : mBeanNames) {
-                String beanStr = name.toString();
-                if (checkWhitelisted(beanStr)) {
-                    scrapeBean(beanConn, name);
-                }
-            }
-        } else {
-            for (ObjectName name : mBeanNames) {
-                scrapeBean(beanConn, name);
-            }
+        } finally {
+            jmxc.close();
         }
-
-        jmxc.close();
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) throws Exception {
