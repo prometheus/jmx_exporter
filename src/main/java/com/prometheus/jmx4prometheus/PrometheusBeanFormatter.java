@@ -48,7 +48,7 @@ class PrometheusBeanFormatter implements JmxScraper.MBeanFormatter {
 
         io.println("{");
         io.println("    \"baseLabels\": {");
-        io.println("      \"name\": \"" + prometheusName + "\"");
+        io.println("      \"__name__\": \"" + prometheusName + "\"");
         io.println("    },");
         io.println("    \"metric\": {");
         io.println("        \"type\": \"gauge\",");
@@ -102,7 +102,7 @@ class PrometheusBeanFormatter implements JmxScraper.MBeanFormatter {
     private static String beanLabels(Map<String, String> labels) {
         StringBuilder out = new StringBuilder();
         for (String key : labels.keySet()) {
-            if (key.toLowerCase().equals("name")) {
+            if (key.toLowerCase().equals("__name__")) {
                 out.append("\"nom\": \"");
                 out.append(labels.get(key));
                 out.append("\",");
