@@ -5,4 +5,4 @@
 dctry=$(dirname $0)
 builddir=${dctry}/target/
 
-java -jar ${builddir}/jmx4prometheus-0.1-jar-with-dependencies.jar -- -c "sample_config.json"
+java -jar ${builddir}/jmx4prometheus-0.2-jar-with-dependencies.jar -- -c "sample_config.json"
