@@ -62,7 +62,7 @@ class Jmx4PrometheusE2ETest(unittest.TestCase):
         self.assertBeanEquals(bean,
                         'org_apache_cassandra_metrics_Compaction_Value',
                         'Attribute exposed for management',
-                        {u'nom': u'CompletedTasks'}
+                        {u'name': u'CompletedTasks'}
                         )
         self.assertEquals(0.2, self.beanValue(bean))
 
@@ -72,7 +72,7 @@ class Jmx4PrometheusE2ETest(unittest.TestCase):
         self.assertBeanEquals(bean,
                         'hadoop_DataNode_replaceBlockOpMinTime',
                         'Attribute exposed for management',
-                        {'nom': 'DataNodeActivity-ams-hdd001-50010', 'service': 'DataNode'}
+                        {'name': 'DataNodeActivity-ams-hdd001-50010', 'service': 'DataNode'}
                         )
         self.assertEquals(200, self.beanValue(bean))
 
@@ -114,7 +114,7 @@ class Jmx4PrometheusE2ETest(unittest.TestCase):
         self.assertEqual(len(bean.keys()), 3)
         self.assertEqual(bean['docstring'], docstring)
         self.assertEqual(len(bean['baseLabels']), 1)
-        self.assertEqual(bean['baseLabels']['name'], name)
+        self.assertEqual(bean['baseLabels']['__name__'], name)
         self.assertEqual(len(bean['metric']), 2)
         self.assertEqual(bean['metric']['type'], 'gauge')
         self.assertEqual(len(bean['metric']['value']), 1)
@@ -128,7 +128,7 @@ class Jmx4PrometheusE2ETest(unittest.TestCase):
         return bean['metric']['value'][0]['value']
 
     def convertBean(self, bean):
-        return bean['baseLabels']['name'], bean
+        return bean['baseLabels']['__name__'], bean
 
 
 
