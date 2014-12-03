@@ -1,14 +1,13 @@
-package com.prometheus.jmx4prometheus;
+package io.prometheus.jmx;
 
-import java.io.PrintWriter;
-import java.util.HashMap;
+import java.lang.management.ManagementFactory;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
@@ -21,19 +20,10 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-
-/**
- * JMX client that dumps all mBeans from a JMX instance.
- * (only returns values that are numeric or strings).
- */
 public class JmxScraper {
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());; 
 
-    static Logger logger = Logger.getLogger("jmx4prometheus"); 
-
-    public static interface MBeanFormatter {
+    public static interface MBeanReceiver {
         void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,
@@ -44,52 +34,39 @@ public class JmxScraper {
             Object value);
     }
 
-    private MBeanFormatter formatter;
-    private List<String> whitelist;
-    private List<String> blacklist;
+    private MBeanReceiver receiver;
+    private String hostPort;
 
-    public JmxScraper(MBeanFormatter formatter) {
-        this.formatter = formatter;
+    public JmxScraper(String hostPort, MBeanReceiver receiver) {
+        this.hostPort = hostPort;
+        this.receiver = receiver;
     }
 
     /**
       * Get a list of mbeans on host_port and scrape their values.
       */
-    public void doScrape(String host_port) throws Exception {
-        logger.log(Level.INFO, "scrape target: " + host_port);
-
-        // Connect it to the RMI connector server
-        String url = "service:jmx:rmi:///jndi/rmi://" + host_port + "/jmxrmi";
-        JMXServiceURL serviceUrl = new JMXServiceURL(url);
-        JMXConnector jmxc = JMXConnectorFactory.connect(serviceUrl, null);
+    public void doScrape() throws Exception {
+        MBeanServerConnection beanConn;
+        JMXConnector jmxc = null;
+        if (hostPort.isEmpty()) {
+          beanConn = ManagementFactory.getPlatformMBeanServer();
+        } else {
+          String url = "service:jmx:rmi:///jndi/rmi://" + hostPort + "/jmxrmi";
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), null);
+          beanConn = jmxc.getMBeanServerConnection();
+        }
         try {
-            MBeanServerConnection beanConn = jmxc.getMBeanServerConnection();
-
             // Query MBean names
             Set<ObjectName> mBeanNames =
                 new TreeSet<ObjectName>(beanConn.queryNames(null, null));
 
-            if (blacklist.size() > 0) {
-                for (ObjectName name : mBeanNames) {
-                    String beanStr = name.toString();
-                    if (!checkBlacklisted(beanStr) || checkWhitelisted(beanStr)) {
-                        scrapeBean(beanConn, name);
-                    }
-                }
-            } else if (whitelist.size() > 0) {
-                for (ObjectName name : mBeanNames) {
-                    String beanStr = name.toString();
-                    if (checkWhitelisted(beanStr)) {
-                        scrapeBean(beanConn, name);
-                    }
-                }
-            } else {
-                for (ObjectName name : mBeanNames) {
-                    scrapeBean(beanConn, name);
-                }
+            for (ObjectName name : mBeanNames) {
+                scrapeBean(beanConn, name);
             }
         } finally {
+          if (jmxc != null) {
             jmxc.close();
+          }
         }
     }
 
@@ -99,7 +76,6 @@ public class JmxScraper {
 
         for (int idx = 0; idx < attrInfos.length; ++idx) {
             MBeanAttributeInfo attr = attrInfos[idx];
-
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
                 continue;
@@ -160,9 +136,9 @@ public class JmxScraper {
             Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
-        } else if (isNumeric(value) || value instanceof String) {
+        } else if (value instanceof Number || value instanceof String) {
             logScrape(domain + beanProperties + attrName, value.toString());
-            this.formatter.recordBean(
+            this.receiver.recordBean(
                     domain,
                     beanProperties,
                     attrKeys,
@@ -242,48 +218,17 @@ public class JmxScraper {
         }
     }
 
-    public static boolean isNumeric(Object value) {
-        return value instanceof Number; 
-    }
-
-    public void setWhitelist(List<String> whitelist) {
-        this.whitelist = whitelist;
-    }
-
-    public void setBlacklist(List<String> blacklist) {
-        this.blacklist = blacklist;
-    }
-
-    private boolean checkBlacklisted(String name) throws Exception {
-        for (String regex : blacklist) {
-            if (name.matches(regex)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkWhitelisted(String name) {
-        for (String regex : whitelist) {
-            if (name.matches(regex)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * For debugging.
      */
-
     private static void logScrape(ObjectName mbeanName, MBeanAttributeInfo attr, String msg) {
-            logScrape(mbeanName + "'_'" + attr.getName(), msg);
+        logScrape(mbeanName + "'_'" + attr.getName(), msg);
     }
     private static void logScrape(String name, String msg) {
-        logger.log(Level.INFO, "scrape: '" + name + "': " + msg);
+        logger.log(Level.FINE, "scrape: '" + name + "': " + msg);
     }
 
-    private static class StdoutWriter implements MBeanFormatter {
+    private static class StdoutWriter implements MBeanReceiver {
         public void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,
@@ -292,7 +237,11 @@ public class JmxScraper {
             String attrType,
             String attrDescription,
             Object value) {
-            logger.log(Level.INFO, "Got: " + domain + beanProperties + attrKeys + attrType + ": " + value);
+            System.out.println(domain +
+                               beanProperties + 
+                               attrKeys +
+                               attrName +
+                               ": " + value);
         }
     }
 
@@ -300,15 +249,11 @@ public class JmxScraper {
      * Convenience function to run standalone.
      */
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.out.println("usage: JmxScraper <target host:port>");
-            System.exit(1);
-        }
-        String host_port = args[1];
-        new JmxScraper(new StdoutWriter()).doScrape(host_port);
-        System.out.println("scrape: Results:");
-        System.out.println("scrape: ##########################################");
+      if (args.length > 0) {
+        new JmxScraper(args[0], new StdoutWriter()).doScrape();
+      } else {
+        new JmxScraper("", new StdoutWriter()).doScrape();
+      }
     }
-
 }
 
