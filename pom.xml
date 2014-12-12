@@ -5,7 +5,7 @@
   <groupId>com.prometheus.jmx4prometheus</groupId>
   <artifactId>jmx4prometheus</artifactId>
   <packaging>jar</packaging>
-  <version>0.2</version>
+  <version>0.3</version>
   <name>jmx4prometheus</name>
   <description>
     See https://github.com/prometheus/jmx4prometheus/blob/master/README.md
@@ -57,7 +57,7 @@
         </configuration>
       </plugin>
 
-      <!-- Build a full jar with dependencies --> 
+      <!-- Build a full jar with dependencies -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
