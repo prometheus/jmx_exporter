@@ -5,11 +5,18 @@ JMX to Prometheus bridge.
 
 A Collector that can configurably scrape and expose mBeans of a JMX target.
 This can be run as an independent HTTP server and scrape remote JMX targets.
+It can also be run as a Java Agent, exposing an HTTP server and scraping the local JVM.
 
 ## Building and Running
 
 `mvn package` to build.
 See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
+
+To run as a javaagent:
+
+```
+java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT.jar=1234:config.json -jar yourJar.jar
+```
 
 ## Configuration
 The configuration is in JSON. An example with all possible options:

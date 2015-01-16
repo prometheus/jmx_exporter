@@ -14,5 +14,6 @@
   <modules>
     <module>collector</module>
     <module>jmx_prometheus_httpserver</module>
+    <module>jmx_prometheus_javaagent</module>
   </modules>
 </project>
