@@ -1,7 +1,4 @@
-/*
- * Part of demo bean app Main.java.
- */
-package com.prometheus.jmx4prometheus;
+package io.prometheus.jmx;
 
 import javax.management.*;
 import javax.management.MBeanServer;
