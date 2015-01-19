@@ -44,6 +44,8 @@ public class JmxScraper {
 
     /**
       * Get a list of mbeans on host_port and scrape their values.
+      *
+      * Values are passed to the receiver in a single thread.
       */
     public void doScrape() throws Exception {
         MBeanServerConnection beanConn;

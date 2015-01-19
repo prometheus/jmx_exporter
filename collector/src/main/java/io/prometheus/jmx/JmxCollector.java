@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -28,7 +29,7 @@ import org.json.simple.parser.ParseException;
 public class JmxCollector extends Collector {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
-    static class Rule {
+    private static class Rule {
       Pattern pattern;
       String name;
       String help;
@@ -103,7 +104,8 @@ public class JmxCollector extends Collector {
     }
     
     class Receiver implements JmxScraper.MBeanReceiver {
-      List<MetricFamilySamples> mfs = new ArrayList<MetricFamilySamples>();
+      Map<String, MetricFamilySamples> metricFamilySamplesMap =
+        new HashMap<String, MetricFamilySamples>();
 
       private static final char SEP = '_';
 
@@ -117,7 +119,18 @@ public class JmxCollector extends Collector {
         return s.replaceAll("[^a-zA-Z0-9:_]", "_").replaceAll("__+", "_");
       }
 
-      private MetricFamilySamples defaultExport(
+      void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
+        MetricFamilySamples mfs = metricFamilySamplesMap.get(sample.name);
+        if (mfs == null) {
+          // JmxScraper.MBeanReceiver is only called from one thread,
+          // so there's no race here.
+          mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<MetricFamilySamples.Sample>());
+          metricFamilySamplesMap.put(sample.name, mfs);
+        }
+        mfs.samples.add(sample);
+      }
+
+      private void defaultExport(
           String domain,
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
@@ -152,10 +165,8 @@ public class JmxCollector extends Collector {
             }
         }
 
-        List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
-        samples.add(new MetricFamilySamples.Sample(
-            fullname, labelNames, labelValues, ((Number)value).doubleValue()));
-        return new MetricFamilySamples(fullname, Type.GAUGE, help, samples);
+        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, ((Number)value).doubleValue()),
+          Type.GAUGE, help);
       }
 
       public void recordBean(
@@ -190,7 +201,7 @@ public class JmxCollector extends Collector {
           }
           // If there's no name provided, use default export format.
           if (rule.name == null) {
-            mfs.add(defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value));
+            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value);
             return;
           }
           // matcher is set below here due to validation in the constructor.
@@ -208,11 +219,9 @@ public class JmxCollector extends Collector {
               labelValues.add(matcher.replaceAll(rule.labelValues.get(i)));
             }
           }
-          // Add to list to be collected.
-          List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
-          samples.add(new MetricFamilySamples.Sample(
-              name, labelNames, labelValues, ((Number)value).doubleValue()));
-          mfs.add(new MetricFamilySamples(name, rule.type, help, samples));
+          // Add to samples.
+          addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, ((Number)value).doubleValue()),
+              rule.type, help);
           return;
         }
       }
@@ -230,16 +239,18 @@ public class JmxCollector extends Collector {
         error = 1;
         LOGGER.severe("JMX scrape failed: " + e);
       }
+      List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
+      mfsList.addAll(receiver.metricFamilySamplesMap.values());
       List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
       samples.add(new MetricFamilySamples.Sample(
           "jmx_scrape_duration_seconds", new ArrayList<String>(), new ArrayList<String>(), (System.nanoTime() - start) / 1.0E9));
-      receiver.mfs.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", samples));
+      mfsList.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", samples));
 
       samples = new ArrayList<MetricFamilySamples.Sample>();
       samples.add(new MetricFamilySamples.Sample(
           "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
-      receiver.mfs.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
-      return receiver.mfs;
+      mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
+      return mfsList;
     }
 
     /**
