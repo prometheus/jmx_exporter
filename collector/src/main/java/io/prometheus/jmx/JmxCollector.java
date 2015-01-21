@@ -40,6 +40,8 @@ public class JmxCollector extends Collector {
     }
 
     String hostPort;
+    boolean lowercaseOutputName;
+    boolean lowercaseOutputLabelNames;
     ArrayList<Rule> rules = new ArrayList<Rule>();
 
     public JmxCollector(Reader in) throws IOException, ParseException {
@@ -55,6 +57,13 @@ public class JmxCollector extends Collector {
         } else {
           // Default to local JVM.
           hostPort = "";
+        }
+
+        if (config.containsKey("lowercaseOutputName")) {
+          lowercaseOutputName = (Boolean)config.get("lowercaseOutputName");
+        }
+        if (config.containsKey("lowercaseOutputLabelNames")) {
+          lowercaseOutputLabelNames = (Boolean)config.get("lowercaseOutputLabelNames");
         }
 
         if (config.containsKey("rules")) {
@@ -152,6 +161,10 @@ public class JmxCollector extends Collector {
         name.append(attrName);
         String fullname = safeName(name.toString());
 
+        if (lowercaseOutputName) {
+          fullname = fullname.toLowerCase();
+        }
+
         List<String> labelNames = new ArrayList<String>();
         List<String> labelValues = new ArrayList<String>();
         if (beanProperties.size() > 1) {
@@ -160,7 +173,11 @@ public class JmxCollector extends Collector {
             iter.next();
             while (iter.hasNext()) {
               Map.Entry<String, String> entry = iter.next();
-              labelNames.add(safeName(entry.getKey()));
+              String labelName = safeName(entry.getKey());
+              if (lowercaseOutputLabelNames) {
+                labelName = labelName.toLowerCase();
+              }
+              labelNames.add(labelName);
               labelValues.add(entry.getValue());
             }
         }
@@ -206,6 +223,9 @@ public class JmxCollector extends Collector {
           }
           // matcher is set below here due to validation in the constructor.
           String name = safeName(matcher.replaceAll(rule.name));
+          if (lowercaseOutputName) {
+            name = name.toLowerCase();
+          }
           // Set the help.
           if (rule.help != null) {
             help = matcher.replaceAll(rule.help);
@@ -215,8 +235,15 @@ public class JmxCollector extends Collector {
           ArrayList<String> labelValues = new ArrayList<String>();
           if (rule.labelNames != null) {
             for (int i = 0; i < rule.labelNames.size(); i++) {
-              labelNames.add(safeName(matcher.replaceAll(rule.labelNames.get(i))));
-              labelValues.add(matcher.replaceAll(rule.labelValues.get(i)));
+              String labelName = safeName(matcher.replaceAll(rule.labelNames.get(i)));
+              String labelValue = matcher.replaceAll(rule.labelValues.get(i));
+              if (lowercaseOutputLabelNames) {
+                labelName = labelName.toLowerCase();
+              }
+              if (!labelName.isEmpty() && !labelValue.isEmpty()) {
+                labelNames.add(labelName);
+                labelValues.add(labelValue);
+              }
             }
           }
           // Add to samples.

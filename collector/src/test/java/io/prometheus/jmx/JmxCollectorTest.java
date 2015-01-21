@@ -74,6 +74,27 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void testEmptyLabelsAreIgnored() throws ParseException {
+      JmxCollector jc = new JmxCollector(
+          "{`rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `foo`, `labels`: {``: `v`, `l`: ``}}]}".replace('`', '"')).register(registry);
+      assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testLowercaseOutputName() throws ParseException {
+      JmxCollector jc = new JmxCollector(
+          "{`lowercaseOutputName`: true, `rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `Foo`}]}".replace('`', '"')).register(registry);
+      assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testLowercaseOutputLabelNames() throws ParseException {
+      JmxCollector jc = new JmxCollector(
+          "{`lowercaseOutputLabelNames`: true, `rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `Foo` , `labels`: {`ABC`: `DEF`}}]}".replace('`', '"')).register(registry);
+      assertEquals(200, registry.getSampleValue("Foo", new String[]{"abc"}, new String[]{"DEF"}), .001);
+    }
+
+    @Test
     public void testNameAndLabelsFromPattern() throws ParseException {
       JmxCollector jc = new JmxCollector(
           "{`rules`: [{`pattern`: `^hadoop<(service)=(DataNode), name=DataNodeActivity-ams-hdd001-50010><>(replaceBlockOpMinTime):`, `name`: `hadoop_$3`, `labels`: {`$1`: `$2`}}]}".replace('`', '"')).register(registry);
@@ -121,6 +142,12 @@ public class JmxCollectorTest {
 
       // Test Hadoop Metrics.
       assertEquals(200, registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}), .001);
+    }
+
+    @Test
+    public void testDefaultExportLowercaseOutputName() throws ParseException {
+      JmxCollector jc = new JmxCollector("{`lowercaseOutputName`: true}".replace('`', '"')).register(registry);
+      assertNotNull(registry.getSampleValue("java_lang_operatingsystem_processcputime", new String[]{}, new String[]{}));
     }
 }
 
