@@ -20,9 +20,13 @@ java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT.jar=1234:config.jso
 
 ## Configuration
 The configuration is in JSON. An example with all possible options:
+
 ```
 { 
   "hostPort": "127.0.0.1:1234",
+  "hostUrl": "service:jmx:rmi:///jndi/rmi://hostname:port/jmxrmi"
+  "username" : "admin"
+  "password" : "admin"
   "lowercaseOutputName": false,
   "lowercaseOutputLabelNames": false,
   "rules": [
@@ -35,9 +39,13 @@ The configuration is in JSON. An example with all possible options:
   ]
 }
 ```
+
 Name     | Description
 ---------|------------
 hostPort | The host and port to connect to via remote JMX. If not specified, will talk to the local JVM.
+hostUrl | The full JMX URL.  If not specified, will use hostPort.
+username | The JMX Connection username.  If not specified, no username/password is used.
+password | The JMX Connection password.  If not specified, no username/passowrd is used.
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 rules    | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
@@ -58,6 +66,7 @@ Example configurations for javaagents can be found at  https://github.com/promet
 
 ### Pattern input
 The format of the input matches against the pattern is
+
 ```
 domain<beanpropertyName1=beanPropertyValue1, beanpropertyName2=beanPropertyValue2, ...><key1, key2, ...>attrName: value
 ```
@@ -75,6 +84,7 @@ The default help includes this string, except for the value.
 
 ### Default format
 The default format will transform beans in a way that should produce sane metrics in most cases. It is
+
 ```
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
 ```
