@@ -1,7 +1,7 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.exporter.MetricsServlet;
-import io.prometheus.client.hotspot.StandardExports;
+import io.prometheus.client.hotspot.DefaultExports;
 import java.lang.instrument.Instrumentation;
 import java.io.FileReader;
 import org.eclipse.jetty.server.Server;
@@ -18,7 +18,7 @@ public class JavaAgent {
        System.exit(1);
      }
      new JmxCollector(new FileReader(args[1])).register();
-     new StandardExports().register();
+     DefaultExports.initialize();
 
      int port = Integer.parseInt(args[0]);
      server = new Server(port);
