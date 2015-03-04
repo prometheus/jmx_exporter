@@ -7,6 +7,7 @@ import java.io.FileReader;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public class JavaAgent {
    static Server server;
@@ -22,6 +23,9 @@ public class JavaAgent {
 
      int port = Integer.parseInt(args[0]);
      server = new Server(port);
+     QueuedThreadPool pool = new QueuedThreadPool();
+     pool.setDaemon(true);
+     server.setThreadPool(pool);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      server.setHandler(context);
