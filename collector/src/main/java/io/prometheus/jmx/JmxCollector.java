@@ -247,7 +247,7 @@ public class JmxCollector extends Collector {
             }
           }
           // Add to samples.
-          LOGGER.fine("add metric sample: " + name + " " + labelNames + " "+labelValues + " " + ((Number)value).doubleValue());
+          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + ((Number)value).doubleValue());
           addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, ((Number)value).doubleValue()),
               rule.type, help);
           return;
