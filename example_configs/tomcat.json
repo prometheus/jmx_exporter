@@ -1,4 +1,6 @@
 {
+  "lowercaseOutputName": true,
+  "lowercaseOutputLabelNames": true,
   "rules": [
     {
       "pattern": "Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>(\w+):",
@@ -6,7 +8,7 @@
       "labels": {
         "protocol":"$1",
         "port":"$2" },
-      "help": "Tomcat global $3",
+      "help": "tomcat global $3",
       "type": "COUNTER",
     },
     {
@@ -15,7 +17,7 @@
       "labels": {
         "module":"$1",
         "servlet":"$2" },
-      "help": "Tomcat servlet $3 total",
+      "help": "tomcat servlet $3 total",
       "type": "COUNTER",
     },
     {
@@ -24,7 +26,7 @@
       "labels": {
         "protocol":"$1",
         "port":"$2" },
-      "help": "Tomcat threadpool $3",
+      "help": "tomcat threadpool $3",
       "type": "GAUGE",
     },
     {
@@ -33,7 +35,7 @@
       "labels": {
         "host":"$1",
         "context":"$2" },
-      "help": "Tomcat session $3 total",
+      "help": "tomcat session $3 total",
       "type": "COUNTER",
     },
   ]
