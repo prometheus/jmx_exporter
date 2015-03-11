@@ -1,32 +1,42 @@
 {
   "rules": [
     {
-      "pattern": "Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>requestCount:",
-      "name": "tomcat_request_count",
+      "pattern": "Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>(\w+):",
+      "name": "tomcat_$3_total",
       "labels": {
-        "impl":"$1",
+        "protocol":"$1",
         "port":"$2" },
-      "help": "Tomcat request count",
+      "help": "Tomcat global $3",
       "type": "COUNTER",
       "attrNameSnakeCase": false
     },
     {
-      "pattern": "Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>bytesSent:",
-      "name": "tomcat_request_send_bytes",
-      "labels": {
-        "impl":"$1",
-        "port":"$2" },
-      "help": "Tomcat request send bytes",
-      "type": "COUNTER",
-      "attrNameSnakeCase": false
-    },
-    {
-      "pattern": "Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, J2EEServer=none><>requestCount:",
-      "name": "tomcat_request_servlet_count",
+      "pattern": "Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, J2EEServer=none><>(requestCount|maxTime|processingTime|errorCount):",
+      "name": "tomcat_servlet_$3_total",
       "labels": {
         "module":"$1",
         "servlet":"$2" },
-      "help": "Tomcat servlet request count",
+      "help": "Tomcat servlet $3 total",
+      "type": "COUNTER",
+      "attrNameSnakeCase": false
+    },
+    {
+      "pattern": "Catalina<type=ThreadPool, name=\"(\w+-\w+)-(\d+)\"><>(currentThreadCount|currentThreadsBusy|keepAliveCount|pollerThreadCount|connectionCount):",
+      "name": "tomcat_threadpool_$3",
+      "labels": {
+        "protocol":"$1",
+        "port":"$2" },
+      "help": "Tomcat threadpool $3",
+      "type": "GAUGE",
+      "attrNameSnakeCase": false
+    },
+    {
+      "pattern": "Catalina<type=Manager, host=([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), context=([-a-zA-Z0-9+/$%~_-|!.]*)><>(processingTime|sessionCounter|rejectedSessions|expiredSessions):",
+      "name": "tomcat_session_$3_total",
+      "labels": {
+        "host":"$1",
+        "context":"$2" },
+      "help": "Tomcat session $3 total",
       "type": "COUNTER",
       "attrNameSnakeCase": false
     },
