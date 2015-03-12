@@ -8,7 +8,7 @@
       "labels": {
         "protocol":"$1",
         "port":"$2" },
-      "help": "tomcat global $3",
+      "help": "Tomcat global $3",
       "type": "COUNTER",
     },
     {
@@ -17,7 +17,7 @@
       "labels": {
         "module":"$1",
         "servlet":"$2" },
-      "help": "tomcat servlet $3 total",
+      "help": "Tomcat servlet $3 total",
       "type": "COUNTER",
     },
     {
@@ -26,7 +26,7 @@
       "labels": {
         "protocol":"$1",
         "port":"$2" },
-      "help": "tomcat threadpool $3",
+      "help": "Tomcat threadpool $3",
       "type": "GAUGE",
     },
     {
@@ -35,7 +35,7 @@
       "labels": {
         "host":"$1",
         "context":"$2" },
-      "help": "tomcat session $3 total",
+      "help": "Tomcat session $3 total",
       "type": "COUNTER",
     },
   ]
