@@ -92,6 +92,12 @@ public class JmxScraper {
             } catch(javax.management.RuntimeErrorException e) {
                 logScrape(mbeanName, attr, "Fail: " + e);
                 continue;
+            } catch(javax.management.RuntimeOperationsException e) {
+                logScrape(mbeanName, attr, "Fail: " + e);
+                continue;
+            } catch(javax.management.AttributeNotFoundException e) {
+                logScrape(mbeanName, attr, "Fail: " + e);
+                continue;
             }
 
             logScrape(mbeanName, attr, "process");

@@ -30,6 +30,7 @@ public class JmxCollectorTest {
         Cassandra.registerBean(mbs);
         CassandraMetrics.registerBean(mbs);
         Hadoop.registerBean(mbs);
+        TomcatServlet.registerBean(mbs);
     }
 
     @Before
@@ -149,5 +150,11 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("{`lowercaseOutputName`: true}".replace('`', '"')).register(registry);
       assertNotNull(registry.getSampleValue("java_lang_operatingsystem_processcputime", new String[]{}, new String[]{}));
     }
-}
 
+    @Test
+    public void testServletRequestPattern() throws ParseException {
+      JmxCollector jc = new JmxCollector(
+          "{`rules`: [{`pattern`: `Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, J2EEServer=none><>RequestCount:`,`name`: `tomcat_request_servlet_count`,`labels`: {`module`:`$1`,`servlet`:`$2` },`help`: `Tomcat servlet request count`,`type`: `COUNTER`,`attrNameSnakeCase`: false}]}".replace('`', '"')).register(registry);
+      assertEquals(1.0, registry.getSampleValue("tomcat_request_servlet_count", new String[]{"servlet","module"}, new String[]{"HTMLHostManager","localhost/host-manager", }), .001);
+    }
+}

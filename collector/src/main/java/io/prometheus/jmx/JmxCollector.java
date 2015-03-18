@@ -92,7 +92,7 @@ public class JmxCollector extends Collector {
               rule.labelNames = new ArrayList<String>();
               rule.labelValues = new ArrayList<String>();
               for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)labels.entrySet()) {
-                rule.labelNames.add(entry.getKey());                                
+                rule.labelNames.add(entry.getKey());
                 rule.labelValues.add((String)entry.getValue());
               }
             }
@@ -111,7 +111,7 @@ public class JmxCollector extends Collector {
         }
 
     }
-    
+
     class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
@@ -247,6 +247,7 @@ public class JmxCollector extends Collector {
             }
           }
           // Add to samples.
+          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + ((Number)value).doubleValue());
           addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, ((Number)value).doubleValue()),
               rule.type, help);
           return;
@@ -296,4 +297,3 @@ public class JmxCollector extends Collector {
       }
     }
 }
-
