@@ -98,6 +98,9 @@ public class JmxScraper {
             } catch(javax.management.AttributeNotFoundException e) {
                 logScrape(mbeanName, attr, "Fail: " + e);
                 continue;
+            } catch(java.rmi.UnmarshalException e) {
+                logScrape(mbeanName, attr, "Fail: " + e);
+                continue;
             }
 
             logScrape(mbeanName, attr, "process");
