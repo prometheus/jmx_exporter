@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -88,7 +89,7 @@ public class JmxCollector extends Collector {
               rule.help = (String)jsonRule.get("help");
             }
             if (jsonRule.containsKey("labels")) {
-              JSONObject labels = (JSONObject)jsonRule.get("labels");
+              TreeMap labels = new TreeMap((JSONObject)jsonRule.get("labels"));
               rule.labelNames = new ArrayList<String>();
               rule.labelValues = new ArrayList<String>();
               for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)labels.entrySet()) {
