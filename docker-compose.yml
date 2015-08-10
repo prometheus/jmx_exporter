@@ -1,6 +1,0 @@
-prometheusjmx:
-  build: .
-  ports:
-    - "8280:80"
-  volumes:
-    - sample_config.json:/opt/prometheus/conf/config.json
