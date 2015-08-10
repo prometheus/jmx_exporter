@@ -2,7 +2,7 @@ FROM java:openjdk-8u45-jre
 
 ADD jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-0.3-SNAPSHOT-jar-with-dependencies.jar /opt/prometheus/jms_prometheus_httpserver.jar
 
-ENV CONFIG_FILE sample_config.json
+ENV CONFIG_FILE config.json
 
 VOLUME /opt/prometheus/conf
 WORKDIR /opt/prometheus
