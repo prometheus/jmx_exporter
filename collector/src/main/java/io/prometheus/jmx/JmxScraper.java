@@ -1,11 +1,7 @@
 package io.prometheus.jmx;
 
 import java.lang.management.ManagementFactory;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.management.MBeanAttributeInfo;
@@ -35,11 +31,19 @@ public class JmxScraper {
     }
 
     private MBeanReceiver receiver;
-    private String hostPort;
+    private String hostUrl;
+    private Map<String,?> env;
 
-    public JmxScraper(String hostPort, MBeanReceiver receiver) {
-        this.hostPort = hostPort;
+    public JmxScraper(String hostUrl, MBeanReceiver receiver) {
+        this.hostUrl = hostUrl;
         this.receiver = receiver;
+        this.env = null;
+    }
+
+    public JmxScraper(String hostUrl,  Map<String,?> env, MBeanReceiver receiver) {
+        this.hostUrl = hostUrl;
+        this.receiver = receiver;
+        this.env = env;
     }
 
     /**
@@ -50,11 +54,12 @@ public class JmxScraper {
     public void doScrape() throws Exception {
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
-        if (hostPort.isEmpty()) {
+        if (hostUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          String url = "service:jmx:rmi:///jndi/rmi://" + hostPort + "/jmxrmi";
-          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), null);
+          //Accepts either the full URL or just host:port
+          String url = hostUrl.contains("/") ? hostUrl : "service:jmx:rmi:///jndi/rmi://" + hostUrl + "/jmxrmi";
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), env);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
