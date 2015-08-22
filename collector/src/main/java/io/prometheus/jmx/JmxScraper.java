@@ -1,5 +1,6 @@
 package io.prometheus.jmx;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -8,6 +9,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
@@ -72,8 +74,17 @@ public class JmxScraper {
         }
     }
 
-    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) throws Exception {
-        MBeanInfo info = beanConn.getMBeanInfo(mbeanName);
+    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
+        MBeanInfo info;
+        try {
+          info = beanConn.getMBeanInfo(mbeanName);
+        } catch (IOException e) {
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          return;
+        } catch (JMException e) {
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          return;
+        }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
         for (int idx = 0; idx < attrInfos.length; ++idx) {
@@ -86,19 +97,7 @@ public class JmxScraper {
             Object value;
             try {
                 value = beanConn.getAttribute(mbeanName, attr.getName());
-            } catch(javax.management.RuntimeMBeanException e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
-            } catch(javax.management.RuntimeErrorException e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
-            } catch(javax.management.RuntimeOperationsException e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
-            } catch(javax.management.AttributeNotFoundException e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
-            } catch(java.rmi.UnmarshalException e) {
+            } catch(Exception e) {
                 logScrape(mbeanName, attr, "Fail: " + e);
                 continue;
             }

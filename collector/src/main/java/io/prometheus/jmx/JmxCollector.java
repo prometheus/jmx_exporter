@@ -1,8 +1,10 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
-import java.io.Reader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -266,7 +268,9 @@ public class JmxCollector extends Collector {
         scraper.doScrape();
       } catch (Exception e) {
         error = 1;
-        LOGGER.severe("JMX scrape failed: " + e);
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
