@@ -198,13 +198,13 @@ public class JmxCollector extends Collector {
           String attrDescription,
           Object value) {
 
+        if (!(value instanceof Number)) {
+          LOGGER.fine("Ignoring non-Number bean: " + domain + beanProperties.toString() + attrKeys.toString() + attrName + ": " + value);
+          return;
+        }
         String beanName = domain +
                    angleBrackets(beanProperties.toString()) +
                    angleBrackets(attrKeys.toString());
-        if (!(value instanceof Number)) {
-          LOGGER.fine("Ignoring non-Number bean: " + beanName + attrName + ": " + value);
-          return;
-        }
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
 
