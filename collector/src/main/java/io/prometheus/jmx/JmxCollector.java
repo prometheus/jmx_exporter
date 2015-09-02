@@ -226,6 +226,9 @@ public class JmxCollector extends Collector {
           }
           // matcher is set below here due to validation in the constructor.
           String name = safeName(matcher.replaceAll(rule.name));
+          if (name.isEmpty()) {
+            return;
+          }
           if (lowercaseOutputName) {
             name = name.toLowerCase();
           }

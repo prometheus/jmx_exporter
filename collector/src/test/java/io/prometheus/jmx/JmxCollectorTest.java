@@ -130,6 +130,13 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void stopsOnEmptyName() throws ParseException {
+      JmxCollector jc = new JmxCollector(
+          "{`rules`: [{`pattern`: `.*`, `name`: ``}, {`pattern`: `.*`, `name`: `foo`}] }".replace('`', '"')).register(registry);
+      assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
     public void defaultExportTest() throws ParseException {
       JmxCollector jc = new JmxCollector("{}").register(registry);
 
