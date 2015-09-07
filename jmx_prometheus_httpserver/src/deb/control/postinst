@@ -1,0 +1,6 @@
+#!/bin/sh
+USER=jmx_exporter
+adduser --system --no-create-home --group ${USER}
+chown -R ${USER}:${USER} /usr/share/jmx_exporter/
+chown -R ${USER}:${USER} /etc/jmx_exporter
+chown ${USER}:${USER} /usr/bin/jmx_exporter

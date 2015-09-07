@@ -115,6 +115,16 @@
                   </mapper>
                 </data>
 
+                <data>
+                  <src>${basedir}/src/deb/bin/jmx_exporter.conf</src>
+                  <type>file</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/etc/init</prefix>
+                    <filemode>644</filemode>
+                  </mapper>
+                </data>
+
               </dataSet>
             </configuration>
           </execution>
