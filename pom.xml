@@ -1,11 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <packaging>pom</packaging>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.prometheus.jmx</groupId>
   <artifactId>parent</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.3</version>
   <description>
     See https://github.com/prometheus/jmx_exporter/blob/master/README.md
   </description>
@@ -33,6 +32,21 @@
           <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
       </repository>
   </distributionManagement>
+
+  <licenses>
+      <license>
+          <name>The Apache Software License, Version 2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+          <distribution>repo</distribution>
+      </license>
+  </licenses>
+
+  <scm>
+      <connection>scm:git:git@github.com:prometheus/jmx_exporter.git</connection>
+      <developerConnection>scm:git:git@github.com:prometheus/jmx_exporter.git</developerConnection>
+      <url>git@github.com:prometheus/jmx_exporter.git</url>
+      <tag>HEAD</tag>
+  </scm>
 
   <build>
       <plugins>
