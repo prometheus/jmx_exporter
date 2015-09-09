@@ -63,7 +63,6 @@
           <goal>shade</goal>
         </goals>
         <configuration>
-          <outputFile>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</outputFile>
           <minimizeJar>true</minimizeJar>
           <relocations>
             <relocation>
