@@ -8,6 +8,7 @@ Maintainers of this repository:
 The following individuals have contributed code to this repository
 (listed in alphabetical order):
 
+* Barisa Obradovic <barisa.obradovic@gmail.com>
 * Brian Brazil <brian.brazil@robustperception.io>
 * Conor Hennessy <conor@soundcloud.com>
 * Julius Volz <julius@soundcloud.com>
