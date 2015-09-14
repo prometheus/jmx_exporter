@@ -35,6 +35,7 @@
 
   <build>
     <plugins>
+
       <!-- Compile version (1.5 for generics) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -69,12 +70,39 @@
           </execution>
         </executions>
       </plugin>
-
+	
+	<!-- This is just needed for replacing place holders in deb control files -->
+        <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/filtered-resources</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>src/deb</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+      
       <!-- debian package builder -->
       <plugin>
         <artifactId>jdeb</artifactId>
         <groupId>org.vafer</groupId>
         <version>1.0</version>
+        <configuration>
+        	<controlDir>${basedir}/target/filtered-resources/control</controlDir>
+        </configuration>
 
         <executions>
           <execution>
@@ -92,25 +120,42 @@
                     <type>perm</type>
                     <prefix>/usr/share/jmx_exporter</prefix>
                     <filemode>644</filemode>
+                    <user>${deb.user}</user>
+                    <group>${deb.group}</group>
                   </mapper>
                 </data>
 
                 <data>
-                  <src>${basedir}/src/deb/config</src>
+                  <src>${basedir}/target/filtered-resources/config</src>
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
                     <prefix>/etc/jmx_exporter</prefix>
+                    <user>${deb.user}</user>
+                    <group>${deb.group}</group>
                   </mapper>
                 </data>
 
                 <data>
-                  <src>${basedir}/src/deb/bin/jmx_exporter</src>
+                  <src>${basedir}/target/filtered-resources/bin/jmx_exporter</src>
                   <type>file</type>
                   <mapper>
                     <type>perm</type>
                     <prefix>/usr/bin</prefix>
                     <filemode>755</filemode>
+                    <user>${deb.user}</user>
+                    <group>${deb.group}</group>
+                  </mapper>
+                </data>
+
+                <data>
+                  <src>${basedir}/target/filtered-resources/upstart/jmx_exporter.conf</src>
+                  <type>file</type>
+                  <dst>${deb.servicename}.conf</dst>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/etc/init</prefix>
+                    <filemode>644</filemode>
                   </mapper>
                 </data>
 
@@ -125,5 +170,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <deb.user>jmx_exporter</deb.user>
+    <deb.group>${deb.user}</deb.group>
+    <deb.servicename>jmx_exporter</deb.servicename>
   </properties>
 </project>
