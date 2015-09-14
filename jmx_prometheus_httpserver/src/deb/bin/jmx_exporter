@@ -1,3 +1,15 @@
 #!/bin/sh
+PORT=${1-9101}
+CONF=${2-/etc/jmx_exporter/jmx_exporter.json}
 
-java -jar /usr/share/jmx_exporter/httpserver-*.jar -- -c /etc/jmx_exporter/jmx_exporter.json
+if [ $# -lt 1 ]; then
+    echo "Using default port $PORT and default config file location at $CONF"
+fi
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage is: $0 <port> <config_file>"
+    exit 0
+fi
+
+echo "Starting $0 on port $PORT using $CONF"
+java -jar /usr/share/jmx_exporter/jmx_prometheus_httpserver-*.jar $PORT $CONF
