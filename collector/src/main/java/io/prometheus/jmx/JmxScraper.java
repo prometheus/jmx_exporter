@@ -38,10 +38,13 @@ public class JmxScraper {
 
     private MBeanReceiver receiver;
     private String hostPort;
+    private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String hostPort, MBeanReceiver receiver) {
+    public JmxScraper(String hostPort, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,  MBeanReceiver receiver) {
         this.hostPort = hostPort;
         this.receiver = receiver;
+        this.whitelistObjectNames = whitelistObjectNames;
+        this.blacklistObjectNames = blacklistObjectNames;
     }
 
     /**
@@ -60,9 +63,15 @@ public class JmxScraper {
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
+
             // Query MBean names
-            Set<ObjectName> mBeanNames =
-                new TreeSet<ObjectName>(beanConn.queryNames(null, null));
+            Set<ObjectName> mBeanNames = new TreeSet();
+            for (ObjectName name : whitelistObjectNames) {
+                mBeanNames.addAll(beanConn.queryNames(name, null));
+            }
+            for (ObjectName name : blacklistObjectNames) {
+                mBeanNames.removeAll(beanConn.queryNames(name, null));
+            }
 
             for (ObjectName name : mBeanNames) {
                 scrapeBean(beanConn, name);
@@ -259,10 +268,12 @@ public class JmxScraper {
      * Convenience function to run standalone.
      */
     public static void main(String[] args) throws Exception {
+      List<ObjectName> objectNames = new LinkedList<ObjectName>();
+      objectNames.add(null);
       if (args.length > 0) {
-        new JmxScraper(args[0], new StdoutWriter()).doScrape();
+        new JmxScraper(args[0], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       } else {
-        new JmxScraper("", new StdoutWriter()).doScrape();
+        new JmxScraper("", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
     }
 }

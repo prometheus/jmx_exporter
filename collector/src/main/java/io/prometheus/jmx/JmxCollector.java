@@ -17,6 +17,8 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 
 import org.json.simple.JSONArray;
@@ -41,16 +43,18 @@ public class JmxCollector extends Collector {
     String hostPort;
     boolean lowercaseOutputName;
     boolean lowercaseOutputLabelNames;
+    List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
+    List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
     ArrayList<Rule> rules = new ArrayList<Rule>();
 
-    public JmxCollector(Reader in) throws IOException, ParseException {
+    public JmxCollector(Reader in) throws IOException, ParseException, MalformedObjectNameException {
         this((JSONObject)new JSONParser().parse(in));
     }
-    public JmxCollector(String jsonConfig) throws ParseException {
+    public JmxCollector(String jsonConfig) throws ParseException, MalformedObjectNameException {
         this((JSONObject)new JSONParser().parse(jsonConfig));
     }
 
-    private JmxCollector(JSONObject config) throws ParseException {
+    private JmxCollector(JSONObject config) throws ParseException, MalformedObjectNameException {
         if (config.containsKey("hostPort")) {
           hostPort = (String)config.get("hostPort");
         } else {
@@ -63,6 +67,21 @@ public class JmxCollector extends Collector {
         }
         if (config.containsKey("lowercaseOutputLabelNames")) {
           lowercaseOutputLabelNames = (Boolean)config.get("lowercaseOutputLabelNames");
+        }
+
+        if (config.containsKey("whitelistObjectNames")) {
+          JSONArray names = (JSONArray) config.get("whitelistObjectNames");
+          for (Object name : names) {
+            whitelistObjectNames.add(new ObjectName((String)name));
+          }
+        } else {
+          whitelistObjectNames.add(null);
+        }
+        if (config.containsKey("blacklistObjectNames")) {
+          JSONArray names = (JSONArray) config.get("blacklistObjectNames");
+          for (Object name : names) {
+            blacklistObjectNames.add(new ObjectName((String)name));
+          }
         }
 
         if (config.containsKey("rules")) {
@@ -260,7 +279,7 @@ public class JmxCollector extends Collector {
 
     public List<MetricFamilySamples> collect() {
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(hostPort, receiver);
+      JmxScraper scraper = new JmxScraper(hostPort, whitelistObjectNames, blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
