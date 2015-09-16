@@ -47,6 +47,8 @@ public class JmxCollector extends Collector {
     List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
     ArrayList<Rule> rules = new ArrayList<Rule>();
 
+    private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
+
     public JmxCollector(Reader in) throws IOException, ParseException, MalformedObjectNameException {
         this((JSONObject)new JSONParser().parse(in));
     }
@@ -136,6 +138,9 @@ public class JmxCollector extends Collector {
 
       private static final char SEP = '_';
 
+      private final Pattern unsafeChars = Pattern.compile("[^a-zA-Z0-9:_]");
+      private final Pattern multipleUnderscores = Pattern.compile("__+");
+
       // [] and () are special in regexes, so swtich to <>.
       private String angleBrackets(String s) {
         return "<" + s.substring(1, s.length() - 1) + ">";
@@ -143,7 +148,7 @@ public class JmxCollector extends Collector {
 
       private String safeName(String s) {
         // Change invalid chars to underscore, and merge underscores.
-        return s.replaceAll("[^a-zA-Z0-9:_]", "_").replaceAll("__+", "_");
+        return multipleUnderscores.matcher(unsafeChars.matcher(s).replaceAll("_")).replaceAll("_");
       }
 
       void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
@@ -223,7 +228,7 @@ public class JmxCollector extends Collector {
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
 
-        String attrNameSnakeCase = attrName.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
+        String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
 
         for (Rule rule : rules) {
           Matcher matcher = null;
