@@ -1,0 +1,5 @@
+---
+hostPort: localhost:5556
+rules:
+- pattern: ".*"
+
