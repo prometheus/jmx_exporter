@@ -71,7 +71,7 @@
                 <include>io.prometheus.**</include>
                 <include>javax.servlet.**</include>
                 <include>org.eclipse.**</include>
-                <include>org.json.**</include>
+                <include>org.yaml.**</include>
               </includes>
               <excludes>
               </excludes>
