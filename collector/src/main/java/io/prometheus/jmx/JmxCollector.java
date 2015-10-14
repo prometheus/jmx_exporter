@@ -52,7 +52,7 @@ public class JmxCollector extends Collector {
     }
     private JmxCollector(Map<String, Object> config) throws MalformedObjectNameException {
         if(config == null) {  //Yaml config empty, set config to empty map.
-            config = new Map<String, Object>(); 
+            config = new HashMap<String, Object>();
         }
 
         if (config.containsKey("hostPort")) {
