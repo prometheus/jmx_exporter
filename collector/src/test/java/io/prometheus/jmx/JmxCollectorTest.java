@@ -34,84 +34,84 @@ public class JmxCollectorTest {
 
     @Before
     public void setUp() throws Exception {
-        registry = new CollectorRegistry();
+      registry = new CollectorRegistry();
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testRulesMustHaveNameWithHelp() throws Exception {
-      JmxCollector jc = new JmxCollector("{`rules`: [{`help`: `foo`}] }".replace('`', '"'));
+      JmxCollector jc = new JmxCollector("---\nrules:\n- help: foo");
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testRulesMustHaveNameWithLabels() throws Exception {
-      JmxCollector jc = new JmxCollector("{`rules`: [{`labels`: {}}] }".replace('`', '"'));
+	  JmxCollector jc = new JmxCollector("---\nrules:\n- labels: {}");
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testRulesMustHavePatternWithName() throws Exception {
-      JmxCollector jc = new JmxCollector("{`rules`: [{`name`: `foo`}] }".replace('`', '"'));
+	  JmxCollector jc = new JmxCollector("---\nrules:\n- name: foo");
     }
 
     @Test
     public void testNameIsReplacedOnMatch() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `foo`}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testSnakeCaseAttrName() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replace_block_op_min_time:`, `name`: `foo`, `attrNameSnakeCase`: true}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replace_block_op_min_time:`\n  name: foo\n  attrNameSnakeCase: true".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testLabelsAreSet() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `foo`, `labels`: {`l`: `v`}}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  labels:\n    l: v".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{"l"}, new String[]{"v"}), .001);
     }
 
     @Test
     public void testEmptyLabelsAreIgnored() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `foo`, `labels`: {``: `v`, `l`: ``}}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  labels:\n    '': v\n    l: ''".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testLowercaseOutputName() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`lowercaseOutputName`: true, `rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `Foo`}]}".replace('`', '"')).register(registry);
+              "\n---\nlowercaseOutputName: true\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: Foo".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testLowercaseOutputLabelNames() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`lowercaseOutputLabelNames`: true, `rules`: [{`pattern`: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `Foo` , `labels`: {`ABC`: `DEF`}}]}".replace('`', '"')).register(registry);
+              "\n---\nlowercaseOutputLabelNames: true\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: Foo\n  labels:\n    ABC: DEF".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("Foo", new String[]{"abc"}, new String[]{"DEF"}), .001);
     }
 
     @Test
     public void testNameAndLabelsFromPattern() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^hadoop<(service)=(DataNode), name=DataNodeActivity-ams-hdd001-50010><>(replaceBlockOpMinTime):`, `name`: `hadoop_$3`, `labels`: {`$1`: `$2`}}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^hadoop<(service)=(DataNode), name=DataNodeActivity-ams-hdd001-50010><>(replaceBlockOpMinTime):`\n  name: hadoop_$3\n  labels:\n    `$1`: `$2`".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("hadoop_replaceBlockOpMinTime", new String[]{"service"}, new String[]{"DataNode"}), .001);
     }
 
     @Test
     public void testNameAndLabelSanatized() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^(hadoop<service=DataNode, )name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `$1`, `labels`: {`$1`: `$1`}}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^(hadoop<service=DataNode, )name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: `$1`\n  labels:\n    `$1`: `$1`".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("hadoop_service_DataNode_", new String[]{"hadoop_service_DataNode_"}, new String[]{"hadoop<service=DataNode, "}), .001);
     }
 
     @Test
     public void testHelpFromPattern() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `^(hadoop)<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`, `name`: `foo`, `help`: `bar $1`}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `^(hadoop)<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  help: bar $1".replace('`','"')).register(registry);
       for(Collector.MetricFamilySamples mfs : jc.collect()) {
         if (mfs.name.equals("foo") && mfs.help.equals("bar hadoop")) {
           return;
@@ -123,7 +123,7 @@ public class JmxCollectorTest {
     @Test
     public void stopsOnFirstMatchingRule() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `.*`, `name`: `foo`}, {`pattern`: `.*`, `name`: `bar`}] }".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `.*`\n  name: foo\n- pattern: `.*`\n  name: bar".replace('`','"')).register(registry);
       assertNotNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
       assertNull(registry.getSampleValue("bar", new String[]{}, new String[]{}));
     }
@@ -131,13 +131,13 @@ public class JmxCollectorTest {
     @Test
     public void stopsOnEmptyName() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `.*`, `name`: ``}, {`pattern`: `.*`, `name`: `foo`}] }".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: `.*`\n  name: ''\n- pattern: `.*`\n  name: foo".replace('`','"')).register(registry);
       assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
     }
 
     @Test
     public void defaultExportTest() throws Exception {
-      JmxCollector jc = new JmxCollector("{}").register(registry);
+      JmxCollector jc = new JmxCollector("---").register(registry);
 
       // Test JVM bean.
       assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
@@ -153,7 +153,7 @@ public class JmxCollectorTest {
 
     @Test
     public void testWhitelist() throws Exception {
-      JmxCollector jc = new JmxCollector("{`whitelistObjectNames`: [`java.lang:*`, `java.lang:*`, `org.apache.cassandra.concurrent:*`]}".replace('`', '"')).register(registry);
+      JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
       // Test what should and shouldn't be present.
       assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
@@ -165,7 +165,7 @@ public class JmxCollectorTest {
 
     @Test
     public void testBlacklist() throws Exception {
-      JmxCollector jc = new JmxCollector("{`whitelistObjectNames`: [`java.lang:*`, `org.apache.cassandra.concurrent:*`], `blacklistObjectNames`: [`org.apache.cassandra.concurrent:*`]}".replace('`', '"')).register(registry);
+      JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nblacklistObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
       // Test what should and shouldn't be present.
       assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
@@ -177,14 +177,14 @@ public class JmxCollectorTest {
 
     @Test
     public void testDefaultExportLowercaseOutputName() throws Exception {
-      JmxCollector jc = new JmxCollector("{`lowercaseOutputName`: true}".replace('`', '"')).register(registry);
+      JmxCollector jc = new JmxCollector("---\nlowercaseOutputName: true").register(registry);
       assertNotNull(registry.getSampleValue("java_lang_operatingsystem_processcputime", new String[]{}, new String[]{}));
     }
 
     @Test
     public void testServletRequestPattern() throws Exception {
       JmxCollector jc = new JmxCollector(
-          "{`rules`: [{`pattern`: `Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, J2EEServer=none><>RequestCount:`,`name`: `tomcat_request_servlet_count`,`labels`: {`module`:`$1`,`servlet`:`$2` },`help`: `Tomcat servlet request count`,`type`: `COUNTER`,`attrNameSnakeCase`: false}]}".replace('`', '"')).register(registry);
+              "\n---\nrules:\n- pattern: 'Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),\n    name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, \nJ2EEServer=none><>RequestCount:'\n  name: tomcat_request_servlet_count\n  labels:\n    module: `$1`\n    servlet: `$2`\n  help: Tomcat servlet request count\n  type: COUNTER\n  attrNameSnakeCase: false".replace('`','"')).register(registry);
       assertEquals(1.0, registry.getSampleValue("tomcat_request_servlet_count", new String[]{"module", "servlet"}, new String[]{"localhost/host-manager", "HTMLHostManager"}), .001);
     }
 }

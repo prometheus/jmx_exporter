@@ -20,12 +20,7 @@ import java.util.regex.Pattern;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
+import org.yaml.snakeyaml.Yaml;
 
 public class JmxCollector extends Collector {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
@@ -49,14 +44,17 @@ public class JmxCollector extends Collector {
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
-    public JmxCollector(Reader in) throws IOException, ParseException, MalformedObjectNameException {
-        this((JSONObject)new JSONParser().parse(in));
+    public JmxCollector(Reader in) throws IOException, MalformedObjectNameException {
+        this((Map<String, Object>)new Yaml().load(in));
     }
-    public JmxCollector(String jsonConfig) throws ParseException, MalformedObjectNameException {
-        this((JSONObject)new JSONParser().parse(jsonConfig));
+    public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
+        this((Map<String, Object>)new Yaml().load(yamlConfig));
     }
+    private JmxCollector(Map<String, Object> config) throws MalformedObjectNameException {
+        if(config == null) {  //Yaml config empty, set config to empty map.
+            config = new HashMap<String, Object>();
+        }
 
-    private JmxCollector(JSONObject config) throws ParseException, MalformedObjectNameException {
         if (config.containsKey("hostPort")) {
           hostPort = (String)config.get("hostPort");
         } else {
@@ -72,43 +70,43 @@ public class JmxCollector extends Collector {
         }
 
         if (config.containsKey("whitelistObjectNames")) {
-          JSONArray names = (JSONArray) config.get("whitelistObjectNames");
-          for (Object name : names) {
+          List<Object> names = (List<Object>) config.get("whitelistObjectNames");
+          for(Object name : names) {
             whitelistObjectNames.add(new ObjectName((String)name));
           }
         } else {
           whitelistObjectNames.add(null);
         }
         if (config.containsKey("blacklistObjectNames")) {
-          JSONArray names = (JSONArray) config.get("blacklistObjectNames");
+          List<Object> names = (List<Object>) config.get("blacklistObjectNames");
           for (Object name : names) {
             blacklistObjectNames.add(new ObjectName((String)name));
           }
         }
 
         if (config.containsKey("rules")) {
-          JSONArray configRules = (JSONArray) config.get("rules");
-          for (Object ruleObject : configRules) {
-            JSONObject jsonRule = (JSONObject) ruleObject;
+          List<Map<String,Object>> configRules = (List<Map<String,Object>>) config.get("rules");
+          for (Map<String, Object> ruleObject : configRules) {
+            Map<String, Object> yamlRule = ruleObject;
             Rule rule = new Rule();
             rules.add(rule);
-            if (jsonRule.containsKey("pattern")) {
-              rule.pattern = Pattern.compile("^.*" + (String)jsonRule.get("pattern") + ".*$");
+            if (yamlRule.containsKey("pattern")) {
+              rule.pattern = Pattern.compile("^.*" + (String)yamlRule.get("pattern") + ".*$");
             }
-            if (jsonRule.containsKey("name")) {
-              rule.name = (String)jsonRule.get("name");
+            if (yamlRule.containsKey("name")) {
+              rule.name = (String)yamlRule.get("name");
             }
-            if (jsonRule.containsKey("attrNameSnakeCase")) {
-              rule.attrNameSnakeCase = (Boolean)jsonRule.get("attrNameSnakeCase");
+            if (yamlRule.containsKey("attrNameSnakeCase")) {
+              rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
             }
-            if (jsonRule.containsKey("type")) {
-              rule.type = Type.valueOf((String)jsonRule.get("type"));
+            if (yamlRule.containsKey("type")) {
+              rule.type = Type.valueOf((String)yamlRule.get("type"));
             }
-            if (jsonRule.containsKey("help")) {
-              rule.help = (String)jsonRule.get("help");
+            if (yamlRule.containsKey("help")) {
+              rule.help = (String)yamlRule.get("help");
             }
-            if (jsonRule.containsKey("labels")) {
-              TreeMap labels = new TreeMap((JSONObject)jsonRule.get("labels"));
+            if (yamlRule.containsKey("labels")) {
+              TreeMap labels = new TreeMap((Map<String, Object>)yamlRule.get("labels"));
               rule.labelNames = new ArrayList<String>();
               rule.labelValues = new ArrayList<String>();
               for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)labels.entrySet()) {
@@ -119,10 +117,10 @@ public class JmxCollector extends Collector {
 
             // Validation.
             if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
-              throw new IllegalArgumentException("Must provide name, if help or labels are given: " + jsonRule);
+              throw new IllegalArgumentException("Must provide name, if help or labels are given: " + yamlRule);
             }
             if (rule.name != null && rule.pattern == null) {
-              throw new IllegalArgumentException("Must provide pattern, if name is given: " + jsonRule);
+              throw new IllegalArgumentException("Must provide pattern, if name is given: " + yamlRule);
             }
           }
         } else {
