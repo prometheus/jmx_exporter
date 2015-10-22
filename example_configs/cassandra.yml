@@ -2,12 +2,12 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
 rules:
-- pattern: org.apache.cassandra.metrics<type=(Connection|Streaming), scope=(S*), name=(S*)><>(Count|Value)
+- pattern: org.apache.cassandra.metrics<type=(Connection|Streaming), scope=(\S*), name=(\S*)><>(Count|Value)
   name: cassandra_$1_$3
   labels:
     address: "$2"
-- pattern: org.apache.cassandra.metrics<type=(S*)(?:, ((?!scope)S*)=(S*))?(?:, scope=(S*))?,
-    name=(S*)><>(Count|Value)
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?,
+    name=(\S*)><>(Count|Value)
   name: cassandra_$1_$5
   labels:
     "$1": "$4"
