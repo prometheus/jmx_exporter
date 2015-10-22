@@ -1,5 +1,5 @@
 ---
-hostPort: localhost:5556
+hostPort: localhost:5555
 rules:
 - pattern: ".*"
 
