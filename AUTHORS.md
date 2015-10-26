@@ -11,7 +11,7 @@ The following individuals have contributed code to this repository
 * Barisa Obradovic <barisa.obradovic@gmail.com>
 * Brian Brazil <brian.brazil@robustperception.io>
 * Conor Hennessy <conor@soundcloud.com>
-* Julius Volz <julius@soundcloud.com>
+* Julius Volz <julius.volz@gmail.com>
 * Levi Lovelock
 * Peter Rossbach <peterrossbach@me.com>
 
