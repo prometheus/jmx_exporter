@@ -21,22 +21,19 @@ java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependenci
 ## Configuration
 The configuration is in JSON. An example with all possible options:
 ```
-{ 
-  "hostPort": "127.0.0.1:1234",
-  "lowercaseOutputName": false,
-  "lowercaseOutputLabelNames": false,
-  "whitelistObjectNames": ["org.apache.cassandra.metrics:*"],
-  "blacklistObjectNames": ["org.apache.cassandra.metrics:type=ColumnFamily,*"],
-  "objectNames": ["org.apache.cassandra.metrics:*"],
-  "rules": [
-    {"pattern": "^org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value:",
-     "name": "cassandra_$1_$2",
-     "labels": {},
-     "help": "Cassandra metric $1 $2",
-     "type": "GAUGE",
-     "attrNameSnakeCase": false},
-  ]
-}
+---
+hostPort: 127.0.0.1:1234
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
+blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+rules:
+  - pattern: "^org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value:"
+    name: cassandra_$1_$2
+    labels: {}
+    help: "Cassandra metric $1 $2"
+    type: GAUGE
+    attrNameSnakeCase: false
 ```
 Name     | Description
 ---------|------------
