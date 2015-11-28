@@ -19,7 +19,7 @@ java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependenci
 ```
 
 ## Configuration
-The configuration is in JSON. An example with all possible options:
+The configuration is in YAML. An example with all possible options:
 ```
 ---
 hostPort: 127.0.0.1:1234
