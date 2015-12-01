@@ -1,0 +1,35 @@
+---
+lowercaseOutputName: true
+rules:
+# These metrics was re-added to a dropwizard-context, so they were partly renamed.
+# In jmx they will appear as:
+# $cluster_name$-metrics{name=requests}[]Count: 48
+# where $cluster_name$ is the cluster name from the server
+# So your milage might vary
+- pattern: "^metrics<name=cassandra.([a-zA-Z-]+).(.+)><>Count"
+  name: cassandra_$2
+  type: COUNTER
+  labels:
+    keyspace: "$1"
+
+
+- pattern: "^metrics<name=cassandra.([a-zA-Z-]+).(.+)><>Value"
+  name: cassandra_$2
+  type: GAUGE
+  labels:
+    keyspace: "$1"
+
+- pattern: metrics<name=cassandra.([a-zA-Z-]+).(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
+  name: cassandra_$2_rate_second
+  type: GAUGE
+  labels:
+    keyspace: "$1"
+    calculation: "$3"
+
+
+- pattern: metrics<name=cassandra.([a-zA-Z-]+).(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
+  name: cassandra_$2_duration_milliseconds
+  type: GAUGE
+  labels:
+    keyspace: "$1"
+    calculation: "$3"

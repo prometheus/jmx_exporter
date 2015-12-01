@@ -1,0 +1,108 @@
+---
+
+lowercaseOutputName: true
+rules:
+
+# Producer rules #
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Count"
+  name: kafka_producer_$1_$2_total
+  labels:
+    broker_host: "$3"
+    broker_port: "$4"
+  type: COUNTER
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Value"
+  name: kafka_producer_$1_$2
+  labels:
+    broker_host: "$3"
+    broker_port: "$4"
+  type: GAUGE
+
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: kafka_producer_$1_$2_rate
+  type: GAUGE
+  labels:
+    broker_host: "$3"
+    broker_port: "$4"
+    calculation: "$5"
+
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+  labels:
+    broker_host: "$3"
+    broker_port: "$4"
+    calculation: "$5"
+
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: kafka_producer_$1_$2_rate
+  type: GAUGE
+  labels:
+    topic: "$3"
+    calculation: "$4"
+
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+  labels:
+    topic: "$3"
+    calculation: "$4"
+
+
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>Count"
+  name: kafka_producer_$1_$2_total
+  type: COUNTER
+  labels:
+    topic: "$3"
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>Value"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+  labels:
+    topic: "$3"
+
+- pattern: "^kafka.producer<type=(.+), name=(.+)><>Count"
+  name: kafka_producer_$1_$2_total
+  type: COUNTER
+
+- pattern: "^kafka.producer<type=(.+), name=(.+)><>Value"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+
+# Consumer rules #
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: kafka_consumer_$1_$2_rate
+  type: GAUGE
+  labels:
+    client: "$3"
+    calculation: "$4"
+
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
+  name: kafka_consumer_$1_$2
+  type: GAUGE
+  labels:
+    client: "$3"
+    calculation: "$4"
+
+
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>Value"
+  name: kafka_consumer_$1_$2
+  labels:
+    client: "$3"
+  type: GAUGE
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>Count"
+  name: kafka_consumer_$1_$2_total
+  labels:
+    client: "$3"
+  type: COUNTER
+
+

@@ -1,0 +1,153 @@
+---
+lowercaseOutputLabelNames: true
+lowercaseOutputName: true
+blackListObjectNames: ["metrics:type=*,name=jvm*"]
+
+rules:
+
+- pattern: "metrics<name=ch.qos.logback.core.Appender.(debug|error|info|trace|warn)><>Count"
+  name: log_msg_total
+  labels:
+    level: "$1"
+  type: COUNTER
+
+- pattern: "metrics<name=ch.qos.logback.core.Appender.(debug|error|info|trace|warn)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: log_msg_rate
+  labels:
+    level: "$1"
+    calculation: "$2"
+  type: COUNTER
+
+- pattern: "metrics<name=ch.qos.logback.core.Appender.all><>Count"
+  name: log_msg_all_total
+  type: COUNTER
+
+- pattern: "metrics<name=ch.qos.logback.core.Appender.all><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: log_msg_all_rate
+  labels:
+    calculation: "$1"
+  type: COUNTER
+
+- pattern: "metrics<name=org.eclipse.jetty.server.HttpConnectionFactory.(.+).connections><>Count"
+  name: http_connections_total
+  type: COUNTER
+  labels:
+    port: "$1"
+
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-responses><>Count"
+  name: http_response_codes_total
+  type: COUNTER
+  labels:
+    http_code: "$1"
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.active-(.+)><>Count"
+  name: http_active_$1
+  type: GAUGE
+
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.async-(.+)><>Count"
+  name: http_request_async_$1_total
+  type: COUNTER
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.async-(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: http_request_async_$1_rate_seconds
+  type: GAUGE
+  labels:
+    calculation: "$2"
+
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>Count"
+  name: http_request_total
+  type: COUNTER
+  labels:
+    http_method: "$1"
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: http_request_rate
+  type: GAUGE
+  labels:
+    http_method: "$1"
+    calculation: "$2"
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
+  name: http_request_duration_milliseconds
+  type: GAUGE
+  labels:
+    http_method: "$1"
+    calculation: "$2"
+
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>Count"
+  name: http_all_request_total
+  type: COUNTER
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
+  name: http_request_all_rate_seconds
+  type: GAUGE
+  labels:
+    calculation: "$1"
+
+
+- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
+  name: http_all_request_duration_milliseconds
+  type: GAUGE
+  labels:
+    calculation: "$1"
+
+
+- pattern: metrics<name=io.dropwizard.jetty.MutableServletContextHandler.dispatches><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
+  name: http_dispatches_rate_seconds
+  type: GAUGE
+  labels:
+    calculation: "$1"
+
+
+- pattern: metrics<name=io.dropwizard.jetty.MutableServletContextHandler.dispatches><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
+  name: http_dispatches_duration_milliseconds
+  type: GAUGE
+  labels:
+    calculation: "$1"
+
+
+- pattern: "^metrics<name=(jvm.+)><>Count"
+  name: dw_$1
+  type: COUNTER
+  help: "possibly duplicated byt non-dw prefixed jvm metrics and should be ignored by blacklist above"
+
+
+- pattern: "^metrics<name=(jvm.+)><>Value"
+  name: dw_$1
+  type: GAUGE
+  help: "possibly duplicated byt non-dw prefixed jvm metrics and should be ignored by blacklist above"
+
+
+- pattern: "^metrics<name=(org.eclipse.jetty.util.thread.QueuedThreadPool.dw.+)><>Value"
+  name: dw_jetty_queued_thread_pool_$1
+  type: GAUGE
+
+
+# Catch-all metrics below
+
+- pattern: "^metrics<name=(.+)><>Count"
+  name: dw_$1
+  type: COUNTER
+
+- pattern: "^metrics<name=(.+)><>Value"
+  name: dw_$1
+  type: GAUGE
+
+- pattern: metrics<name=(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
+  name: dw_$1
+  type: GAUGE
+  labels:
+    calculation: "$2"
+
+
+- pattern: metrics<name=(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
+  name: dw_$1
+  type: GAUGE
+  labels:
+    calculation: "$2"
+
+
