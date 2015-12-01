@@ -22,6 +22,8 @@ import javax.management.ObjectName;
 
 import org.yaml.snakeyaml.Yaml;
 
+import static java.lang.String.format;
+
 public class JmxCollector extends Collector {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
@@ -259,14 +261,21 @@ public class JmxCollector extends Collector {
           ArrayList<String> labelValues = new ArrayList<String>();
           if (rule.labelNames != null) {
             for (int i = 0; i < rule.labelNames.size(); i++) {
-              String labelName = safeName(matcher.replaceAll(rule.labelNames.get(i)));
-              String labelValue = matcher.replaceAll(rule.labelValues.get(i));
-              if (lowercaseOutputLabelNames) {
-                labelName = labelName.toLowerCase();
-              }
-              if (!labelName.isEmpty() && !labelValue.isEmpty()) {
-                labelNames.add(labelName);
-                labelValues.add(labelValue);
+              final String unsafeLabelName = rule.labelNames.get(i);
+              final String labelValReplacement = rule.labelValues.get(i);
+              try {
+                String labelName = safeName(matcher.replaceAll(unsafeLabelName));
+                String labelValue = matcher.replaceAll(labelValReplacement);
+                if (lowercaseOutputLabelNames) {
+                  labelName = labelName.toLowerCase();
+                }
+                if (!labelName.isEmpty() && !labelValue.isEmpty()) {
+                  labelNames.add(labelName);
+                  labelValues.add(labelValue);
+                }
+              } catch (Exception e) {
+                throw new RuntimeException(
+                  format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
               }
             }
           }
