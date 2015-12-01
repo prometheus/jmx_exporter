@@ -263,20 +263,20 @@ public class JmxCollector extends Collector {
             for (int i = 0; i < rule.labelNames.size(); i++) {
               final String unsafeLabelName = rule.labelNames.get(i);
               final String labelValReplacement = rule.labelValues.get(i);
-                try {
-                    String labelName = safeName(matcher.replaceAll(unsafeLabelName));
-                    String labelValue = matcher.replaceAll(labelValReplacement);
-                    if (lowercaseOutputLabelNames) {
-                      labelName = labelName.toLowerCase();
-                    }
-                    if (!labelName.isEmpty() && !labelValue.isEmpty()) {
-                      labelNames.add(labelName);
-                      labelValues.add(labelValue);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(
-                        format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
+              try {
+                String labelName = safeName(matcher.replaceAll(unsafeLabelName));
+                String labelValue = matcher.replaceAll(labelValReplacement);
+                if (lowercaseOutputLabelNames) {
+                  labelName = labelName.toLowerCase();
                 }
+                if (!labelName.isEmpty() && !labelValue.isEmpty()) {
+                  labelNames.add(labelName);
+                  labelValues.add(labelValue);
+                }
+              } catch (Exception e) {
+                throw new RuntimeException(
+                  format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
+              }
             }
           }
           // Add to samples.
