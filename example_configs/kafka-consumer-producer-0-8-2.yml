@@ -7,15 +7,13 @@ rules:
 - pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Count"
   name: kafka_producer_$1_$2_total
   labels:
-    broker_host: "$3"
-    broker_port: "$4"
+    broker: "$3:$4"
   type: COUNTER
 
 - pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Value"
   name: kafka_producer_$1_$2
   labels:
-    broker_host: "$3"
-    broker_port: "$4"
+    broker: "$3:$4"
   type: GAUGE
 
 
@@ -23,8 +21,7 @@ rules:
   name: kafka_producer_$1_$2_rate
   type: GAUGE
   labels:
-    broker_host: "$3"
-    broker_port: "$4"
+    broker: "$3:$4"
     calculation: "$5"
 
 
@@ -32,8 +29,7 @@ rules:
   name: kafka_producer_$1_$2
   type: GAUGE
   labels:
-    broker_host: "$3"
-    broker_port: "$4"
+    broker: "$3:$4"
     calculation: "$5"
 
 
