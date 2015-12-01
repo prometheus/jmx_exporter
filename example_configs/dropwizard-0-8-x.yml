@@ -18,10 +18,6 @@ rules:
     calculation: "$2"
   type: COUNTER
 
-- pattern: "metrics<name=ch.qos.logback.core.Appender.all><>Count"
-  name: log_msg_all_total
-  type: COUNTER
-
 - pattern: "metrics<name=ch.qos.logback.core.Appender.all><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
   name: log_msg_all_rate
   labels:
