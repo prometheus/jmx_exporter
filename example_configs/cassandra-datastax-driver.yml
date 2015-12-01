@@ -23,18 +23,3 @@ rules:
   type: GAUGE
   labels:
     keyspace: "$1"
-
-- pattern: metrics<name=cassandra.([a-zA-Z-]+).(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
-  name: cassandra_$2_rate_second
-  type: GAUGE
-  labels:
-    keyspace: "$1"
-    calculation: "$3"
-
-
-- pattern: metrics<name=cassandra.([a-zA-Z-]+).(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
-  name: cassandra_$2_duration_milliseconds
-  type: GAUGE
-  labels:
-    keyspace: "$1"
-    calculation: "$3"

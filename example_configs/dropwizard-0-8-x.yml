@@ -1,28 +1,18 @@
 ---
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
-blackListObjectNames: ["metrics:type=*,name=jvm*","metrics:type=*,name=ch.qos.logback.core.Appender.all"]
+blackListObjectNames:
+- "metrics:type=*,name=jvm*"
+- "metrics:type=*,name=ch.qos.logback.core.Appender.all"
 
 rules:
 
 - pattern: "metrics<name=ch.qos.logback.core.Appender.(debug|error|info|trace|warn)><>Count"
-  name: log_msg_total
+  name: logback_msg_total
   labels:
     level: "$1"
   type: COUNTER
 
-- pattern: "metrics<name=ch.qos.logback.core.Appender.(debug|error|info|trace|warn)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
-  name: log_msg_rate
-  labels:
-    level: "$1"
-    calculation: "$2"
-  type: COUNTER
-
-- pattern: "metrics<name=ch.qos.logback.core.Appender.all><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
-  name: log_msg_all_rate
-  labels:
-    calculation: "$1"
-  type: COUNTER
 
 - pattern: "metrics<name=org.eclipse.jetty.server.HttpConnectionFactory.(.+).connections><>Count"
   name: http_connections_total
@@ -44,11 +34,6 @@ rules:
   name: http_request_async_$1_total
   type: COUNTER
 
-- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.async-(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
-  name: http_request_async_$1_rate_seconds
-  type: GAUGE
-  labels:
-    calculation: "$2"
 
 - pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>Count"
   name: http_request_total
@@ -56,48 +41,10 @@ rules:
   labels:
     http_method: "$1"
 
-- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
-  name: http_request_rate
-  type: GAUGE
-  labels:
-    http_method: "$1"
-    calculation: "$2"
-
-- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.(.+)-requests><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
-  name: http_request_duration_milliseconds
-  type: GAUGE
-  labels:
-    http_method: "$1"
-    calculation: "$2"
-
 
 - pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>Count"
   name: http_all_request_total
   type: COUNTER
-
-- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)"
-  name: http_request_all_rate_seconds
-  type: GAUGE
-  labels:
-    calculation: "$1"
-
-- pattern: "metrics<name=io.dropwizard.jetty.MutableServletContextHandler.requests><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)"
-  name: http_all_request_duration_milliseconds
-  type: GAUGE
-  labels:
-    calculation: "$1"
-
-- pattern: metrics<name=io.dropwizard.jetty.MutableServletContextHandler.dispatches><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
-  name: http_dispatches_rate_seconds
-  type: GAUGE
-  labels:
-    calculation: "$1"
-
-- pattern: metrics<name=io.dropwizard.jetty.MutableServletContextHandler.dispatches><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
-  name: http_dispatches_duration_milliseconds
-  type: GAUGE
-  labels:
-    calculation: "$1"
 
 - pattern: "^metrics<name=org.eclipse.jetty.util.thread.QueuedThreadPool.dw.(.+)><>Value"
   name: dw_jetty_queued_thread_pool
@@ -115,16 +62,12 @@ rules:
   name: dw_$1
   type: GAUGE
 
-- pattern: metrics<name=(.+)><>(FiveMinuteRate|MeanRate|OneMinuteRate|FifteenMinuteRate)
-  name: dw_$1
-  type: GAUGE
-  labels:
-    calculation: "$2"
-
-- pattern: metrics<name=(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
-  name: dw_$1
-  type: GAUGE
-  labels:
-    calculation: "$2"
+# This to show how percentiles might be formatted. Note that it is not meaningful to sum/average or do other calculations on these values
+# This pattern will also collide with the other catch-all value just above so the name=(.+) should be tailored to the metric you are matching
+#- pattern: metrics<name=(.+)><>(Max|MinMean|StdDev|50thPercentile|75thPercentile|95thPercentile|98thPercentile|99thPercentile|999thPercentile)
+#  name: dw_$1
+#  type: GAUGE
+#  labels:
+#    calculation: "$2"
 
 
