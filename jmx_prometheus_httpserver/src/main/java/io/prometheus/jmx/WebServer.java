@@ -12,7 +12,10 @@ public class WebServer {
        System.err.println("Usage: WebServer <port> <yaml configuration file>");
        System.exit(1);
      }
-     JmxCollector jc = new JmxCollector(new FileReader(args[1])).register();
+
+     for (int i = 1; i < args.length; i++) {
+         new JmxCollector(new FileReader(args[i])).register();
+     }
 
      int port = Integer.parseInt(args[0]);
      Server server = new Server(port);
