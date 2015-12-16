@@ -15,7 +15,7 @@ public class JavaAgent {
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
      String[] args = agentArgument.split(":");
      if (args.length != 2) {
-       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=<port>:<json configuration file>");
+       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=<port>:<yaml configuration file>");
        System.exit(1);
      }
      new JmxCollector(new FileReader(args[1])).register();
