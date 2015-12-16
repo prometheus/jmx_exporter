@@ -15,7 +15,7 @@ See `./run_sample_httpserver.sh` for a sample script that runs the httpserver ag
 To run as a javaagent:
 
 ```
-java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependencies.jar=1234:config.json -jar yourJar.jar
+java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml -jar yourJar.jar
 ```
 
 ## Configuration
@@ -68,11 +68,11 @@ Part     | Description
 ---------|------------
 domain   | Bean name. This is the part before the colon in the JMX object name.
 beanProperyName/Value | Bean properties. These are the key/values after the colon in the JMX object name.
-keyN     | If composite or tabular data is encountered, the name of the attribute is added to this list. 
+keyN     | If composite or tabular data is encountered, the name of the attribute is added to this list.
 attrName | The name of the attribute. For tabular data, this will be the name of the column. If `attrNameSnakeCase` is set, this will be converted to snake case.
 value    | The value of the attribute.
 
-No escaping or other changes are made to these values, with the exception of if `attrNameSnakeCase` is set. 
+No escaping or other changes are made to these values, with the exception of if `attrNameSnakeCase` is set.
 The default help includes this string, except for the value.
 
 ### Default format
@@ -88,6 +88,6 @@ If a given part isn't set, it'll be excluded.
 
 ## Installing
 
-A Debian binary package is created as part of the build process and it can 
-be used to install an executable into `/usr/local/bin/jmx4prometheus` with configuration
-in `/etc/jmx4prometheus/jmx4prometheus_config.json`.
+A Debian binary package is created as part of the build process and it can
+be used to install an executable into `/usr/bin/jmx_exporter` with configuration
+in `/etc/jmx_exporter/jmx_exporter.yaml`.

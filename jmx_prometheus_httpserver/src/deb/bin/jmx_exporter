@@ -1,3 +1,3 @@
 #!/bin/sh
 
-java -jar /usr/share/jmx_exporter/httpserver-*.jar -- -c /etc/jmx_exporter/jmx_exporter.json
+java -jar /usr/share/jmx_exporter/jmx_prometheus_httpserver-*.jar $@

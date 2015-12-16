@@ -9,7 +9,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 public class WebServer {
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
-       System.err.println("Usage: WebServer <port> <json configuration file>");
+       System.err.println("Usage: WebServer <port> <yaml configuration file>");
        System.exit(1);
      }
      JmxCollector jc = new JmxCollector(new FileReader(args[1])).register();
