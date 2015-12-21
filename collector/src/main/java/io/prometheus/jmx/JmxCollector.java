@@ -304,15 +304,21 @@ public class JmxCollector extends Collector {
       }
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
+
+      String suffix = "_local";
+      if (!hostPort.isEmpty()) {
+        suffix = "_" + hostPort.replaceAll("[:\\.]", "_");
+      }
       List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
+      String durationSecondsMetric = "jmx_scrape_duration_seconds" + suffix;
       samples.add(new MetricFamilySamples.Sample(
-          "jmx_scrape_duration_seconds", new ArrayList<String>(), new ArrayList<String>(), (System.nanoTime() - start) / 1.0E9));
-      mfsList.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", samples));
+          durationSecondsMetric, new ArrayList<String>(), new ArrayList<String>(), (System.nanoTime() - start) / 1.0E9));
+      mfsList.add(new MetricFamilySamples(durationSecondsMetric, Type.GAUGE, "Time this JMX scrape took, in seconds.", samples));
 
       samples = new ArrayList<MetricFamilySamples.Sample>();
-      samples.add(new MetricFamilySamples.Sample(
-          "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
-      mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
+      String errorMetric = "jmx_scrape_error" + suffix;
+      samples.add(new MetricFamilySamples.Sample(errorMetric, new ArrayList<String>(), new ArrayList<String>(), error));
+      mfsList.add(new MetricFamilySamples(errorMetric, Type.GAUGE, "Non-zero if this scrape failed.", samples));
       return mfsList;
     }
 
