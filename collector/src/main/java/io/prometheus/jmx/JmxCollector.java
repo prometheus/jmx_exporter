@@ -38,6 +38,9 @@ public class JmxCollector extends Collector {
     }
 
     String hostPort;
+    String username;
+    String password;
+    
     boolean lowercaseOutputName;
     boolean lowercaseOutputLabelNames;
     List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
@@ -64,6 +67,20 @@ public class JmxCollector extends Collector {
           hostPort = "";
         }
 
+        if (config.containsKey("username")) {
+            username = (String)config.get("username");
+          } else {
+            // Any username
+            username = "";
+          }
+        
+        if (config.containsKey("password")) {
+            password = (String)config.get("password");
+          } else {
+            // Empty password
+            password = "";
+          }
+        
         if (config.containsKey("lowercaseOutputName")) {
           lowercaseOutputName = (Boolean)config.get("lowercaseOutputName");
         }
@@ -244,7 +261,7 @@ public class JmxCollector extends Collector {
             defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value);
             return;
           }
-          // matcher is set below here due to validation in the constructor.
+          // Matcher is set below here due to validation in the constructor.
           String name = safeName(matcher.replaceAll(rule.name));
           if (name.isEmpty()) {
             return;
@@ -291,7 +308,7 @@ public class JmxCollector extends Collector {
 
     public List<MetricFamilySamples> collect() {
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(hostPort, whitelistObjectNames, blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(hostPort, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {

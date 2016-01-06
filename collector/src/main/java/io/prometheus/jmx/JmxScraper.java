@@ -1,7 +1,10 @@
 package io.prometheus.jmx;
 
 import java.io.IOException;
+
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +25,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+
 public class JmxScraper {
     private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());; 
 
@@ -38,11 +42,15 @@ public class JmxScraper {
 
     private MBeanReceiver receiver;
     private String hostPort;
+    private String username;
+    private String password;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String hostPort, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,  MBeanReceiver receiver) {
+    public JmxScraper(String hostPort, String username, String password,  List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,  MBeanReceiver receiver) {
         this.hostPort = hostPort;
         this.receiver = receiver;
+        this.username = username;
+        this.password = password;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
     }
@@ -59,11 +67,19 @@ public class JmxScraper {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
           String url = "service:jmx:rmi:///jndi/rmi://" + hostPort + "/jmxrmi";
-          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), null);
+          HashMap credential = null;
+          if(username != null && username.length() != 0 && password != null && password.length() != 0) {
+            credential = new HashMap();
+            List<String> credent = new ArrayList<String>();
+            credent.add(username);
+            credent.add(password);
+            credential.put("javax.management.remote.JMXConnector.CREDENTIALS", credent);
+          }       
+
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), credential);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
-
             // Query MBean names
             Set<ObjectName> mBeanNames = new TreeSet();
             for (ObjectName name : whitelistObjectNames) {
@@ -72,7 +88,6 @@ public class JmxScraper {
             for (ObjectName name : blacklistObjectNames) {
                 mBeanNames.removeAll(beanConn.queryNames(name, null));
             }
-
             for (ObjectName name : mBeanNames) {
                 scrapeBean(beanConn, name);
             }
@@ -213,7 +228,7 @@ public class JmxScraper {
                         String typ = type.getType(valueIdx).getTypeName();
                         String name = valueIdx;
                         if (valueIdx.toLowerCase().equals("value")) {
-                            // skip appending 'value' to the name
+                            // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
                         } 
@@ -270,10 +285,14 @@ public class JmxScraper {
     public static void main(String[] args) throws Exception {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
-      if (args.length > 0) {
-        new JmxScraper(args[0], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-      } else {
-        new JmxScraper("", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      if (args.length > 0){
+          new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      }
+      else if (args.length >= 3){
+          new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      }
+      else {
+          new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
     }
 }
