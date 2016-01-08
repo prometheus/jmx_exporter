@@ -46,7 +46,7 @@ public class JmxScraper {
     private String password;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String hostPort, String username, String password,  List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,  MBeanReceiver receiver) {
+    public JmxScraper(String hostPort, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
         this.hostPort = hostPort;
         this.receiver = receiver;
         this.username = username;
@@ -80,7 +80,7 @@ public class JmxScraper {
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
-            // Query MBean names
+            // Query MBean names.
             Set<ObjectName> mBeanNames = new TreeSet();
             for (ObjectName name : whitelistObjectNames) {
                 mBeanNames.addAll(beanConn.queryNames(name, null));

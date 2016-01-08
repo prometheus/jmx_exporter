@@ -70,14 +70,14 @@ public class JmxCollector extends Collector {
         if (config.containsKey("username")) {
             username = (String)config.get("username");
           } else {
-            // Any username
+            // Any username.
             username = "";
           }
         
         if (config.containsKey("password")) {
             password = (String)config.get("password");
           } else {
-            // Empty password
+            // Empty password.
             password = "";
           }
         
