@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+set -u
+
+exec gosu atm java -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=${JMX_REMOTE_PORT} -jar /var/jmx-exporter/bin/jmx_exporter_prometheus_httpserver.jar ${JMX_EXPORTER_SERVER_PORT} /var/jmx-exporter/conf

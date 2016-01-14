@@ -4,3 +4,5 @@
 
 # compilation objects
 target/
+
+*.jar

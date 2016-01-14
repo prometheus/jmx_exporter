@@ -1,0 +1,8 @@
+[{
+  "paths": [
+    "/var/log/supervisor/jmx-exporter.log"
+  ],
+  "fields": {
+    "type": "jmx-exporter"
+  }
+}]
