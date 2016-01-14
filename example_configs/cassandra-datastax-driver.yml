@@ -11,14 +11,14 @@ rules:
 # So your milage might vary
 # When adding the exiting (datastax) metrics registry in dropwizard I add the keyspace-name so it is easier to sparate the metrics.
 
-- pattern: "^metrics<name=cassandra.([a-zA-Z-]+).(.+)><>Count"
+- pattern: "^metrics<name=cassandra.([a-zA-Z0-9_]+).(.+)><>Count"
   name: cassandra_$2
   type: COUNTER
   labels:
     keyspace: "$1"
 
 
-- pattern: "^metrics<name=cassandra.([a-zA-Z-]+).(.+)><>Value"
+- pattern: "^metrics<name=cassandra.([a-zA-Z0-9_]+).(.+)><>Value"
   name: cassandra_$2
   type: GAUGE
   labels:
