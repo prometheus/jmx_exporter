@@ -70,10 +70,8 @@ public class JmxScraper {
           HashMap credential = null;
           if(username != null && username.length() != 0 && password != null && password.length() != 0) {
             credential = new HashMap();
-            List<String> credent = new ArrayList<String>();
-            credent.add(username);
-            credent.add(password);
-            credential.put("javax.management.remote.JMXConnector.CREDENTIALS", credent);
+            String[] credent = new String[] {username, password};
+            credential.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
           }       
 
           jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), credential);
