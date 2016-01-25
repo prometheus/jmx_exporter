@@ -3,7 +3,6 @@ package io.prometheus.jmx;
 import java.io.IOException;
 
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -12,6 +11,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
@@ -27,7 +29,24 @@ import javax.management.remote.JMXServiceURL;
 
 
 public class JmxScraper {
-    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());; 
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());;
+    private static final Pattern PROPERTY_PATTERN = Pattern.compile(
+            "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
+            "=" +  // Equals
+            "(" + // Either
+                "\"" + // Quoted
+                    "(?:" + // A possibly empty sequence of
+                    "[^\\\\\"]" + // Anything but backslash or quote
+                    "|\\\\\\\\" + // or an escaped backslash
+                    "|\\\\n" + // or an escaped newline
+                    "|\\\\\"" + // or an escaped quote
+                    "|\\\\\\?" + // or an escaped question mark
+                    "|\\\\\\*" + // or an escaped star
+                    ")*" +
+                "\"" +
+            "|" + // Or
+                "[^,=:\"]*" + // Unquoted - can be empty, anything but comma, equals, colon, or quote
+            ")");
 
     public static interface MBeanReceiver {
         void recordBean(
@@ -137,17 +156,20 @@ public class JmxScraper {
         }
     }
 
-    private LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
+    static LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
         // Implement a version of ObjectName.getKeyPropertyList that returns the
         // properties in the ordered they were added (the ObjectName stores them
         // in the order they were added).
         LinkedHashMap<String, String> output = new LinkedHashMap<String, String>();
-        String beanName = mbeanName.toString();
-        int idx = beanName.indexOf(':') + 1;
-        if (idx > 0) {
-            String[] tokens = beanName.substring(idx).split(",|=");
-            for (int i=0; i<tokens.length-1; )
-                output.put(tokens[i++], tokens[i++]);
+        String properties = mbeanName.getKeyPropertyListString();
+        Matcher match = PROPERTY_PATTERN.matcher(properties);
+        while (match.lookingAt()) {
+            output.put(match.group(1), match.group(2));
+            properties = properties.substring(match.end());
+            if (properties.startsWith(",")) {
+                properties = properties.substring(1);
+            }
+            match.reset(properties);
         }
         return output;
     }
