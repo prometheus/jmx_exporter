@@ -26,6 +26,8 @@ import static java.lang.String.format;
 
 public class JmxCollector extends Collector {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
+    public static final String JMX_URL_KEY = "jmxUrl";
+    public static final String HOST_PORT_KEY = "hostPort";
 
     private static class Rule {
       Pattern pattern;
@@ -37,7 +39,7 @@ public class JmxCollector extends Collector {
       ArrayList<String> labelValues;
     }
 
-    String hostPort;
+    String jmxUrl = "";
     String username;
     String password;
     
@@ -60,18 +62,20 @@ public class JmxCollector extends Collector {
             config = new HashMap<String, Object>();
         }
 
-        if (config.containsKey("hostPort")) {
-          hostPort = (String)config.get("hostPort");
-        } else {
-          // Default to local JVM.
-          hostPort = "";
+        if (config.containsKey(HOST_PORT_KEY)) {
+          if (config.containsKey(JMX_URL_KEY)) {
+              throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
+          }
+          jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)config.get(HOST_PORT_KEY) + "/jmxrmi";
+        } else if (config.containsKey(JMX_URL_KEY)) {
+          jmxUrl = (String)config.get(JMX_URL_KEY);
         }
 
         if (config.containsKey("username")) {
-            username = (String)config.get("username");
+            this.username = (String)config.get("username");
           } else {
             // Any username.
-            username = "";
+            this.username = "";
           }
         
         if (config.containsKey("password")) {
@@ -308,7 +312,7 @@ public class JmxCollector extends Collector {
 
     public List<MetricFamilySamples> collect() {
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(hostPort, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(jmxUrl, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
