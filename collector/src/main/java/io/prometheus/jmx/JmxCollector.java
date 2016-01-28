@@ -26,8 +26,6 @@ import static java.lang.String.format;
 
 public class JmxCollector extends Collector {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
-    public static final String JMX_URL_KEY = "jmxUrl";
-    public static final String HOST_PORT_KEY = "hostPort";
 
     private static class Rule {
       Pattern pattern;
@@ -39,7 +37,7 @@ public class JmxCollector extends Collector {
       ArrayList<String> labelValues;
     }
 
-    String jmxUrl = "";
+    String jmxUrl;
     String username;
     String password;
     
@@ -62,20 +60,23 @@ public class JmxCollector extends Collector {
             config = new HashMap<String, Object>();
         }
 
-        if (config.containsKey(HOST_PORT_KEY)) {
-          if (config.containsKey(JMX_URL_KEY)) {
+        if (config.containsKey("hostPort")) {
+          if (config.containsKey("jmxUrl")) {
               throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
           }
-          jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)config.get(HOST_PORT_KEY) + "/jmxrmi";
-        } else if (config.containsKey(JMX_URL_KEY)) {
-          jmxUrl = (String)config.get(JMX_URL_KEY);
+          jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)config.get("hostPort") + "/jmxrmi";
+        } else if (config.containsKey("jmxUrl")) {
+          jmxUrl = (String)config.get("jmxUrl");
+        } else {
+            // Default to local JVM
+            jmxUrl = "";
         }
 
         if (config.containsKey("username")) {
-            this.username = (String)config.get("username");
+            username = (String)config.get("username");
           } else {
             // Any username.
-            this.username = "";
+            username = "";
           }
         
         if (config.containsKey("password")) {
