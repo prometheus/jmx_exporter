@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.management.JMException;
@@ -60,13 +59,13 @@ public class JmxScraper {
     }
 
     private MBeanReceiver receiver;
-    private String hostPort;
+    private String jmxUrl;
     private String username;
     private String password;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String hostPort, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
-        this.hostPort = hostPort;
+    public JmxScraper(String jmxUrl, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
+        this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
@@ -82,10 +81,9 @@ public class JmxScraper {
     public void doScrape() throws Exception {
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
-        if (hostPort.isEmpty()) {
+        if (jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          String url = "service:jmx:rmi:///jndi/rmi://" + hostPort + "/jmxrmi";
           HashMap credential = null;
           if(username != null && username.length() != 0 && password != null && password.length() != 0) {
             credential = new HashMap();
@@ -93,7 +91,7 @@ public class JmxScraper {
             credential.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
           }       
 
-          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), credential);
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), credential);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {

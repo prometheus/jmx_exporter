@@ -37,7 +37,7 @@ public class JmxCollector extends Collector {
       ArrayList<String> labelValues;
     }
 
-    String hostPort;
+    String jmxUrl;
     String username;
     String password;
     
@@ -61,10 +61,15 @@ public class JmxCollector extends Collector {
         }
 
         if (config.containsKey("hostPort")) {
-          hostPort = (String)config.get("hostPort");
+          if (config.containsKey("jmxUrl")) {
+              throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
+          }
+          jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)config.get("hostPort") + "/jmxrmi";
+        } else if (config.containsKey("jmxUrl")) {
+          jmxUrl = (String)config.get("jmxUrl");
         } else {
-          // Default to local JVM.
-          hostPort = "";
+            // Default to local JVM
+            jmxUrl = "";
         }
 
         if (config.containsKey("username")) {
@@ -308,7 +313,7 @@ public class JmxCollector extends Collector {
 
     public List<MetricFamilySamples> collect() {
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(hostPort, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(jmxUrl, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
