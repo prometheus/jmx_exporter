@@ -2,17 +2,20 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.exporter.MetricsServlet;
 import java.io.FileReader;
+import java.util.logging.Logger;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 public class WebServer {
+   private static final Logger logger = Logger.getLogger(WebServer.class.getName());
+   
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
-       System.err.println("Usage: WebServer <port> <yaml configuration file>");
+       logger.severe("Usage: WebServer <port> <yaml configuration file>");
        System.exit(1);
      }
-     JmxCollector jc = new JmxCollector(new FileReader(args[1])).register();
 
      int port = Integer.parseInt(args[0]);
      Server server = new Server(port);

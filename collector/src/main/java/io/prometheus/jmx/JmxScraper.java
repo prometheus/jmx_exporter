@@ -289,7 +289,7 @@ public class JmxScraper {
             String attrType,
             String attrDescription,
             Object value) {
-            System.out.println(domain +
+            logger.info(domain +
                                beanProperties + 
                                attrKeys +
                                attrName +
