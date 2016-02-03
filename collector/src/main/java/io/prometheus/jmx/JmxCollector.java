@@ -328,12 +328,12 @@ public class JmxCollector extends Collector {
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
       List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
       samples.add(new MetricFamilySamples.Sample(
-          "jmx_scrape_duration_seconds", new ArrayList<String>(), new ArrayList<String>(), (System.nanoTime() - start) / 1.0E9));
+          "jmx_scrape_duration_seconds", Arrays.asList("hostPort"), Arrays.asList(hostPort), (System.nanoTime() - start) / 1.0E9));
       mfsList.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", samples));
 
       samples = new ArrayList<MetricFamilySamples.Sample>();
       samples.add(new MetricFamilySamples.Sample(
-          "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
+          "jmx_scrape_error", Arrays.asList("hostPort"), Arrays.asList(hostPort), error));
       mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
       return mfsList;
     }
