@@ -4,5 +4,4 @@
 
 # compilation objects
 target/
-/jmx_prometheus_javaagent/
 /.project
