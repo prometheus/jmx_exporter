@@ -33,8 +33,8 @@ public class JmxCollector extends Collector {
       String help;
       boolean attrNameSnakeCase;
       Type type = Type.GAUGE;
-      ArrayList<String> labelNames;
-      ArrayList<String> labelValues;
+      List<String> labelNames;
+      List<String> labelValues;
     }
 
     String jmxUrl;
@@ -45,7 +45,7 @@ public class JmxCollector extends Collector {
     boolean lowercaseOutputLabelNames;
     List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
     List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
-    ArrayList<Rule> rules = new ArrayList<Rule>();
+    List<Rule> rules = new ArrayList<Rule>();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
@@ -186,8 +186,8 @@ public class JmxCollector extends Collector {
 
       private void defaultExport(
           String domain,
-          LinkedHashMap<String, String> beanProperties,
-          LinkedList<String> attrKeys,
+          Map<String, String> beanProperties,
+          List<String> attrKeys,
           String attrName,
           String attrType,
           String help,
@@ -233,8 +233,8 @@ public class JmxCollector extends Collector {
 
       public void recordBean(
           String domain,
-          LinkedHashMap<String, String> beanProperties,
-          LinkedList<String> attrKeys,
+          Map<String, String> beanProperties,
+          List<String> attrKeys,
           String attrName,
           String attrType,
           String attrDescription,

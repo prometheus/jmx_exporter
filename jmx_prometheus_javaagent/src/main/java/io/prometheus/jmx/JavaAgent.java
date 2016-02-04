@@ -12,6 +12,10 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 public class JavaAgent {
    static Server server;
 
+   private JavaAgent() {
+     throw new UnsupportedOperationException();
+   }
+
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
      String[] args = agentArgument.split(":");
      if (args.length != 2) {
