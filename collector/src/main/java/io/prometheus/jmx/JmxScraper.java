@@ -2,11 +2,7 @@ package io.prometheus.jmx;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.management.JMException;
@@ -25,7 +21,7 @@ import javax.management.remote.JMXServiceURL;
 public class JmxScraper {
     private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());; 
 
-    public static interface MBeanReceiver {
+    public interface MBeanReceiver {
         void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,
@@ -53,7 +49,7 @@ public class JmxScraper {
       * Values are passed to the receiver in a single thread.
       */
     public void doScrape() throws Exception {
-        MBeanServerConnection beanConn;
+        final MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
         if (hostPort.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
@@ -63,9 +59,8 @@ public class JmxScraper {
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
-
             // Query MBean names
-            Set<ObjectName> mBeanNames = new TreeSet();
+            Set<ObjectName> mBeanNames = new TreeSet<>();
             for (ObjectName name : whitelistObjectNames) {
                 mBeanNames.addAll(beanConn.queryNames(name, null));
             }
@@ -73,9 +68,8 @@ public class JmxScraper {
                 mBeanNames.removeAll(beanConn.queryNames(name, null));
             }
 
-            for (ObjectName name : mBeanNames) {
-                scrapeBean(beanConn, name);
-            }
+            mBeanNames.parallelStream().forEach(name -> scrapeBean(beanConn, name));
+
         } finally {
           if (jmxc != null) {
             jmxc.close();
@@ -86,42 +80,40 @@ public class JmxScraper {
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
         MBeanInfo info;
         try {
-          info = beanConn.getMBeanInfo(mbeanName);
-        } catch (IOException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
-        } catch (JMException e) {
+            info = beanConn.getMBeanInfo(mbeanName);
+        } catch (IOException | JMException e) {
           logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
           return;
         }
-        MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
-        for (int idx = 0; idx < attrInfos.length; ++idx) {
-            MBeanAttributeInfo attr = attrInfos[idx];
+        Arrays.asList(info.getAttributes()).parallelStream().forEach(attr -> {
+
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
-                continue;
-            }
+            } else {
 
-            Object value;
-            try {
-                value = beanConn.getAttribute(mbeanName, attr.getName());
-            } catch(Exception e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
-            }
-
-            logScrape(mbeanName, attr, "process");
-            processBeanValue(
-                    mbeanName.getDomain(),
-                    getKeyPropertyList(mbeanName),
-                    new LinkedList<String>(),
-                    attr.getName(),
-                    attr.getType(),
-                    attr.getDescription(),
-                    value
+                Object value = null;
+                boolean fail = false;
+                try {
+                    value = beanConn.getAttribute(mbeanName, attr.getName());
+                } catch (Exception e) {
+                    logScrape(mbeanName, attr, "Fail: " + e);
+                    fail = true;
+                }
+                if (!fail) {
+                    logScrape(mbeanName, attr, "process");
+                    processBeanValue(
+                            mbeanName.getDomain(),
+                            getKeyPropertyList(mbeanName),
+                            new LinkedList<String>(),
+                            attr.getName(),
+                            attr.getType(),
+                            attr.getDescription(),
+                            value
                     );
-        }
+                }
+            }
+        });
     }
 
     private LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
