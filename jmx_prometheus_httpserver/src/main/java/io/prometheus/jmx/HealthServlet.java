@@ -1,7 +1,5 @@
 package io.prometheus.jmx;
 
-import io.prometheus.client.exporter.common.TextFormat;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,7 +12,7 @@ public class HealthServlet extends HttpServlet {
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         resp.setStatus(HttpServletResponse.SC_OK);
-        resp.setContentType(TextFormat.CONTENT_TYPE_004);
+        resp.setContentType("text/plain");
 
         Writer writer = resp.getWriter();
         writer.write("ok\n");
