@@ -1,4 +1,4 @@
-FROM java:8
+FROM java:8-jre
 MAINTAINER  John-William Trenholm <jw@xomar.com>
 
 WORKDIR /jmx_exporter
