@@ -1,0 +1,16 @@
+/etc/systemd/system/jmx_exporter.service
+[Unit]
+Description=JVM Exporter Data for Spark to Prometheus
+Documentation=https://jira.odigeo.com/wiki/display/PSBCN/Monitor+Spark+with+prometheus
+Requires=network.target
+After=network.target
+ConditionPathExists=/opt/jmx_exporter
+#Wants=jmxtrans.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/java -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=5555 -jar jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-0.7-SNAPSHOT-jar-with-dependencies.jar 5556 config.yml
+WorkingDirectory=/opt/jmx_exporter
+
+[Install]
+WantedBy=multi-user.target
