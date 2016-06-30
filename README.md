@@ -15,7 +15,7 @@ See `./run_sample_httpserver.sh` for a sample script that runs the httpserver ag
 To run as a javaagent:
 
 ```
-java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml -jar yourJar.jar
+java -javaagent:jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-0.7-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml:/prometheusMetrics -jar yourJar.jar
 ```
 
 ## Configuration
