@@ -80,6 +80,7 @@
                 <include>org.yaml.**</include>
               </includes>
               <excludes>
+                <exclude>io.prometheus.jmx.shaded.**</exclude>
               </excludes>
             </relocation>
           </relocations>
