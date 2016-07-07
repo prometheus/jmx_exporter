@@ -188,7 +188,7 @@ public class JmxScraper {
             Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
-        } else if (value instanceof Number || value instanceof String) {
+        } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
             logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
                     domain,

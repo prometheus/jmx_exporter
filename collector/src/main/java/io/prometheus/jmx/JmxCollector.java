@@ -238,12 +238,18 @@ public class JmxCollector extends Collector {
           String attrName,
           String attrType,
           String attrDescription,
-          Object value) {
+          Object beanValue) {
 
-        if (!(value instanceof Number)) {
-          LOGGER.fine("Ignoring non-Number bean: " + domain + beanProperties.toString() + attrKeys.toString() + attrName + ": " + value);
+        Number value;
+        if (beanValue instanceof Number) {
+          value = (Number)beanValue;
+        } else if (beanValue instanceof Boolean) {
+          value = (Boolean)beanValue ? 1 : 0;
+        } else {
+          LOGGER.fine("Ignoring non-Number/Boolean bean: " + domain + beanProperties.toString() + attrKeys.toString() + attrName + ": " + beanValue);
           return;
         }
+
         String beanName = domain +
                    angleBrackets(beanProperties.toString()) +
                    angleBrackets(attrKeys.toString());
@@ -302,9 +308,8 @@ public class JmxCollector extends Collector {
             }
           }
           // Add to samples.
-          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + ((Number)value).doubleValue());
-          addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, ((Number)value).doubleValue()),
-              rule.type, help);
+          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
+          addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
           return;
         }
       }

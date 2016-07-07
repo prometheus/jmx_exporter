@@ -30,6 +30,7 @@ public class JmxCollectorTest {
         CassandraMetrics.registerBean(mbs);
         Hadoop.registerBean(mbs);
         TomcatServlet.registerBean(mbs);
+        Bool.registerBean(mbs);
     }
 
     @Before
@@ -186,5 +187,13 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector(
               "\n---\nrules:\n- pattern: 'Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),\n    name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, \nJ2EEServer=none><>RequestCount:'\n  name: tomcat_request_servlet_count\n  labels:\n    module: `$1`\n    servlet: `$2`\n  help: Tomcat servlet request count\n  type: COUNTER\n  attrNameSnakeCase: false".replace('`','"')).register(registry);
       assertEquals(1.0, registry.getSampleValue("tomcat_request_servlet_count", new String[]{"module", "servlet"}, new String[]{"localhost/host-manager", "HTMLHostManager"}), .001);
+    }
+
+    @Test
+    public void testBooleanValues() throws Exception {
+      JmxCollector jc = new JmxCollector("---").register(registry);
+
+      assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
+      assertEquals(0.0, registry.getSampleValue("boolean_Test_False", new String[]{}, new String[]{}), .001);
     }
 }
