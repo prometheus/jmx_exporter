@@ -6,7 +6,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/jmx_exporter 9010 /etc/jmx_exporter/config.yml
+ExecStart=/usr/bin/jmx_exporter 9010 /etc/jmx_exporter/jmx_exporter.yaml
 
 [Install]
 WantedBy=multi-user.target
