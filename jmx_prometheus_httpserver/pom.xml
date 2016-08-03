@@ -46,7 +46,7 @@
         </configuration>
       </plugin>
 
-      <!-- Build a full jar with dependencies --> 
+      <!-- Build a full jar with dependencies -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -101,6 +101,16 @@
                   <mapper>
                     <type>perm</type>
                     <prefix>/etc/jmx_exporter</prefix>
+                  </mapper>
+                </data>
+
+                <data>
+                  <src>${basedir}/src/deb/systemd/jmx_exporter.service</src>
+                  <type>file</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/lib/systemd/system</prefix>
+                    <filemode>755</filemode>
                   </mapper>
                 </data>
 

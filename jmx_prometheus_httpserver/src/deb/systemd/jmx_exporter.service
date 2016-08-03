@@ -1,0 +1,12 @@
+[Unit]
+Description=JVM JMX Exporter to Prometheus
+Documentation=https://github.com/prometheus/jmx_exporter
+Requires=network.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/jmx_exporter 9010 /etc/jmx_exporter/config.yml
+
+[Install]
+WantedBy=multi-user.target
