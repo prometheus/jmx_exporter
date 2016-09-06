@@ -22,12 +22,12 @@ rules:
     port: "$2"
     protocol: "$1"
   help: Tomcat threadpool $3
-  type: COUNTER
+  type: GAUGE
 - pattern: 'Catalina<type=Manager, host=([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]), context=([-a-zA-Z0-9+/$%~_-|!.]*)><>(processingTime|sessionCounter|rejectedSessions|expiredSessions):'
   name: tomcat_session_$3_total
   labels:
     context: "$2"
     host: "$1"
   help: Tomcat session $3 total
-  type: GAUGE
+  type: COUNTER
 
