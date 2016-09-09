@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -50,8 +51,8 @@ public class JmxScraper {
     public static interface MBeanReceiver {
         void recordBean(
             String domain,
-            LinkedHashMap<String, String> beanProperties,
-            LinkedList<String> attrKeys,
+            Map<String, String> beanProperties,
+            List<String> attrKeys,
             String attrName,
             String attrType,
             String attrDescription,
@@ -84,7 +85,7 @@ public class JmxScraper {
         if (jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          HashMap credential = null;
+          Map credential = null;
           if(username != null && username.length() != 0 && password != null && password.length() != 0) {
             credential = new HashMap();
             String[] credent = new String[] {username, password};
@@ -283,8 +284,8 @@ public class JmxScraper {
     private static class StdoutWriter implements MBeanReceiver {
         public void recordBean(
             String domain,
-            LinkedHashMap<String, String> beanProperties,
-            LinkedList<String> attrKeys,
+            Map<String, String> beanProperties,
+            List<String> attrKeys,
             String attrName,
             String attrType,
             String attrDescription,

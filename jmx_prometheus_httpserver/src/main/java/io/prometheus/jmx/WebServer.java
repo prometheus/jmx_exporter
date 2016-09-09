@@ -7,6 +7,11 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 public class WebServer {
+
+   private WebServer() {
+     throw new UnsupportedOperationException();     
+   }
+   
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
        System.err.println("Usage: WebServer <port> <yaml configuration file>");
