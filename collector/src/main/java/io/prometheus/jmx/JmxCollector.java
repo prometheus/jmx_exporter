@@ -355,7 +355,7 @@ public class JmxCollector extends Collector {
       + "`hostPort`: `" + hostPort + "`,"
       + "}").replace('`', '"'));
       for(MetricFamilySamples mfs : jc.collect()) {
-        System.out.println(mfs);
+          LOGGER.info(mfs != null? mfs.toString() : null);
       }
     }
 }
