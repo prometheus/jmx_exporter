@@ -31,12 +31,12 @@ import javax.management.remote.rmi.RMIConnectorServer;
 
 
 public class JmxScraper {
-    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());;
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
-                    "=" +  // Equals
-                    "(" + // Either
-                    "\"" + // Quoted
+            "=" +  // Equals
+            "(" + // Either
+                "\"" + // Quoted
                     "(?:" + // A possibly empty sequence of
                     "[^\\\\\"]" + // Anything but backslash or quote
                     "|\\\\\\\\" + // or an escaped backslash
@@ -45,20 +45,20 @@ public class JmxScraper {
                     "|\\\\\\?" + // or an escaped question mark
                     "|\\\\\\*" + // or an escaped star
                     ")*" +
-                    "\"" +
-                    "|" + // Or
-                    "[^,=:\"]*" + // Unquoted - can be empty, anything but comma, equals, colon, or quote
-                    ")");
+                "\"" +
+            "|" + // Or
+                "[^,=:\"]*" + // Unquoted - can be empty, anything but comma, equals, colon, or quote
+            ")");
 
     public static interface MBeanReceiver {
         void recordBean(
-                String domain,
-                LinkedHashMap<String, String> beanProperties,
-                LinkedList<String> attrKeys,
-                String attrName,
-                String attrType,
-                String attrDescription,
-                Object value);
+            String domain,
+            LinkedHashMap<String, String> beanProperties,
+            LinkedList<String> attrKeys,
+            String attrName,
+            String attrType,
+            String attrDescription,
+            Object value);
     }
 
     private MBeanReceiver receiver;
@@ -77,28 +77,28 @@ public class JmxScraper {
     }
 
     /**
-     * Get a list of mbeans on host_port and scrape their values.
-     *
-     * Values are passed to the receiver in a single thread.
-     */
+      * Get a list of mbeans on host_port and scrape their values.
+      *
+      * Values are passed to the receiver in a single thread.
+      */
     public void doScrape() throws Exception {
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
         if (jmxUrl.isEmpty()) {
-            beanConn = ManagementFactory.getPlatformMBeanServer();
+          beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-            HashMap<String, Object> env = new HashMap<String, Object>();
-            if(username != null && username.length() != 0 && password != null && password.length() != 0) {
-                String[] credent = new String[] {username, password};
-                env.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
-            }
+          HashMap<String, Object> env = new HashMap<String, Object>();
+          if(username != null && username.length() != 0 && password != null && password.length() != 0) {
+            String[] credent = new String[] {username, password};
+            env.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
+          }       
 
-            SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
-            env.put(Context.SECURITY_PROTOCOL, "ssl");
-            env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
-            env.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
-            jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), env);
-            beanConn = jmxc.getMBeanServerConnection();
+          SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+          env.put(Context.SECURITY_PROTOCOL, "ssl");
+          env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+          env.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), env);
+          beanConn = jmxc.getMBeanServerConnection();
         }
         try {
             // Query MBean names.
@@ -113,22 +113,22 @@ public class JmxScraper {
                 scrapeBean(beanConn, name);
             }
         } finally {
-            if (jmxc != null) {
-                jmxc.close();
-            }
+          if (jmxc != null) {
+            jmxc.close();
+          }
         }
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
         MBeanInfo info;
         try {
-            info = beanConn.getMBeanInfo(mbeanName);
+          info = beanConn.getMBeanInfo(mbeanName);
         } catch (IOException e) {
-            logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-            return;
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          return;
         } catch (JMException e) {
-            logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-            return;
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          return;
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
@@ -156,7 +156,7 @@ public class JmxScraper {
                     attr.getType(),
                     attr.getDescription(),
                     value
-            );
+                    );
         }
     }
 
@@ -255,15 +255,15 @@ public class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        }
+                        } 
                         processBeanValue(
-                                domain,
-                                l2s,
-                                attrNames,
-                                name,
-                                typ,
-                                type.getDescription(),
-                                composite.get(valueIdx));
+                            domain,
+                            l2s,
+                            attrNames,
+                            name,
+                            typ,
+                            type.getDescription(),
+                            composite.get(valueIdx));
                     }
                 } else {
                     logScrape(domain, "not a correct tabulardata format");
@@ -288,18 +288,18 @@ public class JmxScraper {
 
     private static class StdoutWriter implements MBeanReceiver {
         public void recordBean(
-                String domain,
-                LinkedHashMap<String, String> beanProperties,
-                LinkedList<String> attrKeys,
-                String attrName,
-                String attrType,
-                String attrDescription,
-                Object value) {
+            String domain,
+            LinkedHashMap<String, String> beanProperties,
+            LinkedList<String> attrKeys,
+            String attrName,
+            String attrType,
+            String attrDescription,
+            Object value) {
             System.out.println(domain +
-                    beanProperties +
-                    attrKeys +
-                    attrName +
-                    ": " + value);
+                               beanProperties + 
+                               attrKeys +
+                               attrName +
+                               ": " + value);
         }
     }
 
@@ -307,16 +307,16 @@ public class JmxScraper {
      * Convenience function to run standalone.
      */
     public static void main(String[] args) throws Exception {
-        List<ObjectName> objectNames = new LinkedList<ObjectName>();
-        objectNames.add(null);
-        if (args.length > 0){
-            new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-        }
-        else if (args.length >= 3){
-            new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-        }
-        else {
-            new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-        }
+      List<ObjectName> objectNames = new LinkedList<ObjectName>();
+      objectNames.add(null);
+      if (args.length > 0){
+          new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      }
+      else if (args.length >= 3){
+          new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      }
+      else {
+          new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+      }
     }
 }
