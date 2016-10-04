@@ -31,8 +31,7 @@ import javax.management.remote.rmi.RMIConnectorServer;
 
 
 public class JmxScraper {
-    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
-
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());;
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
                     "=" +  // Equals
@@ -79,7 +78,7 @@ public class JmxScraper {
 
     /**
      * Get a list of mbeans on host_port and scrape their values.
-     * <p>
+     *
      * Values are passed to the receiver in a single thread.
      */
     public void doScrape() throws Exception {
@@ -89,8 +88,8 @@ public class JmxScraper {
             beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
             HashMap<String, Object> env = new HashMap<String, Object>();
-            if (username != null && username.length() != 0 && password != null && password.length() != 0) {
-                String[] credent = new String[]{username, password};
+            if(username != null && username.length() != 0 && password != null && password.length() != 0) {
+                String[] credent = new String[] {username, password};
                 env.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
             }
 
@@ -143,7 +142,7 @@ public class JmxScraper {
             Object value;
             try {
                 value = beanConn.getAttribute(mbeanName, attr.getName());
-            } catch (Exception e) {
+            } catch(Exception e) {
                 logScrape(mbeanName, attr, "Fail: " + e);
                 continue;
             }
@@ -211,7 +210,7 @@ public class JmxScraper {
             CompositeType type = composite.getCompositeType();
             attrKeys = new LinkedList<String>(attrKeys);
             attrKeys.add(attrName);
-            for (String key : type.keySet()) {
+            for(String key : type.keySet()) {
                 String typ = type.getType(key).getTypeName();
                 Object valu = composite.get(key);
                 processBeanValue(
@@ -248,7 +247,7 @@ public class JmxScraper {
                     for (String idx : rowKeys) {
                         l2s.put(idx, composite.get(idx).toString());
                     }
-                    for (String valueIdx : valueKeys) {
+                    for(String valueIdx : valueKeys) {
                         LinkedList<String> attrNames = extendedAttrKeys;
                         String typ = type.getType(valueIdx).getTypeName();
                         String name = valueIdx;
@@ -283,7 +282,6 @@ public class JmxScraper {
     private static void logScrape(ObjectName mbeanName, MBeanAttributeInfo attr, String msg) {
         logScrape(mbeanName + "'_'" + attr.getName(), msg);
     }
-
     private static void logScrape(String name, String msg) {
         logger.log(Level.FINE, "scrape: '" + name + "': " + msg);
     }
@@ -311,13 +309,14 @@ public class JmxScraper {
     public static void main(String[] args) throws Exception {
         List<ObjectName> objectNames = new LinkedList<ObjectName>();
         objectNames.add(null);
-        if (args.length > 0) {
+        if (args.length > 0){
             new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-        } else if (args.length >= 3) {
+        }
+        else if (args.length >= 3){
             new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-        } else {
+        }
+        else {
             new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
         }
     }
 }
-
