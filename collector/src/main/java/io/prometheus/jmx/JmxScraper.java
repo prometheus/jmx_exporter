@@ -32,7 +32,7 @@ import javax.management.remote.rmi.RMIConnectorServer;
 
 public class JmxScraper {
     private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
-    
+
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
                     "=" +  // Equals
