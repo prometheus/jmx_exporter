@@ -1,39 +1,34 @@
-# Config to expose JMX-variables from Flume's Java proccess and map to Prometheus syntax.
-# The FlumeKafkaSink metrics are also exposed.
-#
-# When using Hortonworks and Ambari. You can use the Ambari > Flume > flume-env and attach the java-agent with the config to the flume process.
-# Proposed directory: /etc/jmx_exporter/
 ---
 lowercaseOutputName: true
  
 rules:
 - pattern: org.apache.flume.source<type=(.+)><>EventAcceptedCount
-  name: flume_source_accepted_count
-  labels: {"agent": "agent1", "source": $1}
+  name: flume_source_accepted_total
+  labels: {"source": $1}
   type: COUNTER
 - pattern: org.apache.flume.channel<type=(.+)><>EventTakeSuccessCount
-  name: flume_channel_take_success_count
-  labels: {"agent": "agent1", "channel": $1}
+  name: flume_channel_take_success_total
+  labels: {"channel": $1}
   type: COUNTER
 - pattern: org.apache.flume.channel<type=(.+)><>ChannelFillPercentage
   name: flume_channel_fill_perc
-  labels: {"agent": "agent1", "channel": $1}
+  labels: {"channel": $1}
 - pattern: org.apache.flume.channel<type=(.+)><>ChannelSize
   name: flume_channel_size
   type: COUNTER
-  labels: {"agent": "agent1", "channel": $1}
+  labels: {"channel": $1}
 - pattern: org.apache.flume.channel<type=(.+)><>EventPutSuccessCount
-  name: flume_channel_put_success_count
+  name: flume_channel_put_success_total
   type: COUNTER
-  labels: {"agent": "agent1", "channel": $1}
+  labels: {"channel": $1}
 - pattern: kafka.producer<type=ProducerTopicMetrics, name=MessagesPerSec, clientId=(.+), topic=(.+)><>Count
-  name: kafka_producer_count
+  name: flume_sink_kafka_producer_total
   type: COUNTER
-  labels: {"agent": "agent1", "clientid": $1, "topic": $2}
+  labels: {"clientid": $1, "topic": $2}
 - pattern: kafka.producer<type=ProducerTopicMetrics, name=MessagesPerSec, clientId=(.+), topic=(.+)><>(.+)Rate
-  name: kafka_producer_$3_rate
-  labels: {"agent": "agent1", "clientid": $1, "topic": $2}
+  name: flume_sink_kafka_producer_$3
+  labels: {"clientid": $1, "topic": $2}
 - pattern: kafka.producer<type=ProducerStats, name=(.+)PerSec, clientId=(.+)><>Count
-  name: kafka_producer_$1_persec
+  name: flume_sink_kafka_producer_$1_total
   type: COUNTER
-  labels: {"agent": "agent1", "clientid": $2}
+  labels: {"clientid": $2}
