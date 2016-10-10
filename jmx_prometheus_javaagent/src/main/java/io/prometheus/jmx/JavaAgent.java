@@ -14,14 +14,17 @@ public class JavaAgent {
 
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
      String[] args = agentArgument.split(":");
-     if (args.length != 2) {
-       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=<port>:<yaml configuration file>");
+     if (args.length < 2 || args.length > 3) {
+       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=<port>:<yaml configuration file>[:<context root>]");
        System.exit(1);
      }
-     new JmxCollector(new FileReader(args[1])).register();
+     int port = Integer.parseInt(args[0]);
+     String configurationFile = args[1];
+     String contextRoot = args.length > 2 ? args[2] : "/metrics";
+
+     new JmxCollector(new FileReader(configurationFile)).register();
      DefaultExports.initialize();
 
-     int port = Integer.parseInt(args[0]);
      server = new Server(port);
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
@@ -29,7 +32,7 @@ public class JavaAgent {
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      server.setHandler(context);
-     context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+     context.addServlet(new ServletHolder(new MetricsServlet()), contextRoot);
      server.start();
    }
 }
