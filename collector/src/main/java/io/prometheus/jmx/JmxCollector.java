@@ -1,26 +1,18 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
+import org.yaml.snakeyaml.Yaml;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import org.yaml.snakeyaml.Yaml;
 
 import static java.lang.String.format;
 
@@ -45,6 +37,7 @@ public class JmxCollector extends Collector {
     boolean lowercaseOutputLabelNames;
     List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
     List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+    List<Pattern> blacklistPatterns = new ArrayList<Pattern>();
     ArrayList<Rule> rules = new ArrayList<Rule>();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
@@ -106,6 +99,13 @@ public class JmxCollector extends Collector {
           for (Object name : names) {
             blacklistObjectNames.add(new ObjectName((String)name));
           }
+        }
+
+        if (config.containsKey("blacklistPatterns")) {
+            List<Object> names =  (List<Object>) config.get("blacklistPatterns");
+            for (Object name : names) {
+                blacklistPatterns.add(Pattern.compile((String)name));
+            }
         }
 
         if (config.containsKey("rules")) {
@@ -318,7 +318,7 @@ public class JmxCollector extends Collector {
 
     public List<MetricFamilySamples> collect() {
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(jmxUrl, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(jmxUrl, username, password, whitelistObjectNames, blacklistObjectNames, blacklistPatterns, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
