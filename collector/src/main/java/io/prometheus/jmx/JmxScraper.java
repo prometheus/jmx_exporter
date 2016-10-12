@@ -1,6 +1,11 @@
 package io.prometheus.jmx;
 
-import javax.management.*;
+
+import javax.management.JMException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
@@ -10,15 +15,21 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class JmxScraper {
-    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());;
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
             "=" +  // Equals
