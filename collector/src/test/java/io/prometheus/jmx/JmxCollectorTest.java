@@ -1,19 +1,15 @@
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
-import java.lang.management.ManagementFactory;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import org.junit.Test;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
+
+import javax.management.MBeanServer;
+import java.lang.management.ManagementFactory;
+
+import static org.junit.Assert.*;
 
 
 public class JmxCollectorTest {
@@ -135,6 +131,23 @@ public class JmxCollectorTest {
               "\n---\nrules:\n- pattern: `.*`\n  name: ''\n- pattern: `.*`\n  name: foo".replace('`','"')).register(registry);
       assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
     }
+
+    @Test
+    public void patternBlackListTest() throws Exception {
+        JmxCollector jc = new JmxCollector("---\nblacklistPatterns:\n- ^java\\.lang.*?:*.").register(registry);
+
+        // Test JVM bean.
+        assertNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
+
+        // Test Cassandra Bean.
+        assertEquals(100, registry.getSampleValue("org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount", new String[]{}, new String[]{}), .001);
+        // Test Cassandra MEtrics.
+        assertEquals(.2, registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}), .001);
+
+        // Test Hadoop Metrics.
+        assertEquals(200, registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}), .001);
+    }
+
 
     @Test
     public void defaultExportTest() throws Exception {

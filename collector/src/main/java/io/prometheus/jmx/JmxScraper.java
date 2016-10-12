@@ -1,8 +1,22 @@
 package io.prometheus.jmx;
 
-import java.io.IOException;
 
+import javax.management.JMException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularType;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -13,22 +27,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.JMException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.TabularData;
-import javax.management.openmbean.TabularType;
-import javax.management.openmbean.CompositeType;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-
 
 public class JmxScraper {
-    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());;
+    private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
             "=" +  // Equals
@@ -64,13 +65,16 @@ public class JmxScraper {
     private String password;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String jmxUrl, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
+    private List<Pattern> blacklistedCanonicalNames;
+
+    public JmxScraper(String jmxUrl, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, List<Pattern> blacklistPatterns, MBeanReceiver receiver) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
+        blacklistedCanonicalNames = blacklistPatterns;
     }
 
     /**
@@ -84,22 +88,25 @@ public class JmxScraper {
         if (jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          HashMap credential = null;
+          HashMap<String, String[]> credential = null;
           if(username != null && username.length() != 0 && password != null && password.length() != 0) {
-            credential = new HashMap();
+            credential = new HashMap<String, String[]>();
             String[] credent = new String[] {username, password};
             credential.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
-          }       
+          }
 
           jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), credential);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
             // Query MBean names.
-            Set<ObjectName> mBeanNames = new TreeSet();
+            Set<ObjectName> mBeanNames = new TreeSet<ObjectName>();
             for (ObjectName name : whitelistObjectNames) {
-                mBeanNames.addAll(beanConn.queryNames(name, null));
+                //TODO: most probably querying for object names is expensive.
+                mBeanNames.addAll(filterOut(beanConn.queryNames(name, null)));
             }
+
+            //todo: when using ObjectName we can have client-side evaluation for black list
             for (ObjectName name : blacklistObjectNames) {
                 mBeanNames.removeAll(beanConn.queryNames(name, null));
             }
@@ -111,6 +118,24 @@ public class JmxScraper {
             jmxc.close();
           }
         }
+    }
+
+    private Collection<? extends ObjectName> filterOut(Set<ObjectName> objectNames) {
+
+        //todo this will produce a bit of garbage per scrape
+        Set<ObjectName> result = new TreeSet<ObjectName>();
+        outer: for (ObjectName name  : objectNames) {
+            String canonical = name.getCanonicalName();
+            for (Pattern p : blacklistedCanonicalNames) {
+                if (p.matcher(canonical).matches()) {
+                    //short-circuit
+                    continue outer;
+                }
+            }
+            result.add(name);
+        }
+
+        return result;
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
@@ -249,7 +274,7 @@ public class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        } 
+                        }
                         processBeanValue(
                             domain,
                             l2s,
@@ -290,7 +315,7 @@ public class JmxScraper {
             String attrDescription,
             Object value) {
             System.out.println(domain +
-                               beanProperties + 
+                               beanProperties +
                                attrKeys +
                                attrName +
                                ": " + value);
@@ -304,13 +329,13 @@ public class JmxScraper {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
       if (args.length > 0){
-          new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), Collections.<Pattern>emptyList(), new StdoutWriter()).doScrape();
       }
       else if (args.length >= 3){
-          new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), Collections.<Pattern>emptyList(), new StdoutWriter()).doScrape();
       }
       else {
-          new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), Collections.<Pattern>emptyList(), new StdoutWriter()).doScrape();
       }
     }
 }
