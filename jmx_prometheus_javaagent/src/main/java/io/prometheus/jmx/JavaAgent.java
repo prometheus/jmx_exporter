@@ -91,7 +91,7 @@ public class JavaAgent {
     static class JmxConfigurer extends TimerTask {
         final CountDownLatch startLatch;
         final File fileToWatch;
-        AtomicReference<Collector> collectorRef = new AtomicReference<>();
+        AtomicReference<Collector> collectorRef = new AtomicReference<Collector>();
 
         JmxConfigurer(CountDownLatch startLatch, File fileToWatch) {
             this.startLatch = startLatch;
