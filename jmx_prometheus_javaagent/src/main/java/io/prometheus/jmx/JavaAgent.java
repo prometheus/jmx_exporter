@@ -1,7 +1,5 @@
 package io.prometheus.jmx;
 
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import org.eclipse.jetty.server.Server;
@@ -91,7 +89,7 @@ public class JavaAgent {
     static class JmxConfigurer extends TimerTask {
         final CountDownLatch startLatch;
         final File fileToWatch;
-        AtomicReference<Collector> collectorRef = new AtomicReference<Collector>();
+        final ConcurrentCollectorWrapper wrapper = new ConcurrentCollectorWrapper();
 
         JmxConfigurer(CountDownLatch startLatch, File fileToWatch) {
             this.startLatch = startLatch;
@@ -109,14 +107,11 @@ public class JavaAgent {
                     return;
                 }
 
-                //NB: logic below can result in duplicated metric blip for short time
                 reader = new FileReader(fileToWatch);
                 JmxCollector collector = new JmxCollector(reader);
-                Collector old = collectorRef.get();
-                if (old != null) {
-                    CollectorRegistry.defaultRegistry.unregister(old);
-                }
-                collectorRef.set(collector.register());
+
+                // we don't care about double registering, since wrapper returns itself on set
+                wrapper.set(collector).register();
 
                 //NB: here we speculate that lastModified used for loading collector is same as file API returned previously
                 info = new FileInfo(lastModified, fileToWatch.getCanonicalPath());
