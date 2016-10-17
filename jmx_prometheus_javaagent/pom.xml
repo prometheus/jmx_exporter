@@ -55,6 +55,16 @@
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <phase>test-compile</phase>
+            <configuration>
+              <source>1.7</source>
+              <target>1.7</target>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <!-- Build a full shaded jar with dependencies -->
