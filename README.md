@@ -18,6 +18,9 @@ To run as a javaagent:
 java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml -jar yourJar.jar
 ```
 
+To bind the java agent to a specific IP change the port number to `host:port`.
+
+
 ## Configuration
 The configuration is in YAML. An example with all possible options:
 ```

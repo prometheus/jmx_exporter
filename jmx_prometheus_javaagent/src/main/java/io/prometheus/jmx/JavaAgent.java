@@ -4,6 +4,7 @@ import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.lang.instrument.Instrumentation;
 import java.io.FileReader;
+import java.net.InetSocketAddress;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -14,15 +15,29 @@ public class JavaAgent {
 
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
      String[] args = agentArgument.split(":");
-     if (args.length != 2) {
-       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=<port>:<yaml configuration file>");
+     if (args.length < 2 || args.length > 3) {
+       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file>");
        System.exit(1);
      }
-     new JmxCollector(new FileReader(args[1])).register();
+
+     int port;
+     InetSocketAddress socket;
+     String file;
+
+     if (args.length == 3) {
+       port = Integer.parseInt(args[1]);
+       socket = new InetSocketAddress(args[0], port);
+       file = args[2];
+     } else {
+       port = Integer.parseInt(args[0]);
+       socket = new InetSocketAddress(port);
+       file = args[1];
+     }
+
+     new JmxCollector(new FileReader(file)).register();
      DefaultExports.initialize();
 
-     int port = Integer.parseInt(args[0]);
-     server = new Server(port);
+     server = new Server(socket);
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
      server.setThreadPool(pool);
