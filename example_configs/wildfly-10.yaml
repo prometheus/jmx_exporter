@@ -1,0 +1,27 @@
+---
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  - pattern: "^jboss.as<subsystem=messaging-activemq, server=.+, jms-(queue|topic)=(.+)><>(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_messaging_$3
+    labels:
+      $1: $2
+
+  - pattern: "^jboss.as<subsystem=datasources, (?:xa-)*data-source=(.+), statistics=(.+)><>(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_datasource_$2_$3
+    labels:
+      name: $1
+
+  - pattern: "^jboss.as<subsystem=transactions><>number_of_(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_transaction_$1
+
+  - pattern: "^jboss.as<subsystem=undertow, server=(.+), http-listener=(.+)><>(bytes_.+|error_count|processing_time|request_count):"
+    attrNameSnakeCase: true
+    name: wildfly_undertow_$3
+    labels:
+      server: $1
+      http_listener: $2
+
