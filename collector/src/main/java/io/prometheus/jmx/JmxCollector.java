@@ -30,6 +30,8 @@ public class JmxCollector extends Collector {
     private static class Rule {
       Pattern pattern;
       String name;
+      String value;
+      Integer valueFactor = 1;
       String help;
       boolean attrNameSnakeCase;
       Type type = Type.GAUGE;
@@ -119,6 +121,15 @@ public class JmxCollector extends Collector {
             }
             if (yamlRule.containsKey("name")) {
               rule.name = (String)yamlRule.get("name");
+            }
+            if (yamlRule.containsKey("value")) {
+              rule.value = String.valueOf(yamlRule.get("value"));
+            }
+            if (yamlRule.containsKey("valueFactor")) {
+              Integer valueFactor = (Integer)yamlRule.get("valueFactor");
+              if (valueFactor != null) {
+                rule.valueFactor = valueFactor;
+              }
             }
             if (yamlRule.containsKey("attrNameSnakeCase")) {
               rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
@@ -240,38 +251,47 @@ public class JmxCollector extends Collector {
           String attrDescription,
           Object beanValue) {
 
-        Number value;
-        if (beanValue instanceof Number) {
-          value = (Number)beanValue;
-        } else if (beanValue instanceof Boolean) {
-          value = (Boolean)beanValue ? 1 : 0;
-        } else {
-          LOGGER.fine("Ignoring non-Number/Boolean bean: " + domain + beanProperties.toString() + attrKeys.toString() + attrName + ": " + beanValue);
-          return;
-        }
-
-        String beanName = domain +
-                   angleBrackets(beanProperties.toString()) +
-                   angleBrackets(attrKeys.toString());
+        String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
-
         String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
 
         for (Rule rule : rules) {
           Matcher matcher = null;
           String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
           if (rule.pattern != null) {
-            matcher = rule.pattern.matcher(matchName + ": " + value);
+            matcher = rule.pattern.matcher(matchName + ": " + beanValue);
             if (!matcher.matches()) {
               continue;
             }
           }
+
+          Number value;
+          if (rule.value != null && !rule.value.isEmpty()) {
+            String val = matcher.replaceAll(rule.value);
+
+            try {
+              beanValue = Double.valueOf(val);
+            } catch (NumberFormatException e) {
+              LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
+              return;
+            }
+          }
+          if (beanValue instanceof Number) {
+            value = ((Number)beanValue).doubleValue() * rule.valueFactor.doubleValue();
+          } else if (beanValue instanceof Boolean) {
+            value = (Boolean)beanValue ? 1 : 0;
+          } else {
+            LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+            return;
+          }
+
           // If there's no name provided, use default export format.
           if (rule.name == null) {
             defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value);
             return;
           }
+
           // Matcher is set below here due to validation in the constructor.
           String name = safeName(matcher.replaceAll(rule.name));
           if (name.isEmpty()) {
@@ -280,10 +300,12 @@ public class JmxCollector extends Collector {
           if (lowercaseOutputName) {
             name = name.toLowerCase();
           }
+
           // Set the help.
           if (rule.help != null) {
             help = matcher.replaceAll(rule.help);
           }
+
           // Set the labels.
           ArrayList<String> labelNames = new ArrayList<String>();
           ArrayList<String> labelValues = new ArrayList<String>();
@@ -307,6 +329,7 @@ public class JmxCollector extends Collector {
               }
             }
           }
+
           // Add to samples.
           LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
           addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
