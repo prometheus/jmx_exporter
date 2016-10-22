@@ -31,7 +31,7 @@ public class JmxCollector extends Collector {
       Pattern pattern;
       String name;
       String value;
-      Integer valueFactor;
+      Integer valueFactor = 1;
       String help;
       boolean attrNameSnakeCase;
       Type type = Type.GAUGE;
@@ -126,7 +126,10 @@ public class JmxCollector extends Collector {
               rule.value = String.valueOf(yamlRule.get("value"));
             }
             if (yamlRule.containsKey("valueFactor")) {
-              rule.valueFactor = (Integer)yamlRule.get("valueFactor");
+              Integer valueFactor = (Integer)yamlRule.get("valueFactor");
+              if (valueFactor != null) {
+                rule.valueFactor = valueFactor;
+              }
             }
             if (yamlRule.containsKey("attrNameSnakeCase")) {
               rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
@@ -275,11 +278,7 @@ public class JmxCollector extends Collector {
             }
           }
           if (beanValue instanceof Number) {
-            if (rule.valueFactor != null) {
-              value = (Double)beanValue * rule.valueFactor.doubleValue();
-            } else {
-              value = (Number)beanValue;
-            }
+            value = ((Number)beanValue).doubleValue() * rule.valueFactor.doubleValue();
           } else if (beanValue instanceof Boolean) {
             value = (Boolean)beanValue ? 1 : 0;
           } else {
