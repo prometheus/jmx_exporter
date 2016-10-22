@@ -1,7 +1,7 @@
 package io.prometheus.jmx;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -196,4 +196,41 @@ public class JmxCollectorTest {
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
       assertEquals(0.0, registry.getSampleValue("boolean_Test_False", new String[]{}, new String[]{}), .001);
     }
+
+    @Test
+    public void testValueEmpty() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:".replace('`','"')).register(registry);
+      assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
+    public void testValueStatic() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1".replace('`','"')).register(registry);
+      assertEquals(1.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testValueCaptureGroup() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `^hadoop<.+-500(10)>`\n  name: foo\n  value: $1".replace('`','"')).register(registry);
+      assertEquals(10.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testValueIgnoreNonNumber() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: a".replace('`','"')).register(registry);
+      assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
+    public void testValueFactorEmpty() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor:".replace('`','"')).register(registry);
+      assertEquals(1.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testValueFactor() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 10".replace('`','"')).register(registry);
+      assertEquals(10.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
 }
