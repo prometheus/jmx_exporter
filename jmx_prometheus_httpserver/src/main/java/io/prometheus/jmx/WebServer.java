@@ -1,7 +1,7 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.exporter.MetricsServlet;
-import java.io.FileReader;
+import java.io.File;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -12,7 +12,7 @@ public class WebServer {
        System.err.println("Usage: WebServer <port> <yaml configuration file>");
        System.exit(1);
      }
-     JmxCollector jc = new JmxCollector(new FileReader(args[1])).register();
+     JmxCollector jc = new JmxCollector(new File(args[1])).register();
 
      int port = Integer.parseInt(args[0]);
      Server server = new Server(port);
