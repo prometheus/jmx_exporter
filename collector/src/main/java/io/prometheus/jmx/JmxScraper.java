@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -18,6 +19,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.management.ObjectInstance;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
@@ -95,16 +97,16 @@ public class JmxScraper {
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
-            // Query MBean names.
-            Set<ObjectName> mBeanNames = new TreeSet();
+            // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
+            Set<ObjectInstance> mBeanNames = new HashSet();
             for (ObjectName name : whitelistObjectNames) {
-                mBeanNames.addAll(beanConn.queryNames(name, null));
+                mBeanNames.addAll(beanConn.queryMBeans(name, null));
             }
             for (ObjectName name : blacklistObjectNames) {
-                mBeanNames.removeAll(beanConn.queryNames(name, null));
+                mBeanNames.removeAll(beanConn.queryMBeans(name, null));
             }
-            for (ObjectName name : mBeanNames) {
-                scrapeBean(beanConn, name);
+            for (ObjectInstance name : mBeanNames) {
+                scrapeBean(beanConn, name.getObjectName());
             }
         } finally {
           if (jmxc != null) {
