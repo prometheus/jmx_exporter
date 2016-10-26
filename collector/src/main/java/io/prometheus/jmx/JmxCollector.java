@@ -49,17 +49,18 @@ public class JmxCollector extends Collector {
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       ArrayList<Rule> rules = new ArrayList<Rule>();
-      long lastUpdate = System.currentTimeMillis();
+      long lastUpdate = 0L;
     }
 
-    Config config;
-    File configFile;
+    private Config config;
+    private File configFile;
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
         config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
+        config.lastUpdate = configFile.lastModified();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
@@ -71,6 +72,7 @@ public class JmxCollector extends Collector {
         FileReader fr = new FileReader(configFile);
         Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
         config = loadConfig(newYamlConfig);
+        config.lastUpdate = configFile.lastModified();
       } catch (Exception e) {
         LOGGER.severe("Configuration reload failed: " + e.toString());
         return;
