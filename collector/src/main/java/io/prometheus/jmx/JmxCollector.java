@@ -79,14 +79,22 @@ public class JmxCollector extends Collector {
     private void reloadConfig() {
       try {
         FileReader fr = new FileReader(configFile);
-        Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
-        config = loadConfig(newYamlConfig);
-        config.lastUpdate = configFile.lastModified();
-        configReloadSuccess.inc();
-      } catch (Exception e) {
+
+        try {
+          Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
+          config = loadConfig(newYamlConfig);
+          config.lastUpdate = configFile.lastModified();
+          configReloadSuccess.inc();
+        } catch (Exception e) {
+          LOGGER.severe("Configuration reload failed: " + e.toString());
+          configReloadFailure.inc();
+        } finally {
+          fr.close();
+        }
+
+      } catch (IOException e) {
         LOGGER.severe("Configuration reload failed: " + e.toString());
         configReloadFailure.inc();
-        return;
       }
     }
 
