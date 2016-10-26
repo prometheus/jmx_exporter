@@ -82,7 +82,7 @@ public class JmxCollector extends Collector {
     private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         Config cfg = new Config();
 
-        if(yamlConfig == null) {  //Yaml config empty, set config to empty map.
+        if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
           yamlConfig = new HashMap<String, Object>();
         }
 
