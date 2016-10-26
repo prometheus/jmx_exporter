@@ -4,22 +4,24 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
 
-whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
+whitelistObjectNames: ["Tomcat:*"]
 
 # ------------------------ GlobalRequestProcessor -----------------------
 
 # maxTime
 - pattern: '^Tomcat<type=GlobalRequestProcessor, name=\"(.*)\"><>maxTime:'
-  name: tomcat_global_processingtime_milliseconds_max
-  help: 'Tomcat global maximum request processing time seen, in milliseconds.'
+  name: tomcat_global_processingtime_seconds_max
+  valueFactor: 0.001
+  help: 'Tomcat global maximum request processing time seen, in seconds.'
   type: GAUGE
   labels:
     worker: "$1"
 
 # processingTime
 - pattern: '^Tomcat<type=GlobalRequestProcessor, name=\"(.*)\"><>processingTime:'
-  name: tomcat_global_processingtime_milliseconds
-  help: 'Tomcat global cummulative request processing time, in milliseconds.'
+  name: tomcat_global_processingtime_seconds
+  valueFactor: 0.001
+  help: 'Tomcat global cummulative request processing time, in seconds.'
   type: COUNTER
   labels:
     worker: "$1"
@@ -108,8 +110,9 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 
 # Time spent doing housekeeping and expiration (Tomcat<type=Manager, host=localhost, context=/><>processingTime)
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>(processingTime):'
+  valueFactor: 0.001
   type: COUNTER
-  name: tomcat_sessions_$3_milliseconds
+  name: tomcat_sessions_$3_seconds
   labels:
     context: "$2"
 
@@ -161,8 +164,9 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 
 # processingTime (Tomcat<type=RequestProcessor, worker="ajp-nio-127.0.0.1-8009", name=AjpRequest1><>processingTime)
 - pattern: '^Tomcat<type=RequestProcessor, worker=\"(.*)\", name=(.*)><>processingTime:'
-  name: tomcat_requestprocessor_milliseconds
-  help: 'Tomcat: The total response time for a request handled by the processor, in milliseconds. The URI of that request is available in the mBean''s maxRequestUri.'
+  name: tomcat_requestprocessor_seconds
+  valueFactor: 0.001
+  help: 'Tomcat: The total response time for a request handled by the processor, in seconds. The URI of that request is available in the mBean''s maxRequestUri.'
   type: COUNTER
   labels:
     worker: "$1"
@@ -171,8 +175,9 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 
 # maxTime (Tomcat<type=RequestProcessor, worker="ajp-nio-127.0.0.1-8009", name=AjpRequest1><>maxTime)
 - pattern: '^Tomcat<type=RequestProcessor, worker=\"(.*)\", name=(.*)><>maxTime:'
-  name: tomcat_requestprocessor_milliseconds_max
-  help: 'Tomcat: The longest response time for a request handled by the processor, in milliseconds. The URI of that request is available in the mBean''s maxRequestUri.'
+  name: tomcat_requestprocessor_seconds_max
+  valueFactor: 0.001
+  help: 'Tomcat: The longest response time for a request handled by the processor, in seconds. The URI of that request is available in the mBean''s maxRequestUri.'
   type: GAUGE
   labels:
     worker: "$1"
@@ -186,7 +191,8 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 
 # The date and time at which this servlet will become available (in milliseconds since the epoch), or zero if the servlet is available. If this value equals Long.MAX_VALUE, the unavailability of this servlet is considered permanent. (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>available)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>available:'
-  name: tomcat_servlet_available_milliseconds
+  name: tomcat_servlet_available_seconds
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: "$1"
@@ -243,7 +249,8 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 
 # Total execution time of the servlet's service method (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>processingTime)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>processingTime:'
-  name: tomcat_servlet_processing_milliseconds
+  name: tomcat_servlet_processing_seconds
+  valueFactor: 0.001
   type: COUNTER
   labels:
     context: "$1"
@@ -252,7 +259,8 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 # Maximum processing time of a request (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>maxTime)
 # Minimum processing time of a request (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>minTime)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>(max|min)Time:'
-  name: tomcat_servlet_processing_$3_milliseconds
+  name: tomcat_servlet_processing_$3_seconds
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: "$1"
@@ -274,6 +282,7 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
   type: COUNTER
 - pattern: '^Tomcat<type=StringCache><>cacheSize:'
   name: tomcat_stringcache_size
+  valueFactor: 0.001
   help: 'Tomcat: The number of entries in the string cache.'
   type: GAUGE
 - pattern: '^Tomcat<type=StringCache><>hitCount:'
@@ -351,28 +360,32 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 # Maximum execution time of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>maxTime)
 # Minimum execution time of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>minTime)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>(min|max)Time:'
-  name: tomcat_webmodule_execution_milliseconds_$2
+  name: tomcat_webmodule_execution__$2
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: $1
 
 # Cumulative execution times of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>processingTime)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>processingTime:'
-  name: tomcat_webmodule_execution_milliseconds
+  name: tomcat_webmodule_execution_seconds
+  valueFactor: 0.001
   type: COUNTER
   labels:
     context: $1
 
 # The session timeout (in minutes) for this web application (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>sessionTimeout)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>sessionTimeout:'
-  name: tomcat_webmodule_session_timeout_milliseconds
+  name: tomcat_webmodule_session_timeout_seconds
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: $1
 
 # Time (in milliseconds since January 1, 1970, 00:00:00) when this context was started (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>startTime)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>startTime:'
-  name: tomcat_webmodule_start_time_milliseconds
+  name: tomcat_webmodule_start_time_seconds
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: $1
@@ -380,298 +393,19 @@ whitelistObjectNames: ["Tomcat:*", "java.lang:*"]
 # Time (in milliseconds) it took to start this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>startupTime)
 # Time spend scanning jars for TLDs for this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>tldScanTime)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>(startupTime|tldScanTime):'
-  name: tomcat_webmodule_$2_milliseconds
+  name: tomcat_webmodule_$2_seconds
+  valueFactor: 0.001
   type: COUNTER
   labels:
     context: $1
 
 # Amount of ms that the container will wait for servlets to unload (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>unloadDelay)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>unloadDelay:'
-  name: tomcat_webmodule_unloadDelay_milliseconds
+  name: tomcat_webmodule_unloadDelay_seconds
+  valueFactor: 0.001
   type: GAUGE
   labels:
     context: $1
-
-# ------------------------ java.lang -----------------------
-# These could be rolled into some internal default configuration, as they are common to any JVM.
-
-- pattern: '^java.lang<type=ClassLoading><>LoadedClassCount:'
-  name: java_classloading_loaded_classes
-  help: 'Number of classes that are currently loaded in the JVM.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=ClassLoading><>TotalLoadedClassCount:'
-  name: java_classloading_loaded_classes_total
-  help: 'Total number of classes that have been loaded since the JVM began execution.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=ClassLoading><>UnloadedClassCount:'
-  name: java_classloading_unloaded_classes_total
-  help: 'Number of classes that have been unloaded from the JVM since the JVM began execution.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=Compilation><>TotalCompilationTime:'
-  name: java_compilation_milliseconds
-  help: 'Accumulated time (in milliseconds) spent in compilation.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><>CollectionCount:'
-  name: java_gc_collection_count
-  help: 'Total number of collections that have occurred.'
-  type: GAUGE
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><>CollectionTime:'
-  name: java_gc_collection_milliseconds
-  help: 'Accumulated collection time (in milliseconds)'
-  type: COUNTER
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><LastGcInfo>duration:'
-  name: java_gc_last_milliseconds
-  help: 'The elapsed time of the last garbage collection, in milliseconds.'
-  type: GAUGE
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><LastGcInfo>(start|end)Time:'
-  name: java_gc_last_$2_time_milliseconds
-  help: 'The $2 time of this GC in milliseconds since the Java virtual machine was started.'
-  type: COUNTER
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><LastGcInfo>GcThreadCount:'
-  name: java_gc_last_thread_count
-  type: GAUGE
-  help: '' # TODO
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*)><LastGcInfo>id:'
-  name: java_gc_last_id
-  help: 'The identifier of this garbage collection which is the number of collections that this collector has done.'
-  type: COUNTER
-  labels:
-      collector: $1
-
-- pattern: '^java.lang<type=GarbageCollector, name=(.*), key=(.*)><LastGcInfo, memoryUsage(Before|After)Gc>(committed|init|max|used):'
-  name: java_gc_last_$3_bytes_$4
-  help: 'Memory usage, in bytes, $3 the Java virtual machine most recently expended effort in recycling unused objects in this memory pool ($4).'
-  type: GAUGE
-  labels:
-      collector: $1
-      pool: $2
-
-- pattern: '^java.lang<type=Memory><(Heap|NonHeap)MemoryUsage>(committed|init|max|used):'
-  name: java_memory_$1_bytes_$2
-  type: GAUGE
-  help: 'The current $1 $2 memory usage, in bytes.'
-
-- pattern: '^java.lang<type=Memory><>ObjectPendingFinalizationCount:'
-  name: java_memory_objects_pending_finalization
-  help: 'Approximate number of objects pending finalization.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><CollectionUsage>(committed|init|max|used):'
-  name: java_memorypool_bytes_$2
-  help: 'Memory usage after the Java virtual machine most recently expended effort in recycling unused objects in this memory pool ($2).'
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><>CollectionUsageThreshold:'
-  name: java_memorypool_collection_usage_threshold_bytes
-  help: >-
-      Collection usage threshold value of this memory pool, in bytes.
-      After a Java virtual machine has expended effort in reclaiming
-      memory space by recycling unused objects in a memory pool at
-      garbage collection time, some number of bytes in the memory
-      pools that are garbaged collected will still be in use. The
-      collection usage threshold allows a value to be set for this
-      number of bytes such that if the threshold is exceeded, a
-      collection usage threshold exceeded notification will be
-      emitted by the MemoryMXBean. In addition, the collection usage
-      threshold count will then be incremented.
-  type: GAUGE
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><>CollectionUsageThresholdCount:'
-  name: java_memorypool_collection_usage_threshold_count
-  help: 'The number of notifications emitted for collection usage threshold being exceeded.'
-  type: COUNTER
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><PeakUsage>(committed|init|max|used):'
-  name: java_memorypool_peak_usage_bytes_$2
-  help: 'Peak memory usage of this memory pool since the Java virtual machine was started or since the peak was reset ($2).'
-  type: GAUGE
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><Usage>(init|max|used):'
-  name: java_memorypool_usage_bytes_$2
-  help: 'An estimate of the memory usage of this memory pool ($2).'
-  type: GAUGE
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><>UsageThreshold:'
-  name: java_memorypool_usage_threshold_bytes
-  help: >-
-    A Java virtual machine performs usage threshold crossing checking on a memory
-    pool basis at its best appropriate time, typically, at garbage collection time.
-    Each memory pool maintains a usage threshold count that will get incremented
-    every time when the Java virtual machine detects that the memory pool usage is
-    crossing the threshold.
-  type: GAUGE
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=MemoryPool, name=(.*)><>UsageThresholdCount:'
-  name: java_memorypool_usage_threshold_count
-  help: >-
-    A Java virtual machine performs usage threshold crossing checking on a memory
-    pool basis at its best appropriate time, typically, at garbage collection time.
-    Each memory pool maintains a usage threshold count that will get incremented
-    every time when the Java virtual machine detects that the memory pool usage is
-    crossing the threshold.
-  type: COUNTER
-  labels:
-      pool: $1
-
-- pattern: '^java.lang<type=OperatingSystem><>CommittedVirtualMemorySize:'
-  name: java_os_virtual_memory_bytes_committed
-  help: >-
-      The amount of memory (in bytes) that is guaranteed to be available for use
-      by the Java virtual machine. The amount of committed memory may change over
-      time (increase or decrease). The Java virtual machine may release memory to
-      the system and committed could be less than init. committed will always be
-      greater than or equal to used.'
-
-- pattern: '^java.lang<type=OperatingSystem><>AvailableProcessors:'
-  name: java_os_available_processors
-  help: 'The number of processors available to the Java virtual machine.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>FreePhysicalMemorySize:'
-  name: java_os_physical_memory_bytes_free
-  help: 'The amount of free physical memory available to the operating system.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>FreeSwapSpaceSize:'
-  name: java_os_swap_space_bytes_free
-  help: 'The amount of free swap space in bytes.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>MaxFileDescriptorCount:'
-  name: java_os_file_descriptors_max
-  help: 'The maximum number of file descriptors.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>OpenFileDescriptorCount:'
-  name: java_os_file_descriptors_open
-  help: 'The number of open file descriptors.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>ProcessCpuLoad:'
-  name: java_os_process_cpu_load
-  help: >-
-    The "recent cpu usage" for the Java Virtual Machine process.
-    This value is a double in the [0.0,1.0] interval.
-    A value of 0.0 means that none of the CPUs were running threads from the JVM process during the
-    recent period of time observed, while a value of 1.0 means that all CPUs were actively running
-    threads from the JVM 100% of the time during the recent period being observed.
-    Threads from the JVM include the application threads as well as the JVM internal threads.
-    All values betweens 0.0 and 1.0 are possible depending of the activities going on in the
-    JVM process and the whole system.
-    If the Java Virtual Machine recent CPU usage is not available, the method returns a negative value.
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>SystemCpuLoad:'
-  name: java_os_system_cpu_load
-  help: >-
-    The "recent cpu usage" for the whole system.
-    This value is a double in the [0.0,1.0] interval.
-    A value of 0.0 means that all CPUs were idle during the recent period of
-    time observed, while a value of 1.0 means that all CPUs were actively
-    running 100% of the time during the recent period being observed.
-    All values betweens 0.0 and 1.0 are possible depending of the activities
-    going on in the system.
-    If the system recent cpu usage is not available, the method returns a
-    negative value.
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>ProcessCpuTime:'
-  name: java_os_process_cpu_nanoseconds
-  help: >-
-    The CPU time used by the process on which the Java virtual machine is running, in nanoseconds.
-    The returned value is of nanoseconds precision but not necessarily nanoseconds accuracy.
-    This method returns -1 if the the platform does not support this operation.
-  type: COUNTER
-
-- pattern: '^java.lang<type=OperatingSystem><>SystemLoadAverage:'
-  name: java_os_system_load_average
-  help: >-
-    The system load average for the last minute.
-    The system load average is the sum of the number of runnable entities queued to the available
-    processors and the number of runnable entities running on the available processors averaged
-    over a period of time. The way in which the load average is calculated is operating system
-    specific but is typically a damped time-dependent average.
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>TotalPhysicalMemorySize:'
-  name: java_os_physical_memory_bytes
-  help: 'The total amount of physical memory, in bytes.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=OperatingSystem><>TotalSwapSpaceSize:'
-  name: java_os_swap_space_bytes
-  help: 'The total amount of swap space, in bytes.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=Runtime><>StartTime:'
-  name: java_runtime_start_time_milliseconds
-  help: 'The approximate time when the Java virtual machine started, in milliseconds since epoch.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=Runtime><>Uptime:'
-  name: java_runtime_uptime_milliseconds
-  help: 'uptime of the Java virtual machine, in milliseconds.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=Threading><>CurrentThreadCpuTime:'
-  name: java_threading_thread_cpu_total_time_nanoseconds
-  help: 'The amount of time that the current thread has executed in user mode or system mode in nanoseconds, if CPU time measurement is enabled; -1 otherwise.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=Threading><>CurrentThreadUserTime:'
-  name: java_threading_thread_cpu_user_time_nanoseconds
-  help: 'The CPU time that the current thread has executed in user mode in nanoseconds, if CPU time measurement is enabled; -1 otherwise.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=Threading><>DaemonThreadCount:'
-  name: java_threading_daemon_thread
-  help: 'The current number of live daemon threads.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=Threading><>PeakThreadCount:'
-  name: java_threading_thread_count_peak
-  help: 'The peak live thread count since the Java virtual machine started or peak was reset.'
-  type: COUNTER
-
-- pattern: '^java.lang<type=Threading><>ThreadCount:'
-  name: java_threading_thread_count
-  help: 'The current number of live threads, including both daemon and non-daemon threads.'
-  type: GAUGE
-
-- pattern: '^java.lang<type=Threading><>TotalStartedThreadCount:'
-  name: java_threading_thread_started
-  help: 'The total number of threads created and also started since the Java virtual machine started.'
-  type: COUNTER
 
 # ------------------------ WILDCARD -----------------------
 
