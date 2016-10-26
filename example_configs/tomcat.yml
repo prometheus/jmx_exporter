@@ -407,8 +407,3 @@ whitelistObjectNames: ["Tomcat:*"]
   labels:
     context: $1
 
-# ------------------------ WILDCARD -----------------------
-
-# This ensures we export all metrics, even if one of the above regexes fail, or if new metrics are added.
-- pattern: ".*"
-
