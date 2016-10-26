@@ -1,9 +1,11 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.Counter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,6 +27,14 @@ import org.yaml.snakeyaml.Yaml;
 import static java.lang.String.format;
 
 public class JmxCollector extends Collector {
+    static final Counter configReloadSuccess = Counter.build()
+      .name("jmx_config_reload_success_total")
+      .help("Number of times configuration have successfully been reloaded.").register();
+
+    static final Counter configReloadFailure = Counter.build()
+      .name("jmx_config_reload_failure_total")
+      .help("Number of times configuration have failed to be reloaded.").register();
+
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
     private static class Rule {
@@ -39,83 +49,109 @@ public class JmxCollector extends Collector {
       ArrayList<String> labelValues;
     }
 
-    String jmxUrl;
-    String username;
-    String password;
-    
-    boolean lowercaseOutputName;
-    boolean lowercaseOutputLabelNames;
-    List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
-    List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
-    ArrayList<Rule> rules = new ArrayList<Rule>();
+    private static class Config {
+      String jmxUrl = "";
+      String username = "";
+      String password = "";
+      boolean lowercaseOutputName;
+      boolean lowercaseOutputLabelNames;
+      List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
+      List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      ArrayList<Rule> rules = new ArrayList<Rule>();
+      long lastUpdate = 0L;
+    }
+
+    private Config config;
+    private File configFile;
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
-    public JmxCollector(Reader in) throws IOException, MalformedObjectNameException {
-        this((Map<String, Object>)new Yaml().load(in));
+    public JmxCollector(File in) throws IOException, MalformedObjectNameException {
+        configFile = in;
+        config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
+        config.lastUpdate = configFile.lastModified();
     }
+
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        this((Map<String, Object>)new Yaml().load(yamlConfig));
+        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
     }
-    private JmxCollector(Map<String, Object> config) throws MalformedObjectNameException {
-        if(config == null) {  //Yaml config empty, set config to empty map.
-            config = new HashMap<String, Object>();
+
+    private void reloadConfig() {
+      try {
+        FileReader fr = new FileReader(configFile);
+
+        try {
+          Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
+          config = loadConfig(newYamlConfig);
+          config.lastUpdate = configFile.lastModified();
+          configReloadSuccess.inc();
+        } catch (Exception e) {
+          LOGGER.severe("Configuration reload failed: " + e.toString());
+          configReloadFailure.inc();
+        } finally {
+          fr.close();
         }
 
-        if (config.containsKey("hostPort")) {
-          if (config.containsKey("jmxUrl")) {
-              throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
-          }
-          jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)config.get("hostPort") + "/jmxrmi";
-        } else if (config.containsKey("jmxUrl")) {
-          jmxUrl = (String)config.get("jmxUrl");
-        } else {
-            // Default to local JVM
-            jmxUrl = "";
+      } catch (IOException e) {
+        LOGGER.severe("Configuration reload failed: " + e.toString());
+        configReloadFailure.inc();
+      }
+    }
+
+    private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
+        Config cfg = new Config();
+
+        if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
+          yamlConfig = new HashMap<String, Object>();
         }
 
-        if (config.containsKey("username")) {
-            username = (String)config.get("username");
-          } else {
-            // Any username.
-            username = "";
+        if (yamlConfig.containsKey("hostPort")) {
+          if (yamlConfig.containsKey("jmxUrl")) {
+            throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
           }
+          cfg.jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)yamlConfig.get("hostPort") + "/jmxrmi";
+        } else if (yamlConfig.containsKey("jmxUrl")) {
+          cfg.jmxUrl = (String)yamlConfig.get("jmxUrl");
+        }
+
+        if (yamlConfig.containsKey("username")) {
+          cfg.username = (String)yamlConfig.get("username");
+        }
         
-        if (config.containsKey("password")) {
-            password = (String)config.get("password");
-          } else {
-            // Empty password.
-            password = "";
-          }
-        
-        if (config.containsKey("lowercaseOutputName")) {
-          lowercaseOutputName = (Boolean)config.get("lowercaseOutputName");
+        if (yamlConfig.containsKey("password")) {
+          cfg.password = (String)yamlConfig.get("password");
         }
-        if (config.containsKey("lowercaseOutputLabelNames")) {
-          lowercaseOutputLabelNames = (Boolean)config.get("lowercaseOutputLabelNames");
+        
+        if (yamlConfig.containsKey("lowercaseOutputName")) {
+          cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
 
-        if (config.containsKey("whitelistObjectNames")) {
-          List<Object> names = (List<Object>) config.get("whitelistObjectNames");
+        if (yamlConfig.containsKey("lowercaseOutputLabelNames")) {
+          cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
+        }
+
+        if (yamlConfig.containsKey("whitelistObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("whitelistObjectNames");
           for(Object name : names) {
-            whitelistObjectNames.add(new ObjectName((String)name));
+            cfg.whitelistObjectNames.add(new ObjectName((String)name));
           }
         } else {
-          whitelistObjectNames.add(null);
+          cfg.whitelistObjectNames.add(null);
         }
-        if (config.containsKey("blacklistObjectNames")) {
-          List<Object> names = (List<Object>) config.get("blacklistObjectNames");
+
+        if (yamlConfig.containsKey("blacklistObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
           for (Object name : names) {
-            blacklistObjectNames.add(new ObjectName((String)name));
+            cfg.blacklistObjectNames.add(new ObjectName((String)name));
           }
         }
 
-        if (config.containsKey("rules")) {
-          List<Map<String,Object>> configRules = (List<Map<String,Object>>) config.get("rules");
+        if (yamlConfig.containsKey("rules")) {
+          List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
             Map<String, Object> yamlRule = ruleObject;
             Rule rule = new Rule();
-            rules.add(rule);
+            cfg.rules.add(rule);
             if (yamlRule.containsKey("pattern")) {
               rule.pattern = Pattern.compile("^.*" + (String)yamlRule.get("pattern") + ".*$");
             }
@@ -160,8 +196,10 @@ public class JmxCollector extends Collector {
           }
         } else {
           // Default to a single default rule.
-          rules.add(new Rule());
+          cfg.rules.add(new Rule());
         }
+
+        return cfg;
 
     }
 
@@ -217,7 +255,7 @@ public class JmxCollector extends Collector {
         name.append(attrName);
         String fullname = safeName(name.toString());
 
-        if (lowercaseOutputName) {
+        if (config.lowercaseOutputName) {
           fullname = fullname.toLowerCase();
         }
 
@@ -230,7 +268,7 @@ public class JmxCollector extends Collector {
             while (iter.hasNext()) {
               Map.Entry<String, String> entry = iter.next();
               String labelName = safeName(entry.getKey());
-              if (lowercaseOutputLabelNames) {
+              if (config.lowercaseOutputLabelNames) {
                 labelName = labelName.toLowerCase();
               }
               labelNames.add(labelName);
@@ -256,7 +294,7 @@ public class JmxCollector extends Collector {
         String help = attrDescription + " (" + beanName + attrName + ")";
         String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
 
-        for (Rule rule : rules) {
+        for (Rule rule : config.rules) {
           Matcher matcher = null;
           String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
           if (rule.pattern != null) {
@@ -297,7 +335,7 @@ public class JmxCollector extends Collector {
           if (name.isEmpty()) {
             return;
           }
-          if (lowercaseOutputName) {
+          if (config.lowercaseOutputName) {
             name = name.toLowerCase();
           }
 
@@ -316,7 +354,7 @@ public class JmxCollector extends Collector {
               try {
                 String labelName = safeName(matcher.replaceAll(unsafeLabelName));
                 String labelValue = matcher.replaceAll(labelValReplacement);
-                if (lowercaseOutputLabelNames) {
+                if (config.lowercaseOutputLabelNames) {
                   labelName = labelName.toLowerCase();
                 }
                 if (!labelName.isEmpty() && !labelValue.isEmpty()) {
@@ -340,8 +378,16 @@ public class JmxCollector extends Collector {
     }
 
     public List<MetricFamilySamples> collect() {
+      if (configFile != null) {
+        long mtime = configFile.lastModified();
+        if (mtime > config.lastUpdate) {
+          LOGGER.fine("Configuration file changed, reloading...");
+          reloadConfig();
+        }
+      }
+
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(jmxUrl, username, password, whitelistObjectNames, blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
