@@ -1,6 +1,7 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.Counter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.File;
@@ -26,6 +27,14 @@ import org.yaml.snakeyaml.Yaml;
 import static java.lang.String.format;
 
 public class JmxCollector extends Collector {
+    static final Counter configReloadSuccess = Counter.build()
+      .name("jmx_config_reload_success_total")
+      .help("Number of times configuration have successfully been reloaded.").register();
+
+    static final Counter configReloadFailure = Counter.build()
+      .name("jmx_config_reload_failure_total")
+      .help("Number of times configuration have failed to be reloaded.").register();
+
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
     private static class Rule {
@@ -73,8 +82,10 @@ public class JmxCollector extends Collector {
         Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
         config = loadConfig(newYamlConfig);
         config.lastUpdate = configFile.lastModified();
+        configReloadSuccess.inc();
       } catch (Exception e) {
         LOGGER.severe("Configuration reload failed: " + e.toString());
+        configReloadFailure.inc();
         return;
       }
     }
