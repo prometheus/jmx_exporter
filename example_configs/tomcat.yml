@@ -19,7 +19,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # processingTime
 - pattern: '^Tomcat<type=GlobalRequestProcessor, name=\"(.*)\"><>processingTime:'
-  name: tomcat_global_processingtime_seconds
+  name: tomcat_global_processingtime_seconds_total
   valueFactor: 0.001
   help: 'Tomcat global cummulative request processing time, in seconds.'
   type: COUNTER
@@ -30,7 +30,7 @@ whitelistObjectNames: ["Tomcat:*"]
 # bytesSent
 - pattern: '^Tomcat<type=GlobalRequestProcessor, name=\"(.*)\"><>bytes(\w+):'
   help: 'Tomcat global cummulative request bytes $2.'
-  name: tomcat_global_$2_bytes
+  name: tomcat_global_$2_bytes_total
   type: COUNTER
   labels:
     worker: "$1"
@@ -40,7 +40,7 @@ whitelistObjectNames: ["Tomcat:*"]
 - pattern: '^Tomcat<type=GlobalRequestProcessor, name=\"(.*)\"><>(\w+)Count:'
   help: 'Tomcat global $2 request count.'
   type: COUNTER
-  name: tomcat_global_$2
+  name: tomcat_global_$2_total
   labels:
     worker: "$1"
 
@@ -64,7 +64,7 @@ whitelistObjectNames: ["Tomcat:*"]
 # Number of active sessions at this moment (Tomcat<type=Manager, host=localhost, context=/><>activeSessions)
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>activeSessions:'
   type: GAUGE
-  name: tomcat_sessions_active_total
+  name: tomcat_sessions_active
   labels:
     context: "$2"
 
@@ -72,21 +72,21 @@ whitelistObjectNames: ["Tomcat:*"]
 # Number of sessions that expired ( doesn't include explicit invalidations ) (Tomcat<type=Manager, host=localhost, context=/><>expiredSessions)
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>(\w*)Sessions:'
   type: COUNTER
-  name: tomcat_sessions_$3
+  name: tomcat_sessions_$3_total
   labels:
     context: "$2"
 
 # Total number of sessions created by this manager (Tomcat<type=Manager, host=localhost, context=/><>sessionCounter)
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>sessionCounter:'
   type: COUNTER
-  name: tomcat_sessions_created
+  name: tomcat_sessions_created_total
   labels:
     context: "$2"
 
 # Number of duplicated session ids generated (Tomcat<type=Manager, host=localhost, context=/><>duplicates)
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>duplicates:'
   type: COUNTER
-  name: tomcat_sessions_duplicated
+  name: tomcat_sessions_duplicated_total
   labels:
     context: "$2"
 
@@ -112,7 +112,7 @@ whitelistObjectNames: ["Tomcat:*"]
 - pattern: '^Tomcat<type=Manager, host=(.*), context=(.*)><>(processingTime):'
   valueFactor: 0.001
   type: COUNTER
-  name: tomcat_sessions_$3_seconds
+  name: tomcat_sessions_$3_seconds_total
   labels:
     context: "$2"
 
@@ -164,7 +164,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # processingTime (Tomcat<type=RequestProcessor, worker="ajp-nio-127.0.0.1-8009", name=AjpRequest1><>processingTime)
 - pattern: '^Tomcat<type=RequestProcessor, worker=\"(.*)\", name=(.*)><>processingTime:'
-  name: tomcat_requestprocessor_seconds
+  name: tomcat_requestprocessor_seconds_total
   valueFactor: 0.001
   help: 'Tomcat: The total response time for a request handled by the processor, in seconds. The URI of that request is available in the mBean''s maxRequestUri.'
   type: COUNTER
@@ -233,7 +233,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # Error count (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>errorCount)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>errorCount:'
-  name: tomcat_servlet_errors
+  name: tomcat_servlet_errors_total
   type: COUNTER
   labels:
     context: "$1"
@@ -249,7 +249,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # Total execution time of the servlet's service method (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>processingTime)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>processingTime:'
-  name: tomcat_servlet_processing_seconds
+  name: tomcat_servlet_processing_seconds_total
   valueFactor: 0.001
   type: COUNTER
   labels:
@@ -268,7 +268,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # Number of requests processed by this wrapper (Tomcat<j2eeType=Servlet, WebModule=//localhost/, name=default, J2EEApplication=none, J2EEServer=none><>requestCount)
 - pattern: '^Tomcat<j2eeType=Servlet, WebModule=//localhost(.*), name=(.*), J2EEApplication=none, J2EEServer=none><>requestCount:'
-  name: tomcat_servlet_requests
+  name: tomcat_servlet_requests_total
   type: GAUGE
   labels:
     context: "$1"
@@ -277,7 +277,7 @@ whitelistObjectNames: ["Tomcat:*"]
 # ------------------------ StringCache -----------------------
 
 - pattern: '^Tomcat<type=StringCache><>accessCount:'
-  name: tomcat_stringcache_access
+  name: tomcat_stringcache_access_total
   help: 'Tomcat: The number of times the string cache was accessed.'
   type: COUNTER
 - pattern: '^Tomcat<type=StringCache><>cacheSize:'
@@ -286,7 +286,7 @@ whitelistObjectNames: ["Tomcat:*"]
   help: 'Tomcat: The number of entries in the string cache.'
   type: GAUGE
 - pattern: '^Tomcat<type=StringCache><>hitCount:'
-  name: tomcat_stringcache_hits
+  name: tomcat_stringcache_hits_total
   help: 'Tomcat: The number of times a String was obtained from the cache for a ByteChunk or CharChunk'
   type: COUNTER
 - pattern: '^Tomcat<type=StringCache><>trainThreshold:'
@@ -297,7 +297,7 @@ whitelistObjectNames: ["Tomcat:*"]
 # ------------------------ ThreadPool -----------------------
 
 - pattern: '^Tomcat<type=ThreadPool, name="(.*)"><>currentThreadCount:'
-  name: tomcat_threadpool_threads_total
+  name: tomcat_threadpool_threads
   help: 'Tomcat: The number of threads that are managed by the pool.'
   type: GAUGE
   labels:
@@ -347,12 +347,12 @@ whitelistObjectNames: ["Tomcat:*"]
 # Cumulative error count of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>errorCount)
 # Cumulative request count of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>requestCount)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>requestCount:'
-  name: tomcat_webmodule_requests
+  name: tomcat_webmodule_requests_total
   type: COUNTER
   labels:
     context: $1
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>errorCount:'
-  name: tomcat_webmodule_requests_errors
+  name: tomcat_webmodule_requests_errors_total
   type: COUNTER
   labels:
     context: $1
@@ -368,7 +368,7 @@ whitelistObjectNames: ["Tomcat:*"]
 
 # Cumulative execution times of all servlets in this context (Tomcat<j2eeType=WebModule, name=//localhost/, J2EEApplication=none, J2EEServer=none><>processingTime)
 - pattern: '^Tomcat<j2eeType=WebModule, name=//localhost(.*), J2EEApplication=none, J2EEServer=none><>processingTime:'
-  name: tomcat_webmodule_execution_seconds
+  name: tomcat_webmodule_execution_seconds_total
   valueFactor: 0.001
   type: COUNTER
   labels:
