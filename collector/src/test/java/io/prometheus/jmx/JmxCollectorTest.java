@@ -229,8 +229,8 @@ public class JmxCollectorTest {
 
     @Test
     public void testValueFactor() throws Exception {
-      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 10".replace('`','"')).register(registry);
-      assertEquals(10.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 0.001".replace('`','"')).register(registry);
+      assertEquals(0.001, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
 }

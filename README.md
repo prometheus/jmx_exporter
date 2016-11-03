@@ -35,7 +35,7 @@ rules:
   - pattern: "^org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)"
     name: cassandra_$1_$2
     value: $3
-    valueFactor: 1000
+    valueFactor: 0.001
     labels: {}
     help: "Cassandra metric $1 $2"
     type: GAUGE
@@ -54,7 +54,7 @@ pattern  | Regex pattern to match against each bean attribute. The pattern is no
 attrNameSnakeCase | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.
 name     | The metric name to set. Capture groups from the `pattern` can be used. If not specified, the default format will be used. If it evaluates to empty, processing of this attribute stops with no output.
 value    | Value for the metric. Static values and capture groups from the `pattern` can be used. If not specified the scraped mBean value will be used.
-valueFactor | Optional integer that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.
+valueFactor | Optional number that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.
 labels   | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.
 help     | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute decription and the full name of the attribute.
 type     | The type of the metric, can be `GAUGE` or `COUNTER`. `name` must be set to use this. Defaults to `GAUGE`.
