@@ -5,6 +5,7 @@ import java.io.File;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.GzipFilter;
 
 public class WebServer {
    public static void main(String[] args) throws Exception {
@@ -18,6 +19,9 @@ public class WebServer {
      Server server = new Server(port);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
+     if (jc.gzipEnabled()) {
+       context.addFilter(GzipFilter.class, "/*", null);
+     }
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
      server.start();
