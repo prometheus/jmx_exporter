@@ -9,6 +9,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.servlets.GzipFilter;
 
 public class JavaAgent {
    static Server server;
@@ -34,7 +35,7 @@ public class JavaAgent {
        file = args[1];
      }
 
-     new JmxCollector(new File(file)).register();
+     JmxCollector jc = new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
 
      server = new Server(socket);
@@ -43,6 +44,9 @@ public class JavaAgent {
      server.setThreadPool(pool);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
+     if (jc.gzipEnabled()) {
+       context.addFilter(GzipFilter.class, "/*", null);
+     }
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
      server.start();
