@@ -39,9 +39,11 @@ public class JavaAgent {
      DefaultExports.initialize();
 
      server = new Server(socket);
+     /*
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
      server.setThreadPool(pool);
+     */
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      if (jc.gzipEnabled()) {
