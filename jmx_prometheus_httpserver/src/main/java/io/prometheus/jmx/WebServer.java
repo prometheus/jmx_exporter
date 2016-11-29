@@ -15,9 +15,22 @@ public class WebServer {
        System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file>");
        System.exit(1);
      }
+
+     String[] hostnamePort = args[0].split(":");
+     int port;
+     InetSocketAddress socket;
+
+     if (hostnamePort.length == 2) {
+       port = Integer.parseInt(hostnamePort[1]);
+       socket = new InetSocketAddress(hostnamePort[0], port);
+     } else {
+       port = Integer.parseInt(hostnamePort[0]);
+       socket = new InetSocketAddress(port);
+     }
+
      JmxCollector jc = new JmxCollector(new File(args[1])).register();
 
-     Server server = new Server(parseSocketAddress(args[0]));
+     Server server = new Server(socket);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      server.setHandler(context);
@@ -25,15 +38,4 @@ public class WebServer {
      server.start();
      server.join();
    }
-
-  static InetSocketAddress parseSocketAddress(String address) {
-    String[] hostAndPort = address.split(":");
-    if (hostAndPort.length == 1) {
-      return new InetSocketAddress(Integer.parseInt(hostAndPort[0]));
-    } else if (hostAndPort.length == 2) {
-      return new InetSocketAddress(hostAndPort[0], Integer.parseInt(hostAndPort[1]));
-    } else {
-      throw new IllegalArgumentException("Can not parse '" + address + "', expected '[hostname:]port'");
-    }
-  }
 }
