@@ -1,32 +1,33 @@
 package io.prometheus.jmx;
 
-import java.io.IOException;
-
-import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
 import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
-import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class JmxScraper {
@@ -266,7 +267,51 @@ public class JmxScraper {
                 }
             }
         } else if (value.getClass().isArray()) {
-            logScrape(domain, "arrays are unsupported");
+            logScrape( domain, "arrays are unsupported" );
+        } else if (value instanceof Map ) {
+            try {
+                Map map = ( Map ) value;
+                for ( Object key : map.keySet() ) {
+                    attrKeys = new LinkedList<String>(attrKeys);
+                    attrKeys.add(key.toString());
+                    processBeanValue(
+                            domain,
+                            beanProperties,
+                            attrKeys,
+                            key.toString(), // forcing it to be a string
+                            "string",
+                            "hashmap",
+                            map.get( key ) ); // we don't go deeper into map itself
+                    attrKeys.removeLast();
+                }
+            } catch ( Exception e ) {
+                logScrape( domain + beanProperties, attrType + "had exception" );
+            }
+        } else if (value instanceof Object ) { // always is going to be true for all objects anyway
+            logger.info( value.getClass().getDeclaredMethods().toString() );
+            for (Method method : value.getClass().getDeclaredMethods() ) {
+                try {
+
+                    String name = method.getName();
+                    if ( name.startsWith( "get" )  || name.startsWith( "is" )) {
+                        if(method.getParameterTypes().length!=0 || method.getGenericParameterTypes().length!=0) {
+                            // we cannot use this getter as it requires a param and we don't know it
+                            continue;
+                        }
+                        processBeanValue(
+                            domain,
+                            beanProperties,
+                            attrKeys,
+                            "" + method.getName(), // forcing it to be a string
+                            method.getReturnType().toString(),
+                            "hashmap",
+                            method.invoke( value ) ); // we don't go deeper into map itself
+                    }
+
+                } catch (Exception e) {
+                    logScrape( domain + beanProperties, attrType + "had exception" );
+                }
+            }
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
