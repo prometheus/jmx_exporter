@@ -1,0 +1,10 @@
+rules:
+  - pattern: Hadoop<service=HBase, name=RegionServer, sub=Regions><>Namespace_([^\W_]+)_table_([^\W_]+)_region_([^\W_]+)_metric_(\w+)
+    name: HBase_metric_$4
+    labels:
+      namespace: "$1"
+      table: "$2"
+      region: "$3"
+  - pattern: Hadoop<service=(\w+), name=(\w+), sub=(\w+)><>(\w+)
+    name: HBase_$2_$3_$4
+
