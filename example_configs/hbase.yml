@@ -1,3 +1,5 @@
+lowercaseOutputLabelNames: true
+lowercaseOutputName: true
 rules:
   - pattern: Hadoop<service=HBase, name=RegionServer, sub=Regions><>Namespace_([^\W_]+)_table_([^\W_]+)_region_([^\W_]+)_metric_(\w+)
     name: HBase_$4
