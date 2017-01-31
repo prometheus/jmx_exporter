@@ -5,6 +5,5 @@ rules:
       namespace: "$1"
       table: "$2"
       region: "$3"
-  - pattern: Hadoop<service=(\w+), name=(\w+), sub=(\w+)><>(\w+)
-    name: HBase_$2_$3_$4
-
+  - pattern: Hadoop<service=HBase, name=(\w+), sub=(\w+)><>([\w.-]+)
+    name: HBase_$1_$2_$3
