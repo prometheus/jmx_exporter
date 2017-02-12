@@ -97,6 +97,10 @@ If a given part isn't set, it'll be excluded.
 
 ## Installing
 
-A Debian binary package is created as part of the build process and it can
-be used to install an executable into `/usr/bin/jmx_exporter` with configuration
-in `/etc/jmx_exporter/jmx_exporter.yaml`.
+Two Debian binary packages are created as part of the build process:
+ - jmx_prometheus_agent
+    - jar in /usr/share/jmx_prometheus/jmx_prometheus_javaagent.jar
+
+ - jmx_prometheus_httpserver
+    - can be used to install an executable into `/usr/bin/jmx_exporter` with configuration
+      in `/etc/jmx_exporter/jmx_exporter.yaml`.

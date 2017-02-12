@@ -107,6 +107,52 @@
       </plugin>
 
       <plugin>
+        <artifactId>jdeb</artifactId>
+        <groupId>org.vafer</groupId>
+        <version>1.0</version>
+
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>jdeb</goal>
+            </goals>
+            <configuration>
+              <dataSet>
+
+                <data>
+                  <src>${project.build.directory}/${project.build.finalName}.jar</src>
+                  <type>file</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/usr/share/jmx_exporter</prefix>
+                    <filemode>644</filemode>
+                  </mapper>
+                </data>
+
+                <data>
+                  <type>link</type>
+                  <symlink>true</symlink>
+                  <linkName>/usr/share/jmx_exporter/jmx_prometheus_javaagent.jar</linkName>
+                  <linkTarget>/usr/share/jmx_exporter/${project.build.finalName}.jar</linkTarget>
+                </data>
+
+                <data>
+                  <src>${basedir}/src/deb/config</src>
+                  <type>directory</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/usr/share/doc/jmx_exporter</prefix>
+                  </mapper>
+                </data>
+
+              </dataSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.19.1</version>
