@@ -27,6 +27,9 @@ import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.naming.Context;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.management.remote.rmi.RMIConnectorServer;
 
 
 public class JmxScraper {
@@ -86,14 +89,17 @@ public class JmxScraper {
         if (jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          HashMap credential = null;
+          HashMap<String, Object> env = new HashMap<String, Object>();
           if(username != null && username.length() != 0 && password != null && password.length() != 0) {
-            credential = new HashMap();
             String[] credent = new String[] {username, password};
-            credential.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
+            env.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
           }       
 
-          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), credential);
+          SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+          env.put(Context.SECURITY_PROTOCOL, "ssl");
+          env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+          env.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), env);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
@@ -316,4 +322,3 @@ public class JmxScraper {
       }
     }
 }
-
