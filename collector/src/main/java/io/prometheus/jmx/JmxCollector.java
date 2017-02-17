@@ -53,6 +53,7 @@ public class JmxCollector extends Collector {
       String jmxUrl = "";
       String username = "";
       String password = "";
+      Boolean gzip = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
@@ -74,6 +75,10 @@ public class JmxCollector extends Collector {
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
         config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+    }
+
+    public Boolean gzipEnabled() {
+        return config.gzip;
     }
 
     private void reloadConfig() {
@@ -114,14 +119,18 @@ public class JmxCollector extends Collector {
           cfg.jmxUrl = (String)yamlConfig.get("jmxUrl");
         }
 
+        if (yamlConfig.containsKey("gzip")) {
+          cfg.gzip = (Boolean)yamlConfig.get("gzip");
+        }
+
         if (yamlConfig.containsKey("username")) {
           cfg.username = (String)yamlConfig.get("username");
         }
-        
+
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
         }
-        
+
         if (yamlConfig.containsKey("lowercaseOutputName")) {
           cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
