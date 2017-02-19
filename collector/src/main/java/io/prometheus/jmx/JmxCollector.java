@@ -53,6 +53,7 @@ public class JmxCollector extends Collector {
       String jmxUrl = "";
       String username = "";
       String password = "";
+      boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
@@ -120,6 +121,10 @@ public class JmxCollector extends Collector {
         
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
+        }
+
+        if (yamlConfig.containsKey("ssl")) {
+          cfg.ssl = (Boolean)yamlConfig.get("ssl");
         }
         
         if (yamlConfig.containsKey("lowercaseOutputName")) {
@@ -389,7 +394,7 @@ public class JmxCollector extends Collector {
       }
 
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
       try {
