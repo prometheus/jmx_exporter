@@ -92,11 +92,11 @@ public class JmxScraper {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
           Map<String, Object> environment = new HashMap<String, Object>();
-          if(username != null && username.length() != 0 && password != null && password.length() != 0) {
+          if (username != null && username.length() != 0 && password != null && password.length() != 0) {
             String[] credent = new String[] {username, password};
             environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
           }
-          if(ssl) {
+          if (ssl) {
               environment.put(Context.SECURITY_PROTOCOL, "ssl");
               SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
               environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
