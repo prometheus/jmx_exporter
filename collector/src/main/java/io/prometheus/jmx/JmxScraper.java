@@ -1,15 +1,15 @@
 package io.prometheus.jmx;
 
 import java.io.IOException;
-
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -18,15 +18,18 @@ import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
 import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
-import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.naming.Context;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 
 public class JmxScraper {
@@ -64,13 +67,15 @@ public class JmxScraper {
     private String jmxUrl;
     private String username;
     private String password;
+    private boolean ssl;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String jmxUrl, String username, String password, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
+        this.ssl = ssl;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
     }
@@ -86,14 +91,19 @@ public class JmxScraper {
         if (jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
-          HashMap credential = null;
-          if(username != null && username.length() != 0 && password != null && password.length() != 0) {
-            credential = new HashMap();
+          Map<String, Object> environment = new HashMap<String, Object>();
+          if (username != null && username.length() != 0 && password != null && password.length() != 0) {
             String[] credent = new String[] {username, password};
-            credential.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
-          }       
+            environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
+          }
+          if (ssl) {
+              environment.put(Context.SECURITY_PROTOCOL, "ssl");
+              SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+              environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+              environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+          }
 
-          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), credential);
+          jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
           beanConn = jmxc.getMBeanServerConnection();
         }
         try {
@@ -306,13 +316,13 @@ public class JmxScraper {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
       if (args.length > 0){
-          new JmxScraper(args[0], "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
       else if (args.length >= 3){
-          new JmxScraper(args[0], args[1], args[2], objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
       else {
-          new JmxScraper("", "", "", objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+          new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
     }
 }

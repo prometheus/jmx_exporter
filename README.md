@@ -27,6 +27,7 @@ The configuration is in YAML. An example with all possible options:
 ---
 hostPort: 127.0.0.1:1234
 jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
+ssl: false
 lowercaseOutputName: false
 lowercaseOutputLabelNames: false
 whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
@@ -44,7 +45,8 @@ rules:
 Name     | Description
 ---------|------------
 hostPort | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
-jmxUrl | A full JMX URL to connect to. Should not be specified if hostPort is.
+jmxUrl   | A full JMX URL to connect to. Should not be specified if hostPort is.
+ssl      | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
