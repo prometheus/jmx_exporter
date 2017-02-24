@@ -5,7 +5,7 @@ JMX to Prometheus exporter.
 
 A Collector that can configurably scrape and expose mBeans of a JMX target. It
 meant to be run as a Java Agent, exposing an HTTP server and scraping the local
-JVM. The Java agent can be downloaded from the [central repository](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.8/jmx_prometheus_javaagent-0.7.jar).
+JVM. The Java agent jar can be downloaded from the [central repository](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.8/jmx_prometheus_javaagent-0.8.jar).
 
 This can be also run as an independent HTTP server and scrape remote JMX targets.
 
