@@ -1,11 +1,13 @@
 JMX Exporter
 =====
 
-JMX to Prometheus bridge.
+JMX to Prometheus exporter.
 
-A Collector that can configurably scrape and expose mBeans of a JMX target.
-This can be run as an independent HTTP server and scrape remote JMX targets.
-It can also be run as a Java Agent, exposing an HTTP server and scraping the local JVM.
+A Collector that can configurably scrape and expose mBeans of a JMX target. It
+meant to be run as a Java Agent, exposing an HTTP server and scraping the local
+JVM. The Java agent can be downloaded from the [central repository](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.8/jmx_prometheus_javaagent-0.7.jar).
+
+This can be also run as an independent HTTP server and scrape remote JMX targets.
 
 ## Building and Running
 
@@ -15,7 +17,7 @@ See `./run_sample_httpserver.sh` for a sample script that runs the httpserver ag
 To run as a javaagent:
 
 ```
-java -javaagent:target/jmx_prometheus_javaagent-0.3-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml -jar yourJar.jar
+java -javaagent:target/jmx_prometheus_javaagent-0.8-SNAPSHOT-jar-with-dependencies.jar=1234:config.yaml -jar yourJar.jar
 ```
 
 To bind the java agent to a specific IP change the port number to `host:port`.
