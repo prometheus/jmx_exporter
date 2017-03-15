@@ -40,7 +40,7 @@ public class JavaAgent {
      server = new Server(socket);
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
-     pool.setMaxThreads(10);
+     pool.setMaxThreads(20);
      pool.setMaxQueued(10);
      pool.setName("jmx_exporter");
      server.setThreadPool(pool);
