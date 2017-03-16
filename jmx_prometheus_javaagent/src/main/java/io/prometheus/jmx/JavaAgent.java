@@ -6,6 +6,7 @@ import java.lang.instrument.Instrumentation;
 import java.io.File;
 import java.net.InetSocketAddress;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -37,13 +38,18 @@ public class JavaAgent {
      new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
 
-     server = new Server(socket);
+     server = new Server();
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
      pool.setMaxThreads(10);
      pool.setMaxQueued(10);
      pool.setName("jmx_exporter");
      server.setThreadPool(pool);
+     SelectChannelConnector connector = new SelectChannelConnector();
+     connector.setHost(socket.getHostName());
+     connector.setPort(socket.getPort());
+     connector.setAcceptors(1);
+     server.addConnector(connector);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      server.setHandler(context);
