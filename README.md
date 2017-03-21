@@ -21,6 +21,14 @@ To bind the java agent to a specific IP change the port number to `host:port`.
 
 See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
 
+## Vieweing
+
+Metrics are available from the `/metrics` URL endpoint:
+
+```
+http://localhost:1234/metrics
+```
+
 ## Building
 
 `mvn package` to build.
