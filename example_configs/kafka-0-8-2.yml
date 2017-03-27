@@ -33,22 +33,36 @@ rules:
 - pattern : kafka.server<type=(.+), name=(.+)PerSec\w*><>Count
   name: kafka_server_$1_$2_total
   type: COUNTER
-- pattern : kafka.server<type=(.+), name=(.+), topic=(.+)><>(Count|Value)
+
+- pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>(Count|Value)
   name: kafka_server_$1_$2
   labels:
-    topic: "$3"
-  type: COUNTER
+    clientId: "$3"
+    topic: "$4"
+    partition: "$5"
 - pattern : kafka.server<type=(.+), name=(.+), topic=(.+), partition=(.*)><>(Count|Value)
   name: kafka_server_$1_$2
   labels:
     topic: "$3"
     partition: "$4"
-- pattern : kafka.server<type=(.+), name=(.+)><>(Count|Value)
+- pattern : kafka.server<type=(.+), name=(.+), topic=(.+)><>(Count|Value)
   name: kafka_server_$1_$2
+  labels:
+    topic: "$3"
+  type: COUNTER
+
+- pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>(Count|Value)
+  name: kafka_server_$1_$2
+  labels:
+    clientId: "$3"
+    broker: "$4:$5"
 - pattern : kafka.server<type=(.+), name=(.+), clientId=(.+)><>(Count|Value)
   name: kafka_server_$1_$2
   labels:
-    clientId: "$2"
+    clientId: "$3"
+- pattern : kafka.server<type=(.+), name=(.+)><>(Count|Value)
+  name: kafka_server_$1_$2
+
 - pattern : kafka.(\w+)<type=(.+), name=(.+)PerSec\w*><>Count
   name: kafka_$1_$2_$3_total
 - pattern : kafka.(\w+)<type=(.+), name=(.+)PerSec\w*, topic=(.+)><>Count
