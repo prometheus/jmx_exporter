@@ -22,7 +22,7 @@ rules:
 - pattern : kafka.network<type=(.+), name=(\w+), networkProcessor=(.+)><>Count
   name: kafka_network_$1_$2
   labels:
-    networkProcessor: "$3"
+    request: "$3"
   type: COUNTER
 - pattern : kafka.network<type=(.+), name=(\w+), request=(\w+)><>Count
   name: kafka_network_$1_$2
