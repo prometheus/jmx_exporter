@@ -151,6 +151,12 @@ public class JmxScraper {
             } catch(Exception e) {
                 logScrape(mbeanName, attr, "Fail: " + e);
                 continue;
+            } catch(java.lang.UnsupportedOperationException e) {
+            	logScrape(mbeanName, attr, "Fail: " + e);
+            	continue;
+            } catch(javax.management.ReflectionException e) {
+            	logScrape(mbeanName, attr, "Fail: " + e);
+            	continue;
             }
 
             logScrape(mbeanName, attr, "process");
