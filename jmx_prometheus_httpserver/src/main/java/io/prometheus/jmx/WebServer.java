@@ -10,32 +10,31 @@ import java.net.InetSocketAddress;
 
 public class WebServer {
 
-   public static void main(String[] args) throws Exception {
-     if (args.length < 2) {
-       System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file>");
-       System.exit(1);
-     }
+  private static final String CONTEXT_PATH = "/";
 
-     String[] hostnamePort = args[0].split(":");
-     int port;
-     InetSocketAddress socket;
+  public static void main(String[] args) throws Exception {
 
-     if (hostnamePort.length == 2) {
-       port = Integer.parseInt(hostnamePort[1]);
-       socket = new InetSocketAddress(hostnamePort[0], port);
-     } else {
-       port = Integer.parseInt(hostnamePort[0]);
-       socket = new InetSocketAddress(port);
-     }
+    ConfigurationLoader loader = new ConfigurationLoader(args);
+    Configuration config = loader.loadConfiguration();
 
-     JmxCollector jc = new JmxCollector(new File(args[1])).register();
+    InetSocketAddress socket;
 
-     Server server = new Server(socket);
-     ServletContextHandler context = new ServletContextHandler();
-     context.setContextPath("/");
-     server.setHandler(context);
-     context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-     server.start();
-     server.join();
-   }
+    if (config.hasHostname()) {
+      socket = new InetSocketAddress(config.retrieveHostname(), config.retrievePort());
+    } else {
+      socket = new InetSocketAddress(config.retrievePort());
+    }
+
+    JmxCollector jc = new JmxCollector(new File(config.retrieveConfigFilePath())).register();
+
+    Server server = new Server(socket);
+    ServletContextHandler context = new ServletContextHandler();
+    context.setContextPath(CONTEXT_PATH);
+    server.setHandler(context);
+    context.addServlet(new ServletHolder(new MetricsServlet()), config.retrievePath());
+    server.start();
+    server.join();
+
+  }
+
 }
