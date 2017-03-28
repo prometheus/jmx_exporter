@@ -19,7 +19,6 @@ class ConfigurationLoader {
 
         Configuration config = ConfigurationFactory.create(cmdLine);
 
-        // Si está la opcion de ayuda, la imprimimos y salimos.
         if (mustShowUsage(config)) {
             showUsage(options);
             System.exit(-1);
