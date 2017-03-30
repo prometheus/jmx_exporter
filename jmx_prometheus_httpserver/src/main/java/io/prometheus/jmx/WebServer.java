@@ -1,6 +1,8 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.exporter.MetricsServlet;
+import io.prometheus.jmx.configuration.Configuration;
+import io.prometheus.jmx.configuration.InputArgumentsLoader;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -14,24 +16,24 @@ public class WebServer {
 
   public static void main(String[] args) throws Exception {
 
-    ConfigurationLoader loader = new ConfigurationLoader(args);
-    Configuration config = loader.loadConfiguration();
+    Configuration config = new InputArgumentsLoader()
+            .load(args);
 
     InetSocketAddress socket;
 
     if (config.hasHostname()) {
-      socket = new InetSocketAddress(config.retrieveHostname(), config.retrievePort());
+      socket = new InetSocketAddress(config.obtainHostname(), config.obtainPort());
     } else {
-      socket = new InetSocketAddress(config.retrievePort());
+      socket = new InetSocketAddress(config.obtainPort());
     }
 
-    JmxCollector jc = new JmxCollector(new File(config.retrieveConfigFilePath())).register();
+    JmxCollector jc = new JmxCollector(new File(config.obtainConfigFilePath())).register();
 
     Server server = new Server(socket);
     ServletContextHandler context = new ServletContextHandler();
     context.setContextPath(CONTEXT_PATH);
     server.setHandler(context);
-    context.addServlet(new ServletHolder(new MetricsServlet()), config.retrievePath());
+    context.addServlet(new ServletHolder(new MetricsServlet()), config.obtainPath());
     server.start();
     server.join();
 

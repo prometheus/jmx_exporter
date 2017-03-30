@@ -1,4 +1,4 @@
-package io.prometheus.jmx;
+package io.prometheus.jmx.configuration;
 
 interface Constants {
 
