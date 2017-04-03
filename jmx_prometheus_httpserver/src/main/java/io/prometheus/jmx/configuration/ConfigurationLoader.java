@@ -20,7 +20,6 @@ class ConfigurationLoader implements Loader{
 
             if (mustShowUsage(config)) {
                 showUsage(options);
-                System.exit(-1);
             }
 
             verboseMode(config);

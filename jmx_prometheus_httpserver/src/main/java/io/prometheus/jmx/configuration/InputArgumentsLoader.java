@@ -26,5 +26,4 @@ public class InputArgumentsLoader implements Loader {
         return config;
     }
 
-
 }

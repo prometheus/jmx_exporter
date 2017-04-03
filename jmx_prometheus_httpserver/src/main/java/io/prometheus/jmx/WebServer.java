@@ -19,6 +19,8 @@ public class WebServer {
     Configuration config = new InputArgumentsLoader()
             .load(args);
 
+    if (config.isNotValid()) System.exit(-1);
+
     InetSocketAddress socket;
 
     if (config.hasHostname()) {

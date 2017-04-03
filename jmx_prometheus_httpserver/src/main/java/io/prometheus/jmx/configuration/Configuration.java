@@ -22,13 +22,17 @@ public class Configuration {
         verbose = Boolean.FALSE;
     }
 
-    Configuration(Integer port, String hostname, String configFilePath) {
+    Configuration(Integer port, String configFilePath) {
         this.port = port;
-        this.hostname = hostname;
         this.path = DEFAULT_PATH;
         this.configFilePath = configFilePath;
         this.verbose = Boolean.FALSE;
         this.help = Boolean.FALSE;
+    }
+
+    Configuration(Integer port, String hostname, String configFilePath) {
+        this(port, configFilePath);
+        this.hostname = hostname;
     }
 
     Configuration(Integer port, String hostname, String path, String configFilePath, Boolean verbose, Boolean help) {
@@ -94,7 +98,7 @@ public class Configuration {
     }
 
     private boolean basicConfigurationisValid() {
-        return port != null || configFilePath != null;
+        return port != null && configFilePath != null;
     }
 
     public boolean hasHostname() {
@@ -155,6 +159,33 @@ public class Configuration {
 
     static Configuration anEmptyConfiguration() {
         return new Configuration();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Configuration)) return false;
+
+        Configuration that = (Configuration) o;
+
+        if (port != null ? !port.equals(that.port) : that.port != null) return false;
+        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
+        if (path != null ? !path.equals(that.path) : that.path != null) return false;
+        if (configFilePath != null ? !configFilePath.equals(that.configFilePath) : that.configFilePath != null)
+            return false;
+        if (verbose != null ? !verbose.equals(that.verbose) : that.verbose != null) return false;
+        return help != null ? help.equals(that.help) : that.help == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = port != null ? port.hashCode() : 0;
+        result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+        result = 31 * result + (path != null ? path.hashCode() : 0);
+        result = 31 * result + (configFilePath != null ? configFilePath.hashCode() : 0);
+        result = 31 * result + (verbose != null ? verbose.hashCode() : 0);
+        result = 31 * result + (help != null ? help.hashCode() : 0);
+        return result;
     }
 
     @Override

@@ -2,7 +2,6 @@ package io.prometheus.jmx.configuration;
 
 interface Constants {
 
-    String HOST_ARG = "h";
     String HOST_ARG_LONG = "hostname";
 
     String PORT_ARG = "p";

@@ -12,7 +12,7 @@ class ConfigurationFactory {
 
         return Configuration.aBuilder()
                 .port(port)
-                .hostname(commandLine.getOptionValue(Constants.HOST_ARG))
+                .hostname(commandLine.getOptionValue(Constants.HOST_ARG_LONG))
                 .path(commandLine.getOptionValue(Constants.PATH_ARG))
                 .configFilePath(commandLine.getOptionValue(Constants.CONFIG_FILE_ARG))
                 .verboseMode(commandLine.hasOption(Constants.VERBOSE_ARG))
