@@ -315,11 +315,11 @@ public class JmxScraper {
     public static void main(String[] args) throws Exception {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
-      if (args.length > 0){
+      if (args.length >= 3){
+            new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
+        }
+      else if (args.length > 0){
           new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
-      }
-      else if (args.length >= 3){
-          new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
       }
       else {
           new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(), new StdoutWriter()).doScrape();
