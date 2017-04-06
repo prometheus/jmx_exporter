@@ -15,11 +15,14 @@
   <url>http://github.com/prometheus/jmx_exporter</url>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <commons-cli.version>1.4</commons-cli.version>
     <junit.version>4.12</junit.version>
     <jetty.version>8.1.7.v20120910</jetty.version>
     <prometheus-client.version>0.0.21</prometheus-client.version>
   </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.prometheus.jmx</groupId>
@@ -139,8 +142,5 @@
     </plugins>
   </build>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
+
 </project>
