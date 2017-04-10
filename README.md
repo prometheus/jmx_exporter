@@ -101,6 +101,27 @@ If a given part isn't set, it'll be excluded.
 
 `mvn test` to test.
 
+## Debugging
+
+You can start the jmx's scraper in standlone mode in order to debug what is called 
+
+`java -cp jmx_exporter.jar io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url`
+
+To get finer logs (including the duration of each jmx call),
+create a file called logging.properties with this content:
+
+```
+handlers=java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=ALL
+io.prometheus.jmx.level=ALL
+io.prometheus.jmx.shaded.io.prometheus.jmx.level=ALL
+```
+
+Add the following flag to your Java invocation:
+
+`-Djava.util.logging.config.file=/path/to/logging.properties`
+
+
 ## Installing
 
 A Debian binary package is created as part of the build process and it can

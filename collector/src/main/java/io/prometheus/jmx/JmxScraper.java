@@ -116,7 +116,9 @@ public class JmxScraper {
                 mBeanNames.removeAll(beanConn.queryMBeans(name, null));
             }
             for (ObjectInstance name : mBeanNames) {
+                long start = System.nanoTime();
                 scrapeBean(beanConn, name.getObjectName());
+                logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + name.getObjectName().toString());
             }
         } finally {
           if (jmxc != null) {
