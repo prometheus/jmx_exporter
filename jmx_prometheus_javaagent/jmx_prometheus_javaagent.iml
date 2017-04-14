@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="collector" />
+    <orderEntry type="library" name="Maven: io.prometheus:simpleclient:0.0.21" level="project" />
+    <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.16" level="project" />
+    <orderEntry type="library" name="Maven: io.prometheus:simpleclient_hotspot:0.0.21" level="project" />
+    <orderEntry type="library" name="Maven: io.prometheus:simpleclient_servlet:0.0.21" level="project" />
+    <orderEntry type="library" name="Maven: io.prometheus:simpleclient_common:0.0.21" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-servlet:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-security:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-server:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-continuation:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-http:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-io:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-util:8.1.7.v20120910" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+  </component>
+</module>

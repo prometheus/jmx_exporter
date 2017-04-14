@@ -5,3 +5,6 @@
 # compilation objects
 target/
 /.project
+.idea
+parent.iml
+collector

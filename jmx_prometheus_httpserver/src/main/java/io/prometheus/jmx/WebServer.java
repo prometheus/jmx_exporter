@@ -1,9 +1,10 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.exporter.MetricsServlet;
-import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -31,6 +32,20 @@ public class WebServer {
      JmxCollector jc = new JmxCollector(new File(args[1])).register();
 
      Server server = new Server(socket);
+
+     HttpConfiguration https = new HttpConfiguration();
+     https.addCustomizer(new SecureRequestCustomizer());
+     SslContextFactory sslContextFactory = new SslContextFactory();
+     sslContextFactory.setKeyStorePath("/tmp/keystore/keystore.jks");
+     sslContextFactory.setKeyStorePassword("qwerty");
+     sslContextFactory.setKeyManagerPassword("qwerty");
+
+     ServerConnector sslConnector = new ServerConnector(server,
+             new SslConnectionFactory(sslContextFactory, "http/1.1"),
+             new HttpConnectionFactory(https));
+     sslConnector.setPort(port);
+     server.setConnectors(new Connector[] { sslConnector });
+
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      server.setHandler(context);
