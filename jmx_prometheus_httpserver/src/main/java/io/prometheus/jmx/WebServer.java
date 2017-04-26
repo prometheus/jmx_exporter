@@ -4,6 +4,7 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.mortbay.servlet.GzipFilter;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -33,6 +34,7 @@ public class WebServer {
      Server server = new Server(socket);
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
+     context.addFilter(GzipFilter.class, "/*", null);
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
      server.start();

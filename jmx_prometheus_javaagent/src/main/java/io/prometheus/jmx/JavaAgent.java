@@ -6,10 +6,11 @@ import java.lang.instrument.Instrumentation;
 import java.io.File;
 import java.net.InetSocketAddress;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.mortbay.servlet.GzipFilter;
 
 public class JavaAgent {
    static Server server;
@@ -38,20 +39,20 @@ public class JavaAgent {
      new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
 
-     server = new Server();
      QueuedThreadPool pool = new QueuedThreadPool();
      pool.setDaemon(true);
      pool.setMaxThreads(10);
-     pool.setMaxQueued(10);
      pool.setName("jmx_exporter");
-     server.setThreadPool(pool);
-     SelectChannelConnector connector = new SelectChannelConnector();
-     connector.setHost(socket.getHostName());
-     connector.setPort(socket.getPort());
-     connector.setAcceptors(1);
-     server.addConnector(connector);
+     server = new Server(pool);
+
+     ServerConnector cnx = new ServerConnector(server);
+     cnx.setReuseAddress(true);
+     cnx.setHost(socket.getHostName());
+     cnx.setPort(port);
+
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
+     context.addFilter(GzipFilter.class, "/*", null);
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
      server.start();
