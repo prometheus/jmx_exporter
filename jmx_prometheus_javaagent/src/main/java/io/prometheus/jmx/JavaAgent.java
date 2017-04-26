@@ -4,7 +4,7 @@ import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.lang.instrument.Instrumentation;
 import java.io.File;
-import java.net.InetSocketAddress;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -22,17 +22,17 @@ public class JavaAgent {
        System.exit(1);
      }
 
+     String host;
      int port;
-     InetSocketAddress socket;
      String file;
 
      if (args.length == 3) {
        port = Integer.parseInt(args[1]);
-       socket = new InetSocketAddress(args[0], port);
+       host = args[0];
        file = args[2];
      } else {
        port = Integer.parseInt(args[0]);
-       socket = new InetSocketAddress(port);
+       host = "0.0.0.0";
        file = args[1];
      }
 
@@ -45,16 +45,18 @@ public class JavaAgent {
      pool.setName("jmx_exporter");
      server = new Server(pool);
 
-     ServerConnector cnx = new ServerConnector(server);
-     cnx.setReuseAddress(true);
-     cnx.setHost(socket.getHostName());
-     cnx.setPort(port);
+     ServerConnector connector = new ServerConnector(server);
+     connector.setReuseAddress(true);
+     connector.setHost(host);
+     connector.setPort(port);
+     server.setConnectors(new Connector[]{connector});
 
      ServletContextHandler context = new ServletContextHandler();
      context.setContextPath("/");
      context.addFilter(GzipFilter.class, "/*", null);
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+
      server.start();
    }
 }
