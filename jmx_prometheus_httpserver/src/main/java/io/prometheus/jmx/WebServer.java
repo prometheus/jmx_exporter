@@ -6,14 +6,16 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.mortbay.servlet.GzipFilter;
 
+import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.net.InetSocketAddress;
 
 public class WebServer {
 
+
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
-       System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file>");
+       System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file> <[cache_ttl]>");
        System.exit(1);
      }
 
@@ -29,6 +31,10 @@ public class WebServer {
        socket = new InetSocketAddress(port);
      }
 
+     HttpServlet servlet = args.length >= 3
+             ? new MetricsServletCache(Integer.valueOf(args[2]))
+             : new MetricsServlet();
+
      JmxCollector jc = new JmxCollector(new File(args[1])).register();
 
      Server server = new Server(socket);
@@ -36,7 +42,7 @@ public class WebServer {
      context.setContextPath("/");
      context.addFilter(GzipFilter.class, "/*", null);
      server.setHandler(context);
-     context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+     context.addServlet(new ServletHolder(servlet), "/metrics");
      server.start();
      server.join();
    }
