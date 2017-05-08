@@ -26,7 +26,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import static java.lang.String.format;
 
-public class JmxCollector extends Collector {
+public class JmxCollector extends Collector implements Collector.Describable {
     static final Counter configReloadSuccess = Counter.build()
       .name("jmx_config_reload_success_total")
       .help("Number of times configuration have successfully been reloaded.").register();
@@ -50,6 +50,7 @@ public class JmxCollector extends Collector {
     }
 
     private static class Config {
+      Integer startDelaySeconds = 0;
       String jmxUrl = "";
       String username = "";
       String password = "";
@@ -64,6 +65,7 @@ public class JmxCollector extends Collector {
 
     private Config config;
     private File configFile;
+    private long createTimeNanoSecs = System.nanoTime();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
@@ -106,6 +108,13 @@ public class JmxCollector extends Collector {
           yamlConfig = new HashMap<String, Object>();
         }
 
+        if (yamlConfig.containsKey("startDelaySeconds")) {
+          try {
+            cfg.startDelaySeconds = (Integer) yamlConfig.get("startDelaySeconds");
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
+          }
+        }
         if (yamlConfig.containsKey("hostPort")) {
           if (yamlConfig.containsKey("jmxUrl")) {
             throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
@@ -398,6 +407,10 @@ public class JmxCollector extends Collector {
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
       long start = System.nanoTime();
       double error = 0;
+      if ((config.startDelaySeconds > 0) &&
+        ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
+        throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
+      }
       try {
         scraper.doScrape();
       } catch (Exception e) {
@@ -418,6 +431,13 @@ public class JmxCollector extends Collector {
           "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
       mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
       return mfsList;
+    }
+
+    public List<MetricFamilySamples> describe() {
+      List<MetricFamilySamples> sampleFamilies = new ArrayList<MetricFamilySamples>();
+      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", new ArrayList<MetricFamilySamples.Sample>()));
+      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", new ArrayList<MetricFamilySamples.Sample>()));
+      return sampleFamilies;
     }
 
     /**
