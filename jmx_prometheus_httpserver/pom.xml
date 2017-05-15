@@ -101,7 +101,7 @@
                 </data>
 
                 <data>
-                  <src>${basedir}/src/deb/config</src>
+                  <src>${basedir}/src/package/config</src>
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
@@ -110,7 +110,7 @@
                 </data>
 
                 <data>
-                  <src>${basedir}/src/deb/bin/jmx_exporter</src>
+                  <src>${basedir}/src/package/bin/jmx_exporter</src>
                   <type>file</type>
                   <mapper>
                     <type>perm</type>
@@ -123,6 +123,71 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- rpm package builder -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rpm-maven-plugin</artifactId>
+        <version>2.1.5</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <id>package-development</id>
+            <goals>
+            <goal>rpm</goal>
+            </goals>
+          </execution>
+        </executions>
+          <configuration>
+            <needarch>false</needarch>
+            <targetOS>linux</targetOS>
+            <targetVendor>redhat</targetVendor>
+            <version>${project.version}</version>
+            <release>SNAPSHOT</release>
+            <license>Apache Software License 2.0</license>
+            <group>Applications/System</group>
+            <copyright>Copyright 2012-2015 The Prometheus Authors</copyright>
+            <mappings>
+              <mapping>
+                <directory>/usr/share/jmx_exporter</directory>
+                <sources>
+                  <source>
+                    <location>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</location>
+                  </source>
+                </sources>
+              </mapping>
+              <mapping>
+                <directory>/etc/jmx_exporter/</directory>
+                <filemode>755</filemode>
+              </mapping>
+              <mapping>
+                <directory>/etc/jmx_exporter/</directory>
+                <directoryIncluded>false</directoryIncluded>
+                <username>root</username>
+                <groupname>root</groupname>
+                <filemode>644</filemode>
+                <sources>
+                  <source>
+                    <location>${basedir}/src/package/config/jmx_exporter.yaml</location>
+                  </source>
+                </sources>
+              </mapping>
+              <mapping>
+                <directory>/usr/bin</directory>
+                <directoryIncluded>false</directoryIncluded>
+                <username>root</username>
+                <groupname>root</groupname>
+                <filemode>755</filemode>
+                <sources>
+                  <source>
+                    <location>${basedir}/src/package/bin/jmx_exporter</location>
+                  </source>
+                </sources>
+              </mapping>
+            </mappings>
+          </configuration>
       </plugin>
     </plugins>
   </build>
