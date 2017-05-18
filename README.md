@@ -27,7 +27,7 @@ See `./run_sample_httpserver.sh` for a sample script that runs the httpserver ag
 
 ## Configuration
 The configuration is in YAML. An example with all possible options:
-```
+```yaml
 ---
 hostPort: 127.0.0.1:1234
 jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
@@ -45,6 +45,9 @@ rules:
     help: "Cassandra metric $1 $2"
     type: GAUGE
     attrNameSnakeCase: false
+    beanPropertiesAsLables: true
+    whitelistBeanProperties: ["test"]
+    blacklistBeanProperties: ["type", "name"]
 ```
 Name     | Description
 ---------|------------
@@ -64,6 +67,9 @@ valueFactor | Optional number that `value` (or the scraped mBean value if `value
 labels   | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.
 help     | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute decription and the full name of the attribute.
 type     | The type of the metric, can be `GAUGE` or `COUNTER`. `name` must be set to use this. Defaults to `GAUGE`.
+beanPropertiesAsLabel | Add bean properties as label to the metric. `name` must be set to use this.
+whitelistBeanProperties | Allow only the given bean properties as labels. `beanPropertiesAsLabel` must be `true` to use this.
+blacklistBeanProperties | Don't add the given bean properties as labels. `beanPropertiesAsLabel` must be `true` to use this.
 
 Metric names and label names are sanitized. All characters other than `[a-zA-Z0-9:_]` are replaced with underscores,
 and adjacent underscores are collapsed. There's no limitations on label values or the help text.

@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -47,6 +48,9 @@ public class JmxCollector extends Collector {
       Type type = Type.GAUGE;
       ArrayList<String> labelNames;
       ArrayList<String> labelValues;
+      boolean beanPropertiesAsLabels;
+      List<String> whitelistBeanProperties = new ArrayList<String>();
+      List<String> blacklistBeanProperties = new ArrayList<String>();
     }
 
     private static class Config {
@@ -192,9 +196,24 @@ public class JmxCollector extends Collector {
                 rule.labelValues.add((String)entry.getValue());
               }
             }
+            if (yamlRule.containsKey("beanPropertiesAsLabels")) {
+              rule.beanPropertiesAsLabels = (Boolean)yamlRule.get("beanPropertiesAsLabels");
+            }
+            if (yamlRule.containsKey("whitelistBeanProperties")) {
+              List<Object> whitelistBeanProperties = (List<Object>) yamlRule.get("whitelistBeanProperties");
+              for (Object whitelistBeanProperty : whitelistBeanProperties) {
+                  rule.whitelistBeanProperties.add((String) whitelistBeanProperty);
+              }
+            }
+            if (yamlRule.containsKey("blacklistBeanProperties")) {
+              List<Object> blacklistBeanProperties = (List<Object>) yamlRule.get("blacklistBeanProperties");
+              for (Object blacklistBeanProperty : blacklistBeanProperties) {
+                rule.blacklistBeanProperties.add((String) blacklistBeanProperty);
+              }
+            }
 
             // Validation.
-            if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
+            if ((rule.labelNames != null || rule.help != null || rule.beanPropertiesAsLabels) && rule.name == null) {
               throw new IllegalArgumentException("Must provide name, if help or labels are given: " + yamlRule);
             }
             if (rule.name != null && rule.pattern == null) {
@@ -372,6 +391,25 @@ public class JmxCollector extends Collector {
                 throw new RuntimeException(
                   format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
               }
+            }
+          }
+          if (rule.beanPropertiesAsLabels) {
+            Set<String> beanPropertiesAsLabels = new HashSet<String>();
+            if (rule.whitelistBeanProperties.isEmpty()) {
+              beanPropertiesAsLabels.addAll(beanProperties.keySet());
+            } else {
+              for (String whitelistBeanProperty : rule.whitelistBeanProperties) {
+                if (beanProperties.containsKey(whitelistBeanProperty)) {
+                  beanPropertiesAsLabels.add(whitelistBeanProperty);
+                }
+              }
+            }
+            for (String blacklistBeanProperty : rule.blacklistBeanProperties) {
+              beanPropertiesAsLabels.remove(blacklistBeanProperty);
+            }
+            for (String beanPropertiesAsLabel : beanPropertiesAsLabels) {
+              labelNames.add(safeName(beanPropertiesAsLabel));
+              labelValues.add(beanProperties.get(beanPropertiesAsLabel));
             }
           }
 
