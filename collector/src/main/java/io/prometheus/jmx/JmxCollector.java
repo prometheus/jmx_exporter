@@ -44,7 +44,7 @@ public class JmxCollector extends Collector {
       Double valueFactor = 1.0;
       String help;
       boolean attrNameSnakeCase;
-      Type type = Type.GAUGE;
+      Type type = Type.UNTYPED;
       ArrayList<String> labelNames;
       ArrayList<String> labelValues;
     }
