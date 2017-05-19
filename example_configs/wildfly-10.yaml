@@ -1,4 +1,5 @@
 ---
+# See docs/Wildfly.md for additional info
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
 rules:
