@@ -247,7 +247,8 @@ public class JmxCollector extends Collector {
           String attrName,
           String attrType,
           String help,
-          Object value) {
+          Object value,
+          Type type) {
         StringBuilder name = new StringBuilder();
         name.append(domain);
         if (beanProperties.size() > 0) {
@@ -284,7 +285,7 @@ public class JmxCollector extends Collector {
         }
 
         addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, ((Number)value).doubleValue()),
-          Type.GAUGE, help);
+          type, help);
       }
 
       public void recordBean(
@@ -333,7 +334,7 @@ public class JmxCollector extends Collector {
 
           // If there's no name provided, use default export format.
           if (rule.name == null) {
-            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value);
+            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value, rule.type);
             return;
           }
 
