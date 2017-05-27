@@ -1,0 +1,25 @@
+---
+lowercaseOutputName: true
+rules:
+# These metrics were re-added to a dropwizard metrics registry, and partly renamed from what you would
+# see from a vanilla datastax-driver jmx beans.
+# Using these standalone from the jmx-beans exposed by the cassandra driver these must be rewritten as e.g:
+# ^(.+)-metrics<name=(.+)><>Count
+# where $1 is the cluster-name adn $2 is the metric.
+# In jmx they will appear as:
+# cluster-name-metrics{name=requests}[]Count: 48
+# So your milage might vary
+# When adding the exiting (datastax) metrics registry in dropwizard I add the keyspace-name so it is easier to sparate the metrics.
+
+- pattern: "^metrics<name=cassandra.([a-zA-Z0-9_]+).(.+)><>Count"
+  name: cassandra_$2
+  type: COUNTER
+  labels:
+    keyspace: "$1"
+
+
+- pattern: "^metrics<name=cassandra.([a-zA-Z0-9_]+).(.+)><>Value"
+  name: cassandra_$2
+  type: GAUGE
+  labels:
+    keyspace: "$1"

@@ -1,0 +1,53 @@
+---
+
+lowercaseOutputName: true
+rules:
+
+# Producer rules #
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Count"
+  name: kafka_producer_$1_$2_total
+  labels:
+    broker: "$3:$4"
+  type: COUNTER
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), brokerHost=(.+), brokerPort=(.*)><>Value"
+  name: kafka_producer_$1_$2
+  labels:
+    broker: "$3:$4"
+  type: GAUGE
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>Count"
+  name: kafka_producer_$1_$2_total
+  type: COUNTER
+  labels:
+    topic: "$3"
+
+- pattern: "^kafka.producer<type=(.+), name=(.+), topic=(.+)><>Value"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+  labels:
+    topic: "$3"
+
+- pattern: "^kafka.producer<type=(.+), name=(.+)><>Count"
+  name: kafka_producer_$1_$2_total
+  type: COUNTER
+
+- pattern: "^kafka.producer<type=(.+), name=(.+)><>Value"
+  name: kafka_producer_$1_$2
+  type: GAUGE
+
+# Consumer rules #
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>Value"
+  name: kafka_consumer_$1_$2
+  labels:
+    client: "$3"
+  type: GAUGE
+
+- pattern: "^kafka.consumer<type=(.+), name=(.+), clientId=(.+)><>Count"
+  name: kafka_consumer_$1_$2_total
+  labels:
+    client: "$3"
+  type: COUNTER
+
+
