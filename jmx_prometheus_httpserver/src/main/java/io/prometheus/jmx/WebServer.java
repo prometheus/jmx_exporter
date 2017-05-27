@@ -37,6 +37,7 @@ public class WebServer {
      context.addFilter(GzipFilter.class, "/*", null);
      server.setHandler(context);
      context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+     context.addServlet(new ServletHolder(new HealthServlet()),  "/health");
      server.start();
      server.join();
    }
