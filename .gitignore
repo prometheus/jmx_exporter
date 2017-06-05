@@ -5,3 +5,4 @@
 # compilation objects
 target/
 /.project
+dependency-reduced-pom.xml
