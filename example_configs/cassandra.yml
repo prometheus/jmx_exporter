@@ -12,3 +12,8 @@ rules:
   labels:
     "$1": "$4"
     "$2": "$3"
+- pattern: org.apache.cassandra.db<type=ColumnFamilies, keyspace=(\S*), columnfamily=(\S*)><>(ReadCount|WriteCount)
+  name: cassandra_columnfamily_$3
+  labels:
+    "keyspace": "$1"
+    "columnfamily": "$2"
