@@ -129,3 +129,18 @@ Add the following flag to your Java invocation:
 A Debian binary package is created as part of the build process and it can
 be used to install an executable into `/usr/bin/jmx_exporter` with configuration
 in `/etc/jmx_exporter/jmx_exporter.yaml`.
+
+## Docker
+To run the jmx_exporter in http agent mode. Name your configuration file `jmx_exporter.yml`
+```
+sudo docker run  -p 9098:9098 -v /opt/jmx_exporter:/opt jmx_exporter
+```
+
+### Verify metrics are being served
+```
+ curl localhost:9098/metrics 
+# HELP kafka_network_requestmetrics_responsesendtimems_request_offsetcommit_count Attribute exposed for management (kafka.network<type=RequestMetrics, name=ResponseSendTimeMs, request=OffsetCommit><>Count)
+# TYPE kafka_network_requestmetrics_responsesendtimems_request_offsetcommit_count counter
+kafka_network_requestmetrics_responsesendtimems_request_offsetcommit_count 0.0
+...
+```
