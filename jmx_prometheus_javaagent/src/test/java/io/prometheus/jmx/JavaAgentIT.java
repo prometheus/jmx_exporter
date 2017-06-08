@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -72,9 +71,7 @@ public class JavaAgentIT {
             // Wait for application to start
             app.getInputStream().read();
 
-            URL uri = new URL("http://localhost:" + port + "/metrics");
-            HttpURLConnection cnx = (HttpURLConnection) uri.openConnection();
-            InputStream stream = cnx.getInputStream();
+            InputStream stream = new URL("http://localhost:" + port + "/metrics").openStream();
             BufferedReader contents = new BufferedReader(new InputStreamReader(stream));
             boolean found = false;
             while (!found) {
@@ -90,15 +87,11 @@ public class JavaAgentIT {
             assertThat("Expected metric not found", found);
 
             // Tell application to stop
-            cnx.disconnect();
             app.getOutputStream().write('\n');
             try {
                 app.getOutputStream().flush();
             } catch (IOException ignored) {
             }
-        } catch (Throwable ex) {
-            assertThat("Expection caught during scraping", false);
-            ex.printStackTrace();
         } finally {
             final int exitcode = app.waitFor();
             // Log any errors printed
