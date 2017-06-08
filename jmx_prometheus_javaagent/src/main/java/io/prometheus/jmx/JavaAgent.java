@@ -45,7 +45,9 @@ public class JavaAgent {
      pool.setName("jmx_exporter");
      server = new Server(pool);
 
-     ServerConnector connector = new ServerConnector(server);
+     // Hard code the number of selectors to avoid running too many threads
+     // https://github.com/prometheus/jmx_exporter/pull/124
+     ServerConnector connector = new ServerConnector(server, 0, 4);
      connector.setReuseAddress(true);
      connector.setHost(host);
      connector.setPort(port);
