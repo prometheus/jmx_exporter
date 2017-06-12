@@ -7,6 +7,5 @@ public class TestApplication {
         System.out.println();
         System.out.flush();
         System.in.read();
-        System.exit(0);
     }
 }
