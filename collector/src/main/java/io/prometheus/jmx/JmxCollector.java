@@ -37,6 +37,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
+    private static class DomainRename {
+      Pattern pattern;
+      String replacement;
+    }
+
     private static class Rule {
       Pattern pattern;
       String name;
@@ -47,6 +52,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Type type = Type.UNTYPED;
       ArrayList<String> labelNames;
       ArrayList<String> labelValues;
+      ArrayList<DomainRename> rename;
     }
 
     private static class Config {
@@ -127,7 +133,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("username")) {
           cfg.username = (String)yamlConfig.get("username");
         }
-        
+
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
         }
@@ -135,7 +141,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("ssl")) {
           cfg.ssl = (Boolean)yamlConfig.get("ssl");
         }
-        
+
         if (yamlConfig.containsKey("lowercaseOutputName")) {
           cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
@@ -201,7 +207,19 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 rule.labelValues.add((String)entry.getValue());
               }
             }
-
+            // Domain renaming feature like org.apache.cassandra -> cassandra
+            if (yamlRule.containsKey("replaceDomains")) {
+              rule.rename = new ArrayList<DomainRename>();
+              TreeMap labels = new TreeMap((Map<String, String>)yamlRule.get("replaceDomains"));
+              for (Map.Entry<String, String> entry : (Set<Map.Entry<String, String>>)labels.entrySet()) {
+                if (entry.getKey().length() > 0 && entry.getValue().length() > 0) {
+                   DomainRename dr = new DomainRename();
+                   dr.pattern = Pattern.compile(entry.getKey());
+                   dr.replacement = entry.getValue();
+                   rule.rename.add(dr);
+                }
+              }
+            }
             // Validation.
             if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
               throw new IllegalArgumentException("Must provide name, if help or labels are given: " + yamlRule);
@@ -343,6 +361,15 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           // If there's no name provided, use default export format.
           if (rule.name == null) {
+            // If some domain renaming configuration exist, apply them
+            if (rule.rename != null) {
+              for (DomainRename r : rule.rename) {
+                Matcher pmatcher = r.pattern.matcher(domain);
+                if (pmatcher.matches()) {
+                  domain = pmatcher.replaceAll(r.replacement);
+                }
+              }
+            }
             defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value, rule.type);
             return;
           }
