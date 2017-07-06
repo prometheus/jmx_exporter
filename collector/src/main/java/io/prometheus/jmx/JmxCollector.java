@@ -99,6 +99,17 @@ public class JmxCollector extends Collector {
       }
     }
 
+    private String defaultAnchoring(String pat) {
+      // Do not surcharge anchoring patterns
+      if (!pat.startsWith("^")) {
+        pat = "^.*" + pat;
+      }
+      if (!pat.endsWith("\\$")) {
+        pat = pat + ".*$";
+      }
+      return pat;
+    }
+
     private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         Config cfg = new Config();
 
@@ -158,7 +169,7 @@ public class JmxCollector extends Collector {
             Rule rule = new Rule();
             cfg.rules.add(rule);
             if (yamlRule.containsKey("pattern")) {
-              rule.pattern = Pattern.compile("^.*" + (String)yamlRule.get("pattern") + ".*$");
+              rule.pattern = Pattern.compile(defaultAnchoring((String)yamlRule.get("pattern")));
             }
             if (yamlRule.containsKey("name")) {
               rule.name = (String)yamlRule.get("name");
