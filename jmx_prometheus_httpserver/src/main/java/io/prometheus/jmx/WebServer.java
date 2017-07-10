@@ -1,7 +1,6 @@
 package io.prometheus.jmx;
 
 import java.io.File;
-import java.net.InetSocketAddress;
 
 import io.prometheus.client.exporter.HTTPServer;
 
@@ -15,18 +14,14 @@ public class WebServer {
 
      String[] hostnamePort = args[0].split(":");
      int port;
-     InetSocketAddress socket;
 
      if (hostnamePort.length == 2) {
        port = Integer.parseInt(hostnamePort[1]);
-       socket = new InetSocketAddress(hostnamePort[0], port);
      } else {
        port = Integer.parseInt(hostnamePort[0]);
-       socket = new InetSocketAddress(port);
      }
 
      JmxCollector jc = new JmxCollector(new File(args[1])).register();
-
      HTTPServer server = new HTTPServer(port);
    }
 }
