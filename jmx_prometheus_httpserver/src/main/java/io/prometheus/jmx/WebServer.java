@@ -27,13 +27,6 @@ public class WebServer {
      }
 
      new JmxCollector(new File(args[1])).register();
-     final HTTPServer server = new HTTPServer(socket, CollectorRegistry.defaultRegistry);
-     
-     Runtime.getRuntime().addShutdownHook(new Thread() {
-         @Override
-         public void run() {
-           server.stop();
-         }
-       });
+     new HTTPServer(socket, CollectorRegistry.defaultRegistry);
    }
 }

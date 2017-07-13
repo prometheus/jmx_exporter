@@ -35,14 +35,6 @@ public class JavaAgent {
 
      new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
-
      server = new HTTPServer(socket, CollectorRegistry.defaultRegistry);
-     
-     Runtime.getRuntime().addShutdownHook(new Thread() {
-         @Override
-         public void run() {
-           server.stop();
-         }
-       });
    }
 }
