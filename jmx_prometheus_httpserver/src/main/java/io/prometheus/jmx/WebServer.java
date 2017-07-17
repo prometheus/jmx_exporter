@@ -1,12 +1,10 @@
 package io.prometheus.jmx;
 
-import io.prometheus.client.exporter.MetricsServlet;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-
 import java.io.File;
 import java.net.InetSocketAddress;
+
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.HTTPServer;
 
 public class WebServer {
 
@@ -19,7 +17,7 @@ public class WebServer {
      String[] hostnamePort = args[0].split(":");
      int port;
      InetSocketAddress socket;
-
+     
      if (hostnamePort.length == 2) {
        port = Integer.parseInt(hostnamePort[1]);
        socket = new InetSocketAddress(hostnamePort[0], port);
@@ -28,14 +26,7 @@ public class WebServer {
        socket = new InetSocketAddress(port);
      }
 
-     JmxCollector jc = new JmxCollector(new File(args[1])).register();
-
-     Server server = new Server(socket);
-     ServletContextHandler context = new ServletContextHandler();
-     context.setContextPath("/");
-     server.setHandler(context);
-     context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-     server.start();
-     server.join();
+     new JmxCollector(new File(args[1])).register();
+     new HTTPServer(socket, CollectorRegistry.defaultRegistry);
    }
 }

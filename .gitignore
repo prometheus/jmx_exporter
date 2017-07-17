@@ -6,5 +6,7 @@
 
 # compilation objects
 target/
-/.project
+.project
+.settings/
+.classpath
 dependency-reduced-pom.xml

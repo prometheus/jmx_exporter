@@ -23,17 +23,12 @@
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_hotspot</artifactId>
-      <version>0.0.21</version>
+      <version>0.0.25</version>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_servlet</artifactId>
-      <version>0.0.21</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <version>8.1.7.v20120910</version>
+      <artifactId>simpleclient_httpserver</artifactId>
+      <version>0.0.25</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -52,8 +47,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
 
