@@ -165,6 +165,18 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void testDomainRenaming() throws Exception {
+      JmxCollector jc = new JmxCollector(("\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*" +
+      									  "\nrules:\n  - pattern: '.*'\n    replaceDomains: {'^org.apache.cassandra(.*)$' : 'cassandra$1' }").replace('`','"')).register(registry);
+
+      // Test what should and shouldn't be renamed.
+      assertNull(registry.getSampleValue("org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount", new String[]{}, new String[]{}));
+
+      assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
+      assertNotNull(registry.getSampleValue("cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount", new String[]{}, new String[]{}));
+    }
+
+    @Test
     public void testBlacklist() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nblacklistObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
