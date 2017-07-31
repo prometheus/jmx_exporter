@@ -22,7 +22,7 @@
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_httpserver</artifactId>
-      <version>0.0.25</version>
+      <version>0.0.26</version>
     </dependency>
   </dependencies>
 
