@@ -1,0 +1,12 @@
+---
+whitelistObjectNames: [ "java.lang:*", "org.eclipse.jetty.util.thread:*", "org.eclipse.jetty.server.handler:*", "solr/*:type=/select,*", "solr/*:type=/update,*", "solr/*:type=searcher,*", "solr/*:type=documentCache,*", "solr/*:type=updateHandler,*"]
+
+rules:
+  - pattern: "^java(.(?!OperatingSystem))*$"
+  - pattern: "^solr/([a-zA-Z0-9_]+)_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)<type=(.+), id=(.+)><>(.*):"
+    name: solr_$4_$6
+    labels:
+      collection: $1
+      shard: $2
+      replica: $3
+  - pattern: ".*"
