@@ -38,7 +38,7 @@ lowercaseOutputLabelNames: false
 whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
 blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
 rules:
-  - pattern: "^org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)"
+  - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
     name: cassandra_$1_$2
     value: $3
     valueFactor: 0.001
