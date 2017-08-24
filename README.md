@@ -51,6 +51,8 @@ Name     | Description
 ---------|------------
 startDelaySeconds | start delay before serving requests. Any requests within the delay period will result in an empty metrics set.
 hostPort | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
+username | The username to be used in remote JMX password authentication.
+password | The password to be used in remote JMX password authentication.
 jmxUrl   | A full JMX URL to connect to. Should not be specified if hostPort is.
 ssl      | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
