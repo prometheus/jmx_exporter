@@ -52,7 +52,7 @@ public class JmxScraper {
                 "[^,=:\"]*" + // Unquoted - can be empty, anything but comma, equals, colon, or quote
             ")");
 
-    public static interface MBeanReceiver {
+    interface MBeanReceiver {
         void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,
@@ -63,14 +63,32 @@ public class JmxScraper {
             Object value);
     }
 
-    private MBeanReceiver receiver;
+    interface MBeanHandlerProvider {
+
+        /**
+         * @return null if the mbean is not required by any rule
+         */
+        MBeanHandler findMBeanHandler(String domain, LinkedHashMap<String, String> beanProperties);
+
+    }
+
+    interface MBeanHandler {
+        /**
+         * @return null if the attribute is not required by any rule
+         */
+        MBeanReceiver findReceiver(String attrName);
+
+    }
+
+
+    private MBeanHandlerProvider receiver;
     private String jmxUrl;
     private String username;
     private String password;
     private boolean ssl;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
-    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanHandlerProvider receiver) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
@@ -85,7 +103,7 @@ public class JmxScraper {
       *
       * Values are passed to the receiver in a single thread.
       */
-    public void doScrape() throws Exception {
+    public int doScrape() throws Exception {
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
         if (jmxUrl.isEmpty()) {
@@ -106,6 +124,7 @@ public class JmxScraper {
           jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
           beanConn = jmxc.getMBeanServerConnection();
         }
+        int attributeCount = 0;
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectInstance> mBeanNames = new HashSet();
@@ -117,9 +136,10 @@ public class JmxScraper {
             }
             for (ObjectInstance name : mBeanNames) {
                 long start = System.nanoTime();
-                scrapeBean(beanConn, name.getObjectName());
+                attributeCount += scrapeBeanIfNecessary(beanConn, name.getObjectName());
                 logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + name.getObjectName().toString());
             }
+            return attributeCount;
         } finally {
           if (jmxc != null) {
             jmxc.close();
@@ -127,45 +147,62 @@ public class JmxScraper {
         }
     }
 
-    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
+    private int scrapeBeanIfNecessary(MBeanServerConnection beanConn, ObjectName mbeanName) {
+        MBeanHandler mBeanHandler = this.receiver.findMBeanHandler(mbeanName.getDomain(), getKeyPropertyList(mbeanName));
+        if (mBeanHandler != null) {
+            return scrapeBean(beanConn, mbeanName, mBeanHandler);
+        } else {
+            logScrape(mbeanName.toString(), "Ignoring");
+            return 0;
+        }
+    }
+
+    private int scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName, MBeanHandler mbeanHandler) {
         MBeanInfo info;
         try {
           info = beanConn.getMBeanInfo(mbeanName);
         } catch (IOException e) {
           logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
+          return 0;
         } catch (JMException e) {
           logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
+          return 0;
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
-
+        int retrievedAttributeCount = 0;
         for (int idx = 0; idx < attrInfos.length; ++idx) {
             MBeanAttributeInfo attr = attrInfos[idx];
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
                 continue;
             }
+            MBeanReceiver attributeHandler = mbeanHandler.findReceiver(attr.getName());
+            if (attributeHandler != null) {
 
-            Object value;
-            try {
-                value = beanConn.getAttribute(mbeanName, attr.getName());
-            } catch(Exception e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
+                Object value;
+                try {
+                    retrievedAttributeCount++;
+                    value = beanConn.getAttribute(mbeanName, attr.getName());
+                } catch (Exception e) {
+                    logScrape(mbeanName, attr, "Fail: " + e);
+                    continue;
+                }
+                logScrape(mbeanName, attr, "process");
+                processBeanValue(
+                        attributeHandler,
+                        mbeanName.getDomain(),
+                        getKeyPropertyList(mbeanName),
+                        new LinkedList<String>(),
+                        attr.getName(),
+                        attr.getType(),
+                        attr.getDescription(),
+                        value
+                );
+            } else {
+                logScrape(mbeanName, attr, "ignoring");
             }
-
-            logScrape(mbeanName, attr, "process");
-            processBeanValue(
-                    mbeanName.getDomain(),
-                    getKeyPropertyList(mbeanName),
-                    new LinkedList<String>(),
-                    attr.getName(),
-                    attr.getType(),
-                    attr.getDescription(),
-                    value
-                    );
         }
+        return retrievedAttributeCount;
     }
 
     static LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
@@ -193,6 +230,7 @@ public class JmxScraper {
      * out in a way it can be processed elsewhere easily.
      */
     private void processBeanValue(
+            MBeanReceiver attributeReceiver,
             String domain,
             LinkedHashMap<String, String> beanProperties,
             LinkedList<String> attrKeys,
@@ -204,7 +242,7 @@ public class JmxScraper {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
             logScrape(domain + beanProperties + attrName, value.toString());
-            this.receiver.recordBean(
+            attributeReceiver.recordBean(
                     domain,
                     beanProperties,
                     attrKeys,
@@ -222,6 +260,7 @@ public class JmxScraper {
                 String typ = type.getType(key).getTypeName();
                 Object valu = composite.get(key);
                 processBeanValue(
+                        attributeReceiver,
                         domain,
                         beanProperties,
                         attrKeys,
@@ -265,6 +304,7 @@ public class JmxScraper {
                             name = attrName;
                         } 
                         processBeanValue(
+                            attributeReceiver,
                             domain,
                             l2s,
                             attrNames,
@@ -294,7 +334,16 @@ public class JmxScraper {
         logger.log(Level.FINE, "scrape: '" + name + "': " + msg);
     }
 
-    private static class StdoutWriter implements MBeanReceiver {
+    private static class StdoutWriter implements MBeanReceiver, MBeanHandler, MBeanHandlerProvider {
+
+        public MBeanHandler findMBeanHandler(String domain, LinkedHashMap<String, String> beanProperties) {
+            return this;
+        }
+
+        public MBeanReceiver findReceiver(String attrName) {
+            return this;
+        }
+
         public void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,

@@ -38,6 +38,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
     private static class Rule {
+      Pattern mbeanNamePattern;
+      Pattern attributePattern;
       Pattern pattern;
       String name;
       String value;
@@ -66,6 +68,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private Config config;
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
+    private long amountOfAttributesRetrieved =0;
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
@@ -79,7 +82,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
         config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
     }
 
-    private void reloadConfig() {
+    long getAmountOfAttributesRetrieved() {
+      return amountOfAttributesRetrieved;
+    }
+
+  private void reloadConfig() {
       try {
         FileReader fr = new FileReader(configFile);
 
@@ -167,7 +174,23 @@ public class JmxCollector extends Collector implements Collector.Describable {
             Rule rule = new Rule();
             cfg.rules.add(rule);
             if (yamlRule.containsKey("pattern")) {
-              rule.pattern = Pattern.compile("^.*" + (String)yamlRule.get("pattern") + ".*$");
+                String pattern = (String) yamlRule.get("pattern");
+                //domain<beanpropertyName1=beanPropertyValue1, beanpropertyName2=beanPropertyValue2, ...>
+                int endOfMbeanPattern = pattern.indexOf(">");
+                if (endOfMbeanPattern > 0) {
+                    rule.mbeanNamePattern = Pattern.compile(pattern.substring(0, endOfMbeanPattern + 1));
+
+                    String attributePattern = pattern.substring(endOfMbeanPattern + 1);//<key1, key2, ...>attrName
+                    Matcher matcher = Pattern.compile("[^<>:, ]+").matcher(attributePattern);
+                    if (matcher.find()) {
+                        rule.attributePattern = Pattern.compile(matcher.group());
+                    } else {
+                        LOGGER.fine("no attribute pattern found in pattern " + pattern + ". All attributes of matching mBeans will be retrieved");
+                    }
+                } else {
+                    LOGGER.fine("no mbean pattern found in " + pattern + ". This pattern will match all mBeans");
+                }
+              rule.pattern = Pattern.compile("^.*" + pattern + ".*$");
             }
             if (yamlRule.containsKey("name")) {
               rule.name = (String)yamlRule.get("name");
@@ -219,7 +242,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     }
 
-    class Receiver implements JmxScraper.MBeanReceiver {
+    class Receiver implements JmxScraper.MBeanHandlerProvider {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
@@ -297,7 +320,43 @@ public class JmxCollector extends Collector implements Collector.Describable {
           type, help);
       }
 
-      public void recordBean(
+      public JmxScraper.MBeanHandler findMBeanHandler(final String domain, final LinkedHashMap<String, String> beanProperties) {
+        List<Rule> rules = config.rules;
+        final List<Rule> mbeanRules = new LinkedList<Rule>();
+        String beanName = domain + angleBrackets(beanProperties.toString());
+        for (Rule rule : rules) {
+          if (rule.mbeanNamePattern == null || rule.mbeanNamePattern.matcher(beanName).matches()) {
+            mbeanRules.add(rule);
+          }
+        }
+        if (mbeanRules.size() == 0) {
+          return null;
+        } else {
+          return new JmxScraper.MBeanHandler() {
+            public JmxScraper.MBeanReceiver findReceiver(String attrName) {
+              final List<Rule> attributeRules = new LinkedList<Rule>();
+              String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
+              for (Rule rule : mbeanRules) {
+                if (rule.attributePattern == null || rule.attributePattern.matcher(rule.attrNameSnakeCase ? attrNameSnakeCase : attrName).matches()) {
+                  attributeRules.add(rule);
+                }
+              }
+              if (attributeRules.size() == 0) {
+                return null;
+              } else {
+                return new JmxScraper.MBeanReceiver() {
+                  public void recordBean(String domain, LinkedHashMap<String, String> beanProperties, LinkedList<String> attrKeys, String attrName, String attrType, String attrDescription, Object value) {
+                    Receiver.this.recordBean(attributeRules, domain, beanProperties, attrKeys, attrName, attrType, attrDescription, value);
+                  }
+                };
+              }
+            }
+          };
+        }
+      }
+
+      void recordBean(
+          List<Rule> rules,
           String domain,
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
@@ -311,7 +370,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String help = attrDescription + " (" + beanName + attrName + ")";
         String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
 
-        for (Rule rule : config.rules) {
+        for (Rule rule : rules) {
           Matcher matcher = null;
           String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
           if (rule.pattern != null) {
@@ -395,6 +454,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
     public List<MetricFamilySamples> collect() {
+      amountOfAttributesRetrieved = -1;
       if (configFile != null) {
         long mtime = configFile.lastModified();
         if (mtime > config.lastUpdate) {
@@ -412,7 +472,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
       }
       try {
-        scraper.doScrape();
+        amountOfAttributesRetrieved = scraper.doScrape();
       } catch (Exception e) {
         error = 1;
         StringWriter sw = new StringWriter();
