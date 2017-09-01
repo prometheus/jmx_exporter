@@ -1,19 +1,17 @@
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.BeforeClass;
+
+import static org.junit.Assert.*;
 
 
 public class JmxCollectorTest {
@@ -213,6 +211,7 @@ public class JmxCollectorTest {
     public void testValueCaptureGroup() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `^hadoop<.+-500(10)>`\n  name: foo\n  value: $1".replace('`','"')).register(registry);
       assertEquals(10.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+      assertThat(jc.getAmountOfAttributesRetrieved(), CoreMatchers.equalTo(1L));
     }
 
     @Test
@@ -231,6 +230,7 @@ public class JmxCollectorTest {
     public void testValueFactor() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 0.001".replace('`','"')).register(registry);
       assertEquals(0.001, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+      assertTrue("Expecting a lot of attributes retrieved when using * pattern: " +jc.getAmountOfAttributesRetrieved(), jc.getAmountOfAttributesRetrieved() > 100);
     }
 
     @Test(expected=IllegalStateException.class)
@@ -245,5 +245,12 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testCompositeData() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `java.lang<type=MemoryPool, name=Metaspace><Usage>max`\n  name: foo\n".replace('`','"')).register(registry);
+      assertEquals(-1.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+      assertThat(jc.getAmountOfAttributesRetrieved(), CoreMatchers.equalTo(1L));
     }
 }
