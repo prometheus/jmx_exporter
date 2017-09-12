@@ -110,6 +110,16 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void testEnvAndSysPropLabelNames() throws Exception {
+      String home = System.getenv("USER");
+      String testProp = "wotGorilla";
+      System.setProperty("test.Prop", testProp);
+      JmxCollector jc = new JmxCollector(
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: Foo\n  labels:\n    ${sysprop.test.Prop}BB${env.USER}CC${env.UNKNOWN_ENV_HERE}DD${sysprop.UNKNOWN_PROP_HERE}EE${sysprop.SOME_UNKNOWN_PROP:abc}${env.SOME_UNKNOWN_ENV:xyz}: ${sysprop.test.Prop}WW${env.USER}XX${env.SOME_UNKNOWN_ENV}YY${sysprop.SOME_UNKNOWN_PROP}ZZ${sysprop.SOME_UNKNOWN_PROP:abc}${env.SOME_UNKNOWN_ENV:xyz}".replace('`','"')).register(registry);
+      assertEquals(200, registry.getSampleValue("Foo", new String[]{testProp + "BB" + home + "CCDDEEabcxyz"}, new String[]{testProp + "WW" + home + "XXYYZZabcxyz"}), .001);
+    }
+
+    @Test
     public void testHelpFromPattern() throws Exception {
       JmxCollector jc = new JmxCollector(
               "\n---\nrules:\n- pattern: `^(hadoop)<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  help: bar $1".replace('`','"')).register(registry);

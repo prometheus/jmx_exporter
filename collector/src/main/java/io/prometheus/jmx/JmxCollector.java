@@ -68,6 +68,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private long createTimeNanoSecs = System.nanoTime();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
+    private static final Pattern propertyTokenPattern = Pattern.compile("\\$\\{(env\\.|sysprop\\.)([^\\}]+)\\}");
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
@@ -197,8 +198,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
               rule.labelNames = new ArrayList<String>();
               rule.labelValues = new ArrayList<String>();
               for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)labels.entrySet()) {
-                rule.labelNames.add(entry.getKey());
-                rule.labelValues.add((String)entry.getValue());
+                rule.labelNames.add(performPropertySubstitution(entry.getKey()));
+                rule.labelValues.add(performPropertySubstitution((String)entry.getValue()));
               }
             }
 
@@ -217,6 +218,63 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         return cfg;
 
+    }
+
+    /**
+     * Given a string that may or may not have ${env.x} or ${sysprop.x} tokens,
+     * replace those tokens with their appropriate values.
+     *
+     * If a token is of the form ${env.ABC} it will be replaced with the value
+     * of the environment variable "ABC". If no environment variable named "ABC"
+     * exists then the token is replaced with a default value or empty string
+     * if no default is specified. To define a default, place it after the
+     * environment variable name separated with a colon, e.g. ${env.ABC:my-default}.
+     *
+     * If a token is of the form ${sysprop.XYZ} it will be replaced with the value
+     * of the system property "XYZ". If no system property named "XYZ"
+     * exists then the token is replaced with a default value or empty string
+     * if no default is specified. To define a default, place it after the
+     * system property name separated with a colon, e.g. ${sysprop.XYZ:my-default}.
+     *
+     * If a given value has no tokens, it is returned as-is.
+     * If a given value has multiple tokens, they are all replaced and the new value is returned.
+     *
+     * For example, if value is "user_${env.USER}_something_${sysprop.foo.bar}_${env.UNK:xyz}"
+     * and the environment variable "USER" has a value of "bob", the Java system property "foo.bar"
+     * has a value of "123", and there is no environment variable named "UNK"
+     * then this method will return "user_bob_something_123_xyz".
+     *
+     * @param value contains 0, 1 or more ${x} tokens to be replaced
+     * @return the value with tokens replaced as described above
+     */
+    private String performPropertySubstitution(String value) {
+      if (value == null || value.length() == 0) {
+        return value;
+      }
+
+      String finalValue = value;
+      Matcher matcher = propertyTokenPattern.matcher(value);
+      while (matcher.find()) {
+        String type = matcher.group(1); // pattern group ensures this will be either "env." or "sysprop."
+        String nameAndDefault = matcher.group(2); // pattern group ensures this is the string between ${ and }
+
+        String[] nameAndDefaultArr = nameAndDefault.split(":", 2);
+        String name = nameAndDefaultArr[0];
+
+        String replacementValue;
+        if (type.equals("env.")) {
+          replacementValue = System.getenv(name);
+        } else {
+          replacementValue = System.getProperty(name);
+        }
+        if (replacementValue == null) {
+          replacementValue = (nameAndDefaultArr.length == 2) ? nameAndDefaultArr[1] : ""; // set to default value
+        }
+
+        finalValue = matcher.replaceFirst(replacementValue);
+        matcher.reset(finalValue);
+      }
+      return finalValue;
     }
 
     class Receiver implements JmxScraper.MBeanReceiver {
