@@ -2,24 +2,12 @@ package io.prometheus.jmx;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.JMException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
@@ -87,6 +75,8 @@ public class JmxScraper {
     private String password;
     private boolean ssl;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
+    private Map<ObjectName, MBeanInfo> mBeanInfoCache = null;
+
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanHandlerProvider receiver) {
         this.jmxUrl = jmxUrl;
@@ -96,6 +86,10 @@ public class JmxScraper {
         this.ssl = ssl;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
+    }
+
+    public void setBeanInfoCache(Map<ObjectName, MBeanInfo> mBeanInfoCache) {
+        this.mBeanInfoCache = mBeanInfoCache;
     }
 
     /**
@@ -126,18 +120,22 @@ public class JmxScraper {
         }
         int attributeCount = 0;
         try {
+            Set<ObjectName> mBeanNames = new HashSet<ObjectName>();
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
-            Set<ObjectInstance> mBeanNames = new HashSet();
             for (ObjectName name : whitelistObjectNames) {
-                mBeanNames.addAll(beanConn.queryMBeans(name, null));
+                if (name == null || name.isPattern()) {
+                    mBeanNames.addAll(getObjectInstances(beanConn, name));
+                } else {
+                    mBeanNames.add(name);
+                }
             }
             for (ObjectName name : blacklistObjectNames) {
-                mBeanNames.removeAll(beanConn.queryMBeans(name, null));
+                mBeanNames.removeAll(getObjectInstances(beanConn, name));
             }
-            for (ObjectInstance name : mBeanNames) {
+            for (ObjectName name : mBeanNames) {
                 long start = System.nanoTime();
-                attributeCount += scrapeBeanIfNecessary(beanConn, name.getObjectName());
-                logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + name.getObjectName().toString());
+                attributeCount += scrapeBeanIfNecessary(beanConn, name);
+                logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + name.toString());
             }
             return attributeCount;
         } finally {
@@ -145,6 +143,14 @@ public class JmxScraper {
             jmxc.close();
           }
         }
+    }
+
+    private List<ObjectName> getObjectInstances(MBeanServerConnection beanConn, ObjectName name) throws IOException {
+        List<ObjectName> res = new LinkedList<ObjectName>();
+        for (ObjectInstance re : beanConn.queryMBeans(name, null)) {
+            res.add(re.getObjectName());
+        }
+        return res;
     }
 
     private int scrapeBeanIfNecessary(MBeanServerConnection beanConn, ObjectName mbeanName) {
@@ -157,38 +163,69 @@ public class JmxScraper {
         }
     }
 
-    private int scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName, MBeanHandler mbeanHandler) {
-        MBeanInfo info;
+    private MBeanAttributeInfo getAttributeInfo(MBeanAttributeInfo[] attrInfos, String name) {
+        for (MBeanAttributeInfo attrInfo : attrInfos) {
+            if (attrInfo.getName().equals(name)) {
+                return attrInfo;
+            }
+        }
+        throw new IllegalStateException("No attribute found with name " + name + " in " + Arrays.toString(attrInfos));
+    }
+
+    private MBeanInfo getMBeanInfo(MBeanServerConnection beanConn, ObjectName mbeanName) {
+        if (mBeanInfoCache != null) {
+            MBeanInfo cachedValue = mBeanInfoCache.get(mbeanName);
+            if (cachedValue != null) {
+                return cachedValue;
+            }
+        }
         try {
-          info = beanConn.getMBeanInfo(mbeanName);
+            final MBeanInfo info = beanConn.getMBeanInfo(mbeanName);
+            if (mBeanInfoCache != null) {
+                mBeanInfoCache.put(mbeanName, info);
+            }
+            return info;
         } catch (IOException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return 0;
+            logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+            return null;
         } catch (JMException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return 0;
+            logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+            return null;
+        }
+    }
+    private int scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName, MBeanHandler mbeanHandler) {
+        MBeanInfo info = getMBeanInfo(beanConn, mbeanName);
+        if (info == null) {
+            return 0;
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
         int retrievedAttributeCount = 0;
-        for (int idx = 0; idx < attrInfos.length; ++idx) {
-            MBeanAttributeInfo attr = attrInfos[idx];
+        Map<String, MBeanReceiver> attributeReceivers = new LinkedHashMap<String, MBeanReceiver>();
+        for (MBeanAttributeInfo attr : attrInfos) {
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
                 continue;
             }
             MBeanReceiver attributeHandler = mbeanHandler.findReceiver(attr.getName());
             if (attributeHandler != null) {
-
-                Object value;
-                try {
-                    retrievedAttributeCount++;
-                    value = beanConn.getAttribute(mbeanName, attr.getName());
-                } catch (Exception e) {
-                    logScrape(mbeanName, attr, "Fail: " + e);
-                    continue;
-                }
-                logScrape(mbeanName, attr, "process");
-                processBeanValue(
+                attributeReceivers.put(attr.getName(), attributeHandler);
+                retrievedAttributeCount++;
+            } else {
+                logScrape(mbeanName, attr, "ignoring");
+            }
+        }
+        String[] attributes = attributeReceivers.keySet().toArray(new String[attributeReceivers.size()]);
+        if (attributeReceivers.size() > 0) {
+            try {
+                //get all attributes in one get
+                AttributeList attributeList = beanConn.getAttributes(mbeanName, attributes);
+                for (Object valueObject : attributeList) {
+                    Attribute attributeValue = (Attribute) valueObject;
+                    MBeanReceiver attributeHandler = attributeReceivers.get(attributeValue.getName());
+                    MBeanAttributeInfo attr = getAttributeInfo(attrInfos, attributeValue.getName());
+                    Object value = attributeValue.getValue();
+                    logScrape(mbeanName, attr, "process");
+                    processBeanValue(
                         attributeHandler,
                         mbeanName.getDomain(),
                         getKeyPropertyList(mbeanName),
@@ -197,9 +234,10 @@ public class JmxScraper {
                         attr.getType(),
                         attr.getDescription(),
                         value
-                );
-            } else {
-                logScrape(mbeanName, attr, "ignoring");
+                    );
+                }
+            } catch (Exception e) {
+                logScrape(mbeanName, Arrays.toString(attributes), "Fail: " + e);
             }
         }
         return retrievedAttributeCount;
@@ -328,7 +366,11 @@ public class JmxScraper {
      * For debugging.
      */
     private static void logScrape(ObjectName mbeanName, MBeanAttributeInfo attr, String msg) {
-        logScrape(mbeanName + "'_'" + attr.getName(), msg);
+        logScrape(mbeanName, attr.getName(), msg);
+    }
+
+    private static void logScrape(ObjectName mbeanName, String attr, String msg) {
+        logScrape(mbeanName + "'_'" + attr, msg);
     }
     private static void logScrape(String name, String msg) {
         logger.log(Level.FINE, "scrape: '" + name + "': " + msg);

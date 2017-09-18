@@ -162,7 +162,27 @@ public class JmxCollectorTest {
       assertNull(registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}));
     }
 
-    @Test
+  @Test
+  public void testWhitelistWithoutPatterns() throws Exception {
+    JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks".replace('`','"')).register(registry);
+
+    // Test what should and shouldn't be present.
+    assertNotNull(registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}));
+    assertNull(registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}));
+  }
+
+  @Test
+  public void testMBeanInfoCache() throws Exception {
+    JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks".replace('`','"')).register(registry);
+    assertThat(jc.getmBeanInfoCache().size(), CoreMatchers.equalTo(0));
+
+    assertNotNull(registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}));
+    assertThat(jc.getmBeanInfoCache().size(), CoreMatchers.equalTo(1));
+  }
+
+
+
+  @Test
     public void testBlacklist() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nblacklistObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 

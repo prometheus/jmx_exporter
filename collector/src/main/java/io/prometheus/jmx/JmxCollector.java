@@ -7,18 +7,12 @@ import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.management.MBeanInfo;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -69,6 +63,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
     private long amountOfAttributesRetrieved =0;
+    private final Map<ObjectName, MBeanInfo> mBeanInfoCache = new ConcurrentHashMap<ObjectName, MBeanInfo>();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
@@ -108,7 +103,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
-    private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
+  public Map<ObjectName, MBeanInfo> getmBeanInfoCache() {
+    return mBeanInfoCache;
+  }
+
+  private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         Config cfg = new Config();
 
         if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
@@ -465,6 +464,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       Receiver receiver = new Receiver();
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
+      scraper.setBeanInfoCache(mBeanInfoCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
