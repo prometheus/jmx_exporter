@@ -25,3 +25,15 @@ rules:
       server: $1
       http_listener: $2
 
+  - pattern: "^org.xnio<type=Xnio, provider=\"nio\", worker=(.+)><>(.+_size|.+_count):"
+    attrNameSnakeCase: true
+    name: wildfly_xnio_$2
+    labels:
+      worker: $1
+
+  - pattern: "^org.xnio<type=Xnio, provider=\"nio\", worker=(.+), address=(.+)><>(.+_count):"
+    attrNameSnakeCase: true
+    name: wildfly_xnio_$3
+    labels:
+      worker: $1
+      address: $2
