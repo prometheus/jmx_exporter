@@ -2,26 +2,18 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.json.JSONObject;
 import org.yaml.snakeyaml.Yaml;
 
 import static java.lang.String.format;
@@ -66,6 +58,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private Config config;
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
+    private String propertyFile;
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
 
@@ -73,6 +66,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
         configFile = in;
         config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
+    }
+
+    public JmxCollector(File in, String propertyFilePath) throws IOException, MalformedObjectNameException  {
+        this(in);
+        this.propertyFile = propertyFilePath;
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
@@ -387,13 +385,44 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           // Add to samples.
           LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
+
+          if (rule.name.contains("spark")) {
+              String appId = labelValues.get(0);
+              String appName;
+
+              try {
+                  appName = getAppNameFromId(appId);
+              }
+              catch(IOException ioe) {
+                  System.out.println(ioe);
+                  appName = "nil";
+              }
+
+              /* The spark_driver record contains the app name. If the agent runs in the driver node
+              * it just replaces the app_name with the name retrieved from the YARN resource manager.
+              * Otherwise, a new 'app_name' attribute is added.
+              * */
+              if (rule.name.equals("spark_driver")) {
+                  for (int idx = 1; idx < labelNames.size(); ++idx) {
+                      if (labelNames.get(idx).equals("app_name")) {
+                          labelValues.add(idx, appName);
+                          break;
+                      }
+                  }
+              }
+              /* The agent does not run in the driver node. Add a new attribute in the list. */
+              else {
+                  labelNames.add("app_name");
+                  labelValues.add(appName);
+              }
+          }
+
           addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
           return;
         }
       }
 
     }
-
     public List<MetricFamilySamples> collect() {
       if (configFile != null) {
         long mtime = configFile.lastModified();
@@ -438,6 +467,39 @@ public class JmxCollector extends Collector implements Collector.Describable {
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", new ArrayList<MetricFamilySamples.Sample>()));
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", new ArrayList<MetricFamilySamples.Sample>()));
       return sampleFamilies;
+    }
+
+  /**
+   * Returns the application name of a running YARN application given the application id
+   * @param id The YARN application id
+   * @return The application name
+   * @throws IOException
+   */
+  public String getAppNameFromId(String id) throws IOException {
+      FileInputStream input = new FileInputStream(propertyFile);
+      Properties properties = new Properties();
+      properties.load(input);
+      String resourceManagerRest = properties.getProperty("yarn.app.manager.rest");
+
+      URL url = new URL(String.format("http://%s:8088/ws/v1/cluster/apps/%s",resourceManagerRest,id));
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+      String line;
+      String jsonString = "";
+
+      while ((line = br.readLine()) != null){
+        jsonString = jsonString + "\n" + line;
+      }
+
+      JSONObject jsonObject = new JSONObject(jsonString);
+
+      //The app attribute contains the application's class name with its full class path,
+      //eg. com.taxibeat.bigdata.jobs.stream.BiRequest. We keep only the class name, BiRequest in this case.
+      String[] appNameSplit = ((JSONObject)jsonObject.get("app")).get("name").toString().split("\\.");
+      String appName = appNameSplit[appNameSplit.length-1];
+
+      return appName;
     }
 
     /**
