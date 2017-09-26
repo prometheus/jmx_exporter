@@ -29,6 +29,9 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
+    private String appName = null;
+    private String appId = null;
+
     private static class Rule {
       Pattern pattern;
       String name;
@@ -125,7 +128,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("username")) {
           cfg.username = (String)yamlConfig.get("username");
         }
-        
+
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
         }
@@ -133,7 +136,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("ssl")) {
           cfg.ssl = (Boolean)yamlConfig.get("ssl");
         }
-        
+
         if (yamlConfig.containsKey("lowercaseOutputName")) {
           cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
@@ -386,36 +389,34 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // Add to samples.
           LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
 
+          //Adding the application_name and the app_id in the exposed metrics
           if (rule.name.contains("spark")) {
-              String appId = labelValues.get(0);
-              String appName;
+              if (!labelNames.contains("application_name")) {
+                  if (appName == null || appId == null) {
+                      try {
+                          appId = labelValues.get(0);
+                          appName = getAppNameFromId(appId);
+                          labelNames.add("application_name");
+                          labelValues.add(appName);
+                      } catch (IOException ioe) {
+                          System.out.println(ioe);
+                          System.out.println("Rule: " + rule.name);
+                          appName = null;
+                          appId = null;
+                      }
+                  }
+                  else {
+                      labelNames.add("application_name");
+                      labelValues.add(appName);
 
-              try {
-                  appName = getAppNameFromId(appId);
-              }
-              catch(IOException ioe) {
-                  System.out.println(ioe);
-                  appName = "nil";
-              }
-
-              /* The spark_driver record contains the app name. If the agent runs in the driver node
-              * it just replaces the app_name with the name retrieved from the YARN resource manager.
-              * Otherwise, a new 'app_name' attribute is added.
-              * */
-              if (rule.name.equals("spark_driver")) {
-                  for (int idx = 1; idx < labelNames.size(); ++idx) {
-                      if (labelNames.get(idx).equals("app_name")) {
-                          labelValues.add(idx, appName);
-                          break;
+                      if (!labelNames.contains("app_id")) {
+                          labelNames.add("app_id");
+                          labelValues.add(appId);
                       }
                   }
               }
-              /* The agent does not run in the driver node. Add a new attribute in the list. */
-              else {
-                  labelNames.add("app_name");
-                  labelValues.add(appName);
-              }
           }
+
 
           addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
           return;
@@ -495,7 +496,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       JSONObject jsonObject = new JSONObject(jsonString);
 
       //The app attribute contains the application's class name with its full class path,
-      //eg. com.taxibeat.bigdata.jobs.stream.BiRequest. We keep only the class name, BiRequest in this case.
+      //eg. com.taxibeat.bigdata.jobs.stream.BiRequest. We keep only the class name, in this case, BiRequest.
       String[] appNameSplit = ((JSONObject)jsonObject.get("app")).get("name").toString().split("\\.");
       String appName = appNameSplit[appNameSplit.length-1];
 
