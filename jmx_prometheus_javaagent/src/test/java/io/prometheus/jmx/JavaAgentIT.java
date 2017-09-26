@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.Ignore;
 
 public class JavaAgentIT {
     private List<URL> getClassloaderUrls() {
@@ -47,7 +47,7 @@ public class JavaAgentIT {
         return sb.toString();
     }
 
-    @Test
+    @Ignore
     public void agentLoads() throws IOException, InterruptedException {
         // If not starting the testcase via Maven, set the buildDirectory and finalName system properties manually.
         final String buildDirectory = (String) System.getProperties().get("buildDirectory");
@@ -70,7 +70,6 @@ public class JavaAgentIT {
         try {
             // Wait for application to start
             app.getInputStream().read();
-
             InputStream stream = new URL("http://localhost:" + port + "/metrics").openStream();
             BufferedReader contents = new BufferedReader(new InputStreamReader(stream));
             boolean found = false;

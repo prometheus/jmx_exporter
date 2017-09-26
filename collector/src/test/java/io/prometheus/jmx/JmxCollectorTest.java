@@ -8,6 +8,9 @@ import static org.junit.Assert.fail;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+
+import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -233,7 +236,7 @@ public class JmxCollectorTest {
       assertEquals(0.001, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testDelayedStartNotReady() throws Exception {
       JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
       assertNull(registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}));
@@ -245,5 +248,12 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test(expected = IOException.class)
+    public void getAppNameFromId() throws Exception {
+        JmxCollector collector = new JmxCollector(new File("example_configs/spark.yml"));
+        collector.getAppNameFromId("app_random_id");
+        fail();
     }
 }
