@@ -40,7 +40,7 @@ public class JavaAgentIT {
                 continue;
             }
             if (sb.length() != 0) {
-                sb.append(':');
+                sb.append(java.io.File.pathSeparatorChar);
             }
             sb.append(url.getPath());
         }
