@@ -1,32 +1,41 @@
 rules:
+
   # These come from the master
   # Example: master.aliveWorkers
-  - pattern: "metrics<name=master.(.*)><>Value"
+  - pattern: "metrics<name=master\\.(.*)><>Value"
     name: spark_master_$1
 
   # These come from the worker
   # Example: worker.coresFree
-  - pattern: "metrics<name=worker.(.*)><>Value"
+  - pattern: "metrics<name=worker\\.(.*)><>Value"
     name: spark_worker_$1
 
   # These come from the application driver
   # Example: app-20160809000059-0000.driver.DAGScheduler.stage.failedStages
-  - pattern: "metrics<name=(.*).driver.(DAGScheduler|BlockManager).(.*)><>Value"
+  - pattern: "metrics<name=(.*)\\.driver\\.(DAGScheduler|BlockManager)\\.(.*)><>Value"
     name: spark_driver_$2_$3
     labels:
       app_id: "$1"
 
   # These come from the application driver if it's a streaming application
   # Example: app-20160809000059-0000.driver.com.example.ClassName.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay
-  - pattern: "metrics<name=(.*).driver.(.*).StreamingMetrics.streaming.(.*)><>Value"
+  - pattern: "metrics<name=(.*)\\.driver\\.(.*)\\.StreamingMetrics\\.streaming\\.(.*)><>Value"
     name: spark_streaming_driver_$3
     labels:
       app_id: "$1"
       app_name: "$2"
 
+  # These come from the application driver if it's a structured streaming application
+  # Example: app-20160809000059-0000.driver.spark.streaming.QueryName.inputRate-total
+  - pattern: "metrics<name=(.*)\\.driver\\.spark\\.streaming\\.(.*)\\.(.*)><>Value"
+    name: spark_structured_streaming_driver_$3
+    labels:
+      app_id: "$1"
+      query_name: "$2"
+
   # These come from the application executors
   # Example: app-20160809000059-0000.0.executor.threadpool.activeTasks
-  - pattern: "metrics<name=(.*)\\.(.*).executor.(.*)><>Value"
+  - pattern: "metrics<name=(.*)\\.(.*)\\.executor\\.(.*)><>Value"
     name: spark_executor_$3
     labels:
       app_id: "$1"
@@ -34,7 +43,7 @@ rules:
 
   # These come from the master
   # Example: application.com.example.ClassName.1470700859054.cores
-  - pattern: "metrics<name=application.(.*)\\.([0-9]+)\\.(.*)><>Value"
+  - pattern: "metrics<name=application\\.(.*)\\.([0-9]+)\\.(.*)><>Value"
     name: spark_application_$3
     labels:
       app_name: "$1"
