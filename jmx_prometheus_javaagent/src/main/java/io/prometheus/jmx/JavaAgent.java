@@ -9,7 +9,7 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 
 public class JavaAgent {
-   
+
    static HTTPServer server;
 
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
@@ -35,6 +35,6 @@ public class JavaAgent {
 
      new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
-     server = new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+     server = new HTTPServer(socket, CollectorRegistry.defaultRegistry, true);
    }
 }
