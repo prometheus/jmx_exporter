@@ -11,7 +11,7 @@ This can be also run as an independent HTTP server and scrape remote JMX targets
 
 ## Running
 
-To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.10/jmx_prometheus_javaagent-0.10.jar) and run:
+To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.1.0/jmx_prometheus_javaagent-0.1.0.jar) and run:
 
 ```
 java -javaagent:./jmx_prometheus_javaagent-0.10.jar=1234:config.yaml -jar yourJar.jar
