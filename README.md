@@ -1,13 +1,15 @@
 JMX Exporter
 =====
 
-JMX to Prometheus exporter.
+JMX to Prometheus exporter: a collector that can configurably scrape and
+expose mBeans of a JMX target.
 
-A Collector that can configurably scrape and expose mBeans of a JMX target. It
-meant to be run as a Java Agent, exposing an HTTP server and scraping the local
-JVM.
-
-This can be also run as an independent HTTP server and scrape remote JMX targets.
+This exporter is intended to be run as a Java Agent, exposing a HTTP server
+and serving metrics of the local JVM. It can be also run as an independent
+HTTP server and scrape remote JMX targets, but this has various
+disadvantages, such as being harder to configure and being unable to expose
+process metrics (e.g., memory and CPU usage). Running the exporter as a Java
+Agent is thus strongly encouraged.
 
 ## Running
 
