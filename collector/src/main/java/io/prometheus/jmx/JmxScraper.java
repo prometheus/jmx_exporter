@@ -254,7 +254,7 @@ public class JmxScraper {
                     CompositeData composite = (CompositeData) valu;
                     for (String idx : rowKeys) {
                         Object rowValue = composite.get(idx);
-                        if(rowValue != null) {
+                        if (rowValue != null) {
                             l2s.put(idx, rowValue.toString());
                         }
                     }
