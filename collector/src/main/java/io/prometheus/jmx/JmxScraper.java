@@ -253,7 +253,10 @@ public class JmxScraper {
                 if (valu instanceof CompositeData) {
                     CompositeData composite = (CompositeData) valu;
                     for (String idx : rowKeys) {
-                        l2s.put(idx, composite.get(idx).toString());
+                        Object rowValue = composite.get(idx);
+                        if(rowValue != null) {
+                            l2s.put(idx, rowValue.toString());
+                        }
                     }
                     for(String valueIdx : valueKeys) {
                         LinkedList<String> attrNames = extendedAttrKeys;
@@ -263,7 +266,7 @@ public class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        } 
+                        }
                         processBeanValue(
                             domain,
                             l2s,
@@ -304,7 +307,7 @@ public class JmxScraper {
             String attrDescription,
             Object value) {
             System.out.println(domain +
-                               beanProperties + 
+                               beanProperties +
                                attrKeys +
                                attrName +
                                ": " + value);
