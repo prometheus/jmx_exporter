@@ -1,0 +1,48 @@
+---
+# In order to get WebLogic mbeans, you need to add the following options in server's options:
+# -Djavax.management.builder.initial=weblogic.management.jmx.mbeanserver.WLSMBeanServerBuilder
+
+attrNameSnakeCase: true
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames:
+  - "com.bea:Name=*,Type=ServerRuntime"
+  - "com.bea:ServerRuntime=*,Type=ApplicationRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=JDBCDataSourceRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=JMSDestinationRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=JDBCStoreRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=FileStoreRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=SAFRemoteEndpointRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=ThreadPoolRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=JMSRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=SAFRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=WorkManagerRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=MessagingBridgeRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=PersistentStoreRuntime,*"
+  - "com.bea:ServerRuntime=*,Type=WebServerRuntime,*"
+
+rules:
+  # ex: com.bea<ServerRuntime=AdminServer, Name=default, ApplicationRuntime=moduleJMS, Type=WorkManagerRuntime><>CompletedRequests
+  - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), (.+)Runtime=(.*), Type=(.+)Runtime><>(.+):"
+    name: weblogic_$3_$5_$6
+    attrNameSnakeCase: true
+    labels:
+      runtime: $1
+      name: $2
+      application: $4
+
+  # ex: com.bea<ServerRuntime=AdminServer, Name=dsName, Type=JDBCDataSourceRuntime><>Metric
+  - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><>(.+):"
+    name: weblogic_$3_$4
+    attrNameSnakeCase: true
+    labels:
+      runtime: $1
+      name: $2
+
+  # ex: com.bea<ServerRuntime=AdminServer, Name=bea_wls_cluster_internal, Type=ApplicationRuntime><OverallHealthStateJMX>IsCritical
+  - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><(.+)>(.+):"
+    name: weblogic_$3_$4_$5
+    attrNameSnakeCase: true
+    labels:
+      runtime: $1
+      name: $2
