@@ -248,11 +248,10 @@ public class JmxCollectorTest {
     }
 
     @Test
-    public void testNullTabularValue() throws Exception {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        Tabular.registerBean(mbs);
-        JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
-        Thread.sleep(2000);
-        assertEquals(1, registry.getSampleValue("tabular_Test_Foo", new String[]{}, new String[]{}), .001);
+    public void testNullTabularKey() throws Exception {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      Tabular.registerBean(mbs);
+      JmxCollector jc = new JmxCollector("").register(registry);
+      assertEquals(1, registry.getSampleValue("tabular_Test_Foo", new String[]{}, new String[]{}), .001);
     }
 }
