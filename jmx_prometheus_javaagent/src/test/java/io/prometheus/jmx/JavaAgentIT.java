@@ -3,6 +3,7 @@ package io.prometheus.jmx;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,12 +55,12 @@ public class JavaAgentIT {
         final String finalName = (String) System.getProperties().get("finalName");
         final int port = Integer.parseInt((String) System.getProperties().get("it.port"));
         final String config = getClass().getClassLoader().getResource("test.yml").getFile();
-        final String javaagent = "-javaagent:" + buildDirectory + "/" + finalName + ".jar=" + port + ":" + config;
+        final String javaagent = "-javaagent:" + buildDirectory + File.separator + finalName + ".jar=" + port + ":" + config;
 
         final String javaHome = System.getenv("JAVA_HOME");
         final String java;
         if (javaHome != null && javaHome.equals("")) {
-            java = javaHome + "/bin/java";
+            java = javaHome + File.separator + "bin" + File.separator + "java";
         } else {
             java = "java";
         }

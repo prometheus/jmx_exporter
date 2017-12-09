@@ -36,6 +36,13 @@
       <version>4.12</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>1.3</version>
+      <scope>runtime</scope>
+      <type>pom</type>
+    </dependency>
   </dependencies>
 
 
