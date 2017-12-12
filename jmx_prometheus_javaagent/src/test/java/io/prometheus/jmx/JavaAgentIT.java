@@ -2,6 +2,9 @@ package io.prometheus.jmx;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.nio.channels.FileChannel;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +20,9 @@ import java.util.List;
 import org.junit.Test;
 
 public class JavaAgentIT {
+
+    public static final String TEST_YML_CONFIG = "test.yml";
+
     private List<URL> getClassloaderUrls() {
         return getClassloaderUrls(getClass().getClassLoader());
     }
@@ -49,12 +55,28 @@ public class JavaAgentIT {
     }
 
     @Test
-    public void agentLoads() throws IOException, InterruptedException {
+    public void agentLoadsAbsolutePathToConfig() throws IOException, InterruptedException {
         // If not starting the testcase via Maven, set the buildDirectory and finalName system properties manually.
+        // If not starting the testcase via Maven, set the buildDirectory and finalName system properties manually.
+        String config = getClass().getClassLoader().getResource(TEST_YML_CONFIG).getFile();
+        testAgent(config);
+    }
+
+    @Test
+    public void agentLoadsRelativePathToConfig() throws IOException, InterruptedException {
+        // If not starting the testcase via Maven, set the buildDirectory and finalName system properties manually.
+        String config = getClass().getClassLoader().getResource(TEST_YML_CONFIG).getFile();
+        File configFile = new File(TEST_YML_CONFIG);
+        copyFileUsingFileChannels(new File(config), configFile);
+        testAgent(TEST_YML_CONFIG);
+        configFile.delete();
+    }
+
+    private void testAgent(String config) throws IOException, InterruptedException {
         final String buildDirectory = (String) System.getProperties().get("buildDirectory");
         final String finalName = (String) System.getProperties().get("finalName");
         final int port = Integer.parseInt((String) System.getProperties().get("it.port"));
-        final String config = getClass().getClassLoader().getResource("test.yml").getFile();
+
         final String javaagent = "-javaagent:" + buildDirectory + File.separator + finalName + ".jar=" + port + ":" + config;
 
         final String javaHome = System.getenv("JAVA_HOME");
@@ -66,8 +88,8 @@ public class JavaAgentIT {
         }
 
         final Process app = new ProcessBuilder()
-            .command(java, javaagent, "-cp", buildClasspath(), "io.prometheus.jmx.TestApplication")
-            .start();
+                .command(java, javaagent, "-cp", buildClasspath(), "io.prometheus.jmx.TestApplication")
+                .start();
         try {
             // Wait for application to start
             app.getInputStream().read();
@@ -103,6 +125,24 @@ public class JavaAgentIT {
             }
 
             assertThat("Application did not exit cleanly", exitcode == 0);
+        }
+    }
+
+    private static void copyFileUsingFileChannels(File source, File dest)
+            throws IOException {
+        FileChannel inputChannel = null;
+        FileChannel outputChannel = null;
+        try {
+            inputChannel = new FileInputStream(source).getChannel();
+            outputChannel = new FileOutputStream(dest).getChannel();
+            outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+        } finally {
+            if (inputChannel != null) {
+                inputChannel.close();
+            }
+            if (outputChannel != null) {
+                outputChannel.close();
+            }
         }
     }
 }
