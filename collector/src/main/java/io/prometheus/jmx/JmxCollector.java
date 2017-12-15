@@ -57,6 +57,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
+      List<ObjectName> whitelistObjectInstances = new ArrayList<ObjectName>();
+      List<ObjectName> blacklistObjectInstances = new ArrayList<ObjectName>();
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       ArrayList<Rule> rules = new ArrayList<Rule>();
@@ -142,6 +144,20 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         if (yamlConfig.containsKey("lowercaseOutputLabelNames")) {
           cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
+        }
+
+        if (yamlConfig.containsKey("whitelistObjectInstances")) {
+            List<Object> names = (List<Object>) yamlConfig.get("whitelistObjectInstances");
+            for(Object name : names) {
+                cfg.whitelistObjectInstances.add(new ObjectName((String)name));
+            }
+        }
+
+        if (yamlConfig.containsKey("blacklistObjectInstances")) {
+            List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectInstances");
+            for(Object name : names) {
+                cfg.blacklistObjectInstances.add(new ObjectName((String)name));
+            }
         }
 
         if (yamlConfig.containsKey("whitelistObjectNames")) {
