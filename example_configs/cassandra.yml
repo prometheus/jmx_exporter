@@ -2,6 +2,13 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
 rules:
+- pattern: org.apache.cassandra.metrics<type=(HintedHandOffManager)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?,
+    name=Hints_created-(\S+)><>(?:Count|Value)
+  name: "cassandra_hintedhandoffmanager_hints_created"
+  labels:
+    destination: "$5"
+    "$1": "$4"
+    "$2": "$3"
 - pattern: org.apache.cassandra.metrics<type=(Connection|Streaming), scope=(\S*), name=(\S*)><>(Count|Value)
   name: cassandra_$1_$3
   labels:
