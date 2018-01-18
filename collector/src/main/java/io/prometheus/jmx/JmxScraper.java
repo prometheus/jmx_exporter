@@ -2,6 +2,7 @@ package io.prometheus.jmx;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -68,17 +69,25 @@ public class JmxScraper {
     private String username;
     private String password;
     private boolean ssl;
+    private List<ObjectName> whitelistObjectInstances, blacklistObjectInstances;
     private List<ObjectName> whitelistObjectNames, blacklistObjectNames;
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
+        this(jmxUrl, username, password, ssl, Collections.EMPTY_LIST, Collections.EMPTY_LIST, whitelistObjectNames, blacklistObjectNames, receiver);
+    }
+
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, List<ObjectName> whitelistObjectInstances, List<ObjectName> blacklistObjectInstances, List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames, MBeanReceiver receiver) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.ssl = ssl;
+        this.whitelistObjectInstances = whitelistObjectInstances;
+        this.blacklistObjectInstances = blacklistObjectInstances;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
     }
+
 
     /**
       * Get a list of mbeans on host_port and scrape their values.
@@ -112,8 +121,14 @@ public class JmxScraper {
             for (ObjectName name : whitelistObjectNames) {
                 mBeanNames.addAll(beanConn.queryMBeans(name, null));
             }
+            for (ObjectName name : whitelistObjectInstances) {
+                mBeanNames.add(beanConn.getObjectInstance(name));
+            }
             for (ObjectName name : blacklistObjectNames) {
                 mBeanNames.removeAll(beanConn.queryMBeans(name, null));
+            }
+            for (ObjectName name : blacklistObjectInstances) {
+                mBeanNames.remove(beanConn.getObjectInstance(name));
             }
             for (ObjectInstance name : mBeanNames) {
                 long start = System.nanoTime();
