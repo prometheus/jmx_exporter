@@ -6,20 +6,16 @@ rules:
     attrNameSnakeCase: true
     name: artemis_$2
     type: COUNTER
-    labels:
-        host: $1
   - pattern: "^org.apache.activemq.artemis<broker=\"([^\"]*)\",\\s*component=addresses,\\s*address=\"([^\"]*)\"><>([^:]*):\\s(.*)"
     attrNameSnakeCase: true
     name: artemis_$3
     type: COUNTER
     labels:
-        host: $1
         address: $2
   - pattern: "^org.apache.activemq.artemis<broker=\"([^\"]*)\",\\s*component=addresses,\\s*address=\"([^\"]*)\",\\s*subcomponent=(queue|topic)s,\\s*routing-type=\"([^\"]*)\",\\s*(queue|topic)=\"([^\"]*)\"><>([^: ]*):\\s(.*)"
     attrNameSnakeCase: true
     name: artemis_$7
     type: COUNTER
     labels:
-        host: $1
         address: $2
         "$5": $6
