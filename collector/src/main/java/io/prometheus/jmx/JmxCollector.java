@@ -59,7 +59,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
-      ArrayList<Rule> rules = new ArrayList<Rule>();
+      List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
     }
 
@@ -68,6 +68,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private long createTimeNanoSecs = System.nanoTime();
 
     private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
+
+    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
@@ -309,6 +311,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
+
         String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
 
         for (Rule rule : config.rules) {
@@ -404,7 +407,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
 
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.whitelistObjectNames, config.blacklistObjectNames, receiver);
+      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
