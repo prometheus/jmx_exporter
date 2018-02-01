@@ -67,8 +67,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
 
-    private static final Pattern snakeCasePattern = Pattern.compile("([a-z0-9])([A-Z])");
-
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
@@ -221,6 +219,24 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     }
 
+    static String toSnakeAndLowerCase(String attrName) {
+      if (attrName == null || attrName.isEmpty()) {
+        return attrName;
+      }
+      char firstChar = attrName.subSequence(0, 1).charAt(0);
+      boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
+      StringBuilder resultBuilder = new StringBuilder().append(Character.toLowerCase(firstChar));
+      for (char attrChar : attrName.substring(1).toCharArray()) {
+        boolean charIsUpperCase = Character.isUpperCase(attrChar);
+        if (!prevCharIsUpperCaseOrUnderscore && charIsUpperCase) {
+          resultBuilder.append("_");
+        }
+        resultBuilder.append(Character.toLowerCase(attrChar));
+        prevCharIsUpperCaseOrUnderscore = charIsUpperCase || attrChar == '_';
+      }
+      return resultBuilder.toString();
+    }
+
     class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
@@ -311,8 +327,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
-
-        String attrNameSnakeCase = snakeCasePattern.matcher(attrName).replaceAll("$1_$2").toLowerCase();
+        String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
         for (Rule rule : config.rules) {
           Matcher matcher = null;
