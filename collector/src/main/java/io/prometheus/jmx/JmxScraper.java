@@ -1,11 +1,6 @@
 package io.prometheus.jmx;
 
-import javax.management.JMException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
@@ -18,14 +13,7 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -135,31 +123,71 @@ class JmxScraper {
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
-        for (int idx = 0; idx < attrInfos.length; ++idx) {
-            MBeanAttributeInfo attr = attrInfos[idx];
-            if (!attr.isReadable()) {
-                logScrape(mbeanName, attr, "not readable");
-                continue;
+        if(true){  //toggle feature (true to use new faster bulk fetch)
+            //collect array of names to fetch in 1 go
+            Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
+            List<String> names = new ArrayList<String>(attrInfos.length);
+            for (int idx = 0; idx < attrInfos.length; ++idx) {
+                MBeanAttributeInfo attr = attrInfos[idx];
+                if (!attr.isReadable()) {
+                    logScrape(mbeanName, attr, "not readable");
+                    continue;
+                }
+                name2AttrInfo.put(attr.getName(), attr);
+                names.add(attr.getName());
             }
-
-            Object value;
+            AttributeList attributes;
             try {
-                value = beanConn.getAttribute(mbeanName, attr.getName());
-            } catch(Exception e) {
-                logScrape(mbeanName, attr, "Fail: " + e);
-                continue;
+                attributes = beanConn.getAttributes(mbeanName, names.toArray(new String[0]));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to read " + names + " from " + mbeanName);
+                //logScrape(mbeanName, null, "Fail: " + e); //TODO
             }
-
-            logScrape(mbeanName, attr, "process");
-            processBeanValue(
-                    mbeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                    new LinkedList<String>(),
-                    attr.getName(),
-                    attr.getType(),
-                    attr.getDescription(),
-                    value
+            for (Object o : attributes) {
+                if (o instanceof Attribute) {
+                    Attribute attribute = (Attribute) o;
+                    Object value = attribute.getValue();
+                    String name = attribute.getName();
+                    MBeanAttributeInfo attr = name2AttrInfo.get(name);
+                    logScrape(mbeanName, attr, "process");
+                    processBeanValue(
+                            mbeanName.getDomain(),
+                            jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                            new LinkedList<String>(),
+                            attr.getName(),
+                            attr.getType(),
+                            attr.getDescription(),
+                            value
                     );
+                }
+            }
+        }else {
+            for (int idx = 0; idx < attrInfos.length; ++idx) {
+                MBeanAttributeInfo attr = attrInfos[idx];
+                if (!attr.isReadable()) {
+                    logScrape(mbeanName, attr, "not readable");
+                    continue;
+                }
+
+                Object value;
+                try {
+                    value = beanConn.getAttribute(mbeanName, attr.getName());
+                } catch (Exception e) {
+                    logScrape(mbeanName, attr, "Fail: " + e);
+                    continue;
+                }
+
+                logScrape(mbeanName, attr, "process");
+                processBeanValue(
+                        mbeanName.getDomain(),
+                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                        new LinkedList<String>(),
+                        attr.getName(),
+                        attr.getType(),
+                        attr.getDescription(),
+                        value
+                );
+            }
         }
     }
 
