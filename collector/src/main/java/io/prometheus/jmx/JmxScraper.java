@@ -123,7 +123,7 @@ class JmxScraper {
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
-        if(true){  //toggle feature (true to use new faster bulk fetch)
+        if(Boolean.valueOf(System.getProperty("BULK_FETCH", "false"))){  //toggle feature (true to use new faster bulk fetch)
             //collect array of names to fetch in 1 go
             Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
             List<String> names = new ArrayList<String>(attrInfos.length);
@@ -299,6 +299,7 @@ class JmxScraper {
     }
     private static void logScrape(String name, String msg) {
         logger.log(Level.FINE, "scrape: '" + name + "': " + msg);
+//        System.out.println("scrape: '" + name + "': " + msg);
     }
 
     private static class StdoutWriter implements MBeanReceiver {
