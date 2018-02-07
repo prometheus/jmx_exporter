@@ -126,7 +126,6 @@ class JmxScraper {
         if(Boolean.valueOf(System.getProperty("BULK_FETCH", "false"))){  //toggle feature (true to use new faster bulk fetch)
             //collect array of names to fetch in 1 go
             Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
-            List<String> names = new ArrayList<String>(attrInfos.length);
             for (int idx = 0; idx < attrInfos.length; ++idx) {
                 MBeanAttributeInfo attr = attrInfos[idx];
                 if (!attr.isReadable()) {
@@ -134,14 +133,12 @@ class JmxScraper {
                     continue;
                 }
                 name2AttrInfo.put(attr.getName(), attr);
-                names.add(attr.getName());
             }
             AttributeList attributes;
             try {
-                attributes = beanConn.getAttributes(mbeanName, names.toArray(new String[0]));
+                attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
             } catch (Exception e) {
-                throw new RuntimeException("Failed to read " + names + " from " + mbeanName);
-                //logScrape(mbeanName, null, "Fail: " + e); //TODO
+                throw new RuntimeException("Failed to read attributes " + name2AttrInfo.keySet() + " from " + mbeanName);
             }
             for (Object o : attributes) {
                 if (o instanceof Attribute) {
