@@ -155,9 +155,7 @@ class JmxScraper {
         for (Object o : attributes) {
             if (o instanceof Attribute) {
                 Attribute attribute = (Attribute) o;
-                Object value = attribute.getValue();
-                String name = attribute.getName();
-                MBeanAttributeInfo attr = name2AttrInfo.get(name);
+                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
                 logScrape(mbeanName, attr, "process");
                 processBeanValue(
                         mbeanName.getDomain(),
@@ -166,7 +164,7 @@ class JmxScraper {
                         attr.getName(),
                         attr.getType(),
                         attr.getDescription(),
-                        value
+                        attribute.getValue()
                 );
             }else {
                 throw new IllegalStateException("Item from attribute list is not of type Attribute [" + o.getClass().getSimpleName() + "]: " + o + " from mbean: " + mbeanName);
