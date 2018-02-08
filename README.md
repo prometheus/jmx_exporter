@@ -16,8 +16,9 @@ Agent is thus strongly encouraged.
 To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.2.0/jmx_prometheus_javaagent-0.2.0.jar) and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.2.0.jar=1234:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.2.0.jar=8080:config.yaml -jar yourJar.jar
 ```
+Metrics will now be accessible at http://localhost:8080/metrics
 
 To bind the java agent to a specific IP change the port number to `host:port`.
 
