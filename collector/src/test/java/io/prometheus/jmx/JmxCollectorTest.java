@@ -1,16 +1,17 @@
 package io.prometheus.jmx;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import java.lang.management.ManagementFactory;
+import javax.management.MBeanServer;
+import org.junit.Test;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
-
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import java.lang.management.ManagementFactory;
-
-import static org.junit.Assert.*;
 
 
 public class JmxCollectorTest {
@@ -28,7 +29,6 @@ public class JmxCollectorTest {
         Hadoop.registerBean(mbs);
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
-        Complex.registerBean(mbs);
     }
 
     @Before
@@ -244,36 +244,4 @@ public class JmxCollectorTest {
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
     }
-
-    @Test
-    public void perfTestSpeedImprovementUsingBulkAttributesRead() throws Exception {
-        int numberOfIterations = 5;
-        doTest(false, numberOfIterations);
-        doTest(true, numberOfIterations);
-        long durationBefore = doTest(false, numberOfIterations);
-        long durationAfter = doTest(true, numberOfIterations);
-        double speedupPercent = (((double)durationAfter - durationBefore)/durationBefore)*100; //(new - old)/old*100%
-        System.out.println("durationBefore = " + durationBefore + ", durationAfter = " + durationAfter +
-                ", speedup = " + Math.abs(speedupPercent) + "% " + (speedupPercent<0?"improvement":"degradation"));
-        assertTrue("not always faster on local loopback", speedupPercent<0);
-    }
-
-    private long doTest(boolean bulkFetch, int numberOfIterations) throws MalformedObjectNameException {
-        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: '.*'\n").register(registry);
-        System.setProperty("BULK_FETCH", String.valueOf(bulkFetch));
-        long start =  System.nanoTime();
-        for (int n = 0; n < numberOfIterations; n++) {
-            registry.getSampleValue("java_lang_OperatingSystem_CommittedVirtualMemorySize", new String[]{}, new String[]{});
-            registry.getSampleValue("java_lang_OperatingSystem_TotalSwapSpaceSize", new String[]{}, new String[]{});
-            assertEquals(1, registry.getSampleValue("Complex_Test_One", new String[]{}, new String[]{}), .001);
-            assertEquals(2, registry.getSampleValue("Complex_Test_Two", new String[]{}, new String[]{}), .001);
-            assertEquals(3, registry.getSampleValue("Complex_Test_Three", new String[]{}, new String[]{}), .001);
-            assertEquals(4, registry.getSampleValue("Complex_Test_Four", new String[]{}, new String[]{}), .001);
-            assertEquals(5, registry.getSampleValue("Complex_Test_Five", new String[]{}, new String[]{}), .001);
-        }
-        registry.unregister(jc);
-        return System.nanoTime() - start;
-    }
-
-
 }

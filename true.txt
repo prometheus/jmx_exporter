@@ -1,5 +1,0 @@
-jmx_scrape_duration_seconds 0.660447403
-jmx_scrape_duration_seconds 0.114861666
-jmx_scrape_duration_seconds 0.123758608
-jmx_scrape_duration_seconds 0.104338104
-jmx_scrape_duration_seconds 0.182599706
