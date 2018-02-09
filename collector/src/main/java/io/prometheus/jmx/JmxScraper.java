@@ -20,14 +20,7 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -146,29 +139,32 @@ class JmxScraper {
             }
             name2AttrInfo.put(attr.getName(), attr);
         }
-        AttributeList attributes;
+        AttributeList attributes = new AttributeList();
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to read attributes " + name2AttrInfo.keySet() + " from " + mbeanName);
-        }
-        for (Object o : attributes) {
-            if (o instanceof Attribute) {
-                Attribute attribute = (Attribute) o;
-                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-                logScrape(mbeanName, attr, "process");
-                processBeanValue(
-                        mbeanName.getDomain(),
-                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                        new LinkedList<String>(),
-                        attr.getName(),
-                        attr.getType(),
-                        attr.getDescription(),
-                        attribute.getValue()
-                );
-            }else {
-                throw new IllegalStateException("Item from attribute list is not of type Attribute [" + o.getClass().getSimpleName() + "]: " + o + " from mbean: " + mbeanName);
+            //couldn't get them all in one go, try them 1 by 1
+            for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
+                try {
+                    attributes.add(beanConn.getAttribute(mbeanName, attr.getName()));
+                } catch(Exception e2) {
+                    logScrape(mbeanName, attr, "Fail: " + e2);
+                    continue;
+                }
             }
+        }
+        for (Attribute attribute : attributes.asList()) {
+            MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
+            logScrape(mbeanName, attr, "process");
+            processBeanValue(
+                    mbeanName.getDomain(),
+                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                    new LinkedList<String>(),
+                    attr.getName(),
+                    attr.getType(),
+                    attr.getDescription(),
+                    attribute.getValue()
+            );
         }
     }
 
