@@ -150,15 +150,7 @@ class JmxScraper {
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
         } catch (Exception e) {
-            //couldn't get them all in one go, try them 1 by 1
-            for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
-                try {
-                    attributes.add(beanConn.getAttribute(mbeanName, attr.getName()));
-                } catch(Exception e2) {
-                    logScrape(mbeanName, attr, "Fail: " + e2);
-                    continue;
-                }
-            }
+            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
         }
         for (Attribute attribute : attributes.asList()) {
             MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
@@ -278,6 +270,9 @@ class JmxScraper {
     /**
      * For debugging.
      */
+    private static void logScrape(ObjectName mbeanName, Set<String> names, String msg) {
+        logScrape(mbeanName + "_" + names, msg);
+    }
     private static void logScrape(ObjectName mbeanName, MBeanAttributeInfo attr, String msg) {
         logScrape(mbeanName + "'_'" + attr.getName(), msg);
     }
