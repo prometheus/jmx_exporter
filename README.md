@@ -23,6 +23,8 @@ To bind the java agent to a specific IP change the port number to `host:port`.
 
 See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
 
+Note: Requires minimum JDK version 1.6
+
 ## Building
 
 `mvn package` to build.
