@@ -146,11 +146,12 @@ class JmxScraper {
             }
             name2AttrInfo.put(attr.getName(), attr);
         }
-        AttributeList attributes = new AttributeList();
+        final AttributeList attributes;
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
         } catch (Exception e) {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
+            return;
         }
         for (Attribute attribute : attributes.asList()) {
             MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
