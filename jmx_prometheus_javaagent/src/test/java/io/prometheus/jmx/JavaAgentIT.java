@@ -3,6 +3,7 @@ package io.prometheus.jmx;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,7 +54,7 @@ public class JavaAgentIT {
         final String buildDirectory = (String) System.getProperties().get("buildDirectory");
         final String finalName = (String) System.getProperties().get("finalName");
         final int port = Integer.parseInt((String) System.getProperties().get("it.port"));
-        final String config = getClass().getClassLoader().getResource("test.yml").getFile();
+        final String config = resolveRelativePathToResource("test.yml");
         final String javaagent = "-javaagent:" + buildDirectory + "/" + finalName + ".jar=" + port + ":" + config;
 
         final String javaHome = System.getenv("JAVA_HOME");
@@ -103,5 +104,12 @@ public class JavaAgentIT {
 
             assertThat("Application did not exit cleanly", exitcode == 0);
         }
+    }
+
+    //trying to avoid the occurrence of any : in the windows path
+    private String resolveRelativePathToResource(String resource) {
+        final String configwk = new File(getClass().getClassLoader().getResource(resource).getFile()).getAbsolutePath();
+        final File workingDir = new File(new File(".").getAbsolutePath());
+        return "." + configwk.replace(workingDir.getParentFile().getAbsolutePath(), "");
     }
 }

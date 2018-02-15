@@ -1,7 +1,6 @@
 package io.prometheus.jmx;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -10,7 +9,6 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.BeforeClass;
