@@ -2,27 +2,27 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import org.yaml.snakeyaml.Yaml;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import org.yaml.snakeyaml.Yaml;
 
 import static java.lang.String.format;
 
@@ -225,7 +225,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
       char firstChar = attrName.subSequence(0, 1).charAt(0);
       boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
-      StringBuilder resultBuilder = new StringBuilder().append(Character.toLowerCase(firstChar));
+      StringBuilder resultBuilder = new StringBuilder(attrName.length()).append(Character.toLowerCase(firstChar));
       for (char attrChar : attrName.substring(1).toCharArray()) {
         boolean charIsUpperCase = Character.isUpperCase(attrChar);
         if (!prevCharIsUpperCaseOrUnderscore && charIsUpperCase) {
@@ -237,23 +237,46 @@ public class JmxCollector extends Collector implements Collector.Describable {
       return resultBuilder.toString();
     }
 
+  /**
+   * Change invalid chars to underscore, and merge underscores.
+   * @param name Input string
+   * @return
+   */
+  static String safeName(String name) {
+      if (name == null) {
+        return null;
+      }
+      boolean prevCharIsUnderscore = false;
+      StringBuilder safeNameBuilder = new StringBuilder(name.length());
+      for (char nameChar : name.toCharArray()) {
+        boolean isUnsafeChar = !(Character.isLetterOrDigit(nameChar) || nameChar == ':' || nameChar == '_');
+        if ((isUnsafeChar || nameChar == '_')) {
+          if (prevCharIsUnderscore) {
+            continue;
+          } else {
+            safeNameBuilder.append("_");
+            prevCharIsUnderscore = true;
+          }
+        } else {
+          safeNameBuilder.append(nameChar);
+          prevCharIsUnderscore = false;
+        }
+      }
+
+      return safeNameBuilder.toString();
+    }
+
     class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
       private static final char SEP = '_';
 
-      private final Pattern unsafeChars = Pattern.compile("[^a-zA-Z0-9:_]");
-      private final Pattern multipleUnderscores = Pattern.compile("__+");
+
 
       // [] and () are special in regexes, so swtich to <>.
       private String angleBrackets(String s) {
         return "<" + s.substring(1, s.length() - 1) + ">";
-      }
-
-      private String safeName(String s) {
-        // Change invalid chars to underscore, and merge underscores.
-        return multipleUnderscores.matcher(unsafeChars.matcher(s).replaceAll("_")).replaceAll("_");
       }
 
       void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
@@ -272,7 +295,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
           String attrName,
-          String attrType,
           String help,
           Object value,
           Type type) {
@@ -361,7 +383,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           // If there's no name provided, use default export format.
           if (rule.name == null) {
-            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, attrType, help, value, rule.type);
+            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.type);
             return;
           }
 
