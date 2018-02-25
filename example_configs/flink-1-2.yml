@@ -1,0 +1,121 @@
+rules:
+  ## Job Manager ##
+  - pattern: org\.apache\.flink\.jobmanager\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*)><>(Count|Value|Rate)
+    name: flink_jobmanager_$1_$2_$3_$4_$5
+    type: GAUGE
+    labels:
+      host: $6
+
+  - pattern: org\.apache\.flink\.jobmanager\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*)><>(Count|Value|Rate)
+    name: flink_jobmanager_$1_$2_$3_$4
+    type: GAUGE
+    labels:
+      host: $5
+
+  - pattern: org\.apache\.flink\.jobmanager\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), job_name=(.*), job_id=(.*)><>(Count|Value|Rate)
+    name: flink_jobmanager_$1_$2_$3
+    type: GAUGE
+    labels:
+      host: $4
+      job_name: $5
+      job_id: $6
+
+  - pattern: org\.apache\.flink\.jobmanager\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), job_name=(.*), job_id=(.*)><>(Count|Value|Rate)
+    name: flink_jobmanager_$1_$2
+    type: GAUGE
+    labels:
+      host: $3
+      job_name: $4
+      job_id: $5
+
+  - pattern: org\.apache\.flink\.jobmanager\.([a-zA-Z\-\_]+)<host=(.*)><>(Count|Value|Rate)
+    name: flink_jobmanager_$1
+    type: GAUGE
+    labels:
+      host: $2
+
+  ## Task Manager ##
+  - pattern: org\.apache\.flink\.taskmanager\.Status\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), tm_id=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_Status_$1_$2_$3_$4_$5_$6
+    type: GAUGE
+    labels:
+      tm_id: $8
+
+  - pattern: org\.apache\.flink\.taskmanager\.Status\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), tm_id=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_Status_$1_$2_$3_$4_$5
+    type: GAUGE
+    labels:
+      tm_id: $7
+
+  - pattern: org\.apache\.flink\.taskmanager\.Status\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), tm_id=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_Status_$1_$2_$3_$4
+    type: GAUGE
+    labels:
+      tm_id: $6
+
+  - pattern: org\.apache\.flink\.taskmanager\.Status\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), tm_id=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_Status_$1_$2_$3
+    type: GAUGE
+    labels:
+      tm_id: $5
+
+  - pattern: org\.apache\.flink\.taskmanager\.Status\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<host=(.*), tm_id=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_Status_$1_$2
+    type: GAUGE
+    labels:
+      tm_id: $4
+
+  - pattern: org\.apache\.flink\.taskmanager\.job\.task\.operator\.(KafkaConsumer|KafkaProducer)\.([a-zA-Z\-\_]+).([a-zA-Z\-\_]+)-([0-9]+)<task_id=(.*), subtask_index=(.*), job_id=(.*), tm_id=(.*), task_attempt_id=(.*), job_name=(.*), operator_name=(.*), task_attempt_num=(.*), host=(.*), task_name=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_job_task_operator_$1_$2
+    type: GAUGE
+    labels:
+      topic: $3
+      partition: $4
+      subtask_index: $6
+      job_id: $7
+      tm_id: $8
+      job_name: $10
+      operator_name: $11
+      task_name: $14
+
+  - pattern: org\.apache\.flink\.taskmanager\.job\.task\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<task_name=(.*), job_id=(.*), task_attempt_id=(.*), job_name=(.*), tm_id=(.*), task_id=(.*), task_attempt_num=(.*), host=(.*), subtask_index=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_job_task_$1_$2
+    type: GAUGE
+    labels:
+      task_name: $3
+      job_id: $4
+      job_name: $6
+      tm_id: $7
+      subtask_index: $11
+
+  - pattern: org\.apache\.flink\.taskmanager\.job\.task\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<task_id=(.*), subtask_index=(.*), job_id=(.*), tm_id=(.*), task_attempt_id=(.*), job_name=(.*), operator_name=(.*), task_attempt_num=(.*), host=(.*), task_name=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_job_task_$1_$2_$3
+    type: GAUGE
+    labels:
+      subtask_index: $5
+      job_id: $6
+      tm_id: $7
+      job_name: $9
+      operator_name: $10
+      task_name: $13
+
+  - pattern: org\.apache\.flink\.taskmanager\.job\.task\.([a-zA-Z\-\_]+)\.([a-zA-Z\-\_]+)<task_id=(.*), subtask_index=(.*), job_id=(.*), tm_id=(.*), task_attempt_id=(.*), job_name=(.*), operator_name=(.*), task_attempt_num=(.*), host=(.*), task_name=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_job_$1_$2
+    type: GAUGE
+    labels:
+      subtask_index: $4
+      job_id: $5
+      tm_id: $6
+      job_name: $8
+      operator_name: $9
+      task_name: $12
+
+  - pattern: org\.apache\.flink\.taskmanager\.job\.task\.([a-zA-Z\-\_]+)<task_name=(.*), job_id=(.*), task_attempt_id=(.*), job_name=(.*), tm_id=(.*), task_id=(.*), task_attempt_num=(.*), host=(.*), subtask_index=(.*)><>(Count|Value|Rate)
+    name: flink_taskmanager_job_task_$1
+    type: GAUGE
+    labels:
+      task_name: $2
+      job_id: $3
+      job_name: $5
+      tm_id: $6
+      subtask_index: $10
