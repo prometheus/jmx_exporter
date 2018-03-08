@@ -110,7 +110,7 @@ If a given part isn't set, it'll be excluded.
 
 ## Debugging
 
-You can start the jmx's scraper in standlone mode in order to debug what is called 
+You can start the jmx's scraper in standalone mode in order to debug what is called 
 
 `java -cp jmx_exporter.jar io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url`
 
