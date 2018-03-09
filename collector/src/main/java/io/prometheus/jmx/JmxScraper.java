@@ -237,7 +237,7 @@ class JmxScraper {
                 if (valu instanceof CompositeData) {
                     CompositeData composite = (CompositeData) valu;
                     for (String idx : rowKeys) {
-                        if ( composite.get(idx) != null ) {
+                        if ((composite != null) && (composite.get(idx) != null)) {
                             l2s.put(idx, composite.get(idx).toString());
                         }
                     }
