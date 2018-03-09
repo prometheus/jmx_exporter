@@ -24,6 +24,21 @@
       <artifactId>simpleclient_httpserver</artifactId>
       <version>0.3.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.remotingjmx</groupId>
+      <artifactId>remoting-jmx</artifactId>
+      <version>2.0.0.Final</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-processor</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.logmanager</groupId>
+          <artifactId>jboss-logmanager</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
 
@@ -33,14 +48,6 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifest>
-              <mainClass>io.prometheus.jmx.WebServer</mainClass>
-            </manifest>
-          </archive>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
         </configuration>
         <executions>
           <execution>
@@ -49,6 +56,17 @@
             <goals>
               <goal>single</goal>
             </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>io.prometheus.jmx.WebServer</mainClass>
+                </manifest>
+              </archive>
+              <descriptor>${project.basedir}/assembly.xml</descriptor>
+              <descriptorRefs>
+                <descriptorRef>asdf</descriptorRef>
+              </descriptorRefs>
+            </configuration>
           </execution>
         </executions>
       </plugin>
