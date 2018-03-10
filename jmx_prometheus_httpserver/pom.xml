@@ -47,8 +47,6 @@
       <!-- Build a full jar with dependencies --> 
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-        </configuration>
         <executions>
           <execution>
             <id>make-assembly</id>
