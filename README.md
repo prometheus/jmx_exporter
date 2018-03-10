@@ -28,7 +28,7 @@ See `./run_sample_httpserver.sh` for a sample script that runs the httpserver ag
 
 JBoss's Wildfly needs extra classes in the client's classpath to allow a connection upgrade from its standard http 9990 management port. This is usually accomplished by [adding jboss-cli.jar to the classpath of your jmx client](http://planet.jboss.org/post/remote_jmx_access_to_wildfly_or_jboss_as7_using_jconsole). Given the nature of how `jmx_prometheus_httpserver` is implemented, simply adding `jboss-cli.jar` to its classpath does not work as expected.
 
-To connect to a remote Wildfly instance, please use `jmx_prometheus_httpserver-*-jar-with-dependencies-wfly.jar`, which is automatically created at build, along with `jmx_prometheus_httpserver-*-jar-with-dependencies.jar`
+To connect to a remote Wildfly instance, please use `jmx_prometheus_httpserver-*-jar-with-dependencies-wildfly.jar`, which is automatically created at build, along with `jmx_prometheus_httpserver-*-jar-with-dependencies.jar`
 
 Following from `run_sample_httpserver.sh`, you can easily modify your command line. For example:
 
