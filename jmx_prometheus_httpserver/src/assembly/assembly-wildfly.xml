@@ -2,7 +2,7 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <!-- TODO: a jarjar format would be better -->
-    <id>jar-with-dependencies-wfly</id>
+    <id>jar-with-dependencies-wildfly</id>
     <formats>
         <format>jar</format>
     </formats>
