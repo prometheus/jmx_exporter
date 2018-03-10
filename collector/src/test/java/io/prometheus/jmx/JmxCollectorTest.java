@@ -244,4 +244,12 @@ public class JmxCollectorTest {
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
     }
+
+    @Test
+    public void testNullTabularKey() throws Exception {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      Tabular.registerBean(mbs);
+      JmxCollector jc = new JmxCollector("").register(registry);
+      assertEquals(1, registry.getSampleValue("tabular_Test_Foo", new String[]{}, new String[]{}), .001);
+    }
 }
