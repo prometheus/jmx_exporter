@@ -62,10 +62,22 @@
                   <mainClass>io.prometheus.jmx.WebServer</mainClass>
                 </manifest>
               </archive>
-              <descriptor>${project.basedir}/assembly.xml</descriptor>
-              <descriptorRefs>
-                <descriptorRef>asdf</descriptorRef>
-              </descriptorRefs>
+              <descriptor>${project.basedir}/src/assembly/assembly.xml</descriptor>
+            </configuration>
+          </execution>
+          <execution>
+            <id>make-assembly-wildfly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>io.prometheus.jmx.WebServer</mainClass>
+                </manifest>
+              </archive>
+              <descriptor>${project.basedir}/src/assembly/assembly-wildfly.xml</descriptor>
             </configuration>
           </execution>
         </executions>
