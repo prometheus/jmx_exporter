@@ -36,6 +36,8 @@ Following from `run_sample_httpserver.sh`, you can easily modify your command li
 java -jar jmx_prometheus_httpserver-*-jar-with-dependencies-wildfly.jar 5556 config.yml
 ```
 
+**NOTE**: `jmx_prometheus_httpserver-*-jar-with-dependencies-wildfly.jar` should only be necessary if you are connecting to a remote Wildfly instance. This is not an issue when using `jmx-exporter` as a javaagent.
+
 ## Building
 
 `mvn package` to build.
