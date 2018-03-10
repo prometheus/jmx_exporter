@@ -237,7 +237,10 @@ class JmxScraper {
                 if (valu instanceof CompositeData) {
                     CompositeData composite = (CompositeData) valu;
                     for (String idx : rowKeys) {
-                        l2s.put(idx, composite.get(idx).toString());
+                        Object obj = composite.get(idx);
+                        if (obj != null) {
+                            l2s.put(idx, obj.toString());
+                        }
                     }
                     for(String valueIdx : valueKeys) {
                         LinkedList<String> attrNames = extendedAttrKeys;
