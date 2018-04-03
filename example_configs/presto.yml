@@ -1,48 +1,38 @@
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-whitelistObjectNames: ["com.facebook.presto.hive:type=NamenodeStats,*", "com.facebook.presto.hive.metastore:type=ThriftHiveMetastore,*", "com.facebook.presto.failureDetector:name=HeartbeatFailureDetector,*", "com.facebook.presto.execution:name=QueryManag\
-er,*", "com.facebook.presto.execution:name=TaskManager,*", "com.facebook.presto.memory:type=ClusterMemoryPool,*", "com.facebook.presto.memory:name=ClusterMemoryManager,*"]
-blacklistObjectNames: []
 rules:
   - pattern: "com.facebook.presto.hive<type=NamenodeStats, name=hive><>(.+): (.*)"
-    name: "presto:hive_namenodestats_$1"
+    name: "presto hive_namenodestats_$1"
     help: "Presto Hive: NameNodeStats $1"
-    value: $2
     type: GAUGE
     attrNameSnakeCase: false
-  - pattern: "com.facebook.presto.hive.metastore<type=ThriftHiveMetastore, name=hive><>(.+): (.*)"
-    name: "presto:hivemetastorestats_$1"
+  - pattern: "com.facebook.presto.hive.metastore.thrift<type=ThriftHiveMetastore, name=hive><>(.+): (.*)"
+    name: "presto hivemetastorestats_$1"
     help: "Presto Hive: Metastore Stats $1"
-    value: $2
     type: GAUGE
     attrNameSnakeCase: false
   - pattern: "com.facebook.presto.execution<name=TaskManager><>(.+): (.*)"
-    name: "presto:taskmanager_$1"
+    name: "presto taskmanager_$1"
     help: "Presto: TaskManager Stats $1"
-    value: $2
     type: GAUGE
     attrNameSnakeCase: false
   - pattern: "com.facebook.presto.failureDetector<name=HeartbeatFailureDetector><>ActiveCount: (.*)"
-    name: "presto:heartbeatdetector_activecount"
+    name: "presto heartbeatdetector_activecount"
     help: "Presto: HeartBeat Detector ActiveCount"
-    value: $1
     type: GAUGE
     attrNameSnakeCase: false
   - pattern: "com.facebook.presto.execution<name=QueryManager><>(.+): (.*)"
-    name: "presto:querymanager_$1"
+    name: "presto querymanager_$1"
     help: "Presto: QueryManager $1"
-    value: $2
     type: GAUGE
     attrNameSnakeCase: false
   - pattern: "com.facebook.presto.memory<name=ClusterMemoryManager><>(.+): (.*)"
-    name: "presto:clustermemorymanager_$1"
+    name: "presto clustermemorymanager_$1"
     help: "Presto: ClusterMemoryManager $1"
-    value: $2
     type: GAUGE
     attrNameSnakeCase: false
   - pattern: "com.facebook.presto.memory<type=ClusterMemoryPool, name=(.*)><>(.+): (.*)"
-    name: "presto:clustermemorypool_$1_$2"
+    name: "presto clustermemorypool_$1_$2"
     help: "Presto ClusterMemoryPool: $1 $2"
-    value: $3
     type: GAUGE
     attrNameSnakeCase: false
