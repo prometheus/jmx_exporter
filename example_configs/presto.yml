@@ -1,38 +1,41 @@
-lowercaseOutputName: true
-lowercaseOutputLabelNames: true
 rules:
-  - pattern: "com.facebook.presto.hive<type=NamenodeStats, name=hive><>(.+): (.*)"
+  - pattern: "com.facebook.presto.hive<type=NamenodeStats, name=hive><>(.+AllTime.+): (.*)"
     name: "presto hive_namenodestats_$1"
     help: "Presto Hive: NameNodeStats $1"
     type: GAUGE
-    attrNameSnakeCase: false
-  - pattern: "com.facebook.presto.hive.metastore.thrift<type=ThriftHiveMetastore, name=hive><>(.+): (.*)"
+  - pattern: "com.facebook.presto.hive<type=NamenodeStats, name=hive><>(.+TotalCount.*): (.*)"
+    name: "presto hive_namenodestats_$1"
+    help: "Presto Hive: NameNodeStats $1"
+    type: COUNTER
+  - pattern: "com.facebook.presto.hive.metastore.thrift<type=ThriftHiveMetastore, name=hive><>(.+AllTime.+): (.*)"
     name: "presto hivemetastorestats_$1"
     help: "Presto Hive: Metastore Stats $1"
     type: GAUGE
-    attrNameSnakeCase: false
-  - pattern: "com.facebook.presto.execution<name=TaskManager><>(.+): (.*)"
+  - pattern: "com.facebook.presto.hive.metastore.thrift<type=ThriftHiveMetastore, name=hive><>(.+TotalCount.*): (.*)"
+    name: "presto hivemetastorestats_$1"
+    help: "Presto Hive: Metastore Stats $1"
+    type: COUNTER
+  - pattern: "com.facebook.presto.execution<name=TaskManager><>(.+TotalCount.*): (.*)"
     name: "presto taskmanager_$1"
     help: "Presto: TaskManager Stats $1"
-    type: GAUGE
-    attrNameSnakeCase: false
+    type: COUNTER
   - pattern: "com.facebook.presto.failureDetector<name=HeartbeatFailureDetector><>ActiveCount: (.*)"
     name: "presto heartbeatdetector_activecount"
     help: "Presto: HeartBeat Detector ActiveCount"
     type: GAUGE
-    attrNameSnakeCase: false
-  - pattern: "com.facebook.presto.execution<name=QueryManager><>(.+): (.*)"
+  - pattern: "com.facebook.presto.execution<name=QueryManager><>(.+AllTime.+): (.*)"
     name: "presto querymanager_$1"
     help: "Presto: QueryManager $1"
     type: GAUGE
-    attrNameSnakeCase: false
+  - pattern: "com.facebook.presto.execution<name=QueryManager><>(.+TotalCount.*): (.*)"
+    name: "presto querymanager_$1"
+    help: "Presto: QueryManager $1"
+    type: COUNTER
   - pattern: "com.facebook.presto.memory<name=ClusterMemoryManager><>(.+): (.*)"
     name: "presto clustermemorymanager_$1"
     help: "Presto: ClusterMemoryManager $1"
     type: GAUGE
-    attrNameSnakeCase: false
   - pattern: "com.facebook.presto.memory<type=ClusterMemoryPool, name=(.*)><>(.+): (.*)"
     name: "presto clustermemorypool_$1_$2"
     help: "Presto ClusterMemoryPool: $1 $2"
     type: GAUGE
-    attrNameSnakeCase: false
