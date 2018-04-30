@@ -19,12 +19,8 @@ class JmxMBeanPropertyCache {
                     "(" + // Either
                     "\"" + // Quoted
                     "(?:" + // A possibly empty sequence of
-                    "[^\\\\\"]" + // Anything but backslash or quote
-                    "|\\\\\\\\" + // or an escaped backslash
-                    "|\\\\n" + // or an escaped newline
-                    "|\\\\\"" + // or an escaped quote
-                    "|\\\\\\?" + // or an escaped question mark
-                    "|\\\\\\*" + // or an escaped star
+                    "[^\\\\\"]*" + // Greedily match anything but backslash or quote
+                    "(?:\\\\.)?" + // Greedily see if we can match an escaped sequence
                     ")*" +
                     "\"" +
                     "|" + // Or
