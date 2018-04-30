@@ -1,9 +1,7 @@
 package io.prometheus.jmx;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import java.util.*;
 
