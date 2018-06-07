@@ -36,6 +36,7 @@
           <archive>
             <manifest>
               <mainClass>io.prometheus.jmx.WebServer</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
           </archive>
           <descriptorRefs>

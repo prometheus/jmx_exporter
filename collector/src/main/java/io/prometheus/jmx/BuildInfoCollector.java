@@ -3,9 +3,10 @@ package io.prometheus.jmx;
 import io.prometheus.client.Collector;
 import io.prometheus.client.GaugeMetricFamily;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import static java.util.Collections.singletonList;
+import static java.util.Arrays.asList;
 
 /**
  * Collects jmx_exporter build version info.
@@ -18,7 +19,7 @@ import static java.util.Collections.singletonList;
  * </pre>
  * Metrics being exported:
  * <pre>
- *   jmx_exporter_build_info{version="3.2.0",} 1.0
+ *   jmx_exporter_build_info{version="3.2.0",name="jmx_prometheus_httpserver",} 1.0
  * </pre>
  */
 public class BuildInfoCollector extends Collector {
@@ -28,11 +29,16 @@ public class BuildInfoCollector extends Collector {
     GaugeMetricFamily artifactInfo = new GaugeMetricFamily(
             "jmx_exporter_build_info",
             "A metric with a constant '1' value labeled with the version of the JMX exporter.",
-            singletonList("version"));
+            asList("version", "name"));
 
-    String version = this.getClass().getPackage().getImplementationVersion();
+    Package pkg = this.getClass().getPackage();
+    String version = pkg.getImplementationVersion();
+    String name = pkg.getImplementationTitle();
 
-    artifactInfo.addMetric(singletonList(version != null ? version : "unknown"), 1L);
+    artifactInfo.addMetric(asList(
+            version != null ? version : "unknown",
+            name != null ? name : "unknown"
+    ), 1L);
     mfs.add(artifactInfo);
 
     return mfs;

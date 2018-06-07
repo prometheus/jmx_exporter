@@ -26,6 +26,7 @@ public class WebServer {
        socket = new InetSocketAddress(port);
      }
 
+     new BuildInfoCollector().register();
      new JmxCollector(new File(args[1])).register();
      new HTTPServer(socket, CollectorRegistry.defaultRegistry);
    }
