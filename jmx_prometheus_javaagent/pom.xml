@@ -82,6 +82,8 @@
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
              <manifestEntries>
               <Premain-Class>io.prometheus.jmx.shaded.io.prometheus.jmx.JavaAgent</Premain-Class>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Implementation-Title>${project.artifactId}</Implementation-Title>
              </manifestEntries>
             </transformer>
           </transformers>

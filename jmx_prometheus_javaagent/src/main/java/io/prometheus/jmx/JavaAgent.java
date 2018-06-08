@@ -44,6 +44,7 @@ public class JavaAgent {
        file = args[1];
      }
 
+     new BuildInfoCollector().register();
      new JmxCollector(new File(file)).register();
      DefaultExports.initialize();
      server = new HTTPServer(socket, CollectorRegistry.defaultRegistry, true);
