@@ -1,6 +1,17 @@
 ---
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
+whitelistObjectNames: 
+ # Whitelist objects to be collected, for performance reason
+ # see https://github.com/prometheus/jmx_exporter/issues/246#issuecomment-367573931
+ # Each object in the rules below has to be added to whitelistObjectNames too !
+ # note that rules use regex (like "foo.*", whereas the whitelist use globbing expressions (like "foo*")
+ - "jboss.as:subsystem=messaging-activemq,server=*"
+ - "jboss.as:subsystem=datasources,data-source=*,statistics=*"
+ - "jboss.as:subsystem=datasources,xa-data-source=*,statistics=*"
+ - "jboss.as:subsystem=transactions*"
+ - "jboss.as:subsystem=undertow,server=*,http-listener=*"
+ # - "java.lang:*"
 rules:
   - pattern: "^jboss.as<subsystem=messaging-activemq, server=.+, jms-(queue|topic)=(.+)><>(.+):"
     attrNameSnakeCase: true
