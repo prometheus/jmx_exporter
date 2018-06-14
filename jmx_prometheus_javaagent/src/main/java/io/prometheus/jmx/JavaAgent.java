@@ -12,6 +12,10 @@ public class JavaAgent {
 
    static HTTPServer server;
 
+   public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
+     premain(agentArgument, instrumentation);
+   }
+
    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
      // Bind to all interfaces by default (this includes IPv6).
      String host = "0.0.0.0";
