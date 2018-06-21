@@ -21,7 +21,7 @@ public class JavaAgent {
      String host = "0.0.0.0";
 
      // If we have IPv6 address in square brackets, extract it first and then
-     // remove it from arguments to prevent confusion from too namy colons.
+     // remove it from arguments to prevent confusion from too many colons.
      Integer indexOfClosingSquareBracket = agentArgument.indexOf("]:");
      if (indexOfClosingSquareBracket >= 0) {
        host = agentArgument.substring(0, indexOfClosingSquareBracket + 1);
