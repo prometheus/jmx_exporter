@@ -34,6 +34,8 @@ The configuration is in YAML. An example with all possible options:
 ---
 startDelaySeconds: 0
 hostPort: 127.0.0.1:1234
+username: 
+password: 
 jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
 ssl: false
 lowercaseOutputName: false
