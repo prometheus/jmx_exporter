@@ -1,0 +1,93 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  ### Metrics with Attributes
+  #kafka.admin.client:type=admin-client-metrics,client-id=moody-test_client-admin
+  #kafka.consumer:type=consumer-coordinator-metrics,client-id=moody-test_client-StreamThread-1-consumer
+  #kafka.consumer:type=consumer-fetch-manager-metrics,client-id=moody-test_client-StreamThread-1-consumer
+  #kafka.consumer:type=consumer-metrics,client-id=moody-test_client-StreamThread-1-consumer
+  #kafka.producer:type=producer-metrics,client-id=moody-test_client-StreamThread-1-producer
+  #kafka.streams:type=stream-metrics,client-id=moody-test_client-StreamThread-1
+  - pattern: "kafka.(.*)<type=(.*)-metrics, client-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+    help: "Kafka client JMX metric $1 $2"
+    type: GAUGE
+
+  #kafka.admin.client:type=admin-client-node-metrics,client-id=moody-test_client-admin,node-id=node--1
+  #kafka.consumer:type=consumer-node-metrics,client-id=moody-test_client-StreamThread-2-consumer,node-id=node--1
+  #kafka.producer:type=producer-node-metrics,client-id=moody-test_client-StreamThread-1-producer,node-id=node--1
+  - pattern: "kafka.(.*)<type=(.*)-metrics, client-id=(.*), node-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+      node_id: "$4"
+    help: "Kafka client JMX metric $1 $2"
+    type: GAUGE
+
+  #kafka.consumer:type=consumer-fetch-manager-metrics,client-id=moody-test_client-StreamThread-1-consumer,topic=realtime-clustered-documents,partition=92
+  - pattern: "kafka.(.*)<type=(.*)-metrics, client-id=(.*), topic=(.*), partition=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+      topic: "$4"
+      partition: "$5"
+    help: "Kafka client JMX metric $1 $2"
+    type: GAUGE
+
+  #kafka.streams:type=stream-task-metrics,client-id=moody-test_client-StreamThread-1,task-id=0_92
+  - pattern: "kafka.(.*)<type=(.*)-metrics, client-id=(.*), task-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+      task_id: "$4"
+    help: "Kafka client JMX metric $1 $2"
+    type: GAUGE
+
+  #kafka.streams:type=stream-processor-node-metrics,client-id=moody-test_client-StreamThread-1,task-id=0_100,processor-node-id=KSTREAM-PROCESSOR-0000000001
+  - pattern: "kafka.(.*)<type=(.*)-metrics, client-id=(.*), task-id=(.*), processor-node-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+      task_id: "$4"
+      processor_node_id: "$5"
+    help: "Kafka client JMX metric $1 $2"
+    type: GAUGE
+
+  ### Metrics with Labels
+  #kafka.admin.client:type=app-info,client-id=moody-test_client-admin
+  #kafka.consumer:type=app-info,client-id=moody-test_client-StreamThread-1-consumer
+  #kafka.producer:type=app-info,client-id=moody-test_client-StreamThread-1-producer
+  - pattern: "kafka.(.*)<type=(app-info), client-id=(.*)><>commit-id:(.*)"
+    name: kafka_$1_$2
+    value: 1
+    labels:
+      client_id: "$3"
+      commit_id: "$4"
+    help: "Kafka client JMX metric $1 $2"
+  - pattern: "kafka.(.*)<type=(app-info), client-id=(.*)><>version:(.*)"
+    name: kafka_$1_$2
+    value: 1
+    labels:
+      client_id: "$3"
+      version: "$4"
+    help: "Kafka client JMX metric $1 $2"
+
+  ### Metrics with count values
+  #kafka.admin.client:type=kafka-metrics-count,client-id=moody-test_client-admin
+  #kafka.consumer:type=kafka-metrics-count,client-id=moody-test_client-StreamThread-1-consumer
+  #kafka.producer:type=kafka-metrics-count,client-id=moody-test_client-StreamThread-1-producer
+  - pattern: "kafka.(.*)<type=(.*)-metrics-count, client-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+    help: "Kafka client JMX metric $1 $2"
+    type: COUNTER
+  #kafka.streams:type=kafka-metrics-count
+  - pattern: "kafka.(.*)<type=(.*)-metrics-count, client-id=(.*)><>"
+    name: kafka_$1_$2
+    labels:
+      client_id: "$3"
+    help: "Kafka client JMX metric $1 $2"
+    type: COUNTER
