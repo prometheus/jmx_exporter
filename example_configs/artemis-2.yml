@@ -4,17 +4,17 @@ lowercaseOutputLabelNames: true
 rules:
   - pattern: "^org.apache.activemq.artemis<broker=\"([^\"]*)\"><>([^:]*):\\s(.*)"
     attrNameSnakeCase: true
-    name: artemis_$2
+    name: "artemis_$2"
     type: COUNTER
   - pattern: "^org.apache.activemq.artemis<broker=\"([^\"]*)\",\\s*component=addresses,\\s*address=\"([^\"]*)\"><>([^:]*):\\s(.*)"
     attrNameSnakeCase: true
-    name: artemis_$3
+    name: "artemis_$3"
     type: COUNTER
     labels:
         address: $2
   - pattern: "^org.apache.activemq.artemis<broker=\"([^\"]*)\",\\s*component=addresses,\\s*address=\"([^\"]*)\",\\s*subcomponent=(queue|topic)s,\\s*routing-type=\"([^\"]*)\",\\s*(queue|topic)=\"([^\"]*)\"><>([^: ]*):\\s(.*)"
     attrNameSnakeCase: true
-    name: artemis_$7
+    name: "artemis_$7"
     type: COUNTER
     labels:
         address: $2
