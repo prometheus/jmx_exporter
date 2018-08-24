@@ -1,3 +1,4 @@
+---
 rules:
   # replicated Zookeeper
   - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+)><>(\\w+)"
@@ -16,6 +17,7 @@ rules:
     labels:
       replicaId: "$2"
       memberType: "$3"
+
   # standalone Zookeeper
   - pattern: "org.apache.ZooKeeperService<name0=StandaloneServer_port(\\d+)><>(\\w+)"
     name: "zookeeper_$2"
