@@ -1,3 +1,4 @@
+---
 rules:
   ## Job Manager ##
   # Example: org.apache.flink.metrics<key0=127.0.0.1, key1=jobmanager, name=taskSlotsTotal><>Value
