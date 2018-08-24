@@ -24,25 +24,25 @@ whitelistObjectNames:
 rules:
   # ex: com.bea<ServerRuntime=AdminServer, Name=default, ApplicationRuntime=moduleJMS, Type=WorkManagerRuntime><>CompletedRequests
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), (.+)Runtime=(.*), Type=(.+)Runtime><>(.+):"
-    name: weblogic_$3_$5_$6
+    name: "weblogic_$3_$5_$6"
     attrNameSnakeCase: true
     labels:
-      runtime: $1
-      name: $2
-      application: $4
+      runtime: "$1"
+      name: "$2"
+      application: "$4"
 
   # ex: com.bea<ServerRuntime=AdminServer, Name=dsName, Type=JDBCDataSourceRuntime><>Metric
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><>(.+):"
-    name: weblogic_$3_$4
+    name: "weblogic_$3_$4"
     attrNameSnakeCase: true
     labels:
-      runtime: $1
-      name: $2
+      runtime: "$1"
+      name: "$2"
 
   # ex: com.bea<ServerRuntime=AdminServer, Name=bea_wls_cluster_internal, Type=ApplicationRuntime><OverallHealthStateJMX>IsCritical
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><(.+)>(.+):"
-    name: weblogic_$3_$4_$5
+    name: "weblogic_$3_$4_$5"
     attrNameSnakeCase: true
     labels:
-      runtime: $1
-      name: $2
+      runtime: "$1"
+      name: "$2"
