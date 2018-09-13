@@ -46,12 +46,12 @@ rules:
   name: ignite_$1_$2_pds_wal
   help: Ignite WAL metrics
   labels:
-    attr: $2
+    attr: $3
 - pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(LastCheckpoint.*):"
   name: ignite_$1_$2_pds_checkpoint
   help: Ignite persistence last checkpoint metrics
   labels:
-    attr: $2
+    attr: $3
   type: COUNTER
 # Apache Ignite allows to keep an eye on the distributed cache specific statistics available.
 #
