@@ -1,21 +1,3 @@
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-#
-#
-#
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
 rules:
@@ -23,20 +5,20 @@ rules:
 # network delay (usually equal to metrics update delay).
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/cluster/ClusterMetrics.html
-- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=ClusterMetrics(.+)><>(HeapMemory.*):"
-  name: ignite_cluster_heap_$1
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(HeapMemory.*):"
+  name: ignite_$1_$2_heap_bytes
   help: Ignite cluster amount of heap memory in bytes
   labels:
     attr: $3
   type: GAUGE
-- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=ClusterMetrics(.+)><>(NonHeapMemory.*):"
-  name: ignite_cluster_nonheap_$1
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(NonHeapMemory.*):"
+  name: ignite_$1_$2_nonheap_bytes
   help: Ignite cluster amount of non-heap memory in bytes
   labels:
     attr: $3
   type: GAUGE
-- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=ClusterMetrics(.+)><>(.*Jobs):"
-  name: ignite_cluster_job_$1
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(.*Jobs):"
+  name: ignite_$1_$2_job_total
   help: Ignite cluster job detalization
   labels:
     attr: $3
@@ -46,26 +28,27 @@ rules:
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataRegionMetricsMXBean.html
 - pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(.*Pages|AllocationRate):"
-  name: ignite_dataregion_pages_$2_$1
+  name: ignite_$1_$2_pages_total
   help: Ignite durable memory pages currently loaded in RAM
   labels:
     attr: $3
+  type: GAUGE
 - pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(Off[Hh]eap.*|MaxSize|PhysicalMemorySize|TotalAllocatedSize):"
-  name: ignite_dataregion_memory_$2_$1
-  help: Ignite durable memory size metrics
+  name: ignite_$1_$2_pages_bytes
+  help: Ignite durable memory pages size metrics in bytes
   labels:
     attr: $3
   type: GAUGE
 # Apache Ignite provides a set of metrics for persistence when it's enabled for a specific data region.
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataStorageMetricsMXBean.html
-- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=DataStorageMetrics><>(Wal.*):"
-  name: ignite_persistence_wal_$1
+- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(Wal.*):"
+  name: ignite_$1_$2_pds_wal
   help: Ignite WAL metrics
   labels:
     attr: $2
-- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=DataStorageMetrics><>(LastCheckpoint.*):"
-  name: ignite_persistence_checkpoint_$1
+- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(LastCheckpoint.*):"
+  name: ignite_$1_$2_pds_checkpoint
   help: Ignite persistence last checkpoint metrics
   labels:
     attr: $2
@@ -73,21 +56,21 @@ rules:
 # Apache Ignite allows to keep an eye on the distributed cache specific statistics available.
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/CacheMetricsMXBean.html
-- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=(.*CacheClusterMetrics.*)><>(Rebalancing.*Rate):"
-  name: ignite_$1_rebalance_$2
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Rebalancing.*Rate):"
+  name: ignite_$1_$3_$2_rebalance_rate
   help: Ignite cache $2 rebalancing rate
   labels:
     cache: $2
     attr: $4
-- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=(.*CacheClusterMetrics.*)><>(RebalanceClearingPartitionsLeft|KeysToRebalanceLeft):"
-  name: ignite_$1_rebalance_left_$2
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(RebalanceClearingPartitionsLeft|KeysToRebalanceLeft):"
+  name: ignite_$1_$3_$2_rebalance_left
   help: Ignite cache $2 rebalancing data left
   labels:
     cache: $2
     attr: $4
   type: COUNTER
-- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=(.*CacheClusterMetrics.*)><>(Cache.*):"
-  name: ignite_$1_cache_operations_$2
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Cache.*):"
+  name: ignite_$1_$3_$2_operations
   help: Ignite cache $2 operations metrics
   labels:
     cache: $2
