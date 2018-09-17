@@ -22,7 +22,7 @@ rules:
   help: Ignite cluster job detalization
   labels:
     attr: $3
-  type: COUNTER
+  type: GAUGE
 # Apache Ignite durable memory can be monitored via data region metrics which will help track overall
 # memory utilization and measure its cluster performance.
 #
@@ -53,7 +53,7 @@ rules:
   help: Ignite persistence last checkpoint metrics
   labels:
     attr: $3
-  type: COUNTER
+  type: GAUGE
 # Apache Ignite allows to keep an eye on the distributed cache specific statistics available.
 # Note, cache metrics is disbaled by default. Use .enableStatistics() to enable statistic collection for the cache.
 #
@@ -70,11 +70,11 @@ rules:
   labels:
     cache: $2
     attr: $4
-  type: COUNTER
+  type: GAUGE
 - pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Cache.*):"
   name: ignite_$1_$3_$2_operations
   help: Ignite cache $2 operations metrics
   labels:
     cache: $2
     attr: $4
-  type: COUNTER
+  type: GAUGE
