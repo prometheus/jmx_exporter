@@ -77,4 +77,4 @@ rules:
   labels:
     cache: $2
     attr: $4
-  type: GAUGE
+  type: COUNTER
