@@ -40,6 +40,7 @@ rules:
     attr: $3
   type: GAUGE
 # Apache Ignite provides a set of metrics for persistence when it's enabled for a specific data region.
+# Note, PDS metrics is disabled by default. Use .enableMetrics() to enable persistence metrics collection on node.
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataStorageMetricsMXBean.html
 - pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(Wal.*):"
@@ -54,6 +55,7 @@ rules:
     attr: $3
   type: COUNTER
 # Apache Ignite allows to keep an eye on the distributed cache specific statistics available.
+# Note, cache metrics is disbaled by default. Use .enableStatistics() to enable statistic collection for the cache.
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/CacheMetricsMXBean.html
 - pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Rebalancing.*Rate):"
