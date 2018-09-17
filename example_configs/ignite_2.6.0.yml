@@ -18,7 +18,7 @@ rules:
     attr: $3
   type: GAUGE
 - pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(.*Jobs):"
-  name: ignite_$1_$2_job_total
+  name: ignite_$1_$2_job
   help: Ignite cluster job detalization
   labels:
     attr: $3
@@ -28,7 +28,7 @@ rules:
 #
 # see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataRegionMetricsMXBean.html
 - pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(.*Pages|AllocationRate):"
-  name: ignite_$1_$2_pages_total
+  name: ignite_$1_$2_pages
   help: Ignite durable memory pages currently loaded in RAM
   labels:
     attr: $3
