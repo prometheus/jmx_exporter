@@ -1,0 +1,106 @@
+# This has been tested on Kafka client 1.1.1, commidId: 98b6346a977495f6
+# Metrics ending with "-total" are counters.
+# Everything else are gauges
+
+# Explaination of regular expression: (((?!(-total|-rate|\.)).)*)
+# this exclude metrics with names "-total", "-rate" and "."
+# "-total": already handled by the (-total) rule
+# "-rate": calculated by the client.  Not needed since we can do the same with the rate()
+# ".": metrics w/ a "." in the name have be deprecated.
+#
+# eg:
+#  "kafka.consumer:type=consumer-fetch-manager-metrics,client-id=client-1:topic-1-0.records-lag-max"
+# has been repplace by
+#  "kafka.consumer:type=consumer-fetch-manager-metrics,client-id=client-1,topic=topic-1,partition=0:records-lag-max"
+
+lowercaseOutputName: true
+
+rules:
+
+#-----------------------------------------------------------------------------
+# Start w/ the special metrics, then most keys to least keys
+#-----------------------------------------------------------------------------
+
+# Special metric: We just want to track the client version/commid-id number
+# kafka.consumer:type=app-info,client-id=consumer-1:version
+# kafka.consumer:type=app-info,client-id=consumer-1:commid-id
+# kafka.producer:type=app-info,client-id=producer-1:version
+# kafka.producer:type=app-info,client-id=producer-1:commid-id
+- pattern: kafka.(\w+)<type=(app-info), client-id=(.+)><>(.+):\s?(.+)
+  name: kafka_$1_$2
+  value: 0
+  labels:
+    "client-id": "$3"
+    "$4": "$5"
+
+#-----------------------------------------------------------------------------
+# metrics w/ 3 keys
+#-----------------------------------------------------------------------------
+
+# dont think there are COUNTER metrics w/ 3 keys. Leaving here in case new client version has them
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+), (.+)=(.+), (.+)=(.+)><>(.+-total)
+  name: kafka_$1_$2_$9
+  type: COUNTER
+  labels:
+    "$3": "$4"
+    "$5": "$6"
+    "$7": "$8"
+
+# kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1,topic=barTopic,partition=0:records-lag
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+), (.+)=(.+), (.+)=(.+)><>(((?!(-total|-rate|\.)).)*)(:)
+  name: kafka_$1_$2_$9
+  type: GAUGE
+  labels:
+    "$3": "$4"
+    "$5": "$6"
+    "$7": "$8"
+
+#-----------------------------------------------------------------------------
+# metrics w/ 2 keys
+#-----------------------------------------------------------------------------
+
+# kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1:bytes-consumed-total
+# kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id=node-111:incoming-byte-total
+# kafka.producer:type=producer-node-metrics,client-id=producer-1,node-id=node-121:outgoing-byte-total
+# kafka.producer:type=producer-topic-metrics,client-id=producer-1,topic=barTopic:record-send-total
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+), (.+)=(.+)><>(.+-total)
+  name: kafka_$1_$2_$7
+  type: COUNTER
+  labels:
+    "$3": "$4"
+    "$5": "$6"
+
+# kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1:fetch-latency-avg
+# kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id=node-111:request-latency-max
+# kafka.producer:type=producer-node-metrics,client-id=producer-1,node-id=node-121:request-size-avg
+# kafka.producer:type=producer-topic-metrics,client-id=producer-1,topic=barTopic:compression-rate
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+), (.+)=(.+)><>(((?!(-total|-rate|\.)).)*)(:)
+  name: kafka_$1_$2_$7
+  type: GAUGE
+  labels:
+    "$3": "$4"
+    "$5": "$6"
+
+#-----------------------------------------------------------------------------
+# metrics w/ 1 key
+#-----------------------------------------------------------------------------
+
+# kafka.consumer:type=consumer-coordinator-metrics,client-id=consumer-1:heartbeat-total
+# kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1:bytes-consumed-total
+# kafka.consumer:type=consumer-metrics,client-id=consumer-1:incoming-byte-total
+# kafka.producer:type=producer-metrics,client-id=producer-1:request-total
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+)><>(.+-total)
+  name: kafka_$1_$2_$5
+  type: COUNTER
+  labels:
+    "$3": "$4"
+
+# kafka.consumer:type=consumer-coordinator-metrics,client-id=consumer-1:assigned-partitions
+# kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1:fetch-latency-avg
+# kafka.consumer:type=consumer-metrics,client-id=consumer-1:request-size-avg
+# kafka.producer:type=producer-metrics,client-id=producer-1:compression-rate-avg
+- pattern: kafka.(\w+)<type=(.+), (.+)=(.+)><>(((?!(-total|-rate|\.)).)*)(:)
+  name: kafka_$1_$2_$5
+  type: GAUGE
+  labels:
+    "$3": "$4"
