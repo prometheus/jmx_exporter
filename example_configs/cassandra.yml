@@ -5,81 +5,54 @@ whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
 blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
 rules:
 # Generic gauges with 0-2 labels
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), (.+)=(.+), name=(.+)><>Value
-  name: cassandra_$1_$6
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(\S*)><>Value
+  name: cassandra_$1_$5
   type: GAUGE
   labels:
+    "$1": "$4"
     "$2": "$3"
-    "$4": "$5"
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), name=(.+)><>Value
-  name: cassandra_$1_$4
-  type: GAUGE
-  labels:
-    "$2": "$3"
-- pattern: org.apache.cassandra.metrics<type=(.+), name=(.+)><>Value
-  name: cassandra_$1_$2
-  type: GAUGE
 
 #
 # Emulate Prometheus 'Summary' metrics for the exported 'Histogram's.
 # TotalLatency is the sum of all latencies since server start
 #
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), (.+)=(.+), name=(.+)?(?:Total)(Latency)><>Count
-  name: cassandra_$1_$6$7_sum
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)?(?:Total)(Latency)><>Count
+  name: cassandra_$1_$5$6_seconds_sum
   type: COUNTER
   labels:
+    "$1": "$4"
     "$2": "$3"
-    "$4": "$5"
-
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), (.+)=(.+), name=(.+)><>Count
-  name: cassandra_$1_$6_count
-  type: COUNTER
-  labels:
-    "$2": "$3"
-    "$4": "$5"
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), (.+)=(.+), name=(.+)><>(\d+)thPercentile
-  name: cassandra_$1_$6_seconds
-  type: GAUGE
-  labels:
-    "$2": "$3"
-    "$4": "$5"
-    quantile: "0.$7"
   # Convert microseconds to seconds
   valueFactor: 0.000001
 
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), name=(.+)?(?:Total)(Latency)><>Count
-  name: cassandra_$1_$4$5_sum
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=((?:.+)?(?:Latency))><>Count
+  name: cassandra_$1_$5_seconds_count
   type: COUNTER
   labels:
+    "$1": "$4"
     "$2": "$3"
 
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), name=(.+)><>Count
-  name: cassandra_$1_$4_count
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)><>Count
+  name: cassandra_$1_$5_count
   type: COUNTER
   labels:
+    "$1": "$4"
     "$2": "$3"
 
-- pattern: org.apache.cassandra.metrics<type=(.+), (.+)=(.+), name=(.+)><>(\d+)thPercentile
-  name: cassandra_$1_$4_seconds
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=((?:.+)?(?:Latency))><>(\d+)thPercentile
+  name: cassandra_$1_$5_seconds
   type: GAUGE
   labels:
+    "$1": "$4"
     "$2": "$3"
-    quantile: "0.$5"
+    quantile: "0.$6"
   # Convert microseconds to seconds
   valueFactor: 0.000001
 
-- pattern: org.apache.cassandra.metrics<type=(.+), name=(.+)?(?:Total)(Latency)><>Count
-  name: cassandra_$1_$2$3_sum
-  type: COUNTER
-
-- pattern: org.apache.cassandra.metrics<type=(.+), name=(.+)><>Count
-  name: cassandra_$1_$2_count
-  type: COUNTER
-
-- pattern: org.apache.cassandra.metrics<type=(.+), name=(.+)><>(\d+)thPercentile
-  name: cassandra_$1_$2_seconds
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)><>(\d+)thPercentile
+  name: cassandra_$1_$5
   type: GAUGE
   labels:
-    quantile: "0.$3"
-  # Convert microseconds to seconds
-  valueFactor: 0.000001
+    "$1": "$4"
+    "$2": "$3"
+    quantile: "0.$6"
