@@ -248,6 +248,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
       boolean prevCharIsUnderscore = false;
       StringBuilder safeNameBuilder = new StringBuilder(name.length());
+      if (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
+        // prevent a numeric prefix.
+        safeNameBuilder.append("_");
+      }
       for (char nameChar : name.toCharArray()) {
         boolean isUnsafeChar = !(Character.isLetterOrDigit(nameChar) || nameChar == ':' || nameChar == '_');
         if ((isUnsafeChar || nameChar == '_')) {

@@ -16,6 +16,7 @@ public class SafeNameTest {
                 { "test_test", "test-test" }, { "test_test", "test-_test" }, { "test_test", "test-_-test" },
                 { "_", "-_-"}, { "", "" }, { null, null }, { "_", "---" },
                 { "test", "test" },
+                { "_001", "001" },
                 // A very long string
                 { "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_",
                 "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___" },
