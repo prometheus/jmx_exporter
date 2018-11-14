@@ -18,7 +18,7 @@ rules:
 #
 - pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)?(?:Total)(Latency)><>Count
   name: cassandra_$1_$5$6_seconds_sum
-  type: COUNTER
+  type: UNTYPED
   labels:
     "$1": "$4"
     "$2": "$3"
@@ -27,14 +27,14 @@ rules:
 
 - pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=((?:.+)?(?:Latency))><>Count
   name: cassandra_$1_$5_seconds_count
-  type: COUNTER
+  type: UNTYPED
   labels:
     "$1": "$4"
     "$2": "$3"
 
 - pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)><>Count
   name: cassandra_$1_$5_count
-  type: COUNTER
+  type: UNTYPED
   labels:
     "$1": "$4"
     "$2": "$3"
