@@ -1,14 +1,58 @@
----
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
+whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
+# ColumnFamily is an alias for Table metrics
+blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
 rules:
-- pattern: org.apache.cassandra.metrics<type=(Connection|Streaming), scope=(\S*), name=(\S*)><>(Count|Value)
-  name: cassandra_$1_$3
-  labels:
-    address: "$2"
-- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?,
-    name=(\S*)><>(Count|Value)
+# Generic gauges with 0-2 labels
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(\S*)><>Value
   name: cassandra_$1_$5
+  type: GAUGE
   labels:
     "$1": "$4"
     "$2": "$3"
+
+#
+# Emulate Prometheus 'Summary' metrics for the exported 'Histogram's.
+# TotalLatency is the sum of all latencies since server start
+#
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)?(?:Total)(Latency)><>Count
+  name: cassandra_$1_$5$6_seconds_sum
+  type: UNTYPED
+  labels:
+    "$1": "$4"
+    "$2": "$3"
+  # Convert microseconds to seconds
+  valueFactor: 0.000001
+
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=((?:.+)?(?:Latency))><>Count
+  name: cassandra_$1_$5_seconds_count
+  type: UNTYPED
+  labels:
+    "$1": "$4"
+    "$2": "$3"
+
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)><>Count
+  name: cassandra_$1_$5_count
+  type: UNTYPED
+  labels:
+    "$1": "$4"
+    "$2": "$3"
+
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=((?:.+)?(?:Latency))><>(\d+)thPercentile
+  name: cassandra_$1_$5_seconds
+  type: GAUGE
+  labels:
+    "$1": "$4"
+    "$2": "$3"
+    quantile: "0.$6"
+  # Convert microseconds to seconds
+  valueFactor: 0.000001
+
+- pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(.+)><>(\d+)thPercentile
+  name: cassandra_$1_$5
+  type: GAUGE
+  labels:
+    "$1": "$4"
+    "$2": "$3"
+    quantile: "0.$6"
