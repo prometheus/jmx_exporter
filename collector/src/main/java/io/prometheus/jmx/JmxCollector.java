@@ -11,6 +11,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -200,6 +203,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 rule.labelNames.add(entry.getKey());
                 rule.labelValues.add((String)entry.getValue());
               }
+              if (yamlConfig.containsKey("cluster")) {
+                rule.labelNames.add("cluster");
+                rule.labelValues.add((String) yamlConfig.get("cluster"));
+              }
             }
 
             // Validation.
@@ -212,7 +219,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         } else {
           // Default to a single default rule.
-          cfg.rules.add(new Rule());
+          Rule rule = new Rule();
+          cfg.rules.add(rule);
+          if (yamlConfig.containsKey("cluster")) {
+            rule.labelNames.add("cluster");
+            rule.labelValues.add((String) yamlConfig.get("cluster"));
+          }
         }
 
         return cfg;
