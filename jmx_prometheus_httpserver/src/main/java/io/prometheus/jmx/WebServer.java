@@ -1,14 +1,33 @@
 package io.prometheus.jmx;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 
-public class WebServer {
+public class WebServer extends HTTPServer {
 
-   public static void main(String[] args) throws Exception {
+  public WebServer(InetSocketAddress addr, CollectorRegistry registry) throws IOException {
+    super(addr, registry);
+    this.server.createContext("/health", new HttpHandler() {
+      @Override
+      public void handle(HttpExchange httpExchange) throws IOException {
+        OutputStream response = httpExchange.getResponseBody();
+        httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 2);
+        response.write("ok".getBytes());
+        response.flush();
+        response.close();
+      }
+    });
+  }
+
+  public static void main(String[] args) throws Exception {
      if (args.length < 2) {
        System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file>");
        System.exit(1);
@@ -28,6 +47,6 @@ public class WebServer {
 
      new BuildInfoCollector().register();
      new JmxCollector(new File(args[1])).register();
-     new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+     new WebServer(socket, CollectorRegistry.defaultRegistry);
    }
 }
