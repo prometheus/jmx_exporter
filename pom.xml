@@ -22,6 +22,10 @@
     <module>jmx_prometheus_javaagent</module>
   </modules>
 
+  <properties>
+    <prometheus.version>0.5.0</prometheus.version>
+  </properties>
+
   <distributionManagement>
       <snapshotRepository>
           <id>ossrh</id>
