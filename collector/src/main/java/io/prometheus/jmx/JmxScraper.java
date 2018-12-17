@@ -225,7 +225,6 @@ class JmxScraper {
             TabularType tt = tds.getTabularType();
 
             List<String> rowKeys = tt.getIndexNames();
-            LinkedHashMap<String, String> l2s = new LinkedHashMap<String, String>(beanProperties);
 
             CompositeType type = tt.getRowType();
             Set<String> valueKeys = new TreeSet<String>(type.keySet());
@@ -236,9 +235,15 @@ class JmxScraper {
             for (Object valu : tds.values()) {
                 if (valu instanceof CompositeData) {
                     CompositeData composite = (CompositeData) valu;
+                    LinkedHashMap<String, String> l2s = new LinkedHashMap<String, String>(beanProperties);
                     for (String idx : rowKeys) {
                         Object obj = composite.get(idx);
                         if (obj != null) {
+                            // Nested tabulardata will repeat the 'key' label, so
+                            // append a suffix to distinguish each.
+                            while (l2s.containsKey(idx)) {
+                              idx = idx + "_";
+                            }
                             l2s.put(idx, obj.toString());
                         }
                     }
