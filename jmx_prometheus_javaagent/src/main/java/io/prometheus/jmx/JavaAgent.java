@@ -3,6 +3,8 @@ package io.prometheus.jmx;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
@@ -10,47 +12,63 @@ import io.prometheus.client.hotspot.DefaultExports;
 
 public class JavaAgent {
 
-   static HTTPServer server;
+	static final String DEFAULT_HOST = "0.0.0.0";
 
-   public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
-     premain(agentArgument, instrumentation);
-   }
+	private static final String IPV6_REGEX = "((\\[.*\\]+):)";
+	private static final String DNS_IPV4_REGEX = "(((\\w+\\.)+\\w+):)";
+	private static final String PORT_REGEX = "(([0-9]+):)";
+	private static final String PATH_REGEX = "(.*)";
 
-   public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
-     // Bind to all interfaces by default (this includes IPv6).
-     String host = "0.0.0.0";
+	private static final Pattern IPV6_PATTERN = Pattern.compile("^" + IPV6_REGEX + PORT_REGEX + PATH_REGEX);
+	private static final Pattern PORT_PATTERN = Pattern.compile("^" + PORT_REGEX + PATH_REGEX);
+	private static final Pattern DNS_IPV4_PATTERN = Pattern.compile("^" + DNS_IPV4_REGEX + PORT_REGEX + PATH_REGEX);
 
-     // If we have IPv6 address in square brackets, extract it first and then
-     // remove it from arguments to prevent confusion from too many colons.
-     Integer indexOfClosingSquareBracket = agentArgument.indexOf("]:");
-     if (indexOfClosingSquareBracket >= 0) {
-       host = agentArgument.substring(0, indexOfClosingSquareBracket + 1);
-       agentArgument = agentArgument.substring(indexOfClosingSquareBracket + 2);
-     }
+	static HTTPServer server;
 
-     String[] args = agentArgument.split(":");
-     if (args.length < 2 || args.length > 3) {
-       System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file>");
-       System.exit(1);
-     }
+	public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
+		premain(agentArgument, instrumentation);
+	}
 
-     int port;
-     String file;
-     InetSocketAddress socket;
+	public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
 
-     if (args.length == 3) {
-       port = Integer.parseInt(args[1]);
-       socket = new InetSocketAddress(args[0], port);
-       file = args[2];
-     } else {
-       port = Integer.parseInt(args[0]);
-       socket = new InetSocketAddress(host, port);
-       file = args[1];
-     }
+		AgentParameters params = parseParameters(agentArgument);
+		InetSocketAddress socket = new InetSocketAddress(params.getHost(), params.getPort());
+		new BuildInfoCollector().register();
+		new JmxCollector(new File(params.getSettingsFilePath())).register();
+		DefaultExports.initialize();
+		server = new HTTPServer(socket, CollectorRegistry.defaultRegistry, true);
+	}
 
-     new BuildInfoCollector().register();
-     new JmxCollector(new File(file)).register();
-     DefaultExports.initialize();
-     server = new HTTPServer(socket, CollectorRegistry.defaultRegistry, true);
-   }
+	static AgentParameters parseParameters(String agentArguments) {
+
+		Matcher ipv6Matcher = IPV6_PATTERN.matcher(agentArguments);
+		Matcher portMatcher = PORT_PATTERN.matcher(agentArguments);
+		Matcher dnsMatcher = DNS_IPV4_PATTERN.matcher(agentArguments);
+
+		try {
+			if (ipv6Matcher.find()) {
+
+				String host = ipv6Matcher.group(2);
+				int port = Integer.parseInt(ipv6Matcher.group(4));
+				String settingsFile = ipv6Matcher.group(5);
+				return new AgentParameters(host, port, settingsFile);
+			} else if (portMatcher.find()) {
+
+				int port = Integer.parseInt(portMatcher.group(2));
+				String settingsFile = portMatcher.group(3);
+				return new AgentParameters(DEFAULT_HOST, port, settingsFile);
+			} else if (dnsMatcher.find()) {
+
+				String host = dnsMatcher.group(2);
+				int port = Integer.parseInt(dnsMatcher.group(5));
+				String settingsFile = dnsMatcher.group(6);
+				return new AgentParameters(host, port, settingsFile);
+			} else {
+				throw new IllegalArgumentException("Could not parse arguments: " + agentArguments);
+			}
+		} catch (Exception e) {
+			throw new IllegalArgumentException(
+					"Usage: -javaagent:/path/to/JavaAgent.jar=[host]:<port>:<yaml configuration file>", e);
+		}
+	}
 }
