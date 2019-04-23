@@ -1,0 +1,37 @@
+---
+# This is example of getting Apache Ignite cache metrics.
+#
+# This metrics will be available after enabling JMX metrics gathering
+# Instructions available on https://apacheignite.readme.io/v2.0/docs/memory-and-cache-metrics
+# or by search query "ignite jmx metrics"
+#
+# 1. Enable statistic for your cache (example for Scala)
+#      val cache = ignite.getOrCreateCache("cacheName")
+#      cache.localMxBean().enableStatistics()
+#
+# 2. Run your application with flags
+#      -Dcom.sun.management.jmxremote.ssl=false 
+#      -Dcom.sun.management.jmxremote.authenticate=false
+#      -Dcom.sun.management.jmxremote.port=5555
+#
+# 3. Run simple http server on 5556 port with this configuration
+# 4. Get your metrics in Prometheus
+#
+# Query examples:
+#    Get size of cache
+#    dict { name="cache1" metric="Size" }
+#   
+#    Get size of all caches
+#    dict { metric="Size" }
+#   
+#    Get all metrics for cache by name
+#    dict { name="cache1" }
+hostPort: localhost:5555
+rules:
+  - pattern : "org.apache<clsLdr=(.+), group=(.+), name=(.+)><>(.+): (.+)"
+    name: dict
+    value: $5
+    labels:
+      "clsLdr": "$1"
+      "name": "$2"
+      "metric": "$4"
