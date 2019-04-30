@@ -253,7 +253,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         safeNameBuilder.append("_");
       }
       for (char nameChar : name.toCharArray()) {
-        boolean isUnsafeChar = !(Character.isLetterOrDigit(nameChar) || nameChar == ':' || nameChar == '_');
+        boolean isUnsafeChar = !JmxCollector.isLegalCharacter(nameChar);
         if ((isUnsafeChar || nameChar == '_')) {
           if (prevCharIsUnderscore) {
             continue;
@@ -269,6 +269,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       return safeNameBuilder.toString();
     }
+
+  private static boolean isLegalCharacter(char input) {
+    return ((input == ':') ||
+            (input == '_') ||
+            (input >= 'a' && input <= 'z') ||
+            (input >= 'A' && input <= 'Z') ||
+            (input >= '0' && input <= '9'));
+  }
 
     class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =

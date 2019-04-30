@@ -20,6 +20,10 @@ public class SafeNameTest {
                 // A very long string
                 { "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_",
                 "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___" },
+                { "test_swedish_chars_", "test_swedish_chars_åäö" },
+                { "test_test", "test@test" },
+                { "test_test", "test;test" },
+                { "test:test", "test:test" },
         });
     }
 
