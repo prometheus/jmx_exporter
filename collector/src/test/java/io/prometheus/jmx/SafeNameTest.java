@@ -23,6 +23,7 @@ public class SafeNameTest {
                 { "test_swedish_chars_", "test_swedish_chars_åäö" },
                 { "test_test", "test@test" },
                 { "test_test", "test;test" },
+                { "test:test", "test:test" },
         });
     }
 
