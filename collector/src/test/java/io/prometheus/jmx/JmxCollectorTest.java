@@ -5,16 +5,27 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.util.Random;
+
 import javax.management.MBeanServer;
-import org.junit.Test;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
+
+import io.prometheus.client.Collector;
+import io.prometheus.client.CollectorRegistry;
 
 
 public class JmxCollectorTest {
+    private static final String[] EMPTY = {};
 
     CollectorRegistry registry;
 
@@ -251,5 +262,37 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testRemoteJmxmpServer() throws Exception {
+        final String url = "service:jmx:jmxmp://localhost:" + getAvailablePort();
+        final JMXConnectorServer server = JMXConnectorServerFactory.newJMXConnectorServer(
+                new JMXServiceURL(url), null, ManagementFactory.getPlatformMBeanServer());
+        server.start();
+
+        final JmxCollector jc = new JmxCollector("---\njmxUrl: " + url).register(registry);
+        assertEquals(1.0, registry.getSampleValue("boolean_Test_True", EMPTY, EMPTY), .001);
+    }
+
+    private static int getAvailablePort() {
+        final int minPort = 1024;
+        final int maxPort = 65535;
+        final int portRange = maxPort - minPort;
+        final Random random = new Random(System.currentTimeMillis());
+        int maxTry = portRange;
+        while (true) {
+            final int candidate = minPort + random.nextInt(portRange);
+            try {
+                new ServerSocket(candidate).close();
+                return candidate;
+            } catch (IOException ignored) {
+            }
+            if (maxTry-- == 0) {
+                throw new IllegalStateException(String.format("Failed to find an available port in [%d, %d] " +
+                                                              "after %d attempts.",
+                                                              minPort, maxPort, portRange));
+            }
+        }
     }
 }

@@ -31,6 +31,13 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.16</version>
     </dependency>
+    <!-- Since javax.management:jmxremote_optional:1.0.1_04 jar file does not
+         exist on maven central, use substitute one -->
+    <dependency>
+        <groupId>org.glassfish.external</groupId>
+        <artifactId>opendmk_jmxremote_optional_jar</artifactId>
+        <version>1.0-b01-ea</version>
+    </dependency>
   </dependencies>
 
 
