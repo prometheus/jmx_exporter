@@ -31,7 +31,7 @@ public class JavaAgent {
             server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
         }
         catch (IllegalArgumentException e) {
-            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file>");
+            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
             System.exit(1);
         }
     }
