@@ -59,7 +59,7 @@ public class JavaAgentIT {
 
         final String javaHome = System.getenv("JAVA_HOME");
         final String java;
-        if (javaHome != null && javaHome.equals("")) {
+        if (javaHome != null && !javaHome.isEmpty()) {
             java = javaHome + "/bin/java";
         } else {
             java = "java";
