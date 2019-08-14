@@ -27,16 +27,16 @@ rules:
     valueFactor: 0.001
     labels:
       client_id: $1
-    help: "How much sync operations are taking place as part of a consumer rebalance"
+    help: "How many sync operations are taking place as part of a consumer rebalance"
     type: GAUGE
     attrNameSnakeCase: false
 
 
   - pattern: 'kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>assigned-partitions'
-    name: kafka_consumer_sync_rate_per_second
+    name: kafka_consumer_assigned_partitions
     valueFactor: 0.001
     labels:
       client_id: $1
-    help: "How much sync operations are taking place as part of a consumer rebalance"
+    help: "Partitions assigned to a given client"
     type: GAUGE
     attrNameSnakeCase: false
