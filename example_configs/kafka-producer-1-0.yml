@@ -1,0 +1,80 @@
+---
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+whitelistObjectNames: ["kafka.producer:*"]
+#All these metrics taken from recommendations in chapter 10 of Kafka: The Definitive Guide
+rules:
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>record-error-rate'
+    name: kafka_producer_record_error_rate
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer record error rate (should never be above zero)"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>request-latency-avg'
+    name: kafka_producer_request_latency_ms_avg
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer average request latency"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>outgoing-byte-rate'
+    name: kafka_producer_outgoing_byte_rate
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer outgoing byte rate"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>record-send-rate'
+    name: kafka_producer_record_send_rate
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer record send rate"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>request-rate'
+    name: kafka_producer_record_send_rate
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer request rate (one request contains multiple batched records)"
+    type: GAUGE
+    attrNameSnakeCase: false
+  
+  # This one isn't in the book, but good to add alerts on to detect buffer exhaustion / network issues etc.
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>waiting-threads'
+    name: kafka_producer_waiting_threads_total
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Number of threads blocking on producer"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>request-size-avg'
+    name: kafka_producer_request_size_avg
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer request size average"
+    type: GAUGE
+    attrNameSnakeCase: false
+    
+  - pattern: 'kafka.producer<type=producer-metrics, client-id=(.+)><>batch-size-avg'
+    name: kafka_producer_batch_size_avg
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "Producer batch size average"
+    type: GAUGE
+    attrNameSnakeCase: false
+
+

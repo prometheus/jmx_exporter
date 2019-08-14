@@ -1,0 +1,42 @@
+---
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+whitelistObjectNames: ["kafka.consumer:*"]
+#All these metrics taken from recommendations in chapter 10 of Kafka: The Definitive Guide
+rules:
+  - pattern: 'kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>commit-latency-avg'
+    name: kafka_consumer_commit_latency_ms_avg
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "How long it takes the consumers to commit offsets to brokers"
+    type: GAUGE
+    attrNameSnakeCase: false
+
+  - pattern: 'kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>sync-time-avg'
+    name: kafka_consumer_sync_time_ms_avg
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "How much time the consumer is spent in negotiations over who gets what partitions during a rebalance operation"
+    type: GAUGE
+    attrNameSnakeCase: false
+
+  - pattern: 'kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>sync-rate'
+    name: kafka_consumer_sync_rate_per_second
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "How much sync operations are taking place as part of a consumer rebalance"
+    type: GAUGE
+    attrNameSnakeCase: false
+
+
+  - pattern: 'kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>assigned-partitions'
+    name: kafka_consumer_sync_rate_per_second
+    valueFactor: 0.001
+    labels:
+      client_id: $1
+    help: "How much sync operations are taking place as part of a consumer rebalance"
+    type: GAUGE
+    attrNameSnakeCase: false
