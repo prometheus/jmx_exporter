@@ -114,7 +114,12 @@ If a given part isn't set, it'll be excluded.
 
 You can start the jmx's scraper in standalone mode in order to debug what is called 
 
-`java -cp jmx_exporter.jar io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url`
+```
+git clone https://github.com/prometheus/jmx_exporter.git
+cd jmx_exporter
+mvn package
+java -cp collector/target/collector*.jar  io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url
+```
 
 To get finer logs (including the duration of each jmx call),
 create a file called logging.properties with this content:
