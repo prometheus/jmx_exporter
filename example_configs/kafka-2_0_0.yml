@@ -1,5 +1,20 @@
 lowercaseOutputName: true
 
+# By default, omit certain Kafka metrics that are tagged by topic and by partition.
+# As new topics/partitions are created, these metrics grow exponentially, with Ntopics * Npartitions entries for each of these items.
+# In non-trivial clusters, generating these metrics can effectively result in prometheus timing out the request and dropping the entire payload.
+blacklistObjectNames:
+  - "kafka.cluster:name=InSyncReplicasCount,*"
+  - "kafka.cluster:name=LastStableOffsetLag,*"
+  - "kafka.cluster:name=ReplicasCount,*"
+  - "kafka.cluster:name=UnderMinIsr,*"
+  - "kafka.cluster:name=UnderReplicated,*"
+  - "kafka.log:name=LogEndOffset,*"
+  - "kafka.log:name=LogStartOffset,*"
+  - "kafka.log:name=NumLogSegments,*"
+  - "kafka.log:name=Size,*"
+  - "kafka.server:name=ConsumerLag,*"
+
 rules:
 # Special cases and very specific rules
 - pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
