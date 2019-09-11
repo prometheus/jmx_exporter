@@ -9,6 +9,7 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -79,6 +80,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
         config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
     }
 
+    public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
+      config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+    }
+
     private void reloadConfig() {
       try {
         FileReader fr = new FileReader(configFile);
@@ -127,7 +132,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("username")) {
           cfg.username = (String)yamlConfig.get("username");
         }
-        
+
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
         }
@@ -135,7 +140,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("ssl")) {
           cfg.ssl = (Boolean)yamlConfig.get("ssl");
         }
-        
+
         if (yamlConfig.containsKey("lowercaseOutputName")) {
           cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
