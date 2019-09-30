@@ -39,14 +39,14 @@ rules:
   name: kafka_server_quota_$3
   type: GAUGE
   labels:
-    type: "$1"
+    resource: "$1"
     clientId: "$2"
 
 - pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
   name: kafka_server_quota_$4
   type: GAUGE
   labels:
-    type: "$1"
+    resource: "$1"
     user: "$2"
     clientId: "$3"
 
