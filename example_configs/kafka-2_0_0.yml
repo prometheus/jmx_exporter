@@ -35,16 +35,18 @@ rules:
   name: kafka_$1_$2_$3_total
   type: COUNTER
 
-- pattern: kafka.server<type=(.+), client-id=(.+)><>([^:]+)
-  name: kafka_server_$1_$3
+- pattern: kafka.server<type=(.+), client-id=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
   type: GAUGE
   labels:
+    type: "$1"
     clientId: "$2"
 
-- pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([^:]+)
-  name: kafka_server_$1_$4
+- pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$4
   type: GAUGE
   labels:
+    type: "$1"
     user: "$2"
     clientId: "$3"
 
