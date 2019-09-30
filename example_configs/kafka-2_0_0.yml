@@ -39,14 +39,22 @@ rules:
   name: kafka_server_quota_$3
   type: GAUGE
   labels:
+<<<<<<< HEAD
     resource: "$1"
+=======
+    type: "$1"
+>>>>>>> Change the type for label in the metric quota
     clientId: "$2"
 
 - pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
   name: kafka_server_quota_$4
   type: GAUGE
   labels:
+<<<<<<< HEAD
     resource: "$1"
+=======
+    type: "$1"
+>>>>>>> Change the type for label in the metric quota
     user: "$2"
     clientId: "$3"
 
