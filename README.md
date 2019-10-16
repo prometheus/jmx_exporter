@@ -13,10 +13,10 @@ Agent is thus strongly encouraged.
 
 ## Running
 
-To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.12.0/jmx_prometheus_javaagent-0.12.0.jar) and run:
+To run as a javaagent, build the jar (mvn package) and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.12.0.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.12.0.jar=8080:config.yaml:server-config.yaml -jar yourJar.jar
 ```
 Metrics will now be accessible at http://localhost:8080/metrics
 
@@ -82,12 +82,25 @@ Note that the scraper always processes all mBeans, even if they're not exported.
 
 Example configurations for javaagents can be found at  https://github.com/prometheus/jmx_exporter/tree/master/example_configs
 
+## Server Configuration
+Metrics http server configuration is in YAML. Example with all possible options.
+```yaml
+---
+serverTLSEnabled: true
+serverKeyStorePath: /tmp/keystore
+serverKeyStorePassword: secret
+```
+Name     | Description
+---------|------------
+serverTLSEnabled | Metric server TLS configuration. Default is false.
+serverKeyStorePath | Path to the keystore. If TLS is enabled, this should be set.
+serverKeyStorePassword | Password to read the keystore.
+
 ### Pattern input
 The format of the input matches against the pattern is
 ```
 domain<beanpropertyName1=beanPropertyValue1, beanpropertyName2=beanPropertyValue2, ...><key1, key2, ...>attrName: value
 ```
-
 Part     | Description
 ---------|------------
 domain   | Bean name. This is the part before the colon in the JMX object name.
