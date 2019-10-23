@@ -149,6 +149,10 @@ class JmxScraper {
         final AttributeList attributes;
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
+            if (attributes == null) {
+                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
+                return;
+            }
         } catch (Exception e) {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
             return;
