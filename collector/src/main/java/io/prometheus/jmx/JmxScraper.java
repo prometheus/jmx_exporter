@@ -190,7 +190,12 @@ class JmxScraper {
             Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
-        } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
+        } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
+            //output Date as Long (the number of milliseconds since January 1, 1970, 00:00:00 GMT)
+            if( value instanceof java.util.Date){
+                attrType = "java.lang.Long";
+                value = ((java.util.Date)value).getTime();
+            }
             logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
                     domain,
@@ -259,7 +264,7 @@ class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        } 
+                        }
                         processBeanValue(
                             domain,
                             l2s,
@@ -303,7 +308,7 @@ class JmxScraper {
             String attrDescription,
             Object value) {
             System.out.println(domain +
-                               beanProperties + 
+                               beanProperties +
                                attrKeys +
                                attrName +
                                ": " + value);
