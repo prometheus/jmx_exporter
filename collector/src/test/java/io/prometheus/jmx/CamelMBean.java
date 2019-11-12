@@ -2,9 +2,13 @@ package io.prometheus.jmx;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Random;
 
 public interface CamelMBean {
-    long getLastExchangeFailureTimestamp();
+    long EXPECTED_DATE_IN_SECONDS = 1573285945L;
+    Date getLastExchangeFailureTimestamp();
 }
 
 class Camel implements CamelMBean{
@@ -17,7 +21,8 @@ class Camel implements CamelMBean{
     }
 
     @Override
-    public long getLastExchangeFailureTimestamp() {
-        return 1573285945806L;
+    public Date getLastExchangeFailureTimestamp() {
+        int theMillisecondAtTheMoment = Calendar.getInstance().get(Calendar.MILLISECOND);
+        return new Date(EXPECTED_DATE_IN_SECONDS * 1000 + theMillisecondAtTheMoment);
     }
 }

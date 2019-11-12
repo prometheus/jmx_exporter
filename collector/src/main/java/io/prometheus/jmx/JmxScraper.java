@@ -191,10 +191,10 @@ class JmxScraper {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
-            //output Date as Long (the number of milliseconds since January 1, 1970, 00:00:00 GMT)
-            if( value instanceof java.util.Date){
+            //output Date as Long (the number of seconds since January 1, 1970, 00:00:00 GMT)
+            if(value instanceof java.util.Date){
                 attrType = "java.lang.Long";
-                value = ((java.util.Date)value).getTime();
+                value = ((java.util.Date)value).getTime() / 1000;
             }
             logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
