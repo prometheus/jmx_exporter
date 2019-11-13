@@ -263,7 +263,7 @@ class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        }
+                        } 
                         processBeanValue(
                             domain,
                             l2s,
@@ -307,7 +307,7 @@ class JmxScraper {
             String attrDescription,
             Object value) {
             System.out.println(domain +
-                               beanProperties +
+                               beanProperties + 
                                attrKeys +
                                attrName +
                                ": " + value);
