@@ -256,16 +256,16 @@ public class JmxCollectorTest {
 
     @Test
     public void testCamelLastExchangFailureTimestamp() throws Exception{
-        String rulePattern =
-                "\n---\nrules:\n- pattern: 'org.apache.camel<context=([^,]+), type=routes, name=\"([^\"]+)\"><>LastExchangeFailureTimestamp'\n" +
-                        "  name: org.apache.camel.LastExchangeFailureTimestamp\n" +
-                        "  help: Exchanges Last Failure Timestamps\n" +
-                        "  type: UNTYPED\n" +
-                        "  labels:\n" +
-                        "    context: \"$1\"\n" +
-                        "    route: \"$2\"\n" +
-                        "    type: routes";
-        JmxCollector jc = new JmxCollector(rulePattern).register(registry);
-        assertEquals(Double.valueOf((double)Camel.EXPECTED_DATE_IN_MILLISECONDS / 1000), registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"}));
+      String rulePattern =
+              "\n---\nrules:\n- pattern: 'org.apache.camel<context=([^,]+), type=routes, name=\"([^\"]+)\"><>LastExchangeFailureTimestamp'\n" +
+                      "  name: org.apache.camel.LastExchangeFailureTimestamp\n" +
+                      "  help: Exchanges Last Failure Timestamps\n" +
+                      "  type: UNTYPED\n" +
+                      "  labels:\n" +
+                      "    context: \"$1\"\n" +
+                      "    route: \"$2\"\n" +
+                      "    type: routes";
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      assertEquals(Double.valueOf((double)Camel.EXPECTED_DATE_IN_MILLISECONDS / 1000), registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"}));
     }
 }
