@@ -266,6 +266,6 @@ public class JmxCollectorTest {
                         "    route: \"$2\"\n" +
                         "    type: routes";
         JmxCollector jc = new JmxCollector(rulePattern).register(registry);
-        assertEquals(Double.valueOf(Camel.EXPECTED_DATE_IN_SECONDS), registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"}));
+        assertEquals(Double.valueOf((double)Camel.EXPECTED_DATE_IN_MILLISECONDS / 1000), registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"}));
     }
 }
