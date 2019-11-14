@@ -5,7 +5,7 @@ import javax.management.ObjectName;
 import java.util.Date;
 
 public interface CamelMBean {
-  long EXPECTED_DATE_IN_MILLISECONDS = 1573285945111L;
+  double EXPECTED_SECONDS = 1.573285945111E9;
 
   Date getLastExchangeFailureTimestamp();
 }
@@ -21,6 +21,6 @@ class Camel implements CamelMBean {
 
   @Override
   public Date getLastExchangeFailureTimestamp() {
-    return new Date(EXPECTED_DATE_IN_MILLISECONDS);
+    return new Date((long)(EXPECTED_SECONDS * 1000));
   }
 }

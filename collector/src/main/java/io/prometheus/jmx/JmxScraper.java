@@ -191,9 +191,9 @@ class JmxScraper {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
-            if(value instanceof java.util.Date){
+            if (value instanceof java.util.Date) {
                 attrType = "java.lang.Double";
-                value = (double) ((java.util.Date) value).getTime() / 1000;
+                value = ((java.util.Date) value).getTime() / 1000.0;
             }
             logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
