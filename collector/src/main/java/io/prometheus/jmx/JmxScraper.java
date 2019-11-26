@@ -149,6 +149,10 @@ class JmxScraper {
         final AttributeList attributes;
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
+            if (attributes == null) {
+                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
+                return;
+            }
         } catch (Exception e) {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
             return;
@@ -186,7 +190,11 @@ class JmxScraper {
             Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
-        } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
+        } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
+            if (value instanceof java.util.Date) {
+                attrType = "java.lang.Double";
+                value = ((java.util.Date) value).getTime() / 1000.0;
+            }
             logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
                     domain,

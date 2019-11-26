@@ -13,16 +13,18 @@ Agent is thus strongly encouraged.
 
 ## Running
 
-To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar) and run:
+To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.12.0/jmx_prometheus_javaagent-0.12.0.jar) and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.11.0.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.12.0.jar=8080:config.yaml -jar yourJar.jar
 ```
 Metrics will now be accessible at http://localhost:8080/metrics
 
 To bind the java agent to a specific IP change the port number to `host:port`.
 
 See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
+
+Please note that due to the nature of JMX the `/metrics` endpoint might exceed Prometheus default scrape timeout of 10 seconds.
 
 ## Building
 
@@ -114,7 +116,12 @@ If a given part isn't set, it'll be excluded.
 
 You can start the jmx's scraper in standalone mode in order to debug what is called 
 
-`java -cp jmx_exporter.jar io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url`
+```
+git clone https://github.com/prometheus/jmx_exporter.git
+cd jmx_exporter
+mvn package
+java -cp collector/target/collector*.jar  io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url
+```
 
 To get finer logs (including the duration of each jmx call),
 create a file called logging.properties with this content:

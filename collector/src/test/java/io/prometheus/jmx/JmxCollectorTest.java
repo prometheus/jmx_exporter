@@ -31,6 +31,7 @@ public class JmxCollectorTest {
 
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
+        Camel.registerBean(mbs);
     }
 
     @Before
@@ -251,5 +252,21 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(registry);
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testCamelLastExchangFailureTimestamp() throws Exception{
+      String rulePattern =
+              "\n---\nrules:\n- pattern: 'org.apache.camel<context=([^,]+), type=routes, name=\"([^\"]+)\"><>LastExchangeFailureTimestamp'\n" +
+                      "  name: org.apache.camel.LastExchangeFailureTimestamp\n" +
+                      "  help: Exchanges Last Failure Timestamps\n" +
+                      "  type: UNTYPED\n" +
+                      "  labels:\n" +
+                      "    context: \"$1\"\n" +
+                      "    route: \"$2\"\n" +
+                      "    type: routes";
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      Double actual = registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"});
+      assertEquals(Camel.EXPECTED_SECONDS, actual, 0);
     }
 }

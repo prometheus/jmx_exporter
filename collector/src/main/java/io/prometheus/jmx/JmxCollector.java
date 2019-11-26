@@ -9,6 +9,7 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -79,6 +80,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
         config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
     }
 
+    public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
+      config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+    }
+
     private void reloadConfig() {
       try {
         FileReader fr = new FileReader(configFile);
@@ -127,7 +132,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("username")) {
           cfg.username = (String)yamlConfig.get("username");
         }
-        
+
         if (yamlConfig.containsKey("password")) {
           cfg.password = (String)yamlConfig.get("password");
         }
@@ -135,7 +140,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         if (yamlConfig.containsKey("ssl")) {
           cfg.ssl = (Boolean)yamlConfig.get("ssl");
         }
-        
+
         if (yamlConfig.containsKey("lowercaseOutputName")) {
           cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
         }
@@ -253,7 +258,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         safeNameBuilder.append("_");
       }
       for (char nameChar : name.toCharArray()) {
-        boolean isUnsafeChar = !(Character.isLetterOrDigit(nameChar) || nameChar == ':' || nameChar == '_');
+        boolean isUnsafeChar = !JmxCollector.isLegalCharacter(nameChar);
         if ((isUnsafeChar || nameChar == '_')) {
           if (prevCharIsUnderscore) {
             continue;
@@ -269,6 +274,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       return safeNameBuilder.toString();
     }
+
+  private static boolean isLegalCharacter(char input) {
+    return ((input == ':') ||
+            (input == '_') ||
+            (input >= 'a' && input <= 'z') ||
+            (input >= 'A' && input <= 'Z') ||
+            (input >= '0' && input <= '9'));
+  }
 
     class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =

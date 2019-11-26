@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/circleci-java
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+
+    steps: 
+      - checkout
+      - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
+          key: circleci-demo-java-spring-{{ checksum "pom.xml" }}
+      - run: mvn dependency:go-offline # gets the project dependencies
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: circleci-demo-java-spring-{{ checksum "pom.xml" }}
+      
+      - run: mvn package
