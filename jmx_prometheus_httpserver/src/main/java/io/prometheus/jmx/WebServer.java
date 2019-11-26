@@ -14,16 +14,16 @@ public class WebServer {
        System.exit(1);
      }
 
-     String[] hostnamePort = args[0].split(":");
-     int port;
      InetSocketAddress socket;
-     
-     if (hostnamePort.length == 2) {
-       port = Integer.parseInt(hostnamePort[1]);
-       socket = new InetSocketAddress(hostnamePort[0], port);
-     } else {
-       port = Integer.parseInt(hostnamePort[0]);
+     int colonIndex = args[0].lastIndexOf(':');
+
+     if (colonIndex < 0) {
+       int port = Integer.parseInt(args[0]);
        socket = new InetSocketAddress(port);
+     } else {
+       int port = Integer.parseInt(args[0].substring(colonIndex + 1));
+       String host = args[0].substring(0, colonIndex);
+       socket = new InetSocketAddress(host, port);
      }
 
      new BuildInfoCollector().register();
