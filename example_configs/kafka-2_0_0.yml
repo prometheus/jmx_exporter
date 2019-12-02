@@ -96,6 +96,18 @@ rules:
 - pattern: kafka.(\w+)<type=(.+), name=(.+)><>Count
   name: kafka_$1_$2_$3_count
   type: COUNTER
+- pattern: kafka.(\w+)<type=(.+), name=(.+)><>MeanRate
+  name: kafka_$1_$2_$3_MeanRate
+  type: COUNTER
+- pattern: kafka.(\w+)<type=(.+), name=(.+)><>OneMinuteRate
+  name: kafka_$1_$2_$3_OneMinuteRate
+  type: COUNTER
+- pattern: kafka.(\w+)<type=(.+), name=(.+)><>FiveMinuteRate
+  name: kafka_$1_$2_$3_FiveMinuteRate
+  type: COUNTER
+- pattern: kafka.(\w+)<type=(.+), name=(.+)><>FifteenMinuteRate
+  name: kafka_$1_$2_$3_FifteenMinuteRate
+  type: COUNTER
 - pattern: kafka.(\w+)<type=(.+), name=(.+)><>(\d+)thPercentile
   name: kafka_$1_$2_$3
   type: GAUGE
