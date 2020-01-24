@@ -1,0 +1,13 @@
+# The metrics look this this
+# Hadoop<service=HBase, name=RegionServer, sub=Regions><>Namespace_foo_table_my_table_name_region_1234567xy_metric_scanNext_75th_percentile: 0.0
+# So we have many many different metrics and it is hard to aggregate per namespace or per table
+# Idea is to have it under one metric and the details in the labels
+# Idea came from https://blog.godatadriven.com/hbase-prometheus-monitoring
+rules:
+  - pattern: Hadoop<service=HBase, name=RegionServer, sub=Regions><>Namespace_(.+)_table_(.+)_region_(.+)_metric_(.+):\ (.+)
+    name: HBase_metric_$4
+    labels:
+      namespace: "$1"
+      table: "$2"
+      region: "$3"
+    value: "$5"
