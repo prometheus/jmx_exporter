@@ -87,6 +87,12 @@ rules:
   type: COUNTER
   labels:
     "$4": "$5"
+- pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Mean
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    "$4": "$5"
+    quantile: "avg"
 - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\d+)thPercentile
   name: kafka_$1_$2_$3
   type: GAUGE
