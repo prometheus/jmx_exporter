@@ -1,0 +1,12 @@
+---
+# A minimal example for connecting remotely to WebLogic via t3(s).
+# Important: `wlthint3client.jar` must be in the classpath, so do NOT start the JVM with `-jar` as it ignores `-cp`!
+jmxUrl: service:jmx:t3s://weblogic.host:wlPort/jndi/weblogic.management.mbeanservers.domainruntime
+jmxEnvironment:
+  "jmx.remote.protocol.provider.pkgs": "weblogic.management.remote"
+  "java.naming.security.principal": "wluser"
+  "java.naming.security.credentials": "wlpass"
+
+# For other properties s, including weblogic specific `weblogic.yml` (don't scrape *all* of weblogic :-) )
+rules:
+  - pattern: ".*"

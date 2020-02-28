@@ -269,4 +269,33 @@ public class JmxCollectorTest {
       Double actual = registry.getSampleValue("org_apache_camel_LastExchangeFailureTimestamp", new String[]{"context", "route", "type"}, new String[]{"my-camel-context", "my-route-name", "routes"});
       assertEquals(Camel.EXPECTED_SECONDS, actual, 0);
     }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testJmxEnvMustNotContainObject() throws Exception {
+        new JmxCollector("---\njmxEnvironment:\n  some.custom.object:\n    subObject:\n      key: value\n");
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testJmxEnvMustNotContainList() throws Exception {
+        new JmxCollector("---\njmxEnvironment:\n  - key.one: value1\n  - key2: value2\n");
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testJmxEnvMustNotContainSubList() throws Exception {
+        new JmxCollector(
+            "---\n" +
+            "jmxEnvironment:\n" +
+            "  some.custom.object:\n" +
+            "    - key1: value1\n" +
+            "    - key2: value2\n");
+    }
+
+    @Test
+    public void testJmxEnvironmentLoading() throws Exception {
+        new JmxCollector((
+                "---\n" +
+                "jmxEnvironment:\n" +
+                "  some.custom.property: some.value\n" +
+                "  `quoted.property`: `quoted.value`\n").replace('`','"'));
+    }
 }

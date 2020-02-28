@@ -40,6 +40,9 @@ username:
 password: 
 jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
 ssl: false
+jmxEnvironment:
+  "some.useful.property": "any string value"
+  "another.jmx.connector.property": "customValue"
 lowercaseOutputName: false
 lowercaseOutputLabelNames: false
 whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
@@ -58,10 +61,11 @@ Name     | Description
 ---------|------------
 startDelaySeconds | start delay before serving requests. Any requests within the delay period will result in an empty metrics set.
 hostPort | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
-username | The username to be used in remote JMX password authentication.
-password | The password to be used in remote JMX password authentication.
+username | The username to be used in remote JMX password authentication (used for `jmx.remote.credentials` JMX-connector property).
+password | The password to be used in remote JMX password authentication (used for `jmx.remote.credentials` JMX-connector property).
 jmxUrl   | A full JMX URL to connect to. Should not be specified if hostPort is.
-ssl      | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
+ssl      | Whether JMX connection should be done over SSL. Note this only sets RMI/JRMP standard properties, other RMI implementations (e.g. WebLogic, JBoss, IIOP) may not be affected! To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
+jmxEnvironment | Properties passed directly to JMX-connector. Can be used to configure proprietary RMI protocol implementations and more nuanced properties. Typically not needed for "standard" use cases. 
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.

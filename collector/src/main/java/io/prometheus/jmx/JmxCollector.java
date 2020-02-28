@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Collections;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,6 +57,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       String username = "";
       String password = "";
       boolean ssl = false;
+      Map<String, String> jmxEnvironment=Collections.emptyMap();
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
@@ -127,6 +129,19 @@ public class JmxCollector extends Collector implements Collector.Describable {
           cfg.jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)yamlConfig.get("hostPort") + "/jmxrmi";
         } else if (yamlConfig.containsKey("jmxUrl")) {
           cfg.jmxUrl = (String)yamlConfig.get("jmxUrl");
+        }
+        if(yamlConfig.containsKey("jmxEnvironment")) {
+          try {
+            Map<?, ?> env=(Map<?, ?>)yamlConfig.get("jmxEnvironment");
+            Map<String, String> result=new HashMap<String, String>(env.size());
+            for(Map.Entry<?, ?> e : env.entrySet()) {
+              result.put((String)e.getKey(), (String)e.getValue());
+            }
+            cfg.jmxEnvironment=Collections.unmodifiableMap(result);
+          }
+          catch(ClassCastException cex) {
+            throw new IllegalArgumentException("jmxEnvironment must only contain String properties (String -> String mappings)");
+          }
         }
 
         if (yamlConfig.containsKey("username")) {
@@ -461,7 +476,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
 
       Receiver receiver = new Receiver();
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.jmxEnvironment,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;

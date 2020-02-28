@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,10 +53,11 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
+    private final Map<String, String> jmxEnv;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
-    public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, Map<String, String> jmxEnv,
                       List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
                       MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
@@ -63,6 +65,7 @@ class JmxScraper {
         this.username = username;
         this.password = password;
         this.ssl = ssl;
+        this.jmxEnv = jmxEnv;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
@@ -89,6 +92,9 @@ class JmxScraper {
               SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
               environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
               environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+          }
+          if(!jmxEnv.isEmpty()) {
+              environment.putAll(jmxEnv);
           }
 
           jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
@@ -319,17 +325,18 @@ class JmxScraper {
      */
     public static void main(String[] args) throws Exception {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
+      Map<String, String> jmxEnv=Collections.emptyMap();
       objectNames.add(null);
       if (args.length >= 3){
-            new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(),
+            new JmxScraper(args[0], args[1], args[2], false, jmxEnv, objectNames, new LinkedList<ObjectName>(),
                     new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
         }
       else if (args.length > 0){
-          new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper(args[0], "", "", false, jmxEnv, objectNames, new LinkedList<ObjectName>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
       else {
-          new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper("", "", "", false, jmxEnv, objectNames, new LinkedList<ObjectName>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
     }
