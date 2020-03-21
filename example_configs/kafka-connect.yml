@@ -9,38 +9,38 @@ rules:
     labels:
       clientId: "$2"
       $3: "$4"
-    help: "Kafka $1 JMX metric info $2 $3"
-    type: UNTYPED
+    help: "Kafka $1 JMX metric info $2"
+    type: GAUGE
 
   #kafka.connect:type=connect-node-metrics,client-id="{clientid}",node-id="{nodeid}"
   #kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id="{nodeid}"
   - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>([a-z-]+)
-    name: kafka_$1_$2_$5
+    name: kafka_$2_$5
     labels:
       clientId: "$3"
       nodeId: "$4"
-    help: "Kafka $1 JMX metric $2 $5"
-    type: GAUGE
+    help: "Kafka $1 JMX metric type $2"
+    type: UNTYPED
 
   #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
   #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
   - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+), partition=(.+)><>([a-z-]+)
-    name: kafka_$1_$2_$6
+    name: kafka_$2_$6
     labels:
       clientId: "$3"
       topic: "$4"
       partition: "$5"
-    help: "Kafka $1 JMX metric $1 $2"
+    help: "Kafka $1 JMX metric type $2"
     type: GAUGE
 
   #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"
   #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
   - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+)><>([a-z-]+)
-    name: kafka_$1_$2_$5
+    name: kafka_$2_$5
     labels:
       clientId: "$3"
       topic: "$4"
-    help: "Kafka $1 JMX metric $1 $2"
+    help: "Kafka $1 JMX metric type $2"
     type: GAUGE
 
   #kafka.connect:type=kafka-metrics-count,client-id="{clientid}"
@@ -48,10 +48,10 @@ rules:
   #kafka.consumer:type=consumer-coordinator-metrics,client-id="{clientid}"
   #kafka.consumer:type=consumer-metrics,client-id="{clientid}"
   - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+)><>([a-z-]+)
-    name: kafka_$1_$2_$4
+    name: kafka_$2_$4
     labels:
       clientId: "$3"
-    help: "Kafka $1 JMX metric $1 $3"
+    help: "Kafka $1 JMX metric type $2"
     type: GAUGE
 
   #kafka.connect:type=connector-task-metrics,connector="{connector}",task="{task}<> status"
@@ -74,7 +74,7 @@ rules:
     labels:
       connector: "$2"
       task: "$3"
-    help: "Kafka Connect JMX metric $1 $4"
+    help: "Kafka Connect JMX metric type $1"
     type: GAUGE
 
   #kafka.connect:type=connector-metrics,connector="{connector}"
@@ -84,7 +84,7 @@ rules:
     labels:
       connector: "$2"
       task: "$3"
-    help: "Kafka Connect JMX metric $1 $3"
+    help: "Kafka Connect JMX metric $1"
     type: GAUGE
 
   #kafka.connect:type=connect-worker-rebalance-metrics
@@ -96,5 +96,5 @@ rules:
   #kafka.connect:type=connect-worker-metrics
   - pattern: kafka.connect<type=connect-worker-metrics><>([a-z-]+)
     name: kafka_connect_worker_$1
-    help: "Kafka Connect JMX metric worker $1"
+    help: "Kafka Connect JMX metric worker"
     type: GAUGE
