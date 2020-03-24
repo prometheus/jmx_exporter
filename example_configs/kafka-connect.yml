@@ -3,13 +3,19 @@ rules:
   #kafka.connect:type=app-info,client-id="{clientid}"
   #kafka.consumer:type=app-info,client-id="{clientid}"
   #kafka.producer:type=app-info,client-id="{clientid}"
-  - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>([a-z-]+): (.+)'
-    name: kafka_$1_info
+  - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>start-time-ms'
+    name: kafka_$1_start_time
+    labels:
+      clientId: "$2"
+    help: "Kafka $1 JMX metric start time ms"
+    type: GAUGE
+  - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>(commit-id|version): (.+)'
+    name: kafka_$1_$3_info
     value: 1
     labels:
       clientId: "$2"
       $3: "$4"
-    help: "Kafka $1 JMX metric info $2"
+    help: "Kafka $1 JMX metric info version and commit-id"
     type: GAUGE
 
   #kafka.connect:type=connect-node-metrics,client-id="{clientid}",node-id="{nodeid}"
