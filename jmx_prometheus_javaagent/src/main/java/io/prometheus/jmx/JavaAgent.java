@@ -3,6 +3,8 @@ package io.prometheus.jmx;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,7 +14,7 @@ import io.prometheus.client.hotspot.DefaultExports;
 
 public class JavaAgent {
 
-    static HTTPServer server;
+    static Collection<HTTPServer> servers = new ArrayList<HTTPServer>();
 
     public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
         premain(agentArgument, instrumentation);
@@ -25,10 +27,15 @@ public class JavaAgent {
         try {
             Config config = parseConfig(agentArgument, host);
 
-            new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file)).register();
-            DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+            // This method may be called multiple times if it's loaded on to the same JVM
+            // multiple times.  Each invocation needs an independent CollectorRegistry.
+            CollectorRegistry collectorRegistry = new CollectorRegistry(true);
+
+            new BuildInfoCollector().register(collectorRegistry);
+            new JmxCollector(new File(config.file)).register(collectorRegistry);
+            DefaultExports.register(collectorRegistry);
+            HTTPServer server = new HTTPServer(config.socket, collectorRegistry, true);
+            servers.add(server);
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
