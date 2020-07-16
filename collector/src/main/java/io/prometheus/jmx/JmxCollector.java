@@ -4,8 +4,6 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,9 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import static java.lang.String.format;
 
@@ -60,6 +62,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      boolean cacheRules = false;
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
     }
@@ -69,6 +72,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private long createTimeNanoSecs = System.nanoTime();
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
+    private final ConcurrentMap<String, MatchedRule> cachedRules = new ConcurrentHashMap<String, MatchedRule>();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
@@ -165,7 +169,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         }
 
-        if (yamlConfig.containsKey("rules")) {
+        if (yamlConfig.containsKey("cacheRules")) {
+          cfg.cacheRules = (Boolean)yamlConfig.get("cacheRules");
+        }
+
+      if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
             Map<String, Object> yamlRule = ruleObject;
@@ -287,9 +295,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
+      ConcurrentMap<String, MatchedRule> cachedRules;
+
       private static final char SEP = '_';
 
-
+      Receiver(ConcurrentMap<String, MatchedRule> cachedRules) {
+        this.cachedRules = cachedRules;
+      }
 
       // [] and () are special in regexes, so swtich to <>.
       private String angleBrackets(String s) {
@@ -307,13 +319,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
         mfs.samples.add(sample);
       }
 
-      private void defaultExport(
+      private MatchedRule defaultExport(
           String domain,
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
           String attrName,
           String help,
-          Object value,
+          Double value,
+          double valueFactor,
           Type type) {
         StringBuilder name = new StringBuilder();
         name.append(domain);
@@ -350,8 +363,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             }
         }
 
-        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, ((Number)value).doubleValue()),
-          type, help);
+        return new MatchedRule(fullname, type, help, labelNames, labelValues, value, valueFactor);
       }
 
       public void recordBean(
@@ -368,99 +380,134 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String help = attrDescription + " (" + beanName + attrName + ")";
         String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
-        for (Rule rule : config.rules) {
-          Matcher matcher = null;
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
-          if (rule.pattern != null) {
-            matcher = rule.pattern.matcher(matchName + ": " + beanValue);
-            if (!matcher.matches()) {
-              continue;
+        MatchedRule matchedRule = null;
+        String cacheName = beanName + attrName;
+        if (config.cacheRules) {
+          matchedRule = cachedRules.get(cacheName);
+        }
+
+        if (matchedRule == null) {
+          for (Rule rule : config.rules) {
+            Matcher matcher = null;
+            String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
+
+            // Using bean value in caching is not possible (caching is only done on bean name, values can change)
+            if (!config.cacheRules) {
+              matchName = matchName + ": " + beanValue;
             }
-          }
 
-          Number value;
-          if (rule.value != null && !rule.value.isEmpty()) {
-            String val = matcher.replaceAll(rule.value);
-
-            try {
-              beanValue = Double.valueOf(val);
-            } catch (NumberFormatException e) {
-              LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
-              return;
-            }
-          }
-          if (beanValue instanceof Number) {
-            value = ((Number)beanValue).doubleValue() * rule.valueFactor;
-          } else if (beanValue instanceof Boolean) {
-            value = (Boolean)beanValue ? 1 : 0;
-          } else {
-            LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
-            return;
-          }
-
-          // If there's no name provided, use default export format.
-          if (rule.name == null) {
-            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.type);
-            return;
-          }
-
-          // Matcher is set below here due to validation in the constructor.
-          String name = safeName(matcher.replaceAll(rule.name));
-          if (name.isEmpty()) {
-            return;
-          }
-          if (config.lowercaseOutputName) {
-            name = name.toLowerCase();
-          }
-
-          // Set the help.
-          if (rule.help != null) {
-            help = matcher.replaceAll(rule.help);
-          }
-
-          // Set the labels.
-          ArrayList<String> labelNames = new ArrayList<String>();
-          ArrayList<String> labelValues = new ArrayList<String>();
-          if (rule.labelNames != null) {
-            for (int i = 0; i < rule.labelNames.size(); i++) {
-              final String unsafeLabelName = rule.labelNames.get(i);
-              final String labelValReplacement = rule.labelValues.get(i);
-              try {
-                String labelName = safeName(matcher.replaceAll(unsafeLabelName));
-                String labelValue = matcher.replaceAll(labelValReplacement);
-                if (config.lowercaseOutputLabelNames) {
-                  labelName = labelName.toLowerCase();
-                }
-                if (!labelName.isEmpty() && !labelValue.isEmpty()) {
-                  labelNames.add(labelName);
-                  labelValues.add(labelValue);
-                }
-              } catch (Exception e) {
-                throw new RuntimeException(
-                  format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
+            if (rule.pattern != null) {
+              matcher = rule.pattern.matcher(matchName);
+              if (!matcher.matches()) {
+                continue;
               }
             }
+
+            Double value = null;
+            if (rule.value != null && !rule.value.isEmpty()) {
+              String val = matcher.replaceAll(rule.value);
+              try {
+                value = Double.valueOf(val);
+              } catch (NumberFormatException e) {
+                LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
+                return;
+              }
+            }
+
+            // If there's no name provided, use default export format.
+            if (rule.name == null) {
+              matchedRule = defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
+              break;
+            }
+
+            // Matcher is set below here due to validation in the constructor.
+            String name = safeName(matcher.replaceAll(rule.name));
+            if (name.isEmpty()) {
+              return;
+            }
+            if (config.lowercaseOutputName) {
+              name = name.toLowerCase();
+            }
+
+            // Set the help.
+            if (rule.help != null) {
+              help = matcher.replaceAll(rule.help);
+            }
+
+            // Set the labels.
+            ArrayList<String> labelNames = new ArrayList<String>();
+            ArrayList<String> labelValues = new ArrayList<String>();
+            if (rule.labelNames != null) {
+              for (int i = 0; i < rule.labelNames.size(); i++) {
+                final String unsafeLabelName = rule.labelNames.get(i);
+                final String labelValReplacement = rule.labelValues.get(i);
+                try {
+                  String labelName = safeName(matcher.replaceAll(unsafeLabelName));
+                  String labelValue = matcher.replaceAll(labelValReplacement);
+                  if (config.lowercaseOutputLabelNames) {
+                    labelName = labelName.toLowerCase();
+                  }
+                  if (!labelName.isEmpty() && !labelValue.isEmpty()) {
+                    labelNames.add(labelName);
+                    labelValues.add(labelValue);
+                  }
+                } catch (Exception e) {
+                  throw new RuntimeException(
+                          format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
+                }
+              }
+            }
+
+            matchedRule = new MatchedRule(name, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
+            break;
           }
 
-          // Add to samples.
-          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
-          addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
+          // No rule matches the mbean, cache it as an invalid rule to get cache hits in the future
+          if (matchedRule == null) {
+            matchedRule = MatchedRule.unmatched();
+          }
+
+          if (config.cacheRules) {
+            cachedRules.put(cacheName, matchedRule);
+          }
+        }
+
+        if (matchedRule.isUnmatched()) {
           return;
         }
+
+        Number value;
+        if (matchedRule.value != null) {
+          beanValue = matchedRule.value;
+        }
+
+        if (beanValue instanceof Number) {
+          value = ((Number) beanValue).doubleValue() * matchedRule.valueFactor;
+        } else if (beanValue instanceof Boolean) {
+          value = (Boolean) beanValue ? 1 : 0;
+        } else {
+          LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+          return;
+        }
+
+        // Add to samples.
+        LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
+        addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, help);
       }
 
     }
 
-    public List<MetricFamilySamples> collect() {
-      if (configFile != null) {
+  public List<MetricFamilySamples> collect() {
+    if (configFile != null) {
         long mtime = configFile.lastModified();
         if (mtime > config.lastUpdate) {
           LOGGER.fine("Configuration file changed, reloading...");
           reloadConfig();
+          cachedRules.clear();  // rules may have changed with the configuration, clear the rule cache
         }
       }
 
-      Receiver receiver = new Receiver();
+      Receiver receiver = new Receiver(cachedRules);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -488,6 +535,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
       samples.add(new MetricFamilySamples.Sample(
           "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
       mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
+      if (config.cacheRules) {
+        samples = new ArrayList<MetricFamilySamples.Sample>();
+        samples.add(new MetricFamilySamples.Sample(
+                "jmx_scrape_cached_beans", new ArrayList<String>(), new ArrayList<String>(), cachedRules.size()));
+        mfsList.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", samples));
+      }
       return mfsList;
     }
 
@@ -495,6 +548,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<MetricFamilySamples> sampleFamilies = new ArrayList<MetricFamilySamples>();
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", new ArrayList<MetricFamilySamples.Sample>()));
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", new ArrayList<MetricFamilySamples.Sample>()));
+      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", new ArrayList<MetricFamilySamples.Sample>()));
       return sampleFamilies;
     }
 

@@ -44,6 +44,7 @@ lowercaseOutputName: false
 lowercaseOutputLabelNames: false
 whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
 blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+cacheRules: false
 rules:
   - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
     name: cassandra_$1_$2
@@ -57,16 +58,17 @@ rules:
 Name     | Description
 ---------|------------
 startDelaySeconds | start delay before serving requests. Any requests within the delay period will result in an empty metrics set.
-hostPort | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
-username | The username to be used in remote JMX password authentication.
-password | The password to be used in remote JMX password authentication.
-jmxUrl   | A full JMX URL to connect to. Should not be specified if hostPort is.
-ssl      | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
+hostPort   | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
+username   | The username to be used in remote JMX password authentication.
+password   | The password to be used in remote JMX password authentication.
+jmxUrl     | A full JMX URL to connect to. Should not be specified if hostPort is.
+ssl        | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
 blacklistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `whitelistObjectNames`. Defaults to none.
-rules    | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
+cacheRules | Whether to cach bean to rule computation. If true, bean values are ommitted from patterns when matching.
+rules      | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
 pattern  | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.
 attrNameSnakeCase | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.
 name     | The metric name to set. Capture groups from the `pattern` can be used. If not specified, the default format will be used. If it evaluates to empty, processing of this attribute stops with no output.
