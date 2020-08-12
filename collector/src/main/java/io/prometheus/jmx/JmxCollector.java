@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -296,11 +297,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         new HashMap<String, MetricFamilySamples>();
 
       ConcurrentMap<String, MatchedRule> cachedRules;
+      Set<String> lastCachedRules;
 
       private static final char SEP = '_';
 
-      Receiver(ConcurrentMap<String, MatchedRule> cachedRules) {
+      Receiver(ConcurrentMap<String, MatchedRule> cachedRules, Set<String> lastCachedRules) {
         this.cachedRules = cachedRules;
+        this.lastCachedRules = lastCachedRules;
       }
 
       // [] and () are special in regexes, so swtich to <>.
@@ -384,6 +387,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String cacheName = beanName + attrName;
         if (config.cacheRules) {
           matchedRule = cachedRules.get(cacheName);
+          lastCachedRules.add(cacheName);
         }
 
         if (matchedRule == null) {
@@ -497,6 +501,15 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     }
 
+  // Remove stale rules (in the cache but not collected in the last run of the collector)
+  private void evictStaleCachedRules(Set<String> lastCachedRules) {
+    for (String cacheName : cachedRules.keySet()) {
+      if (!lastCachedRules.contains(cacheName)) {
+        cachedRules.remove(cacheName);
+      }
+    }
+  }
+
   public List<MetricFamilySamples> collect() {
     if (configFile != null) {
         long mtime = configFile.lastModified();
@@ -507,7 +520,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
       }
 
-      Receiver receiver = new Receiver(cachedRules);
+      Set<String> lastCachedRules = new HashSet<String>();
+      Receiver receiver = new Receiver(cachedRules, lastCachedRules);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -524,6 +538,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
+      evictStaleCachedRules(lastCachedRules);
+
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
       List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
