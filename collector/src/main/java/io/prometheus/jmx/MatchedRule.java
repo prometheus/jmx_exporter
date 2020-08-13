@@ -11,6 +11,7 @@ import java.util.List;
  */
 public class MatchedRule {
     final String name;
+    final String matchName;
     final Type type;
     final String help;
     final List<String> labelNames;
@@ -22,6 +23,7 @@ public class MatchedRule {
 
     private MatchedRule() {
         this.name = null;
+        this.matchName = null;
         this.type = null;
         this.help = null;
         this.labelNames = null;
@@ -32,6 +34,7 @@ public class MatchedRule {
 
     public MatchedRule(
             final String name,
+            final String matchName,
             final Type type,
             final String help,
             final List<String> labelNames,
@@ -39,6 +42,7 @@ public class MatchedRule {
             final Double value,
             double valueFactor) {
         this.name = name;
+        this.matchName = matchName;
         this.type = type;
         this.help = help;
         this.labelNames = labelNames;

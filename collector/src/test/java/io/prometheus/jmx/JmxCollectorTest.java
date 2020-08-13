@@ -272,16 +272,28 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void testMatchBeanValueDisabled() throws Exception {
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*:`\n  name: foo\n  matchBeanValue: false".replace('`','"')).register(registry);
+        assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
+    public void testMatchBeanValueEnabled() throws Exception {
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*:`\n  name: foo\n  matchBeanValue: true".replace('`','"')).register(registry);
+        assertNotNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
     public void testCachedBeansDisabled() throws Exception {
         JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4".replace('`','"')).register(registry);
-        assertNull(registry.getSampleValue("jmx_scrape_cached_beans", new String[]{}, new String[]{}));
+        assertEquals(0.0, registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}), .001);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testCachedBeansEnabled() throws Exception {
-        JmxCollector jc = new JmxCollector("\n---\ncacheRules: true\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4".replace('`','"')).register(registry);
-        assertTrue(registry.getSampleValue("jmx_scrape_cached_beans", new String[]{}, new String[]{}) > 0);
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true\n  matchBeanValue: true".replace('`','"')).register(registry);
+        assertTrue(registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}) > 0);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 }
