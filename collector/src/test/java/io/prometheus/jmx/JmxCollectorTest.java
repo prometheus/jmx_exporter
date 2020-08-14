@@ -272,18 +272,6 @@ public class JmxCollectorTest {
     }
 
     @Test
-    public void testMatchBeanValueDisabled() throws Exception {
-        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*:`\n  name: foo\n  matchBeanValue: false".replace('`','"')).register(registry);
-        assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
-    }
-
-    @Test
-    public void testMatchBeanValueEnabled() throws Exception {
-        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*:`\n  name: foo\n  matchBeanValue: true".replace('`','"')).register(registry);
-        assertNotNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
-    }
-
-    @Test
     public void testCachedBeansDisabled() throws Exception {
         JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4".replace('`','"')).register(registry);
         assertEquals(0.0, registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}), .001);

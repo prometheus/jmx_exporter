@@ -46,7 +46,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Double valueFactor = 1.0;
       String help;
       boolean attrNameSnakeCase;
-      boolean matchBeanValue = true;
       boolean cache = false;
       Type type = Type.UNTYPED;
       ArrayList<String> labelNames;
@@ -194,9 +193,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
             }
             if (yamlRule.containsKey("attrNameSnakeCase")) {
               rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
-            }
-            if (yamlRule.containsKey("matchBeanValue")) {
-              rule.matchBeanValue = (Boolean)yamlRule.get("matchBeanValue");
             }
             if (yamlRule.containsKey("cache")) {
               rule.cache = (Boolean)yamlRule.get("cache");
@@ -388,16 +384,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         MatchedRule matchedRule = MatchedRule.unmatched();
 
         for (Rule rule : config.rules) {
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
-
-          if (rule.matchBeanValue) {
-            matchName = matchName + ": " + beanValue;
-          }
+          String cacheName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
+          String matchName = cacheName + ": " + beanValue;
 
           if (rule.cache) {
-            MatchedRule cachedRule = cachedRules.get(rule, matchName);
+            MatchedRule cachedRule = cachedRules.get(rule, cacheName);
             if (cachedRule != null) {
-              lastCachedRules.add(new MatchedRulesCache.Entry(rule, matchName));
+              lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheName));
               if (!cachedRule.isUnmatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -414,8 +407,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
             matcher = rule.pattern.matcher(matchName);
             if (!matcher.matches()) {
               if (rule.cache) {
-                cachedRules.put(rule, matchName, MatchedRule.unmatched());
-                lastCachedRules.add(new MatchedRulesCache.Entry(rule, matchName));
+                cachedRules.put(rule, cacheName, MatchedRule.unmatched());
+                lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheName));
               }
               continue;
             }
@@ -436,7 +429,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.name == null) {
             matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
             if (rule.cache) {
-              lastCachedRules.add(new MatchedRulesCache.Entry(rule, matchName));
+              cachedRules.put(rule, cacheName, matchedRule);
+              lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheName));
             }
             break;
           }
@@ -481,8 +475,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           matchedRule = new MatchedRule(name, matchName, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
           if (rule.cache) {
-            cachedRules.put(rule, matchName, matchedRule);
-            lastCachedRules.add(new MatchedRulesCache.Entry(rule, matchName));
+            cachedRules.put(rule, cacheName, matchedRule);
+            lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheName));
           }
           break;
         }
