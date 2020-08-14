@@ -280,7 +280,7 @@ public class JmxCollectorTest {
 
     @Test
     public void testCachedBeansEnabled() throws Exception {
-        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true\n  matchBeanValue: true".replace('`','"')).register(registry);
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true".replace('`','"')).register(registry);
         assertTrue(registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}) > 0);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }

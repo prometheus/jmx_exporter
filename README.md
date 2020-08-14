@@ -51,7 +51,6 @@ rules:
     valueFactor: 0.001
     labels: {}
     help: "Cassandra metric $1 $2"
-    matchBeanValue: true
     cache: false
     type: GAUGE
     attrNameSnakeCase: false
