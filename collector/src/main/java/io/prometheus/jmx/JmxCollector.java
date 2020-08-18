@@ -399,8 +399,9 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.cache) {
             MatchedRule cachedRule = cachedRules.get(rule, cacheKey);
             if (cachedRule != null) {
+              // add to the cache to signal that this cacheKey is not stale and should stay in the cache
               addToCache(rule, cacheKey, cachedRule);
-              if (!cachedRule.isUnmatched()) {
+              if (cachedRule.isMatched()) {
                 matchedRule = cachedRule;
                 break;
               }

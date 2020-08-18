@@ -63,4 +63,8 @@ public class MatchedRule {
     public boolean isUnmatched() {
         return this == _unmatched;
     }
+
+    public boolean isMatched() {
+        return !isUnmatched();
+    }
 }
