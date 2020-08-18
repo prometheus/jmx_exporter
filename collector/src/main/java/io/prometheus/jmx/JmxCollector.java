@@ -12,7 +12,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -294,11 +293,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
         new HashMap<String, MetricFamilySamples>();
 
       MatchedRulesCache cachedRules;
-      Set<MatchedRulesCache.Entry> lastCachedRules;
+      MatchedRulesCache.LastEntries lastCachedRules;
 
       private static final char SEP = '_';
 
-      Receiver(MatchedRulesCache cachedRules, Set<MatchedRulesCache.Entry> lastCachedRules) {
+      Receiver(MatchedRulesCache cachedRules, MatchedRulesCache.LastEntries lastCachedRules) {
         this.cachedRules = cachedRules;
         this.lastCachedRules = lastCachedRules;
       }
@@ -324,7 +323,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         if (rule.cache) {
           cachedRules.put(rule, cacheKey, matchedRule);
-          lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheKey));
+          lastCachedRules.add(rule, cacheKey);
         }
       }
 
@@ -399,8 +398,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.cache) {
             MatchedRule cachedRule = cachedRules.get(rule, cacheKey);
             if (cachedRule != null) {
-              // add to the cache to signal that this cacheKey is not stale and should stay in the cache
-              addToCache(rule, cacheKey, cachedRule);
+              lastCachedRules.add(rule, cacheKey);
               if (cachedRule.isMatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -517,7 +515,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
       }
 
-      Set<MatchedRulesCache.Entry> lastCachedRules = new HashSet<MatchedRulesCache.Entry>();
+      MatchedRulesCache.LastEntries lastCachedRules = new MatchedRulesCache.LastEntries();
       Receiver receiver = new Receiver(cachedRules, lastCachedRules);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
