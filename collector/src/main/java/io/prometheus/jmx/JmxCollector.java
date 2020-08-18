@@ -71,7 +71,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private long createTimeNanoSecs = System.nanoTime();
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
-    private final MatchedRulesCache cachedRules = new MatchedRulesCache();
+    private MatchedRulesCache cachedRules = new MatchedRulesCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
@@ -321,10 +321,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       // Add the matched rule to the cached rules and tag it as not stale (lastCachedRules),
       // if the rule is configured to be cached
-      private void addToCache(final Rule rule, final String cacheName, final MatchedRule matchedRule) {
+      private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         if (rule.cache) {
-          cachedRules.put(rule, cacheName, matchedRule);
-          lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheName));
+          cachedRules.put(rule, cacheKey, matchedRule);
+          lastCachedRules.add(new MatchedRulesCache.Entry(rule, cacheKey));
         }
       }
 
@@ -393,13 +393,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         MatchedRule matchedRule = MatchedRule.unmatched();
 
         for (Rule rule : config.rules) {
-          String cacheName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
-          String matchName = cacheName + ": " + beanValue;
+          String cacheKey = beanName + attrName;
+          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + beanValue;
 
           if (rule.cache) {
-            MatchedRule cachedRule = cachedRules.get(rule, cacheName);
+            MatchedRule cachedRule = cachedRules.get(rule, cacheKey);
             if (cachedRule != null) {
-              addToCache(rule, cacheName, cachedRule);
+              addToCache(rule, cacheKey, cachedRule);
               if (!cachedRule.isUnmatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -415,7 +415,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.pattern != null) {
             matcher = rule.pattern.matcher(matchName);
             if (!matcher.matches()) {
-              addToCache(rule, cacheName, MatchedRule.unmatched());
+              addToCache(rule, cacheKey, MatchedRule.unmatched());
               continue;
             }
           }
@@ -434,7 +434,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // If there's no name provided, use default export format.
           if (rule.name == null) {
             matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
-            addToCache(rule, cacheName, matchedRule);
+            addToCache(rule, cacheKey, matchedRule);
             break;
           }
 
@@ -477,7 +477,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
 
           matchedRule = new MatchedRule(name, matchName, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
-          addToCache(rule, cacheName, matchedRule);
+          addToCache(rule, cacheKey, matchedRule);
           break;
         }
 
