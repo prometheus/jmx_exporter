@@ -75,7 +75,7 @@ value             | Value for the metric. Static values and capture groups from 
 valueFactor       | Optional number that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.
 labels            | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.
 help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description and the full name of the attribute.
-cache             | Whether to cache bean name expressions to rule computation (match and mismatch). This can increase performance when collecting a lot of mbeans. Defaults to `false`.
+cache             | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value only the first value will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.
 type              | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.
 
 Metric names and label names are sanitized. All characters other than `[a-zA-Z0-9:_]` are replaced with underscores,
