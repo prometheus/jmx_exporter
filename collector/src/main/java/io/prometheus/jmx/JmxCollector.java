@@ -506,12 +506,21 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
   public List<MetricFamilySamples> collect() {
+    MatchedRulesCache cachedRules = this.cachedRules;
+
     if (configFile != null) {
         long mtime = configFile.lastModified();
         if (mtime > config.lastUpdate) {
           LOGGER.fine("Configuration file changed, reloading...");
           reloadConfig();
-          cachedRules.clear();  // rules may have changed with the configuration, clear the rule cache
+          synchronized (this) {
+            // rules may have changed with the configuration, clear the cache
+            // another thread may have changed the cache already, clear only if it hasn't been changed
+            if (cachedRules == this.cachedRules) {
+              this.cachedRules = new MatchedRulesCache();
+            }
+            cachedRules = this.cachedRules;
+          }
         }
       }
 
