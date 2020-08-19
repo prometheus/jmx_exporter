@@ -274,14 +274,14 @@ public class JmxCollectorTest {
     @Test
     public void testCachedBeansDisabled() throws Exception {
         JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4".replace('`','"')).register(registry);
-        assertEquals(0.0, registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}), .001);
+        assertEquals(0.0, registry.getSampleValue("jmx_scrape_cached_beans", new String[]{}, new String[]{}), .001);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 
     @Test
     public void testCachedBeansEnabled() throws Exception {
         JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true".replace('`','"')).register(registry);
-        assertTrue(registry.getSampleValue("jmx_scrape_cache_matched_beans", new String[]{}, new String[]{}) > 0);
+        assertTrue(registry.getSampleValue("jmx_scrape_cached_beans", new String[]{}, new String[]{}) > 0);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
     }
 }

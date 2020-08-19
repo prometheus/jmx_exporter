@@ -293,13 +293,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         new HashMap<String, MetricFamilySamples>();
 
       MatchedRulesCache cachedRules;
-      MatchedRulesCache.LastEntries lastCachedRules;
+      MatchedRulesCache.StalenessTracker stalenessTracker;
 
       private static final char SEP = '_';
 
-      Receiver(MatchedRulesCache cachedRules, MatchedRulesCache.LastEntries lastCachedRules) {
+      Receiver(MatchedRulesCache cachedRules, MatchedRulesCache.StalenessTracker stalenessTracker) {
         this.cachedRules = cachedRules;
-        this.lastCachedRules = lastCachedRules;
+        this.stalenessTracker = stalenessTracker;
       }
 
       // [] and () are special in regexes, so swtich to <>.
@@ -318,12 +318,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
         mfs.samples.add(sample);
       }
 
-      // Add the matched rule to the cached rules and tag it as not stale (lastCachedRules),
+      // Add the matched rule to the cached rules and tag it as not stale
       // if the rule is configured to be cached
       private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         if (rule.cache) {
           cachedRules.put(rule, cacheKey, matchedRule);
-          lastCachedRules.add(rule, cacheKey);
+          stalenessTracker.add(rule, cacheKey);
         }
       }
 
@@ -398,7 +398,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.cache) {
             MatchedRule cachedRule = cachedRules.get(rule, cacheKey);
             if (cachedRule != null) {
-              lastCachedRules.add(rule, cacheKey);
+              stalenessTracker.add(rule, cacheKey);
               if (cachedRule.isMatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -515,8 +515,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
       }
 
-      MatchedRulesCache.LastEntries lastCachedRules = new MatchedRulesCache.LastEntries();
-      Receiver receiver = new Receiver(cachedRules, lastCachedRules);
+      MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
+      Receiver receiver = new Receiver(cachedRules, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -533,7 +533,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
-      cachedRules.evictStaleEntries(lastCachedRules);
+      cachedRules.evictStaleEntries(stalenessTracker);
 
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
@@ -548,12 +548,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
       samples = new ArrayList<MetricFamilySamples.Sample>();
       samples.add(new MetricFamilySamples.Sample(
-              "jmx_scrape_cache_matched_beans", new ArrayList<String>(), new ArrayList<String>(), cachedRules.matchedCount()));
-      mfsList.add(new MetricFamilySamples("jmx_scrape_cache_matched_beans", Type.GAUGE, "Number of beans with their matching rule cached", samples));
-      samples = new ArrayList<MetricFamilySamples.Sample>();
-      samples.add(new MetricFamilySamples.Sample(
-            "jmx_scrape_cache_unmatched_beans", new ArrayList<String>(), new ArrayList<String>(), cachedRules.unmatchedCount()));
-      mfsList.add(new MetricFamilySamples("jmx_scrape_cache_unmatched_beans", Type.GAUGE, "Number of beans cached without a matching rule", samples));
+              "jmx_scrape_cached_beans", new ArrayList<String>(), new ArrayList<String>(), stalenessTracker.cachedCount()));
+      mfsList.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", samples));
       return mfsList;
     }
 
@@ -561,8 +557,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<MetricFamilySamples> sampleFamilies = new ArrayList<MetricFamilySamples>();
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", new ArrayList<MetricFamilySamples.Sample>()));
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", new ArrayList<MetricFamilySamples.Sample>()));
-      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_cache_matched_beans", Type.GAUGE, "Number of beans with their matching rule cached", new ArrayList<MetricFamilySamples.Sample>()));
-      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_cache_unmatched_beans", Type.GAUGE, "Number of beans cached without a matching rule", new ArrayList<MetricFamilySamples.Sample>()));
+      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", new ArrayList<MetricFamilySamples.Sample>()));
       return sampleFamilies;
     }
 
