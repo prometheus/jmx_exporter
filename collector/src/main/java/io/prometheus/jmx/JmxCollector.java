@@ -410,13 +410,16 @@ public class JmxCollector extends Collector implements Collector.Describable {
         MatchedRule matchedRule = MatchedRule.unmatched();
 
         for (Rule rule : config.rules) {
-          String cacheKey = beanName + attrName;
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + beanValue;
+          // Rules with bean values cannot be properly cached (only the value from the first scrape will be cached).
+          // If caching for the rule is enabled, replace the value with a dummy <cache> to avoid caching different values at different times.
+          Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
+
+          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + matchBeanValue;
 
           if (rule.cache) {
-            MatchedRule cachedRule = config.rulesCache.get(rule, cacheKey);
+            MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
             if (cachedRule != null) {
-              stalenessTracker.add(rule, cacheKey);
+              stalenessTracker.add(rule, matchName);
               if (cachedRule.isMatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -432,7 +435,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           if (rule.pattern != null) {
             matcher = rule.pattern.matcher(matchName);
             if (!matcher.matches()) {
-              addToCache(rule, cacheKey, MatchedRule.unmatched());
+              addToCache(rule, matchName, MatchedRule.unmatched());
               continue;
             }
           }
@@ -451,7 +454,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // If there's no name provided, use default export format.
           if (rule.name == null) {
             matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
-            addToCache(rule, cacheKey, matchedRule);
+            addToCache(rule, matchName, matchedRule);
             break;
           }
 
@@ -494,7 +497,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
 
           matchedRule = new MatchedRule(name, matchName, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
-          addToCache(rule, cacheKey, matchedRule);
+          addToCache(rule, matchName, matchedRule);
           break;
         }
 
