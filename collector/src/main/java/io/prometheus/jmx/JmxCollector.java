@@ -310,13 +310,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
-      MatchedRulesCache rulesCache;
+      Config config;
       MatchedRulesCache.StalenessTracker stalenessTracker;
 
       private static final char SEP = '_';
 
-      Receiver(MatchedRulesCache rulesCache, MatchedRulesCache.StalenessTracker stalenessTracker) {
-        this.rulesCache = rulesCache;
+      Receiver(Config config, MatchedRulesCache.StalenessTracker stalenessTracker) {
+        this.config = config;
         this.stalenessTracker = stalenessTracker;
       }
 
@@ -340,7 +340,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       // if the rule is configured to be cached
       private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         if (rule.cache) {
-          rulesCache.put(rule, cacheKey, matchedRule);
+          config.rulesCache.put(rule, cacheKey, matchedRule);
           stalenessTracker.add(rule, cacheKey);
         }
       }
@@ -414,7 +414,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + beanValue;
 
           if (rule.cache) {
-            MatchedRule cachedRule = rulesCache.get(rule, cacheKey);
+            MatchedRule cachedRule = config.rulesCache.get(rule, cacheKey);
             if (cachedRule != null) {
               stalenessTracker.add(rule, cacheKey);
               if (cachedRule.isMatched()) {
@@ -525,10 +525,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
   public List<MetricFamilySamples> collect() {
       maybeReloadConfig();
-      MatchedRulesCache rulesCache = config.rulesCache;
+
+      // Take a reference to the current config and collect with this one
+      // (to avoid race conditions in case another thread reloads the config in the meantime)
+      Config config = this.config;
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
-      Receiver receiver = new Receiver(rulesCache, stalenessTracker);
+      Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -545,7 +548,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
-      rulesCache.evictStaleEntries(stalenessTracker);
+      config.rulesCache.evictStaleEntries(stalenessTracker);
 
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
