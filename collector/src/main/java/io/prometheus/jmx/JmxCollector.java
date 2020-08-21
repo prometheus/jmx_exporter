@@ -109,19 +109,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
-    private void maybeReloadConfig() {
+    private Config maybeReloadConfig() {
       if (configFile != null) {
-        long mtime = configFile.lastModified();
-        if (mtime > config.lastUpdate) {
-          synchronized (this) {
-            // check again in case two threads try to reload the config at the same time
-            if (mtime > config.lastUpdate) {
-              LOGGER.fine("Configuration file changed, reloading...");
-              reloadConfig();
-            }
+        synchronized (this) {
+          long mtime = configFile.lastModified();
+          if (mtime > config.lastUpdate) {
+            LOGGER.fine("Configuration file changed, reloading...");
+            reloadConfig();
           }
         }
       }
+
+      return config;
     }
 
   private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
@@ -527,11 +526,9 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
   public List<MetricFamilySamples> collect() {
-      maybeReloadConfig();
-
       // Take a reference to the current config and collect with this one
       // (to avoid race conditions in case another thread reloads the config in the meantime)
-      Config config = this.config;
+      Config config = maybeReloadConfig();
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
