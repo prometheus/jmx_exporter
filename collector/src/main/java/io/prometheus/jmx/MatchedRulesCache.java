@@ -1,5 +1,6 @@
 package io.prometheus.jmx;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,32 +15,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MatchedRulesCache {
     private final Map<JmxCollector.Rule, Map<String, MatchedRule>> cachedRules;
 
-    public MatchedRulesCache() {
-        this.cachedRules = new ConcurrentHashMap<JmxCollector.Rule, Map<String, MatchedRule>>();
-    }
-
-    public void clear() {
-        cachedRules.clear();
+    public MatchedRulesCache(Collection<JmxCollector.Rule> rules) {
+        this.cachedRules = new HashMap<JmxCollector.Rule, Map<String, MatchedRule>>(rules.size());
+        for (JmxCollector.Rule rule : rules) {
+            this.cachedRules.put(rule, new ConcurrentHashMap<String, MatchedRule>());
+        }
     }
 
     public void put(final JmxCollector.Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(rule);
-        if (cachedRulesForRule == null) {
-            synchronized (cachedRules) {
-                cachedRulesForRule = cachedRules.get(rule);
-                if (cachedRulesForRule == null) {
-                    cachedRulesForRule = new ConcurrentHashMap<String, MatchedRule>();
-                    cachedRules.put(rule, cachedRulesForRule);
-                }
-            }
-        }
-
         cachedRulesForRule.put(cacheKey, matchedRule);
     }
 
     public MatchedRule get(final JmxCollector.Rule rule, final String cacheKey) {
-        Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(rule);
-        return (cachedRulesForRule == null) ? null : cachedRulesForRule.get(cacheKey);
+        return cachedRules.get(rule).get(cacheKey);
     }
 
     // Remove stale rules (in the cache but not collected in the last run of the collector)
@@ -52,10 +41,6 @@ public class MatchedRulesCache {
                 if (!stalenessTracker.contains(rule, cacheKey)) {
                     cachedRulesForRule.remove(cacheKey);
                 }
-            }
-
-            if (cachedRulesForRule.size() == 0) {
-                cachedRules.remove(rule);
             }
         }
     }

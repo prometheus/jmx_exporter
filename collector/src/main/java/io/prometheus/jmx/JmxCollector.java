@@ -63,6 +63,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
+
+      MatchedRulesCache rulesCache;
     }
 
     private Config config;
@@ -70,7 +72,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private long createTimeNanoSecs = System.nanoTime();
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
-    private MatchedRulesCache cachedRules = new MatchedRulesCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         configFile = in;
@@ -108,7 +109,22 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
-    private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
+    private void maybeReloadConfig() {
+      if (configFile != null) {
+        long mtime = configFile.lastModified();
+        if (mtime > config.lastUpdate) {
+          synchronized (this) {
+            // check again in case two threads try to reload the config at the same time
+            if (mtime > config.lastUpdate) {
+              LOGGER.fine("Configuration file changed, reloading...");
+              reloadConfig();
+            }
+          }
+        }
+      }
+    }
+
+  private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         Config cfg = new Config();
 
         if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
@@ -225,6 +241,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
           cfg.rules.add(new Rule());
         }
 
+        cfg.rulesCache = new MatchedRulesCache(cfg.rules);
+
         return cfg;
 
     }
@@ -292,13 +310,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
-      MatchedRulesCache cachedRules;
+      MatchedRulesCache rulesCache;
       MatchedRulesCache.StalenessTracker stalenessTracker;
 
       private static final char SEP = '_';
 
-      Receiver(MatchedRulesCache cachedRules, MatchedRulesCache.StalenessTracker stalenessTracker) {
-        this.cachedRules = cachedRules;
+      Receiver(MatchedRulesCache rulesCache, MatchedRulesCache.StalenessTracker stalenessTracker) {
+        this.rulesCache = rulesCache;
         this.stalenessTracker = stalenessTracker;
       }
 
@@ -322,7 +340,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       // if the rule is configured to be cached
       private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         if (rule.cache) {
-          cachedRules.put(rule, cacheKey, matchedRule);
+          rulesCache.put(rule, cacheKey, matchedRule);
           stalenessTracker.add(rule, cacheKey);
         }
       }
@@ -396,7 +414,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + beanValue;
 
           if (rule.cache) {
-            MatchedRule cachedRule = cachedRules.get(rule, cacheKey);
+            MatchedRule cachedRule = rulesCache.get(rule, cacheKey);
             if (cachedRule != null) {
               stalenessTracker.add(rule, cacheKey);
               if (cachedRule.isMatched()) {
@@ -506,26 +524,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
   public List<MetricFamilySamples> collect() {
-    MatchedRulesCache cachedRules = this.cachedRules;
-
-    if (configFile != null) {
-        long mtime = configFile.lastModified();
-        if (mtime > config.lastUpdate) {
-          LOGGER.fine("Configuration file changed, reloading...");
-          reloadConfig();
-          synchronized (this) {
-            // rules may have changed with the configuration, clear the cache
-            // another thread may have changed the cache already, clear only if it hasn't been changed
-            if (cachedRules == this.cachedRules) {
-              this.cachedRules = new MatchedRulesCache();
-            }
-            cachedRules = this.cachedRules;
-          }
-        }
-      }
+      maybeReloadConfig();
+      MatchedRulesCache rulesCache = config.rulesCache;
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
-      Receiver receiver = new Receiver(cachedRules, stalenessTracker);
+      Receiver receiver = new Receiver(rulesCache, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -542,7 +545,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
-      cachedRules.evictStaleEntries(stalenessTracker);
+      rulesCache.evictStaleEntries(stalenessTracker);
 
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
