@@ -4,8 +4,6 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,6 +22,8 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import static java.lang.String.format;
 
@@ -38,13 +38,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
-    private static class Rule {
+    static class Rule {
       Pattern pattern;
       String name;
       String value;
       Double valueFactor = 1.0;
       String help;
       boolean attrNameSnakeCase;
+      boolean cache = false;
       Type type = Type.UNTYPED;
       ArrayList<String> labelNames;
       ArrayList<String> labelValues;
@@ -62,6 +63,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
+
+      MatchedRulesCache rulesCache;
     }
 
     private Config config;
@@ -77,7 +80,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+      config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
@@ -106,7 +109,19 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
-    private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
+    private synchronized Config getLatestConfig() {
+      if (configFile != null) {
+          long mtime = configFile.lastModified();
+          if (mtime > config.lastUpdate) {
+            LOGGER.fine("Configuration file changed, reloading...");
+            reloadConfig();
+          }
+      }
+
+      return config;
+    }
+
+  private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         Config cfg = new Config();
 
         if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
@@ -165,7 +180,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         }
 
-        if (yamlConfig.containsKey("rules")) {
+      if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
             Map<String, Object> yamlRule = ruleObject;
@@ -190,6 +205,9 @@ public class JmxCollector extends Collector implements Collector.Describable {
             }
             if (yamlRule.containsKey("attrNameSnakeCase")) {
               rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
+            }
+            if (yamlRule.containsKey("cache")) {
+              rule.cache = (Boolean)yamlRule.get("cache");
             }
             if (yamlRule.containsKey("type")) {
               rule.type = Type.valueOf((String)yamlRule.get("type"));
@@ -219,6 +237,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // Default to a single default rule.
           cfg.rules.add(new Rule());
         }
+
+        cfg.rulesCache = new MatchedRulesCache(cfg.rules);
 
         return cfg;
 
@@ -287,9 +307,15 @@ public class JmxCollector extends Collector implements Collector.Describable {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
 
+      Config config;
+      MatchedRulesCache.StalenessTracker stalenessTracker;
+
       private static final char SEP = '_';
 
-
+      Receiver(Config config, MatchedRulesCache.StalenessTracker stalenessTracker) {
+        this.config = config;
+        this.stalenessTracker = stalenessTracker;
+      }
 
       // [] and () are special in regexes, so swtich to <>.
       private String angleBrackets(String s) {
@@ -307,13 +333,24 @@ public class JmxCollector extends Collector implements Collector.Describable {
         mfs.samples.add(sample);
       }
 
-      private void defaultExport(
+      // Add the matched rule to the cached rules and tag it as not stale
+      // if the rule is configured to be cached
+      private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
+        if (rule.cache) {
+          config.rulesCache.put(rule, cacheKey, matchedRule);
+          stalenessTracker.add(rule, cacheKey);
+        }
+      }
+
+      private MatchedRule defaultExport(
+          String matchName,
           String domain,
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
           String attrName,
           String help,
-          Object value,
+          Double value,
+          double valueFactor,
           Type type) {
         StringBuilder name = new StringBuilder();
         name.append(domain);
@@ -350,8 +387,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             }
         }
 
-        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, ((Number)value).doubleValue()),
-          type, help);
+        return new MatchedRule(fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
       }
 
       public void recordBean(
@@ -368,40 +404,55 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String help = attrDescription + " (" + beanName + attrName + ")";
         String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
+        MatchedRule matchedRule = MatchedRule.unmatched();
+
         for (Rule rule : config.rules) {
-          Matcher matcher = null;
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName);
-          if (rule.pattern != null) {
-            matcher = rule.pattern.matcher(matchName + ": " + beanValue);
-            if (!matcher.matches()) {
+          // Rules with bean values cannot be properly cached (only the value from the first scrape will be cached).
+          // If caching for the rule is enabled, replace the value with a dummy <cache> to avoid caching different values at different times.
+          Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
+
+          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + matchBeanValue;
+
+          if (rule.cache) {
+            MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
+            if (cachedRule != null) {
+              stalenessTracker.add(rule, matchName);
+              if (cachedRule.isMatched()) {
+                matchedRule = cachedRule;
+                break;
+              }
+
+              // The bean was cached earlier, but did not match the current rule.
+              // Skip it to avoid matching against the same pattern again
               continue;
             }
           }
 
-          Number value;
+          Matcher matcher = null;
+          if (rule.pattern != null) {
+            matcher = rule.pattern.matcher(matchName);
+            if (!matcher.matches()) {
+              addToCache(rule, matchName, MatchedRule.unmatched());
+              continue;
+            }
+          }
+
+          Double value = null;
           if (rule.value != null && !rule.value.isEmpty()) {
             String val = matcher.replaceAll(rule.value);
-
             try {
-              beanValue = Double.valueOf(val);
+              value = Double.valueOf(val);
             } catch (NumberFormatException e) {
               LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
               return;
             }
           }
-          if (beanValue instanceof Number) {
-            value = ((Number)beanValue).doubleValue() * rule.valueFactor;
-          } else if (beanValue instanceof Boolean) {
-            value = (Boolean)beanValue ? 1 : 0;
-          } else {
-            LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
-            return;
-          }
 
           // If there's no name provided, use default export format.
           if (rule.name == null) {
-            defaultExport(domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.type);
-            return;
+            matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
+            addToCache(rule, matchName, matchedRule);
+            break;
           }
 
           // Matcher is set below here due to validation in the constructor.
@@ -437,30 +488,48 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 }
               } catch (Exception e) {
                 throw new RuntimeException(
-                  format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
+                        format("Matcher '%s' unable to use: '%s' value: '%s'", matcher, unsafeLabelName, labelValReplacement), e);
               }
             }
           }
 
-          // Add to samples.
-          LOGGER.fine("add metric sample: " + name + " " + labelNames + " " + labelValues + " " + value.doubleValue());
-          addSample(new MetricFamilySamples.Sample(name, labelNames, labelValues, value.doubleValue()), rule.type, help);
+          matchedRule = new MatchedRule(name, matchName, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
+          addToCache(rule, matchName, matchedRule);
+          break;
+        }
+
+        if (matchedRule.isUnmatched()) {
           return;
         }
+
+        Number value;
+        if (matchedRule.value != null) {
+          beanValue = matchedRule.value;
+        }
+
+        if (beanValue instanceof Number) {
+          value = ((Number) beanValue).doubleValue() * matchedRule.valueFactor;
+        } else if (beanValue instanceof Boolean) {
+          value = (Boolean) beanValue ? 1 : 0;
+        } else {
+          LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+          return;
+        }
+
+        // Add to samples.
+        LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
+        addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, help);
       }
 
     }
 
-    public List<MetricFamilySamples> collect() {
-      if (configFile != null) {
-        long mtime = configFile.lastModified();
-        if (mtime > config.lastUpdate) {
-          LOGGER.fine("Configuration file changed, reloading...");
-          reloadConfig();
-        }
-      }
+  public List<MetricFamilySamples> collect() {
+      // Take a reference to the current config and collect with this one
+      // (to avoid race conditions in case another thread reloads the config in the meantime)
+      Config config = getLatestConfig();
 
-      Receiver receiver = new Receiver();
+      MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
+      Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
@@ -477,6 +546,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
+      config.rulesCache.evictStaleEntries(stalenessTracker);
+
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());
       List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
@@ -488,6 +559,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
       samples.add(new MetricFamilySamples.Sample(
           "jmx_scrape_error", new ArrayList<String>(), new ArrayList<String>(), error));
       mfsList.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", samples));
+      samples = new ArrayList<MetricFamilySamples.Sample>();
+      samples.add(new MetricFamilySamples.Sample(
+              "jmx_scrape_cached_beans", new ArrayList<String>(), new ArrayList<String>(), stalenessTracker.cachedCount()));
+      mfsList.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", samples));
       return mfsList;
     }
 
@@ -495,6 +570,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<MetricFamilySamples> sampleFamilies = new ArrayList<MetricFamilySamples>();
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_duration_seconds", Type.GAUGE, "Time this JMX scrape took, in seconds.", new ArrayList<MetricFamilySamples.Sample>()));
       sampleFamilies.add(new MetricFamilySamples("jmx_scrape_error", Type.GAUGE, "Non-zero if this scrape failed.", new ArrayList<MetricFamilySamples.Sample>()));
+      sampleFamilies.add(new MetricFamilySamples("jmx_scrape_cached_beans", Type.GAUGE, "Number of beans with their matching rule cached", new ArrayList<MetricFamilySamples.Sample>()));
       return sampleFamilies;
     }
 
