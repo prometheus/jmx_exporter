@@ -109,7 +109,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
-    private synchronized Config getLastConfig() {
+    private synchronized Config getLatestConfig() {
       if (configFile != null) {
           long mtime = configFile.lastModified();
           if (mtime > config.lastUpdate) {
@@ -526,7 +526,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
   public List<MetricFamilySamples> collect() {
       // Take a reference to the current config and collect with this one
       // (to avoid race conditions in case another thread reloads the config in the meantime)
-      Config config = getLastConfig();
+      Config config = getLatestConfig();
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
