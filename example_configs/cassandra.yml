@@ -1,8 +1,8 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
-whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
+allowedlistObjectNames: ["org.apache.cassandra.metrics:*"]
 # ColumnFamily is an alias for Table metrics
-blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+deniedlistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
 rules:
 # Generic gauges with 0-2 labels
 - pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(\S*)><>Value

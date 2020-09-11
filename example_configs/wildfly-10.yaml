@@ -1,11 +1,11 @@
 ---
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-whitelistObjectNames: 
- # Whitelist objects to be collected, for performance reason
+allowedlistObjectNames:
+ # Allowedlist objects to be collected, for performance reason
  # see https://github.com/prometheus/jmx_exporter/issues/246#issuecomment-367573931
- # Each object in the rules below has to be added to whitelistObjectNames too !
- # note that rules use regex (like "foo.*", whereas the whitelist use globbing expressions (like "foo*")
+ # Each object in the rules below has to be added to allowedlistObjectNames too !
+ # note that rules use regex (like "foo.*", whereas the allowedlist use globbing expressions (like "foo*")
  - "jboss.as:subsystem=messaging-activemq,server=*,jms-queue=*"
  - "jboss.as:subsystem=messaging-activemq,server=*,jms-topic=*"
  - "jboss.as:subsystem=datasources,data-source=*,statistics=*"

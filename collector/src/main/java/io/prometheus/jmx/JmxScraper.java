@@ -52,19 +52,19 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
-    private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
+    private final List<ObjectName> allowedlistObjectNames, deniedlistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
-                      List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+                      List<ObjectName> allowedlistObjectNames, List<ObjectName> deniedlistObjectNames,
                       MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.ssl = ssl;
-        this.whitelistObjectNames = whitelistObjectNames;
-        this.blacklistObjectNames = blacklistObjectNames;
+        this.allowedlistObjectNames = allowedlistObjectNames;
+        this.deniedlistObjectNames = deniedlistObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
 
@@ -97,19 +97,19 @@ class JmxScraper {
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectName> mBeanNames = new HashSet<ObjectName>();
-            for (ObjectName name : whitelistObjectNames) {
+            for (ObjectName name : allowedlistObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.add(instance.getObjectName());
                 }
             }
 
-            for (ObjectName name : blacklistObjectNames) {
+            for (ObjectName name : deniedlistObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.remove(instance.getObjectName());
                 }
             }
 
-            // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache:
+            // Now that we have *only* the allowedlisted mBeans, remove any old ones from the cache:
             jmxMBeanPropertyCache.onlyKeepMBeans(mBeanNames);
 
             for (ObjectName objectName : mBeanNames) {

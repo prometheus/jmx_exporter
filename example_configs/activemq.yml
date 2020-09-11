@@ -1,8 +1,8 @@
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-blacklistObjectNames:
+deniedlistObjectNames:
   - "org.apache.activemq:clientId=*,*"
-whitelistObjectNames:
+allowedlistObjectNames:
   - "org.apache.activemq:destinationType=Queue,*"
   - "org.apache.activemq:destinationType=Topic,*"
   - "org.apache.activemq:type=Broker,brokerName=*"

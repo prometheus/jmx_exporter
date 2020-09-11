@@ -5,7 +5,7 @@
 attrNameSnakeCase: true
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-whitelistObjectNames:
+allowedlistObjectNames:
   - "com.bea:Name=*,Type=ServerRuntime"
   - "com.bea:ServerRuntime=*,Type=ApplicationRuntime,*"
   - "com.bea:ServerRuntime=*,Type=JDBCDataSourceRuntime,*"

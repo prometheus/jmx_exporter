@@ -59,8 +59,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
-      List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
-      List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      List<ObjectName> allowedlistObjectNames = new ArrayList<ObjectName>();
+      List<ObjectName> deniedlistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
 
@@ -164,19 +164,19 @@ public class JmxCollector extends Collector implements Collector.Describable {
           cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
         }
 
-        if (yamlConfig.containsKey("whitelistObjectNames")) {
-          List<Object> names = (List<Object>) yamlConfig.get("whitelistObjectNames");
+        if (yamlConfig.containsKey("allowedlistObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("allowedlistObjectNames");
           for(Object name : names) {
-            cfg.whitelistObjectNames.add(new ObjectName((String)name));
+            cfg.allowedlistObjectNames.add(new ObjectName((String)name));
           }
         } else {
-          cfg.whitelistObjectNames.add(null);
+          cfg.allowedlistObjectNames.add(null);
         }
 
-        if (yamlConfig.containsKey("blacklistObjectNames")) {
-          List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
+        if (yamlConfig.containsKey("deniedlistObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("deniedlistObjectNames");
           for (Object name : names) {
-            cfg.blacklistObjectNames.add(new ObjectName((String)name));
+            cfg.deniedlistObjectNames.add(new ObjectName((String)name));
           }
         }
 
@@ -531,7 +531,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+              config.allowedlistObjectNames, config.deniedlistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&

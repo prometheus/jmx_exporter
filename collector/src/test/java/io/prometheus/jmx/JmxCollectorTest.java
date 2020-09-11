@@ -161,8 +161,8 @@ public class JmxCollectorTest {
     }
 
     @Test
-    public void testWhitelist() throws Exception {
-      JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
+    public void testAllowedlist() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nallowedlistObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
       // Test what should and shouldn't be present.
       assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
@@ -173,8 +173,8 @@ public class JmxCollectorTest {
     }
 
     @Test
-    public void testBlacklist() throws Exception {
-      JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nblacklistObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
+    public void testDeniedlist() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nallowedlistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\ndeniedlistObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
       // Test what should and shouldn't be present.
       assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
