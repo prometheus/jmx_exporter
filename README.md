@@ -13,10 +13,10 @@ Agent is thus strongly encouraged.
 
 ## Running
 
-To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.13.0/jmx_prometheus_javaagent-0.13.0.jar) and run:
+To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.14.0/jmx_prometheus_javaagent-0.14.0.jar) and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.13.0.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.14.0.jar=8080:config.yaml -jar yourJar.jar
 ```
 Metrics will now be accessible at http://localhost:8080/metrics
 
