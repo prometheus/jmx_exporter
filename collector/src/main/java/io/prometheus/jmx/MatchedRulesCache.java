@@ -3,6 +3,7 @@ package io.prometheus.jmx;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,9 +38,10 @@ public class MatchedRulesCache {
             JmxCollector.Rule rule = entry.getKey();
             Map<String, MatchedRule> cachedRulesForRule = entry.getValue();
 
-            for (String cacheKey : cachedRulesForRule.keySet()) {
-                if (!stalenessTracker.contains(rule, cacheKey)) {
-                    cachedRulesForRule.remove(cacheKey);
+            Iterator<String> it = cachedRulesForRule.keySet().iterator();
+            while (it.hasNext()) {
+                if (!stalenessTracker.contains(rule, it.next())) {
+                    it.remove();
                 }
             }
         }
