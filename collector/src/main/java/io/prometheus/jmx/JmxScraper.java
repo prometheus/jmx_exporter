@@ -115,7 +115,7 @@ class JmxScraper {
             for (ObjectName objectName : mBeanNames) {
                 long start = System.nanoTime();
                 scrapeBean(beanConn, objectName);
-                logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + objectName.toString());
+                if (logger.isLoggable(Level.FINE)) logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + objectName.toString());
             }
         } finally {
           if (jmxc != null) {
@@ -129,10 +129,10 @@ class JmxScraper {
         try {
           info = beanConn.getMBeanInfo(mbeanName);
         } catch (IOException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
           return;
         } catch (JMException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
           return;
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
@@ -141,25 +141,26 @@ class JmxScraper {
         for (int idx = 0; idx < attrInfos.length; ++idx) {
             MBeanAttributeInfo attr = attrInfos[idx];
             if (!attr.isReadable()) {
-                logScrape(mbeanName, attr, "not readable");
+                if (logger.isLoggable(Level.FINE)) logScrape(mbeanName, attr, "not readable");
                 continue;
             }
             name2AttrInfo.put(attr.getName(), attr);
         }
         final AttributeList attributes;
+        final Set<String> keySet = name2AttrInfo.keySet();
         try {
-            attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
+            attributes = beanConn.getAttributes(mbeanName, keySet.toArray(new String[keySet.size()]));
             if (attributes == null) {
-                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
+                if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
                 return;
             }
         } catch (Exception e) {
-            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
+            if (logger.isLoggable(Level.FINE)) logScrape(mbeanName, keySet, "Fail: " + e);
             return;
         }
         for (Attribute attribute : attributes.asList()) {
             MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-            logScrape(mbeanName, attr, "process");
+            if (logger.isLoggable(Level.FINE)) logScrape(mbeanName, attr, "process");
             processBeanValue(
                     mbeanName.getDomain(),
                     jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
@@ -189,13 +190,13 @@ class JmxScraper {
             String attrDescription,
             Object value) {
         if (value == null) {
-            logScrape(domain + beanProperties + attrName, "null");
+            if (logger.isLoggable(Level.FINE)) logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
             if (value instanceof java.util.Date) {
                 attrType = "java.lang.Double";
                 value = ((java.util.Date) value).getTime() / 1000.0;
             }
-            logScrape(domain + beanProperties + attrName, value.toString());
+            if (logger.isLoggable(Level.FINE)) logScrape(domain + beanProperties + attrName, value.toString());
             this.receiver.recordBean(
                     domain,
                     beanProperties,
@@ -205,7 +206,7 @@ class JmxScraper {
                     attrDescription,
                     value);
         } else if (value instanceof CompositeData) {
-            logScrape(domain + beanProperties + attrName, "compositedata");
+            if (logger.isLoggable(Level.FINE)) logScrape(domain + beanProperties + attrName, "compositedata");
             CompositeData composite = (CompositeData) value;
             CompositeType type = composite.getCompositeType();
             attrKeys = new LinkedList<String>(attrKeys);
@@ -228,7 +229,7 @@ class JmxScraper {
             // meant to be used according to the docs. I've only seen them
             // used as 'key' 'value' pairs even when 'value' is itself a
             // CompositeData of multiple values.
-            logScrape(domain + beanProperties + attrName, "tabulardata");
+            if (logger.isLoggable(Level.FINE)) logScrape(domain + beanProperties + attrName, "tabulardata");
             TabularData tds = (TabularData) value;
             TabularType tt = tds.getTabularType();
 
@@ -274,13 +275,13 @@ class JmxScraper {
                             composite.get(valueIdx));
                     }
                 } else {
-                    logScrape(domain, "not a correct tabulardata format");
+                    if (logger.isLoggable(Level.FINE)) logScrape(domain, "not a correct tabulardata format");
                 }
             }
         } else if (value.getClass().isArray()) {
-            logScrape(domain, "arrays are unsupported");
+            if (logger.isLoggable(Level.FINE)) logScrape(domain, "arrays are unsupported");
         } else {
-            logScrape(domain + beanProperties, attrType + " is not exported");
+            if (logger.isLoggable(Level.FINE)) logScrape(domain + beanProperties, attrType + " is not exported");
         }
     }
 

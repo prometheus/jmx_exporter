@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -512,12 +513,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
         } else if (beanValue instanceof Boolean) {
           value = (Boolean) beanValue ? 1 : 0;
         } else {
-          LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
           return;
         }
 
         // Add to samples.
-        LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
+        if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, help);
       }
 
