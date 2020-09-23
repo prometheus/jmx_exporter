@@ -1,5 +1,6 @@
 package io.prometheus.jmx;
 
+import javax.management.MBeanAttributeInfo;
 import javax.management.ObjectName;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,6 +33,10 @@ class JmxMBeanPropertyCache {
     // in the order they were added).
     private final Map<ObjectName, LinkedHashMap<String, String>> keyPropertiesPerBean;
 
+
+    private final Map<ObjectName, Map<String, MBeanAttributeInfo>> mbeanInfoCache = 
+            new ConcurrentHashMap<ObjectName, Map<String,MBeanAttributeInfo>>();
+
     public JmxMBeanPropertyCache() {
         this.keyPropertiesPerBean = new ConcurrentHashMap<ObjectName, LinkedHashMap<String, String>>();
     }
@@ -59,10 +64,36 @@ class JmxMBeanPropertyCache {
         return keyProperties;
     }
 
+    /**
+     * Puts this MBean info in cache.
+     *
+     * @param mbeanName
+     * @param name2AttrInfo
+     */
+    public void cacheAttrInfo(ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
+        mbeanInfoCache.put(mbeanName, name2AttrInfo);
+    }
+
+    /**
+     * Gets this MBean info from cache, or null if not present.
+     *
+     * @param mbeanName
+     * @return Map or attributes names to attributes info
+     */
+    public Map<String, MBeanAttributeInfo> getAttrInfo(ObjectName mbeanName) {
+        return mbeanInfoCache.get(mbeanName);
+    }
+
+    /**
+     * Cleans the cache of unused MBeans info.
+     *
+     * @param latestBeans Beans to keep
+     */
     public void onlyKeepMBeans(Set<ObjectName> latestBeans) {
         for (ObjectName prevName : keyPropertiesPerBean.keySet()) {
             if (!latestBeans.contains(prevName)) {
                 keyPropertiesPerBean.remove(prevName);
+                mbeanInfoCache.remove(prevName);
             }
         }
     }

@@ -18,6 +18,7 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -125,27 +126,34 @@ class JmxScraper {
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
-        MBeanInfo info;
-        try {
-          info = beanConn.getMBeanInfo(mbeanName);
-        } catch (IOException e) {
-          if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
-        } catch (JMException e) {
-          if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
-        }
-        MBeanAttributeInfo[] attrInfos = info.getAttributes();
+        Map<String, MBeanAttributeInfo> name2AttrInfo = jmxMBeanPropertyCache.getAttrInfo(mbeanName);
 
-        Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
-        for (int idx = 0; idx < attrInfos.length; ++idx) {
-            MBeanAttributeInfo attr = attrInfos[idx];
-            if (!attr.isReadable()) {
-                if (logger.isLoggable(Level.FINE)) logScrape(mbeanName, attr, "not readable");
-                continue;
+        if (name2AttrInfo == null) {
+            MBeanInfo info;
+            try {
+              info = beanConn.getMBeanInfo(mbeanName);
+            } catch (IOException e) {
+              if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+              return;
+            } catch (JMException e) {
+              if (logger.isLoggable(Level.FINE)) logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+              return;
             }
-            name2AttrInfo.put(attr.getName(), attr);
+            MBeanAttributeInfo[] attrInfos = info.getAttributes();
+    
+            name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
+            for (int idx = 0; idx < attrInfos.length; ++idx) {
+                MBeanAttributeInfo attr = attrInfos[idx];
+                if (!attr.isReadable()) {
+                    if (logger.isLoggable(Level.FINE)) logScrape(mbeanName, attr, "not readable");
+                    continue;
+                }
+                name2AttrInfo.put(attr.getName(), attr);
+            }
+
+            jmxMBeanPropertyCache.cacheAttrInfo(mbeanName, name2AttrInfo);
         }
+        
         final AttributeList attributes;
         final Set<String> keySet = name2AttrInfo.keySet();
         try {
