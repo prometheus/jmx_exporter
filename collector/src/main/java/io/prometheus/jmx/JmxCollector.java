@@ -60,6 +60,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
+      boolean detectUnusedJmxAttributes;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
@@ -163,6 +164,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         if (yamlConfig.containsKey("lowercaseOutputLabelNames")) {
           cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
+        }
+
+        if (yamlConfig.containsKey("detectUnusedJmxAttributes")) {
+          cfg.detectUnusedJmxAttributes = (Boolean)yamlConfig.get("detectUnusedJmxAttributes");
         }
 
         if (yamlConfig.containsKey("whitelistObjectNames")) {
@@ -391,7 +396,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         return new MatchedRule(fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
       }
 
-      public void recordBean(
+      public boolean recordBean(
           String domain,
           LinkedHashMap<String, String> beanProperties,
           LinkedList<String> attrKeys,
@@ -445,7 +450,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
               value = Double.valueOf(val);
             } catch (NumberFormatException e) {
               LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
-              return;
+              return true;
             }
           }
 
@@ -459,7 +464,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // Matcher is set below here due to validation in the constructor.
           String name = safeName(matcher.replaceAll(rule.name));
           if (name.isEmpty()) {
-            return;
+            return true;
           }
           if (config.lowercaseOutputName) {
             name = name.toLowerCase();
@@ -500,7 +505,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
 
         if (matchedRule.isUnmatched()) {
-          return;
+          return false;
         }
 
         Number value;
@@ -513,15 +518,15 @@ public class JmxCollector extends Collector implements Collector.Describable {
         } else if (beanValue instanceof Boolean) {
           value = (Boolean) beanValue ? 1 : 0;
         } else {
-            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
-          return;
+          if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+          return false;
         }
 
         // Add to samples.
         if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, help);
+        return true;
       }
-
     }
 
   public List<MetricFamilySamples> collect() {
@@ -532,7 +537,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+              config.whitelistObjectNames, config.blacklistObjectNames, config.detectUnusedJmxAttributes, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
