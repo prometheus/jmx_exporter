@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -73,20 +74,25 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
 
-    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
+    private JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
+        this((Map<String, Object>)new Yaml().load(new FileReader(in)));
         configFile = in;
-        config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        this((Map<String, Object>)new Yaml().load(yamlConfig));
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        this((Map<String, Object>)new Yaml().load(inputStream));
+    }
+
+    private JmxCollector(Map<String, Object> load) throws MalformedObjectNameException {
+        config = loadConfig(load);
+        createScraper();
     }
 
     private void reloadConfig() {
@@ -98,6 +104,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           config = loadConfig(newYamlConfig);
           config.lastUpdate = configFile.lastModified();
           configReloadSuccess.inc();
+          createScraper();
         } catch (Exception e) {
           LOGGER.severe("Configuration reload failed: " + e.toString());
           configReloadFailure.inc();
@@ -248,6 +255,15 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         return cfg;
 
+    }
+
+    /**
+     * Creates JMX Scraper
+     */
+    private void createScraper() {
+        jmxMBeanPropertyCache.onlyKeepMBeans(Collections.<ObjectName>emptySet());
+        scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+                config.whitelistObjectNames, config.blacklistObjectNames, config.detectUnusedJmxAttributes, jmxMBeanPropertyCache);
     }
 
     static String toSnakeAndLowerCase(String attrName) {
@@ -529,6 +545,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
     }
 
+    JmxScraper scraper;
   public List<MetricFamilySamples> collect() {
       // Take a reference to the current config and collect with this one
       // (to avoid race conditions in case another thread reloads the config in the meantime)
@@ -536,8 +553,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, config.detectUnusedJmxAttributes, receiver, jmxMBeanPropertyCache);
+
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
@@ -545,7 +561,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
       }
       try {
-        scraper.doScrape();
+        scraper.doScrape(receiver);
       } catch (Exception e) {
         error = 1;
         StringWriter sw = new StringWriter();
