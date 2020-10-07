@@ -29,7 +29,8 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.26</version>
+      <!-- uses an older version because 2.24+ requires Java 7 -->
+      <version>1.16</version>
     </dependency>
   </dependencies>
 
