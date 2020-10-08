@@ -157,18 +157,21 @@ class JmxScraper {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
             return;
         }
-        for (Attribute attribute : attributes.asList()) {
-            MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-            logScrape(mbeanName, attr, "process");
-            processBeanValue(
-                    mbeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                    new LinkedList<String>(),
-                    attr.getName(),
-                    attr.getType(),
-                    attr.getDescription(),
-                    attribute.getValue()
-            );
+        for (Object attributeObj : attributes.asList()) {
+            if (Attribute.class.isInstance(attributeObj)) {
+                Attribute attribute = (Attribute)(attributeObj);
+                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
+                logScrape(mbeanName, attr, "process");
+                processBeanValue(
+                        mbeanName.getDomain(),
+                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                        new LinkedList<String>(),
+                        attr.getName(),
+                        attr.getType(),
+                        attr.getDescription(),
+                        attribute.getValue()
+                );
+            }
         }
     }
 
