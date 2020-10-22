@@ -1,5 +1,5 @@
 lowercaseOutputName: true
-
+cacheRules: true
 rules:
 # Special cases and very specific rules
 - pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
