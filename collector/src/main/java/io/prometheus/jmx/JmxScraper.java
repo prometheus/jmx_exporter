@@ -20,14 +20,7 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -146,7 +139,7 @@ class JmxScraper {
             }
             name2AttrInfo.put(attr.getName(), attr);
         }
-        final AttributeList attributes;
+        AttributeList attributes;
         try {
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
             if (attributes == null) {
@@ -155,7 +148,14 @@ class JmxScraper {
             }
         } catch (Exception e) {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
-            return;
+            attributes = new AttributeList();
+            for (String name : name2AttrInfo.keySet().toArray(new String[0])) {
+                try {
+                    attributes.add(new Attribute(name, beanConn.getAttribute(mbeanName, name)));
+                } catch (Exception ex) {
+                    logScrape(mbeanName, new HashSet<String>(Collections.singletonList(name)), "Fail: " + ex);
+                }
+            }
         }
         for (Object attributeObj : attributes.asList()) {
             if (Attribute.class.isInstance(attributeObj)) {
