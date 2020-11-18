@@ -5,6 +5,7 @@ import javax.management.AttributeList;
 import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
@@ -31,6 +32,14 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+import javax.naming.InitialContext;
+
 
 class JmxScraper {
     private static final Logger logger = Logger.getLogger(JmxScraper.class.getName());
@@ -52,12 +61,14 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
+    private boolean resetMetrics=false;
+    private List<ObjectName> MBeansToReset;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
-                      List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
-                      MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
+            List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+            MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
@@ -66,6 +77,22 @@ class JmxScraper {
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+        }
+    
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
+                      List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+                      MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache,
+                      boolean resetMetrics, List<ObjectName> MBeansToResetNames) {
+        this.jmxUrl = jmxUrl;
+        this.receiver = receiver;
+        this.username = username;
+        this.password = password;
+        this.ssl = ssl;
+        this.whitelistObjectNames = whitelistObjectNames;
+        this.blacklistObjectNames = blacklistObjectNames;
+        this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+        this.resetMetrics = resetMetrics;
+        this.MBeansToReset = MBeansToResetNames;
     }
 
     /**
@@ -117,6 +144,16 @@ class JmxScraper {
                 scrapeBean(beanConn, objectName);
                 logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + objectName.toString());
             }
+
+            //reset the jmx metrics
+            if(this.resetMetrics) {
+                if(jmxc != null) {
+                    // reset the metrics on the configured mbeans passed in in the "MBeansToReset" param
+                    for(ObjectName mbean : this.MBeansToReset) {
+                        resetServerStats(jmxc,mbean.toString());
+                    }
+                }
+            }
         } finally {
           if (jmxc != null) {
             jmxc.close();
@@ -124,6 +161,43 @@ class JmxScraper {
         }
     }
 
+    /**
+      * Reset Server's MBeans Stats
+      */
+    protected static void resetServerStats(JMXConnector jmxc,String beanQuery) throws MalformedObjectNameException,
+                                        InstanceNotFoundException, MBeanException, ReflectionException, IOException,
+                                        IntrospectionException {
+        // Reset stats,for each appserver
+        Set<ObjectName> nameSet = jmxc.getMBeanServerConnection().queryNames(new ObjectName(beanQuery),null);
+        logger.fine("********************************************************************************************");
+        logger.fine(nameSet.toString());
+        logger.fine("********************************************************************************************");
+        
+        java.util.Iterator it = nameSet.iterator();
+        if(it.hasNext()){
+            while(it.hasNext()){
+                ObjectName serverStatsObjectName = (ObjectName)(it.next());
+                MBeanInfo mbi = jmxc.getMBeanServerConnection().getMBeanInfo(serverStatsObjectName);
+                //review all the MBeans to see if there is a reset operation on them, if there is , fire it
+                MBeanOperationInfo[] mbiArray = mbi.getOperations();
+                for(MBeanOperationInfo mbOp : mbiArray){
+                    logger.fine("there is an operation : " + mbOp.getName() + " on MBean " + serverStatsObjectName);
+                    if(mbOp.getName().equalsIgnoreCase("reset")){
+                        logger.fine("resetting " + serverStatsObjectName.toString() + "....");
+                        jmxc.getMBeanServerConnection().invoke(serverStatsObjectName, "reset", null, null);
+                    }
+                    break;
+                } 
+            }
+        }
+        else {
+            logger.info("Couldnt find any mbeans for query " + beanQuery);
+        }
+    } 
+
+    /**
+      * Scrapes MBeans Info
+      */
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
         MBeanInfo info;
         try {
@@ -157,25 +231,20 @@ class JmxScraper {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
             return;
         }
-        for (Object attributeObj : attributes.asList()) {
-            if (Attribute.class.isInstance(attributeObj)) {
-                Attribute attribute = (Attribute)(attributeObj);
-                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-                logScrape(mbeanName, attr, "process");
-                processBeanValue(
-                        mbeanName.getDomain(),
-                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                        new LinkedList<String>(),
-                        attr.getName(),
-                        attr.getType(),
-                        attr.getDescription(),
-                        attribute.getValue()
-                );
-            }
+        for (Attribute attribute : attributes.asList()) {
+            MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
+            logScrape(mbeanName, attr, "process");
+            processBeanValue(
+                    mbeanName.getDomain(),
+                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                    new LinkedList<String>(),
+                    attr.getName(),
+                    attr.getType(),
+                    attr.getDescription(),
+                    attribute.getValue()
+            );
         }
     }
-
-
 
     /**
      * Recursive function for exporting the values of an mBean.
@@ -325,16 +394,17 @@ class JmxScraper {
       objectNames.add(null);
       if (args.length >= 3){
             new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(),
-                    new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
+                    new StdoutWriter(), new JmxMBeanPropertyCache(), true, null).doScrape();
         }
       else if (args.length > 0){
           new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(),
-                  new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
+                  new StdoutWriter(), new JmxMBeanPropertyCache(), false, null).doScrape();
       }
       else {
           new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(),
-                  new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
+                  new StdoutWriter(), new JmxMBeanPropertyCache(), false, null).doScrape();
       }
     }
 }
+
 
