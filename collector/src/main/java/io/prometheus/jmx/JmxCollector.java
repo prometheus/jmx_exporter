@@ -59,6 +59,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
+      boolean resetMetrics;      
+      List<ObjectName> MBeansToReset = new ArrayList<ObjectName>();
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
@@ -179,6 +181,32 @@ public class JmxCollector extends Collector implements Collector.Describable {
             cfg.blacklistObjectNames.add(new ObjectName((String)name));
           }
         }
+        
+        if (yamlConfig.containsKey("resetMetrics")) {
+            try {
+                if(((Boolean)(yamlConfig.get("resetMetrics")) != true) && ((Boolean)(yamlConfig.get("resetMetrics")) != false)) {
+                    // nonsense value, set the attribute to false
+                    cfg.resetMetrics=false;
+                }
+                else {
+                    cfg.resetMetrics = (Boolean)yamlConfig.get("resetMetrics");
+                    if (yamlConfig.containsKey("MBeansToReset")) {
+                        List<Object> mbeans = (List<Object>) yamlConfig.get("MBeansToReset");
+            LOGGER.fine("In JmxCollector: MBeansToReset=" + mbeans);
+                        for(Object mbean : mbeans) {
+              LOGGER.fine("In JmxCollector: bean=" + mbean);
+                          cfg.MBeansToReset.add(new ObjectName((String)mbean));
+                        }
+                      } else {
+                        cfg.MBeansToReset.add(null);
+                      }
+
+                }
+            }
+            catch(Exception e) {
+                cfg.resetMetrics=false;
+            }
+       }
 
       if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
@@ -527,11 +555,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
       // Take a reference to the current config and collect with this one
       // (to avoid race conditions in case another thread reloads the config in the meantime)
       Config config = getLatestConfig();
+      JmxScraper scraper;
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+      if(config.resetMetrics) {
+          scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache, config.resetMetrics, config.MBeansToReset);
+      } 
+      else {
+           scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+                  config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+      }
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
