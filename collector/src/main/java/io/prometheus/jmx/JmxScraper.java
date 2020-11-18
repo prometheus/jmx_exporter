@@ -2,12 +2,18 @@ package io.prometheus.jmx;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
 import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
 import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
@@ -18,6 +24,9 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+
+import io.prometheus.jmx.JmxScraper.MBeanReceiver;
+
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -52,6 +61,8 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
+    private boolean resetMetrics=false;
+    private List<ObjectName> MBeansToReset;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
@@ -67,7 +78,23 @@ class JmxScraper {
         this.blacklistObjectNames = blacklistObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
+            List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+            MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache,
+            boolean resetMetrics, List<ObjectName> MBeansToResetNames) {
+            this.jmxUrl = jmxUrl;
+            this.receiver = receiver;
+            this.username = username;
+            this.password = password;
+            this.ssl = ssl;
+            this.whitelistObjectNames = whitelistObjectNames;
+            this.blacklistObjectNames = blacklistObjectNames;
+            this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+            this.resetMetrics = resetMetrics;
+            this.MBeansToReset = MBeansToResetNames;
+}
 
+    
     /**
       * Get a list of mbeans on host_port and scrape their values.
       *
@@ -117,12 +144,53 @@ class JmxScraper {
                 scrapeBean(beanConn, objectName);
                 logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + objectName.toString());
             }
+            
+            //reset the jmx metrics
+            if(this.resetMetrics) {
+                if(jmxc != null) {
+                    // reset the metrics on the configured mbeans passed in in the "MBeansToReset" param
+                    for(ObjectName mbean : this.MBeansToReset) {
+                        resetServerStats(jmxc,mbean.toString());
+                    }
+                }
+            }
         } finally {
           if (jmxc != null) {
             jmxc.close();
           }
         }
     }
+    
+    protected static void resetServerStats(JMXConnector jmxc, String beanQuery) throws MalformedObjectNameException,
+            InstanceNotFoundException, MBeanException, ReflectionException, IOException, IntrospectionException {
+        // Reset stats,for each appserver
+        Set<ObjectName> nameSet = jmxc.getMBeanServerConnection().queryNames(new ObjectName(beanQuery), null);
+        logger.fine("********************************************************************************************");
+        logger.fine(nameSet.toString());
+        logger.fine("********************************************************************************************");
+
+        java.util.Iterator it = nameSet.iterator();
+        if (it.hasNext()) {
+            while (it.hasNext()) {
+                ObjectName serverStatsObjectName = (ObjectName) (it.next());
+                MBeanInfo mbi = jmxc.getMBeanServerConnection().getMBeanInfo(serverStatsObjectName);
+                // review all the MBeans to see if there is a reset operation on them, if there is ,
+                // fire it
+                MBeanOperationInfo[] mbiArray = mbi.getOperations();
+                for (MBeanOperationInfo mbOp : mbiArray) {
+                    logger.fine("there is an operation : " + mbOp.getName() + " on MBean " + serverStatsObjectName);
+                    if (mbOp.getName().equalsIgnoreCase("reset")) {
+                        logger.fine("resetting " + serverStatsObjectName.toString() + "....");
+                        jmxc.getMBeanServerConnection().invoke(serverStatsObjectName, "reset", null, null);
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            logger.info("Couldnt find any mbeans for query " + beanQuery);
+        }
+    }  
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
         MBeanInfo info;
