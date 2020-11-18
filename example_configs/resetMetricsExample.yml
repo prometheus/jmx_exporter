@@ -1,0 +1,11 @@
+# other config sections
+
+resetMetrics: true
+MBeansToReset:
+  - "com.testsoftware:*,name=test.util.internal.mbean.testServerMBean"
+  - "com.testsoftware:*,name=test.util.cache.internal.mbean.testCacheStatsMBean"
+  - "com.testsoftware:*,name=test.util.jmx.internal.mbeans.runandrecord.testRunAndRecordStatsMBean"
+
+
+# subsequent config sections......
+#rules:
