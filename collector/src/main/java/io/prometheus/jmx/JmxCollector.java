@@ -46,7 +46,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       String help;
       boolean attrNameSnakeCase;
       boolean cache = false;
-      Type type = Type.UNTYPED;
+      Type type = Type.UNKNOWN;
       ArrayList<String> labelNames;
       ArrayList<String> labelValues;
     }
@@ -210,7 +210,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
               rule.cache = (Boolean)yamlRule.get("cache");
             }
             if (yamlRule.containsKey("type")) {
-              rule.type = Type.valueOf((String)yamlRule.get("type"));
+              String t = (String)yamlRule.get("type");
+              // Gracefully handle switch to OM data model.
+              if ("UNTYPED".equals(t)) {
+                t = "UNKNOWN";
+              }
+              rule.type = Type.valueOf(t);
             }
             if (yamlRule.containsKey("help")) {
               rule.help = (String)yamlRule.get("help");
