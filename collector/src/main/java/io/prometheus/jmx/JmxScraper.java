@@ -20,14 +20,7 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -157,7 +150,7 @@ class JmxScraper {
             logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
             return;
         }
-        for (Object attributeObj : attributes.asList()) {
+        for (Object attributeObj : attributes) {
             if (Attribute.class.isInstance(attributeObj)) {
                 Attribute attribute = (Attribute)(attributeObj);
                 MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
@@ -282,6 +275,18 @@ class JmxScraper {
             }
         } else if (value.getClass().isArray()) {
             logScrape(domain, "arrays are unsupported");
+        } else if (value instanceof ArrayList<?>) {
+            // We can't output a list of values here, so instead let's send the count of entries
+            ArrayList<?> list = (ArrayList<?>)value;
+            logScrape(domain + beanProperties + attrName, String.valueOf(list.size()));
+            this.receiver.recordBean(
+                    domain,
+                    beanProperties,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    list.size());
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
