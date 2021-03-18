@@ -54,6 +54,7 @@ class JmxScraper {
     private final boolean ssl;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
+    private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
                       List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
@@ -282,6 +283,16 @@ class JmxScraper {
             }
         } else if (value.getClass().isArray()) {
             logScrape(domain, "arrays are unsupported");
+        } else if (optionalValueExtractor.isOptional(value)) {
+            logScrape(domain + beanProperties + attrName, "java.util.Optional");
+            processBeanValue(
+                    domain,
+                    beanProperties,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    optionalValueExtractor.getOptionalValueOrNull(value));
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
