@@ -347,6 +347,24 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
       }
 
+      private String expandEnvVars(String value) {
+        Map<String, String> envMap = System.getenv();
+        final String pattern = "\\$\\{([A-Za-z0-9_]+)\\}";
+        Pattern expr = Pattern.compile(pattern);
+        Matcher envMatcher = expr.matcher(value);
+        while (envMatcher.find()) {
+          String envValue = envMap.get(envMatcher.group(1).toUpperCase());
+          if (envValue == null) {
+            envValue = "";
+          } else {
+            envValue = envValue.replace("\\", "\\\\");
+          }
+          Pattern subexpr = Pattern.compile(Pattern.quote(envMatcher.group(0)));
+          value = subexpr.matcher(value).replaceAll(envValue);
+        }
+        return value;
+      }
+
       private MatchedRule defaultExport(
           String matchName,
           String domain,
@@ -483,7 +501,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
               final String labelValReplacement = rule.labelValues.get(i);
               try {
                 String labelName = safeName(matcher.replaceAll(unsafeLabelName));
-                String labelValue = matcher.replaceAll(labelValReplacement);
+                String labelValue = matcher.replaceAll(expandEnvVars(labelValReplacement));
+                System.out.println(labelValue);
                 if (config.lowercaseOutputLabelNames) {
                   labelName = labelName.toLowerCase();
                 }

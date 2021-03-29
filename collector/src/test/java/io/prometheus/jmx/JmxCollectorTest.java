@@ -5,6 +5,7 @@ import io.prometheus.client.CollectorRegistry;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Rule;
 
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
@@ -15,9 +16,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
+
 public class JmxCollectorTest {
 
     CollectorRegistry registry;
+
+    @Rule
+    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     @BeforeClass
     public static void OneTimeSetUp() throws Exception {
@@ -67,6 +73,16 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector(
               "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replace_block_op_min_time:`\n  name: foo\n  attrNameSnakeCase: true".replace('`','"')).register(registry);
       assertEquals(200, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testEnvVarLoad() throws Exception {
+      environmentVariables.set("TEST_VAR", "value");
+
+      JmxCollector jc = new JmxCollector(
+              "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  labels:\n    l: ${TEST_VAR}".replace('`','"')).register(registry);
+      assertEquals(200, registry.getSampleValue("foo", new String[]{"l"}, new String[]{System.getenv("TEST_VAR")}), .001);
+      environmentVariables.clear("TEST_VAR");
     }
 
     @Test
