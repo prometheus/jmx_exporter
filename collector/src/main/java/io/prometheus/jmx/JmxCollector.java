@@ -502,7 +502,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
               try {
                 String labelName = safeName(matcher.replaceAll(unsafeLabelName));
                 String labelValue = matcher.replaceAll(expandEnvVars(labelValReplacement));
-                System.out.println(labelValue);
+
                 if (config.lowercaseOutputLabelNames) {
                   labelName = labelName.toLowerCase();
                 }
