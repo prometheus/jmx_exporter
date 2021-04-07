@@ -19,7 +19,9 @@
   <modules>
     <module>collector</module>
     <module>jmx_prometheus_httpserver</module>
+    <module>jmx_prometheus_javaagent_java6</module>
     <module>jmx_prometheus_javaagent</module>
+    <module>integration_tests</module>
   </modules>
 
   <distributionManagement>
