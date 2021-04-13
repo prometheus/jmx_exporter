@@ -29,7 +29,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.23</version>
+      <version>1.23</version> <!-- updating this breaks Java 6 compatibility -->
     </dependency>
   </dependencies>
 
