@@ -130,10 +130,10 @@ class JmxScraper {
         try {
           info = beanConn.getMBeanInfo(mbeanName);
         } catch (IOException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " , e);
           return;
         } catch (JMException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
+          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " , e);
           return;
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
@@ -155,7 +155,7 @@ class JmxScraper {
                 return;
             }
         } catch (Exception e) {
-            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
+            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " , e);
             return;
         }
         for (Object attributeObj : attributes.asList()) {
@@ -304,11 +304,20 @@ class JmxScraper {
     private static void logScrape(ObjectName mbeanName, Set<String> names, String msg) {
         logScrape(mbeanName + "_" + names, msg);
     }
+
+    private static void logScrape(ObjectName mbeanName, Set<String> names, String msg, Exception e) {
+        logScrape(mbeanName + "_" + names, msg, e);
+    }
+    
     private static void logScrape(ObjectName mbeanName, MBeanAttributeInfo attr, String msg) {
         logScrape(mbeanName + "'_'" + attr.getName(), msg);
     }
     private static void logScrape(String name, String msg) {
         logger.log(Level.FINE, "scrape: '" + name + "': " + msg);
+    }
+
+    private static void logScrape(String name, String msg, Exception e) {
+        logger.log(Level.SEVERE, "scrape: '" + name + "': " + msg + e.getMessage());
     }
 
     private static class StdoutWriter implements MBeanReceiver {
@@ -348,4 +357,3 @@ class JmxScraper {
       }
     }
 }
-
