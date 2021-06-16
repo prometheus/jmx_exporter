@@ -2,11 +2,15 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.Collector.MetricFamilySamples;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.management.ManagementFactory;
+import java.util.List;
+
 import javax.management.MBeanServer;
 
 import static org.junit.Assert.assertEquals;
@@ -283,5 +287,15 @@ public class JmxCollectorTest {
         JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true".replace('`','"')).register(registry);
         assertTrue(registry.getSampleValue("jmx_scrape_cached_beans", new String[]{}, new String[]{}) > 0);
         assertEquals(4.0, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testCachedBeansEnabledRetainsHelpAcrossCollections() throws Exception {
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 4\n  cache: true\n  help: help message".replace('`','"'))
+                .register(registry);
+        List<MetricFamilySamples> samples = jc.collect();
+        assertEquals("help message", samples.get(0).help);
+        samples = jc.collect();
+        assertEquals("help message", samples.get(0).help);
     }
 }
