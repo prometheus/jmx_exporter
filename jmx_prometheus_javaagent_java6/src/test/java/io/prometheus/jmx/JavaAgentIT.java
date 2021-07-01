@@ -41,14 +41,12 @@ public class JavaAgentIT {
     private String buildClasspath() {
         StringBuilder sb = new StringBuilder();
         for (URL url : getClassloaderUrls()) {
-            if (!url.getProtocol().equals("file")) {
-                continue;
-            }
-            if (sb.length() != 0) {
+            if (url.getProtocol().equals("file")) {
+                sb.append(url.getPath());
                 sb.append(java.io.File.pathSeparatorChar);
             }
-            sb.append(url.getPath());
         }
+        sb.append("./target/test-classes");
         return sb.toString();
     }
 

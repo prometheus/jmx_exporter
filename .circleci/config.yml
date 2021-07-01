@@ -17,7 +17,8 @@ jobs:
       - checkout
       - restore_cache:
           key: maven-dependencies-{{ checksum "pom.xml" }}
-      - run: mvn clean verify
+      - run: ./mvnw clean install
+      - run: ./mvnw javadoc:jar
       - save_cache:
           paths:
             - ~/.m2

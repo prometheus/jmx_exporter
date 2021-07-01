@@ -11,8 +11,7 @@
     <artifactId>integration_tests</artifactId>
     <packaging>pom</packaging>
 
-    <name>Prometheus JMX Exporter Integration Tests</name>
-
+    <name>Prometheus JMX Exporter - Integration Tests</name>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>

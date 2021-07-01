@@ -9,10 +9,19 @@
   </parent>
 
   <artifactId>jmx_prometheus_javaagent</artifactId>
+  <name>Prometheus JMX Exporter - Java Agent</name>
   <description>
     See https://github.com/prometheus/jmx_exporter/blob/master/README.md
   </description>
   <url>http://github.com/prometheus/jmx_exporter</url>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <dependencies>
     <dependency>
@@ -41,7 +50,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
         <executions>
           <execution>
             <phase>package</phase>
