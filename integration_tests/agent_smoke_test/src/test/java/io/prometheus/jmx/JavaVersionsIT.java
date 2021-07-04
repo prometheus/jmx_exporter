@@ -14,6 +14,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -39,27 +40,42 @@ public class JavaVersionsIT {
   public JavaContainer javaContainer;
 
   @Parameterized.Parameters(name="{0}")
-  public static String[] images() {
-    return new String[] {
+  public static String[][] images() {
+    return new String[][] {
 
         // HotSpot
-        "openjdk:8-jre",
-        "openjdk:11-jre",
-        "ticketfly/java:6",
-        "adoptopenjdk/openjdk16:ubi-minimal-jre",
+        { "openjdk:8-jre", "jmx_prometheus_javaagent" },
+        { "openjdk:8-jre","jmx_prometheus_javaagent_java6" },
+
+        { "openjdk:11-jre", "jmx_prometheus_javaagent_java6" },
+        { "openjdk:11-jre", "jmx_prometheus_javaagent" },
+
+        { "ticketfly/java:6",  "jmx_prometheus_javaagent_java6" },
+
+        { "openjdk:7", "jmx_prometheus_javaagent_java6" },
+        { "openjdk:7", "jmx_prometheus_javaagent" },
+
+        { "adoptopenjdk/openjdk16:ubi-minimal-jre", "jmx_prometheus_javaagent_java6" },
+        { "adoptopenjdk/openjdk16:ubi-minimal-jre", "jmx_prometheus_javaagent" },
 
         // OpenJ9
-        "ibmjava:8-jre",
-        "adoptopenjdk/openjdk11-openj9",
+        { "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
+        { "ibmjava:8-jre", "jmx_prometheus_javaagent" },
+
+        { "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
+        { "ibmjava:8-jre", "jmx_prometheus_javaagent" },
+
+        { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_javaagent_java6" },
+        { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_javaagent" },
     };
   }
 
-  public JavaVersionsIT(String baseImage) throws IOException {
+  public JavaVersionsIT(String baseImage, String agent) throws IOException {
     this.baseImage = baseImage;
-    Path agentJar = getAgentJar();
+    Path agentJar = getAgentJar(agent);
     Path exampleApplicationJar = getExampleApplicationJar();
     String dockerfileContent = loadDockerfile(agentJar, exampleApplicationJar);
-    javaContainer = new JavaContainer(dockerfileContent, getAgentJar(), getExampleApplicationJar(),
+    javaContainer = new JavaContainer(dockerfileContent, agentJar, getExampleApplicationJar(),
        "jmx_exporter_test_" + baseImage.replaceAll("[:/-]", "_"))
         .withExposedPorts(9000)
         .waitingFor(Wait.forLogMessage(".*registered.*", 1))
@@ -76,12 +92,10 @@ public class JavaVersionsIT {
     }
   }
 
-  private Path getAgentJar() throws IOException {
-    if (baseImage.endsWith("java:6")) {
-      return Paths.get("../../jmx_prometheus_javaagent_java6/target/jmx_prometheus_javaagent_java6-" + loadProjectVersion() + ".jar");
-    } else {
-      return Paths.get("../../jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-" + loadProjectVersion() + ".jar");
-    }
+  private Path getAgentJar(String agent) throws IOException {
+    Path path = Paths.get("../../" + agent + "/target/" + agent + "-" + loadProjectVersion() + ".jar");
+    Assert.assertTrue(path + ": File not found.", Files.exists(path));
+    return path;
   }
 
   private Path getExampleApplicationJar() throws IOException {
