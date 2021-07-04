@@ -41,7 +41,7 @@
       <!-- and include this dependency instead -->
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.27</version>
+      <version>1.29</version>
     </dependency>
   </dependencies>
 
