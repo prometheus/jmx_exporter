@@ -93,6 +93,53 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+                <configuration>
+                  <!-- Artifacts published to Maven central must have a source JAR. -->
+                  <!-- Include pom.xml so that the source JAR is not empty. -->
+                  <includePom>true</includePom>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <!-- Artifacts published to Maven central must have a javadoc JAR. -->
+                  <!-- Copy the javadoc over from the Java 6 module. -->
+                  <includeDependencySources>true</includeDependencySources>
+                  <dependencySourceIncludes>
+                    <dependencySourceInclude>${project.groupId}:jmx_prometheus_javaagent_java6</dependencySourceInclude>
+                  </dependencySourceIncludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
