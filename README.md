@@ -13,10 +13,15 @@ Agent is thus strongly encouraged.
 
 ## Running
 
-To run as a javaagent [download the jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.15.0/jmx_prometheus_javaagent-0.15.0.jar) and run:
+The Java agent is available in two versions with identical functionality:
+* [jmx_prometheus_javaagent-0.16.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent-0.16.0.jar) requires Java >= 7.
+* [jmx_prometheus_javaagent-0.16.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent_java6-0.16.0.jar) is compatible with Java 6.
 
+The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.0) for more info.
+
+To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.15.0.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.16.0.jar=8080:config.yaml -jar yourJar.jar
 ```
 Metrics will now be accessible at http://localhost:8080/metrics
 
@@ -28,7 +33,7 @@ Please note that due to the nature of JMX the `/metrics` endpoint might exceed P
 
 ## Building
 
-`mvn package` to build.
+`./mvnw package` to build.
 
 ## Configuration
 The configuration is in YAML. An example with all possible options:
@@ -112,7 +117,14 @@ If a given part isn't set, it'll be excluded.
 
 ## Testing
 
-`mvn test` to test.
+The JMX exporter uses [Testcontainers](https://www.testcontainers.org/) to run tests with different Java versions.
+You need to have Docker installed to run these tests.
+
+You can run the tests with:
+
+```
+./mvnw verify
+```
 
 ## Debugging
 
@@ -121,7 +133,7 @@ You can start the jmx's scraper in standalone mode in order to debug what is cal
 ```
 git clone https://github.com/prometheus/jmx_exporter.git
 cd jmx_exporter
-mvn package
+./mvnw package
 java -cp collector/target/collector*.jar  io.prometheus.jmx.JmxScraper  service:jmx:rmi:your_url
 ```
 
