@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.15.1-SNAPSHOT</version>
+    <version>0.16.0</version>
   </parent>
 
   <artifactId>jmx_prometheus_javaagent_java6</artifactId>

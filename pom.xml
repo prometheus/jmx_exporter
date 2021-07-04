@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <packaging>pom</packaging>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.prometheus.jmx</groupId>
   <artifactId>parent</artifactId>
-  <version>0.15.1-SNAPSHOT</version>
+  <version>0.16.0</version>
 
   <name>Prometheus JMX Exporter</name>
   <url>http://github.com/prometheus/jmx_exporter</url>
@@ -26,7 +25,7 @@
     <connection>scm:git:git@github.com:prometheus/jmx_exporter.git</connection>
     <developerConnection>scm:git:git@github.com:prometheus/jmx_exporter.git</developerConnection>
     <url>git@github.com:prometheus/jmx_exporter.git</url>
-    <tag>HEAD</tag>
+    <tag>parent-0.16.0</tag>
   </scm>
 
   <developers>
@@ -168,7 +167,7 @@
             </goals>
             <configuration>
               <rules>
-                <requirePluginVersions/>
+                <requirePluginVersions />
               </rules>
             </configuration>
           </execution>
