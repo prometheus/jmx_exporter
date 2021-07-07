@@ -10,6 +10,7 @@ pipeline {
     environment {
         registryCredential = 'jenkins-artifactory'
         ARTIFACTORY_URL = 'docker.internal.sysdig.com'
+        VERSION = 0.16.1
     }
 
     stages {
@@ -17,7 +18,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${env.ARTIFACTORY_URL}",  registryCredential) {                        
-                        sh """docker pull ${env.ARTIFACTORY_URL}/jmx-exporter:latest"""
+                        sh """docker pull ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION}"""
                     }
                 }
             }
@@ -26,8 +27,8 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://quay.io", "QUAY") {
-                        sh """docker tag ${env.ARTIFACTORY_URL}/jmx-exporter:latest quay.io/sysdig/promcat-jmx-exporter:latest"""
-                        sh """docker push quay.io/sysdig/promcat-jmx-exporter:latest"""
+                        sh """docker tag ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION} quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}"""
+                        sh """docker push quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}"""
                     }
                 }
             }

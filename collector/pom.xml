@@ -4,11 +4,11 @@
   <parent>
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.15.1-SNAPSHOT</version>
+    <version>0.16.1-SNAPSHOT</version>
   </parent>
 
-  <groupId>io.prometheus.jmx</groupId>
   <artifactId>collector</artifactId>
+  <name>Prometheus JMX Exporter - Collector</name>
   <description>
     See https://github.com/prometheus/jmx_exporter/blob/master/README.md
   </description>
@@ -18,33 +18,31 @@
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient</artifactId>
-      <version>0.10.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.23</version>
+      <version>1.29</version>
     </dependency>
   </dependencies>
-
 
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-           <systemProperties>
-             <property>
-               <name>java.util.logging.config.file</name>
-               <value>src/test/resources/logging.properties</value>
-             </property>
-           </systemProperties>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>
