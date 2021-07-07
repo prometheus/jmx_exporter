@@ -274,6 +274,37 @@
             </executions>
           </plugin>
           <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.3.2</version>
+              <configuration>
+                  <source>1.7</source>
+                  <target>1.7</target>
+              </configuration>
+          </plugin>
+          <plugin>
+              <artifactId>maven-release-plugin</artifactId>
+              <groupId>org.apache.maven.plugins</groupId>
+              <version>2.5</version>
+              <configuration>
+                <autoVersionSubmodules>true</autoVersionSubmodules>
+                <useReleaseProfile>false</useReleaseProfile>
+                <releaseProfiles>release</releaseProfiles>
+                <goals>deploy</goals>
+              </configuration>
+          </plugin>
+          <plugin>
+              <artifactId>maven-deploy-plugin</artifactId>
+              <groupId>org.apache.maven.plugins</groupId>
+              <version>2.7</version>
+          </plugin>
+          <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <version>2.4.0</version>
+              <extensions>true</extensions>
+          </plugin>
+          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
             <executions>
