@@ -10,6 +10,8 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    env:
+      VERSION: 0.16.1
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     steps:
@@ -47,8 +49,8 @@ jobs:
 
       - name: Change the tag of the image
         run: |
-          docker tag temp-jmx-exporter:latest artifactory.internal.sysdig.com/jmx-exporter:latest
+          docker tag temp-jmx-exporter:latest artifactory.internal.sysdig.com/jmx-exporter:$VERSION
 
       - name: Push the image
         run: |
-          docker push artifactory.internal.sysdig.com/jmx-exporter:latest
+          docker push artifactory.internal.sysdig.com/jmx-exporter:$VERSION

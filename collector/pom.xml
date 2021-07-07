@@ -28,7 +28,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.23</version> <!-- required for the Java 6 release -->
+      <version>1.29</version>
     </dependency>
   </dependencies>
 
@@ -37,12 +37,12 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-           <systemProperties>
-             <property>
-               <name>java.util.logging.config.file</name>
-               <value>src/test/resources/logging.properties</value>
-             </property>
-           </systemProperties>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>

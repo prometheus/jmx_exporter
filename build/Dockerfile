@@ -5,6 +5,8 @@ COPY pom.xml /opt/jmx_exporter
 COPY collector /opt/jmx_exporter/collector
 COPY jmx_prometheus_httpserver /opt/jmx_exporter/jmx_prometheus_httpserver
 COPY jmx_prometheus_javaagent /opt/jmx_exporter/jmx_prometheus_javaagent
+COPY jmx_prometheus_javaagent_java6 /opt/jmx_exporter/jmx_prometheus_javaagent_java6
+COPY integration_tests /opt/jmx_exporter/integration_tests
 WORKDIR /opt/jmx_exporter/
 RUN mvn package
 
@@ -12,7 +14,7 @@ FROM anapsix/alpine-java:8
 
 RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
 
-ENV VERSION 0.15.1
+ENV VERSION 0.16.1
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT-jar-with-dependencies.jar /opt/jmx_exporter/$JAR
 
