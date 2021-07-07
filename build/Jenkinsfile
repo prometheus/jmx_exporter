@@ -10,7 +10,7 @@ pipeline {
     environment {
         registryCredential = 'jenkins-artifactory'
         ARTIFACTORY_URL = 'docker.internal.sysdig.com'
-        VERSION = 0.16.1
+        VERSION = '0.16.1'
     }
 
     stages {
