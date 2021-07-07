@@ -1,161 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <packaging>pom</packaging>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.prometheus.jmx</groupId>
   <artifactId>parent</artifactId>
-  <version>0.15.1-SNAPSHOT</version>
+  <version>0.16.1-SNAPSHOT</version>
+
+  <name>Prometheus JMX Exporter</name>
+  <url>http://github.com/prometheus/jmx_exporter</url>
   <description>
     See https://github.com/prometheus/jmx_exporter/blob/master/README.md
   </description>
-  <url>http://github.com/prometheus/jmx_exporter</url>
 
-  <parent>
-      <groupId>org.sonatype.oss</groupId>
-      <artifactId>oss-parent</artifactId>
-      <version>7</version>
-  </parent>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:prometheus/jmx_exporter.git</connection>
+    <developerConnection>scm:git:git@github.com:prometheus/jmx_exporter.git</developerConnection>
+    <url>git@github.com:prometheus/jmx_exporter.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <developers>
+    <developer>
+      <name>Fabian Stäber</name>
+      <email>fabian@fstab.de</email>
+    </developer>
+  </developers>
 
   <modules>
     <module>collector</module>
     <module>jmx_prometheus_httpserver</module>
+    <module>jmx_prometheus_javaagent_java6</module>
     <module>jmx_prometheus_javaagent</module>
+    <module>integration_tests</module>
   </modules>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <prometheus.simpleclient.version>0.11.0</prometheus.simpleclient.version>
+  </properties>
+
   <distributionManagement>
-      <snapshotRepository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      </snapshotRepository>
-      <repository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-      </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
   </distributionManagement>
 
-  <licenses>
-      <license>
-          <name>The Apache Software License, Version 2.0</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-          <distribution>repo</distribution>
-      </license>
-  </licenses>
-
-  <scm>
-      <connection>scm:git:git@github.com:prometheus/jmx_exporter.git</connection>
-      <developerConnection>scm:git:git@github.com:prometheus/jmx_exporter.git</developerConnection>
-      <url>git@github.com:prometheus/jmx_exporter.git</url>
-      <tag>HEAD</tag>
-  </scm>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient</artifactId>
+        <version>${prometheus.simpleclient.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_hotspot</artifactId>
+        <version>${prometheus.simpleclient.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_httpserver</artifactId>
+        <version>${prometheus.simpleclient.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
+    <pluginManagement>
       <plugins>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <version>2.3.2</version>
-              <configuration>
-                  <source>1.6</source>
-                  <target>1.6</target>
-              </configuration>
-          </plugin>
-          <plugin>
-              <artifactId>maven-release-plugin</artifactId>
-              <groupId>org.apache.maven.plugins</groupId>
-              <version>2.5</version>
-              <configuration>
-                <autoVersionSubmodules>true</autoVersionSubmodules>
-                <useReleaseProfile>false</useReleaseProfile>
-                <releaseProfiles>release</releaseProfiles>
-                <goals>deploy</goals>
-              </configuration>
-          </plugin>
-          <plugin>
-              <artifactId>maven-deploy-plugin</artifactId>
-              <groupId>org.apache.maven.plugins</groupId>
-              <version>2.7</version>
-          </plugin>
-          <plugin>
-              <groupId>org.apache.felix</groupId>
-              <artifactId>maven-bundle-plugin</artifactId>
-              <version>2.4.0</version>
-              <extensions>true</extensions>
-          </plugin>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.15</version>
-          </plugin>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.8</version>
-              <configuration>
-                  <encoding>UTF-8</encoding>
-                  <docencoding>UTF-8</docencoding>
-                  <linksource>true</linksource>
-              </configuration>
-              <executions>
-                  <execution>
-                      <id>generate-javadoc-site-report</id>
-                      <phase>site</phase>
-                      <goals>
-                          <goal>javadoc</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
+        <!-- Add plugin versions for reproducible builds. Versions for default bindings are taken from -->
+        <!-- https://github.com/apache/maven/tree/maven-3.8.1/maven-core/src/main/resources/META-INF/plexus -->
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.7</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.6</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.12.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>2.5</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.3</version>
+        </plugin>
+        <!-- Plugins with groupId org.apache.maven.plugins that are not part of default bindings. -->
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.22.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5.3</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.0.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
       </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-plugin-versions</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requirePluginVersions />
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>release</releaseProfiles>
+          <goals>deploy</goals>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.4.0</version>
+        <extensions>true</extensions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <linksource>true</linksource>
+          <source>8</source>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-javadoc-site-report</id>
+            <phase>site</phase>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
-  <profiles>
-      <profile>
-          <id>release</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-gpg-plugin</artifactId>
-                      <version>1.5</version>
-                      <executions>
-                          <execution>
-                              <id>sign-artifacts</id>
-                              <phase>verify</phase>
-                              <goals>
-                                  <goal>sign</goal>
-                              </goals>
-                          </execution>
-                      </executions>
-                  </plugin>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-source-plugin</artifactId>
-                      <version>2.2.1</version>
-                      <executions>
-                          <execution>
-                              <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                          </execution>
-                      </executions>
-                  </plugin>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-javadoc-plugin</artifactId>
-                      <version>2.9.1</version>
-                      <executions>
-                          <execution>
-                              <id>attach-javadocs</id>
-                              <goals>
-                                  <goal>jar</goal>
-                              </goals>
-                          </execution>
-                      </executions>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-  </profiles>
+  <reporting>
+    <plugins>
+      <plugin>
+        <!-- maven-site-plugin 3.3 requires maven-project-info-reports-plugin < 3.0 -->
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.9</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <id>aggregate</id>
+            <inherited>false</inherited>
+            <reports>
+              <report>aggregate</report>
+            </reports>
+          </reportSet>
+          <reportSet>
+            <id>default</id>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

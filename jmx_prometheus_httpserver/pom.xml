@@ -4,28 +4,35 @@
   <parent>
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.15.1-SNAPSHOT</version>
+    <version>0.16.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>jmx_prometheus_httpserver</artifactId>
+  <name>Prometheus JMX Exporter - Http Server</name>
   <description>
     See https://github.com/prometheus/jmx_exporter/blob/master/README.md
   </description>
   <url>http://github.com/prometheus/jmx_exporter</url>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
   <dependencies>
     <dependency>
       <groupId>io.prometheus.jmx</groupId>
       <artifactId>collector</artifactId>
-      <version>0.15.1-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_httpserver</artifactId>
-      <version>0.10.0</version>
     </dependency>
   </dependencies>
-
 
   <build>
     <plugins>
