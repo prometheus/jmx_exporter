@@ -1,3 +1,10 @@
+FROM quay.io/sysdig/sysdig-ubi:1 as sysdig-ubi-jre
+
+USER root
+
+RUN dnf update
+RUN dnf install -y java-11-openjdk
+
 FROM maven:3.6.3-openjdk as javabuilder
 
 RUN mkdir /opt/jmx_exporter
@@ -10,7 +17,7 @@ COPY integration_tests /opt/jmx_exporter/integration_tests
 WORKDIR /opt/jmx_exporter/
 RUN mvn package
 
-FROM sysdig-ubi-jre:latest
+FROM sysdig-ubi-jre
 
 ENV VERSION 0.16.1
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
