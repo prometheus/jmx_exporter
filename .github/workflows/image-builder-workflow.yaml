@@ -61,12 +61,6 @@ jobs:
         with:
           sarif_file: ${{ steps.scan-local.outputs.sarifReport }}
 
-      - name: Sarif report
-        uses: github/codeql-action/upload-sarif@v1  
-        if: always()
-        with:
-          sarif_file: ${{ steps.scan-local-2.outputs.sarifReport }}
-
       - name: Change the tag of the image
         run: |
           docker tag temp-jmx-exporter:latest artifactory.internal.sysdig.com/jmx-exporter:$VERSION
