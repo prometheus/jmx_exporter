@@ -3,7 +3,7 @@ FROM quay.io/sysdig/sysdig-ubi:1 as sysdig-ubi-jre
 USER root
 
 RUN dnf update
-RUN dnf install -y java-11-openjdk
+RUN dnf install -y java-11-openjdk-headless.x86_64
 
 FROM maven:3.6.3-openjdk as javabuilder
 
