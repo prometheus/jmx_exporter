@@ -10,7 +10,9 @@ COPY integration_tests /opt/jmx_exporter/integration_tests
 WORKDIR /opt/jmx_exporter/
 RUN mvn package
 
-FROM sysdig-ubi-jre:latest
+FROM anapsix/alpine-java:8
+
+RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
 
 ENV VERSION 0.16.1
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
