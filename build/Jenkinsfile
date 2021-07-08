@@ -19,6 +19,7 @@ pipeline {
                 script {
                     docker.withRegistry("https://${env.ARTIFACTORY_URL}",  registryCredential) {                        
                         sh """docker pull ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION}"""
+                        sh """docker pull ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION}-ubi"""
                     }
                 }
             }
@@ -28,7 +29,9 @@ pipeline {
                 script {
                     docker.withRegistry("https://quay.io", "QUAY") {
                         sh """docker tag ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION} quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}"""
+                        sh """docker tag ${env.ARTIFACTORY_URL}/jmx-exporter:${env.VERSION}-ubi quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}-ubi"""
                         sh """docker push quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}"""
+                        sh """docker push quay.io/sysdig/promcat-jmx-exporter:${env.VERSION}-ubi"""
                     }
                 }
             }
