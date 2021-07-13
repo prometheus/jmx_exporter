@@ -69,6 +69,7 @@
                   <artifact>io.prometheus.jmx:jmx_prometheus_javaagent_java6</artifact>
                   <excludes>
                     <exclude>io/prometheus/jmx/shaded/org/yaml/snakeyaml/**</exclude>
+                    <exclude>META-INF/maven/**</exclude>
                   </excludes>
                   <includes>
                     <include>**</include>
