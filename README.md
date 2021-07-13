@@ -15,7 +15,7 @@ Agent is thus strongly encouraged.
 
 The Java agent is available in two versions with identical functionality:
 * [jmx_prometheus_javaagent-0.16.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent-0.16.0.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.16.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent_java6-0.16.0.jar) is compatible with Java 6.
+* [jmx_prometheus_javaagent-0.16.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.16.0/jmx_prometheus_javaagent_java6-0.16.0.jar) is compatible with Java 6.
 
 The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.0) for more info.
 
