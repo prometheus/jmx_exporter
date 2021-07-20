@@ -1,0 +1,14 @@
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  - pattern: 'Hadoop<service=NodeManager, name=RpcActivityForPort(\d+)><>(\w+)'
+    name: hadoop_nodemanager_rpc_activity_for_port_$2
+    attrNameSnakeCase: true
+    labels:
+      "port": $1
+    help: "rpc activity for port metric, parse from jmx bean: {Hadoop:service=NodeManager, name=RpcActivityForPort$1}.$2"
+  - pattern: 'Hadoop<service=NodeManager, name=(\w+)><>(\w+)'
+    name: hadoop_nodemanager_$1_$2
+    attrNameSnakeCase: true
+    help: "Common config, parse from jmx bean: {Hadoop:service=NodeManager, name=$1}.$2"

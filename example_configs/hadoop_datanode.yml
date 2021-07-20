@@ -1,0 +1,15 @@
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  - pattern: 'Hadoop<service=DataNode, name=DataNodeInfo, key=(.*), key_=networkErrors><>DatanodeNetworkCounts: (\d\.\-Ee+)'
+    name: hadoop_datanode_network_errors
+    value: $2
+    help: "DataNode networkError counts every host"
+    type: COUNTER
+    labels:
+      "host": "$1"
+  - pattern: 'Hadoop<service=(\w+), name=(\w+)><>(\w+)'
+    name: Hadoop_$1_$2_$3
+    attrNameSnakeCase: true
+    help: "Common config, parse from jmx bean: {Hadoop:service=$1, name=$2}.$3"

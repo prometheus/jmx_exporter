@@ -1,0 +1,26 @@
+lowercaseOutputName: true
+rules:
+  - pattern: "Hadoop<service=NameNode, name=NameNodeStatus><>State:.*?active.*?"
+    name: hadoop_namenode_status
+    value: 1
+    help: "NameNodeStatus status, means active and means standby"
+    type: COUNTER
+  - pattern: "Hadoop<service=NameNode, name=NameNodeStatus><>State:.*?standby.*?"
+    name: hadoop_namenode_status
+    value: 0
+    help: "NameNodeStatus status, means active and means standby"
+    type: COUNTER
+  - pattern: "Hadoop<service=NameNode, name=FSNamesystemState><>FSState:.*?Operational.*?"
+    name: hadoop_namenode_fsnamesystem_state
+    value: 1
+    help: "FSNameSystem state, means Operational and means Safemode"
+    type: COUNTER
+  - pattern: "Hadoop<service=NameNode, name=FSNamesystemState><>FSState:.*?Safemode.*?"
+    name: hadoop_namenode_fsnamesystem_state
+    value: 0
+    help: "FSNameSystem state, means Operational and means Safemode"
+    type: COUNTER
+  - pattern: "Hadoop<service=(\w+), name=(\w+)><>(\w+)"
+    name: hadoop_$1_$2_$3
+    attrNameSnakeCase: true
+    help: "Common config, parse from jmx bean: {Hadoop:service=$1, name=$2}.$3"

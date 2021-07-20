@@ -1,0 +1,94 @@
+ssl: false
+lowercaseOutputName: true
+# the data of these rules comes from hive jmx url: 192.168.205.197:10002/jmx
+# Noted that, you must config hive params in hive-site.xml to enable hive monitor itself:
+# hive.metastore.metrics.enabled:true
+# hive.server2.metrics.enabled	:true
+# hive.service.metrics.reporter	:JMX
+rules:
+  - pattern: 'Hadoop<service=hive, name=MetricsSystem, sub=Stats>(\w+)'
+    name: hive_metrics_system_$1
+    attrNameSnakeCase: true
+    help: "hadoop hive metrics system status"
+  - pattern: 'Hadoop<service=hive, name=UgiMetrics>(\w+)'
+    name: hive_ugi_metrics_$1
+    attrNameSnakeCase: true
+    help: "hadoop hive metrics system status"
+  - pattern: 'metrics<name=buffers.mapped.count><>Value'
+    name: hive_metrics_buffers_mapped_count
+  - pattern: 'metrics<name=memory.non-heap.usage><>Value'
+    name: hive_metrics_memory_non_heap_usage
+  - pattern: 'metrics<name=gc.PS-Scavenge.time><>Value'
+    name: hive_metrics_gc_PS_Scavenge_time
+  - pattern: 'metrics<name=memory.non-heap.init><>Value'
+    name: hive_metrics_memory_non_heap_init
+  - pattern: 'metrics<name=memory.pools.Code-Cache.usage><>Value'
+    name: hive_metrics_memory_pools_Code_Cache_usage
+  - pattern: 'metrics<name=buffers.direct.used><>Value'
+    name: hive_metrics_buffers_direct_used
+  - pattern: 'metrics<name=memory.total.committed><>Value'
+    name: hive_metrics_memory_total_committed
+  - pattern: 'metrics<name=buffers.mapped.capacity><>Value'
+    name: hive_metrics_buffers_mapped_capacity
+  - pattern: 'metrics<name=memory.heap.max><>Value'
+    name: hive_metrics_memory_heap_max
+  - pattern: 'metrics<name=threads.timed_waiting.count><>Value'
+    name: hive_metrics_threads_timed_waiting_count
+  - pattern: 'metrics<name=memory.heap.usage><>Value'
+    name: hive_metrics_memory_heap_usage
+  - pattern: 'metrics<name=memory.non-heap.max><>Value'
+    name: hive_metrics_memory_non_heap_max
+  - pattern: 'metrics<name=threads.runnable.count><>Value'
+    name: hive_metrics_threads_runnable_count
+  - pattern: 'metrics<name=memory.pools.PS-Eden-Space.usage><>Value'
+    name: hive_metrics_memory_pools_PS_Eden_Space_usage
+  - pattern: 'metrics<name=memory.non-heap.used><>Value'
+    name: hive_metrics_memory_non_heap_used
+  - pattern: 'metrics<name=gc.PS-MarkSweep.count><>Value'
+    name: hive_metrics_gc_PS_Mark_Sweep_count
+  - pattern: 'metrics<name=buffers.mapped.used><>Value'
+    name: hive_metrics_buffers_mapped_used
+  - pattern: 'metrics<name=gc.PS-Scavenge.count><>Value'
+    name: hive_metrics_gc_PS_Scavenge_count
+  - pattern: 'metrics<name=threads.new.count><>Value'
+    name: hive_metrics_threads_new_count
+  - pattern: 'metrics<name=memory.heap.used><>Value'
+    name: hive_metrics_memory_heap_used
+  - pattern: 'metrics<name=memory.total.init><>Value'
+    name: hive_metrics_memory_total_init
+  - pattern: 'metrics<name=memory.pools.Metaspace.usage><>Value'
+    name: hive_metrics_memory_pools_Metaspace_usage
+  - pattern: 'metrics<name=memory.pools.PS-Old-Gen.usage><>Value'
+    name: hive_metrics_memory_pools_PS_Old_Gen_usage
+  - pattern: 'metrics<name=threads.daemon.count><>Value'
+    name: hive_metrics_threads_daemon_count
+  - pattern: 'metrics<name=memory.total.max><>Value'
+    name: hive_metrics_memory_total_max
+  - pattern: 'metrics<name=threads.count><>Value'
+    name: hive_metrics_threads_count
+  - pattern: 'metrics<name=threads.deadlock.count><>Value'
+    name: hive_metrics_threads_deadlock_count
+  - pattern: 'metrics<name=memory.heap.init><>Value'
+    name: hive_metrics_memory_heap_init
+  - pattern: 'metrics<name=threads.terminated.count><>Value'
+    name: hive_metrics_threads_terminated_count
+  - pattern: 'metrics<name=buffers.direct.count><>Value'
+    name: hive_metrics_buffers_direct_count
+  - pattern: 'metrics<name=memory.total.used><>Value'
+    name: hive_metrics_memory_total_used
+  - pattern: 'metrics<name=memory.non-heap.committed><>Value'
+    name: hive_metrics_memory_non_heap_committed
+  - pattern: 'metrics<name=memory.pools.PS-Survivor-Space.usage><>Value'
+    name: hive_metrics_memory_pools_PS_Survivor_Space_usage
+  - pattern: 'metrics<name=classLoading.loaded><>Value'
+    name: hive_metrics_class_loading_loaded
+  - pattern: 'metrics<name=threads.waiting.count><>Value'
+    name: hive_metrics_threads_waiting_count
+  - pattern: 'metrics<name=classLoading.unloaded><>Value'
+    name: hive_metrics_class_loading_unloaded
+  - pattern: 'metrics<name=memory.heap.committed><>Value'
+    name: hive_metrics_memory_heap_committed
+  - pattern: 'metrics<name=gc.PS-MarkSweep.time><>Value'
+    name: hive_metrics_gc_PS_Mark_Sweep_time
+
+

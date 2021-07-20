@@ -1,0 +1,63 @@
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  - pattern: 'Hadoop<service=ResourceManager, name=MetricsSystem, sub=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_metrics_system_$1_$2
+    attrNameSnakeCase: true
+    help: "rpc activity for port metric, parse from jmx bean: {Hadoop:service=ResourceManager, name=RpcActivityForPort$1}.$2"
+  - pattern: 'Hadoop<service=ResourceManager, name=RpcActivityForPort(\d+)><>(\w+)'
+    name: hadoop_resourcemanager_rpc_activity_for_port_$2
+    attrNameSnakeCase: true
+    labels:
+      "port": $1
+    help: "rpc activity for port metric, parse from jmx bean: {Hadoop:service=ResourceManager, name=RpcActivityForPort$1}.$2"
+  - pattern: 'Hadoop<service=ResourceManager, name=RpcDetailedActivityForPort(\d+)><>(\w+)'
+    name: hadoop_resourcemanager_rpc_activity_for_port_$2
+    attrNameSnakeCase: true
+    labels:
+      "port": $1
+    help: "rpc activity for port metric, parse from jmx bean: {Hadoop:service=ResourceManager, name=RpcActivityForPort$1}.$2"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+), q1=(\w+), q2=(\w+), user=(.*)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$5
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+      "q1": "$2"
+      "q2": "$3"
+      "user": "$4"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+), q1=(\w+), q2=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$4
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+      "q1": "$2"
+      "q2": "$3"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+), q1=(\w+), user=(.*)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$4
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+      "q1": "$2"
+      "user": "$3"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+), q1=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$3
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+      "q1": "$2"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+), user=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$3
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+      "user": "$2"
+  - pattern: 'Hadoop<service=ResourceManager, name=QueueMetrics, q0=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_queue_metrics_$2
+    attrNameSnakeCase: true
+    labels:
+      "q0": "$1"
+  - pattern: 'Hadoop<service=ResourceManager, name=(\w+)><>(\w+)'
+    name: hadoop_resourcemanager_$1_$2
+    attrNameSnakeCase: true
+    help: "Common config, parse from jmx bean: {Hadoop:service=ResourceManager, name=$1}.$2"
