@@ -1,4 +1,4 @@
-FROM quay.io/sysdig/sysdig-ubi:1 as sysdig-ubi-jre
+FROM quay.io/sysdig/sysdig-ubi:1.1.8 as sysdig-ubi-jre
 
 USER root
 
