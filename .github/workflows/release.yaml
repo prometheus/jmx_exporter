@@ -23,6 +23,7 @@ jobs:
         docker build --label version=${{ github.event.release.tag_name }} -f ./build/Dockerfile.jre11 -t temp-jmx-exporter:${{ github.event.release.tag_name }}-ubi .
     - name: Publish docker image
       run: |
+        docker tag artifactory.internal.sysdig.com/jmx-exporter:latest artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
         docker push artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
         docker push artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}-ubi
         docker push artifactory.internal.sysdig.com/jmx-exporter:latest
