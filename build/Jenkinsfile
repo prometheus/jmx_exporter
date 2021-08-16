@@ -1,3 +1,5 @@
+string projectName = "prometheus-integrations"
+
 pipeline {
     agent {
         label 'qa_terminating_j8'
@@ -39,5 +41,13 @@ pipeline {
                 }
             }
         }
+    } //stages
+    post {
+    always {
+        sh "docker rmi -f ${env.ARTIFACTORY_URL}/${env.EXPORTER}:${env.VERSION}"
+        sh "docker rmi -f ${env.ARTIFACTORY_URL}/${env.EXPORTER}:${env.VERSION}-ubi"
+        sh "docker images -q -f 'dangling=true' | xargs --no-run-if-empty docker rmi -f"
+        cleanWs deleteDirs: true, notFailBuild: true
     }
+  } //post
 }
