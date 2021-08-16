@@ -40,7 +40,7 @@ jobs:
         id: scan-local
         uses: sysdiglabs/scan-action@v3
         with:
-          image-tag: "temp-jmx-exporter:$VERSION"
+          image-tag: "temp-jmx-exporter:testing"
           sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
           ignore-failed-scan: true
           input-type: docker-daemon
@@ -50,7 +50,7 @@ jobs:
         id: scan-local-2
         uses: sysdiglabs/scan-action@v3
         with:
-          image-tag: "temp-jmx-exporter:$VERSION-ubi"
+          image-tag: "temp-jmx-exporter:testing-ubi"
           sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
           ignore-failed-scan: true
           input-type: docker-daemon
