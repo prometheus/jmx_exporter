@@ -33,7 +33,6 @@ jobs:
           echo $CURRENT_VERSION
           export NEXT_VERSION=$(./build/inc_version.sh $CURRENT_VERSION)
           echo $NEXT_VERSION
-          cd dashboard-manager
           docker build --label version=$NEXT_VERSION -f ./build/Dockerfile -t temp-jmx-exporter:$VERSION .
           docker build --label version=$NEXT_VERSION -f ./build/Dockerfile.jre11 -t temp-jmx-exporter:$VERSION-ubi .  
 
