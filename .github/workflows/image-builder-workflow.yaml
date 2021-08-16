@@ -46,16 +46,6 @@ jobs:
           input-type: docker-daemon
           run-as-user: root
 
-      - name: Scan local image
-        id: scan-local-2
-        uses: sysdiglabs/scan-action@v3
-        with:
-          image-tag: "temp-jmx-exporter:testing-ubi"
-          sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
-          ignore-failed-scan: true
-          input-type: docker-daemon
-          run-as-user: root
-
       - name: Sarif report
         uses: github/codeql-action/upload-sarif@v1  
         if: always()
