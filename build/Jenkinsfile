@@ -11,14 +11,14 @@ pipeline {
         registryCredential = 'jenkins-artifactory'
         ARTIFACTORY_URL = 'docker.internal.sysdig.com'
         EXPORTER = 'jmx-exporter'
-        VERSION = '0.16.1'
     }
 
     stages {
         stage('Pull image from artifactory') {
             steps {
                 script {
-                    docker.withRegistry("https://${env.ARTIFACTORY_URL}",  registryCredential) {                        
+                    docker.withRegistry("https://${env.ARTIFACTORY_URL}",  registryCredential) {            
+                        sh """export VERSION=$(docker inspect --format '{{ index .Config.Labels "version" }}' artifactory.internal.sysdig.com/jmx-exporterjmx-exporter:latest)"""          
                         sh """docker pull ${env.ARTIFACTORY_URL}/${env.EXPORTER}:${env.VERSION}"""
                         sh """docker pull ${env.ARTIFACTORY_URL}/${env.EXPORTER}:${env.VERSION}-ubi"""
                     }

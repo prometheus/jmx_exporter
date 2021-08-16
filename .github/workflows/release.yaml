@@ -1,0 +1,29 @@
+on:
+  release:
+    types: [released]
+name: Build, test and publish
+jobs:
+  buildDockerImage:
+    name: Build docker image
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Login to Artifactory
+      uses: docker/login-action@v1 
+      with:
+        registry: artifactory.internal.sysdig.com
+        username: david.lorite@sysdig.com
+        password: ${{ secrets.ARTI_TOKEN }}
+    - name: Release if tagged
+      if: "!startswith(github.ref, 'refs/tags/v')"
+      run: exit 78
+    - name: Pull image
+      run: docker pull artifactory.internal.sysdig.com/jmx-exporter:testing
+    - name: Tag docker image
+      run: |
+        docker tag artifactory.internal.sysdig.com/jmx-exporter:testing artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
+        docker tag artifactory.internal.sysdig.com/jmx-exporter:testing artifactory.internal.sysdig.com/jmx-exporter:latest
+    - name: Publish docker image
+      run: |
+        docker push artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
+        docker push artifactory.internal.sysdig.com/jmx-exporter:latest
