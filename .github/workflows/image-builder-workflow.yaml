@@ -29,7 +29,7 @@ jobs:
           password: ${{ secrets.ARTI_TOKEN }}
       - name: Increase version and build
         run: |
-          export CURRENT_VERSION=$(docker inspect --format '{{ index .Config.Labels "version" }}' artifactory.internal.sysdig.com/jmx-exporterjmx-exporter:$VERSION)
+          export CURRENT_VERSION=$(docker inspect --format '{{ index .Config.Labels "version" }}' artifactory.internal.sysdig.com/jmx-exporter:$VERSION)
           echo $CURRENT_VERSION
           export NEXT_VERSION=$(./build/inc_version.sh $CURRENT_VERSION)
           echo $NEXT_VERSION
