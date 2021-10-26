@@ -45,7 +45,7 @@ public class JavaAgent {
      */
     public static Config parseConfig(String args, String ifc) {
         Pattern pattern = Pattern.compile(
-                "^(?:((?:[\\w.]+)|(?:\\[.+])):)?" +  // host name, or ipv4, or ipv6 address in brackets
+                "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
                         "(\\d{1,5}):" +              // port
                         "(.+)");                     // config file
 

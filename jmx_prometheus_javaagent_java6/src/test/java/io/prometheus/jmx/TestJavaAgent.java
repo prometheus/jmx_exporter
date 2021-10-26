@@ -34,6 +34,11 @@ public class TestJavaAgent {
         Assert.assertEquals("/unix/path/config.yaml", config.file);
         Assert.assertEquals(8080, config.port);
 
+        config = JavaAgent.parseConfig("my-host:8080:config.yaml", DEFAULT_HOST);
+        Assert.assertEquals("my-host", config.host);
+        Assert.assertEquals("config.yaml", config.file);
+        Assert.assertEquals(8080, config.port);
+
         config = JavaAgent.parseConfig("127.0.0.1:8080:/unix/path/config.yaml", DEFAULT_HOST);
         Assert.assertEquals("127.0.0.1", config.host);
         Assert.assertEquals("/unix/path/config.yaml", config.file);
