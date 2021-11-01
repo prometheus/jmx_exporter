@@ -21,7 +21,7 @@ import java.util.List;
  * <pre>mvn verify</pre>
  */
 @RunWith(Parameterized.class)
-public class JavaVersionsIT {
+public class AgentJavaVersionsIT {
 
   private final GenericContainer<?> javaContainer;
   private final Volume volume;
@@ -58,7 +58,7 @@ public class JavaVersionsIT {
     };
   }
 
-  public JavaVersionsIT(String baseImage, String agentModule) throws IOException, URISyntaxException {
+  public AgentJavaVersionsIT(String baseImage, String agentModule) throws IOException, URISyntaxException {
     volume = Volume.create("java-versions-integration-test-");
     volume.copyAgentJar(agentModule);
     volume.copyConfigYaml("config.yml");

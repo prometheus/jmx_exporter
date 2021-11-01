@@ -22,7 +22,7 @@
 
     <modules>
         <module>jmx_example_application</module>
-        <module>agent_smoke_test</module>
+        <module>smoke_tests</module>
     </modules>
 
     <dependencyManagement>

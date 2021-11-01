@@ -4,6 +4,8 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,12 +24,13 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 import static java.lang.String.format;
 
 public class JmxCollector extends Collector implements Collector.Describable {
+
+    private final boolean jmxUrlRequired;
+
     static final Counter configReloadSuccess = Counter.build()
       .name("jmx_config_reload_success_total")
       .help("Number of times configuration have successfully been reloaded.").register();
@@ -74,17 +77,38 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
+        this(in, false);
+    }
+
+    public JmxCollector(File in, boolean jmxUrlRequired) throws IOException, MalformedObjectNameException {
         configFile = in;
+        this.jmxUrlRequired = jmxUrlRequired;
         config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
+        exitIfJmxUrlMissing();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        jmxUrlRequired = false;
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        jmxUrlRequired = false;
+    }
+
+    private void exitIfJmxUrlMissing() {
+        // If the jmxUrl configuration is missing, the JmxScraper implicitly monitors the JVM it runs in.
+        // This is good if the JmxCollector is used in the Java agent, because the Java agent should monitor the JVM
+        // it is attached to.
+        // However, if the JmxCollector is used in the WebServer, the intention is that it monitors another process.
+        // If the jmxUrl configuration is missing, it should not silently ignore this and start monitoring itself.
+        // The WebServer sets jmxUrlRequired to true so that we can verify this and terminate with a proper error message.
+        if (jmxUrlRequired && config.jmxUrl.isEmpty()) {
+            LOGGER.severe("configuration error: one of jmxUrl or hostPort is required");
+            System.exit(-1);
+        }
     }
 
     private void reloadConfig() {
@@ -113,11 +137,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
       if (configFile != null) {
           long mtime = configFile.lastModified();
           if (mtime > config.lastUpdate) {
-            LOGGER.fine("Configuration file changed, reloading...");
-            reloadConfig();
+              LOGGER.fine("Configuration file changed, reloading...");
+              reloadConfig();
           }
       }
-
+      exitIfJmxUrlMissing();
       return config;
     }
 

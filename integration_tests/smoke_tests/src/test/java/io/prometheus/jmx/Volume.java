@@ -43,6 +43,19 @@ public class Volume implements Closeable {
         Files.copy(agentJar, tmpDir.resolve("agent.jar"));
     }
 
+    public void copyHttpServer() throws IOException {
+        Path httpServerJar = tmpDir
+                .getParent() // ./integration_tests/agent_smoke_test/target/
+                .getParent() // ./integration_tests/agent_smoke_test/
+                .getParent() // ./integration_tests/
+                .getParent() // ./
+                .resolve("jmx_prometheus_httpserver")
+                .resolve("target")
+                .resolve("jmx_prometheus_httpserver-" + loadProjectVersion() + "-jar-with-dependencies.jar");
+        Assert.assertTrue(httpServerJar + ": File not found.", Files.exists(httpServerJar));
+        Files.copy(httpServerJar, tmpDir.resolve("jmx_prometheus_httpserver.jar"));
+    }
+
     public void copyConfigYaml(String filename) throws IOException, URISyntaxException {
         Path configYaml = Paths.get(getClass().getClassLoader().getResource(filename).toURI());
         Assert.assertTrue(filename + ": File not found.", Files.exists(configYaml));

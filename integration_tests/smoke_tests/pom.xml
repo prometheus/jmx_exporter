@@ -8,8 +8,8 @@
     <version>0.16.2-SNAPSHOT</version>
   </parent>
 
-  <artifactId>agent_smoke_test</artifactId>
-  <name>Prometheus JMX Exporter - Agent Smoke Test</name>
+  <artifactId>smoke_tests</artifactId>
+  <name>Prometheus JMX Exporter - Smoke Tests</name>
 
   <licenses>
     <license>
