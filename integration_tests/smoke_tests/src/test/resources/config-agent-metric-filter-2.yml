@@ -1,0 +1,15 @@
+metricFilter:
+  nameMustNotBeEqualTo:
+    - java_specification_version
+    - java_vm_specification_version
+  nameMustNotStartWith:
+    - jvm_threads_deadlocked
+    - jvm_threads_deadlocked
+    - io_prometheus_jmx_tabularData_Server
+    - java_lang_Memory_HeapMemoryUsage
+    - jmx_config_reload
+rules:
+  - pattern: 'java.lang<type=Runtime, key=(\S+)><>SystemProperties: ([0-9]+)$'
+    name: $1
+    value: $2
+  - pattern: ".*"

@@ -1,0 +1,12 @@
+metricFilter:
+  nameMustNotBeEqualTo:
+    - jvm_threads_deadlocked
+    - io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail
+    - java_lang_Memory_HeapMemoryUsage_used
+    - jmx_config_reload_success_total
+    - java_specification_version
+rules:
+  - pattern: 'java.lang<type=Runtime, key=(\S+)><>SystemProperties: ([0-9]+)$'
+    name: $1
+    value: $2
+  - pattern: ".*"

@@ -1,4 +1,3 @@
-hostPort: localhost:9999
 rules:
   # Examples of the following rule:
   # --

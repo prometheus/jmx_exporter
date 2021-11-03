@@ -1,28 +1,28 @@
 package io.prometheus.jmx;
 
-import org.junit.After;
-import org.junit.Test;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
- * Simple test of the jmx_prometheus_httpserver getting metrics from the JmxExampleApplication.
+ * Run the jmx_example_application and the jmx_prometheus_httpserver in a Docker container.
  */
-public class HttpServerIT {
+public class HttpServerTestSetup implements TestSetup {
 
+    private final String configFilePrefix;
     private final Volume volume;
     private final GenericContainer<?> javaContainer;
-    private final Scraper scraper;
+    private final Scraper  scraper;
 
-    public HttpServerIT() throws IOException, URISyntaxException {
-        String baseImage = "openjdk:11-jre";
+    public HttpServerTestSetup(String baseImage, String configFilePrefix) throws IOException, URISyntaxException {
+        this.configFilePrefix = configFilePrefix;
         volume = Volume.create("http-server-integration-test-");
         volume.copyHttpServer();
-        volume.copyConfigYaml("config-httpserver.yml");
+        volume.copyConfigYaml(makeConfigFileName(".yml"));
         volume.copyExampleApplication();
         String runExampleConfig = "java " +
                 "-Dcom.sun.management.jmxremote.port=9999 " +
@@ -41,22 +41,23 @@ public class HttpServerIT {
         scraper = new Scraper(javaContainer.getHost(), javaContainer.getMappedPort(9000));
     }
 
-    @After
-    public void tearDown() throws IOException {
+    private String makeConfigFileName(String suffix) {
+        return configFilePrefix + suffix;
+    }
+
+    @Override
+    public void close() throws Exception {
         javaContainer.stop();
         volume.close();
     }
 
-    @Test
-    public void testExampleMetrics() throws Exception {
-        for (String metric : new String[]{
-                "java_lang_Memory_NonHeapMemoryUsage_committed",
-                "io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size{source=\"/dev/sda1\"} 7.516192768E9",
-        }) {
-            scraper.scrape(10 * 1000).stream()
-                    .filter(line -> line.startsWith(metric))
-                    .findAny()
-                    .orElseThrow(() -> new AssertionError("Metric " + metric + " not found."));
-        }
+    @Override
+    public List<String> scrape(long timeoutMillis) {
+        return scraper.scrape(timeoutMillis);
+    }
+
+    @Override
+    public void copyConfig(String suffix) throws IOException, URISyntaxException {
+        volume.copyConfigYaml(makeConfigFileName(suffix));
     }
 }

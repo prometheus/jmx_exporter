@@ -2,6 +2,9 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Predicate;
+import io.prometheus.client.SampleNameFilter;
+import io.prometheus.client.Supplier;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.management.MalformedObjectNameException;
@@ -64,10 +67,26 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      MetricFilterConfig metricFilterConfig = new MetricFilterConfig();
+
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
 
       MatchedRulesCache rulesCache;
+
+      static class MetricFilterConfig {
+        List<String> nameMustStartWith = new ArrayList<String>();
+        List<String> nameMustNotStartWith = new ArrayList<String>();
+        List<String> nameMustBeEqualTo = new ArrayList<String>();
+        List<String> nameMustNotBeEqualTo = new ArrayList<String>();
+
+        boolean isEmpty() {
+            return nameMustStartWith.isEmpty()
+                    && nameMustNotStartWith.isEmpty()
+                    && nameMustBeEqualTo.isEmpty()
+                    && nameMustNotBeEqualTo.isEmpty();
+        }
+      }
     }
 
     private Config config;
@@ -203,7 +222,21 @@ public class JmxCollector extends Collector implements Collector.Describable {
             cfg.blacklistObjectNames.add(new ObjectName((String)name));
           }
         }
-
+      if (yamlConfig.get("metricFilter") instanceof Map) {
+          Map<String, Object> metricFilter = (Map<String, Object>) yamlConfig.get("metricFilter");
+          if (metricFilter.get("nameMustStartWith") instanceof List) {
+              cfg.metricFilterConfig.nameMustStartWith.addAll((List<String>) metricFilter.get("nameMustStartWith"));
+          }
+          if (metricFilter.get("nameMustNotStartWith") instanceof List) {
+              cfg.metricFilterConfig.nameMustNotStartWith.addAll((List<String>) metricFilter.get("nameMustNotStartWith"));
+          }
+          if (metricFilter.get("nameMustBeEqualTo") instanceof List) {
+              cfg.metricFilterConfig.nameMustBeEqualTo.addAll((List<String>) metricFilter.get("nameMustBeEqualTo"));
+          }
+          if (metricFilter.get("nameMustNotBeEqualTo") instanceof List) {
+              cfg.metricFilterConfig.nameMustNotBeEqualTo.addAll((List<String>) metricFilter.get("nameMustNotBeEqualTo"));
+          }
+      }
       if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
@@ -550,6 +583,24 @@ public class JmxCollector extends Collector implements Collector.Describable {
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, matchedRule.help);
       }
 
+    }
+
+    Supplier<Predicate<String>> getSampleNameFilterSupplier() {
+      return new Supplier<Predicate<String>>() {
+          @Override
+          public Predicate<String> get() {
+              Config.MetricFilterConfig metricFilterConfig = getLatestConfig().metricFilterConfig;
+              if (metricFilterConfig.isEmpty()) {
+                  return null;
+              }
+              return new SampleNameFilter.Builder()
+                      .nameMustBeEqualTo(metricFilterConfig.nameMustBeEqualTo)
+                      .nameMustNotBeEqualTo(metricFilterConfig.nameMustNotBeEqualTo)
+                      .nameMustStartWith(metricFilterConfig.nameMustStartWith)
+                      .nameMustNotStartWith(metricFilterConfig.nameMustNotStartWith)
+                      .build();
+          }
+      };
     }
 
   public List<MetricFamilySamples> collect() {

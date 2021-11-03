@@ -6,13 +6,16 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 /**
- * Create a temporary directory with the agent, example application, and config.yml.
+ * Create a temporary directory with the agent, http_server, example application, and config.yml.
  * The directory will be mounted as a volume in the test container.
  * This allows us to easily write a test where we update config.yml at runtime.
  */
@@ -32,8 +35,8 @@ public class Volume implements Closeable {
 
     public void copyAgentJar(String module) throws IOException {
         Path agentJar = tmpDir
-                .getParent() // ./integration_tests/agent_smoke_test/target/
-                .getParent() // ./integration_tests/agent_smoke_test/
+                .getParent() // ./integration_tests/smoke_tests/target/
+                .getParent() // ./integration_tests/smoke_tests/
                 .getParent() // ./integration_tests/
                 .getParent() // ./
                 .resolve(module)
@@ -45,8 +48,8 @@ public class Volume implements Closeable {
 
     public void copyHttpServer() throws IOException {
         Path httpServerJar = tmpDir
-                .getParent() // ./integration_tests/agent_smoke_test/target/
-                .getParent() // ./integration_tests/agent_smoke_test/
+                .getParent() // ./integration_tests/smoke_tests/target/
+                .getParent() // ./integration_tests/smoke_tests/
                 .getParent() // ./integration_tests/
                 .getParent() // ./
                 .resolve("jmx_prometheus_httpserver")
@@ -57,15 +60,17 @@ public class Volume implements Closeable {
     }
 
     public void copyConfigYaml(String filename) throws IOException, URISyntaxException {
-        Path configYaml = Paths.get(getClass().getClassLoader().getResource(filename).toURI());
+        URL url = getClass().getClassLoader().getResource(filename);
+        Assert.assertNotNull(filename + ": File not found.", url);
+        Path configYaml = Paths.get(url.toURI());
         Assert.assertTrue(filename + ": File not found.", Files.exists(configYaml));
-        Files.copy(configYaml, tmpDir.resolve("config.yaml"));
+        Files.copy(configYaml, tmpDir.resolve("config.yaml"), REPLACE_EXISTING);
     }
 
     public void copyExampleApplication() throws IOException {
         Path exampleApplicationJar = tmpDir
-                .getParent() // ./integration_tests/agent_smoke_test/target/
-                .getParent() // ./integration_tests/agent_smoke_test/
+                .getParent() // ./integration_tests/smoke_tests/target/
+                .getParent() // ./integration_tests/smoke_tests/
                 .getParent() // ./integration_tests/
                 .resolve("jmx_example_application")
                 .resolve("target")

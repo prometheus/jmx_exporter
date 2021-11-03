@@ -26,9 +26,13 @@ public class JavaAgent {
             Config config = parseConfig(agentArgument, host);
 
             new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file)).register();
+            JmxCollector collector = new JmxCollector(new File(config.file)).register();
             DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+            server = new HTTPServer.Builder()
+                    .withInetSocketAddress(config.socket)
+                    .withSampleNameFilterSupplier(collector.getSampleNameFilterSupplier())
+                    .withRegistry(CollectorRegistry.defaultRegistry)
+                    .build();
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());

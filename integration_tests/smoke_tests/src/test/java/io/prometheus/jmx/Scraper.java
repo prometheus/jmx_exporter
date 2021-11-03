@@ -8,6 +8,9 @@ import org.junit.Assert;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * HTTP client for scraping metrics.
+ */
 public class Scraper {
 
     private final OkHttpClient client;

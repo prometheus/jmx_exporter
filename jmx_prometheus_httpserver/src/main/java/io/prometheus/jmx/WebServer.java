@@ -27,7 +27,11 @@ public class WebServer {
      }
 
      new BuildInfoCollector().register();
-     new JmxCollector(new File(args[1]), true).register();
-     new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+     JmxCollector collector = new JmxCollector(new File(args[1]), true).register();
+     new HTTPServer.Builder()
+             .withInetSocketAddress(socket)
+             .withSampleNameFilterSupplier(collector.getSampleNameFilterSupplier())
+             .withRegistry(CollectorRegistry.defaultRegistry)
+             .build();
    }
 }
