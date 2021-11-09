@@ -14,14 +14,14 @@ Agent is thus strongly encouraged.
 ## Running
 
 The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.16.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent-0.16.0.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.16.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent_java6-0.16.0.jar) is compatible with Java 6.
+* [jmx_prometheus_javaagent-0.16.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar) requires Java >= 7.
+* [jmx_prometheus_javaagent-0.16.1_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.16.1/jmx_prometheus_javaagent_java6-0.16.1.jar) is compatible with Java 6.
 
-The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.0) for more info.
+The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.1) for more info.
 
 To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.16.0.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.16.1.jar=8080:config.yaml -jar yourJar.jar
 ```
 Metrics will now be accessible at http://localhost:8080/metrics
 

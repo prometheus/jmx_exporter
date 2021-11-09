@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>parent</artifactId>
-        <version>0.16.1-SNAPSHOT</version>
+        <version>0.16.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration_tests</artifactId>
@@ -22,7 +22,7 @@
 
     <modules>
         <module>jmx_example_application</module>
-        <module>agent_smoke_test</module>
+        <module>smoke_tests</module>
     </modules>
 
     <dependencyManagement>

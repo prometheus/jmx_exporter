@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.16.1-SNAPSHOT</version>
+    <version>0.16.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>jmx_prometheus_javaagent</artifactId>
@@ -69,6 +69,7 @@
                   <artifact>io.prometheus.jmx:jmx_prometheus_javaagent_java6</artifact>
                   <excludes>
                     <exclude>io/prometheus/jmx/shaded/org/yaml/snakeyaml/**</exclude>
+                    <exclude>META-INF/maven/**</exclude>
                   </excludes>
                   <includes>
                     <include>**</include>
