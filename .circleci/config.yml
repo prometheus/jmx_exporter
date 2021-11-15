@@ -24,4 +24,4 @@ jobs:
             - ~/.m2
           key: maven-dependencies-{{ checksum "pom.xml" }}
 orbs:
-  prometheus: prometheus/prometheus@0.11.0
+  prometheus: prometheus/prometheus@0.14.0
