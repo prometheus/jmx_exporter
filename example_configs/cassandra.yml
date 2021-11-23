@@ -1,8 +1,14 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
 whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
-# ColumnFamily is an alias for Table metrics
-blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+
+blacklistObjectNames:
+  # ColumnFamily is an alias for Table metrics
+  - "org.apache.cassandra.metrics:type=ColumnFamily,*"
+  # TotalDiskSpaceUsed and EstimatedPartitionCount slow down scraping significantly
+  - "org.apache.cassandra.metrics:*,name=TotalDiskSpaceUsed"
+  - "org.apache.cassandra.metrics:*,name=EstimatedPartitionCount"
+  
 rules:
 # Generic gauges with 0-2 labels
 - pattern: org.apache.cassandra.metrics<type=(\S*)(?:, ((?!scope)\S*)=(\S*))?(?:, scope=(\S*))?, name=(\S*)><>Value
