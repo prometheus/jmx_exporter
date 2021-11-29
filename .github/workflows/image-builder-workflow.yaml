@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        docker: ['scratch','ubi']
+        docker: ['ubi']
     env:
       VERSION: latest
       EXPORTER_NAME: jmx-exporter
@@ -36,7 +36,7 @@ jobs:
         run: |
           docker pull artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION
           export RELEASE=$(docker inspect --format '{{ index .Config.Labels "release" }}' artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION)
-          docker build --label release=$RELEASE -f ./docker/Dockerfile -t $EXPORTER_NAME:$VERSION --target ${{ matrix.docker }} . 
+          docker build --label release=$RELEASE -f ./build/Dockerfile -t $EXPORTER_NAME:$VERSION --target ${{ matrix.docker }} . 
 
       - name: Scan local image
         id: scan-local
@@ -65,7 +65,7 @@ jobs:
       - name: Fake Upload master to Quay.io
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://sysdig-jenkins.internal.sysdig.com/view/Integrations/job/integrations-jmx-exporter/buildWithParameters?token=${{ secrets.JENKINS_PROMCAT_LAUNCH_TOKEN }}&EXPORTER=jmx-exporter&DRY_RUN=true'
+          url: 'https://sysdig-jenkins.internal.sysdig.com/view/Integrations/job/integrations-redis-exporter/buildWithParameters?token=${{ secrets.JENKINS_PROMCAT_LAUNCH_TOKEN }}&EXPORTER=redis-exporter&DRY_RUN=true'
           method: 'POST'
           username: david.lorite@sysdig.com
           password: ${{ secrets.JENKINS_PROMCAT_API_TOKEN }}
