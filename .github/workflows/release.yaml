@@ -4,7 +4,12 @@ on:
 name: Build, test and publish
 jobs:
   buildDockerImage:
-    name: Build docker image
+    env:
+      EXPORTER_NAME: jmx-exporter
+    strategy:
+      matrix:
+        docker: ['scratch','ubi']
+    name: Build docker image ${{ matrix.docker }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -19,11 +24,16 @@ jobs:
       run: exit 78
     - name: Build image
       run: |
-        docker build --label version=${{ github.event.release.tag_name }} -f ./build/Dockerfile -t artifactory.internal.sysdig.com/jmx-exporter:latest .
-        docker build --label version=${{ github.event.release.tag_name }} -f ./build/Dockerfile.jre11 -t artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}-ubi .
+        docker build --label release=${{ github.event.release.tag_name }} -f ./build/Dockerfile --target ${{ matrix.docker }} -t artifactory.internal.sysdig.com/$EXPORTER_NAME:latest .
     - name: Publish docker image
       run: |
-        docker tag artifactory.internal.sysdig.com/jmx-exporter:latest artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
-        docker push artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}
-        docker push artifactory.internal.sysdig.com/jmx-exporter:${{ github.event.release.tag_name }}-ubi
-        docker push artifactory.internal.sysdig.com/jmx-exporter:latest
+        docker tag artifactory.internal.sysdig.com/$EXPORTER_NAME:latest artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}-${{ matrix.docker }}
+        docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}-${{ matrix.docker }}
+        docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:latest
+    - name: Upload master to Quay.io
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://sysdig-jenkins.internal.sysdig.com/view/Integrations/job/integrations-jmx-exporter/buildWithParameters?token=${{ secrets.JENKINS_PROMCAT_LAUNCH_TOKEN }}&EXPORTER=jmx-exporter&DRY_RUN=false'
+        method: 'POST'
+        username: david.lorite@sysdig.com
+        password: ${{ secrets.JENKINS_PROMCAT_API_TOKEN }}
