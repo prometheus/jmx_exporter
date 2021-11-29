@@ -42,7 +42,7 @@ jobs:
         id: scan-local
         uses: sysdiglabs/scan-action@v3
         with:
-          image-tag: "jmx-exporter:latest"
+          image-tag: "promcat-jmx-exporter:latest"
           sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
           ignore-failed-scan: true
           input-type: docker-daemon
