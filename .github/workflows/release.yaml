@@ -28,7 +28,9 @@ jobs:
     - name: Publish docker image
       run: |
         docker tag artifactory.internal.sysdig.com/$EXPORTER_NAME:latest artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}-${{ matrix.docker }}
+        docker tag artifactory.internal.sysdig.com/$EXPORTER_NAME:latest artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}
         docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}-${{ matrix.docker }}
+        docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:${{ github.event.release.tag_name }}
         docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:latest
     - name: Upload master to Quay.io
       uses: fjogeleit/http-request-action@master
