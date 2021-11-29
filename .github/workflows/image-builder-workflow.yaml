@@ -1,4 +1,4 @@
-name: buildandDeploy
+name: Build and scan
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -10,10 +10,15 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    strategy:
+      matrix:
+        docker: ['scratch','ubi']
     env:
-      VERSION: testing
+      VERSION: latest
+      EXPORTER_NAME: jmx-exporter
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    name: ${{ matrix.docker }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -29,18 +34,15 @@ jobs:
           password: ${{ secrets.ARTI_TOKEN }}
       - name: Increase version and build
         run: |
-          export CURRENT_VERSION=$(docker inspect --format '{{ index .Config.Labels "version" }}' artifactory.internal.sysdig.com/jmx-exporter:$VERSION)
-          echo $CURRENT_VERSION
-          export NEXT_VERSION=$(./build/inc_version.sh $CURRENT_VERSION)
-          echo $NEXT_VERSION
-          docker build --label version=$NEXT_VERSION -f ./build/Dockerfile -t temp-jmx-exporter:$VERSION .
-          docker build --label version=$NEXT_VERSION -f ./build/Dockerfile.jre11 -t temp-jmx-exporter:$VERSION-ubi .  
+          docker pull artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION
+          export RELEASE=$(docker inspect --format '{{ index .Config.Labels "release" }}' artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION)
+          docker build --label release=$RELEASE -f ./docker/Dockerfile -t $EXPORTER_NAME:$VERSION --target ${{ matrix.docker }} . 
 
       - name: Scan local image
         id: scan-local
         uses: sysdiglabs/scan-action@v3
         with:
-          image-tag: "temp-jmx-exporter:testing"
+          image-tag: "jmx-exporter:latest"
           sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
           ignore-failed-scan: true
           input-type: docker-daemon
@@ -54,10 +56,16 @@ jobs:
 
       - name: Change the tag of the image
         run: |
-          docker tag temp-jmx-exporter:$VERSION artifactory.internal.sysdig.com/jmx-exporter:$VERSION
-          docker tag temp-jmx-exporter:$VERSION-ubi artifactory.internal.sysdig.com/jmx-exporter:$VERSION-ubi
+          docker tag $EXPORTER_NAME:$VERSION artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION
 
       - name: Push the image
         run: |
-          docker push artifactory.internal.sysdig.com/jmx-exporter:$VERSION
-          docker push artifactory.internal.sysdig.com/jmx-exporter:$VERSION-ubi
+          docker push artifactory.internal.sysdig.com/$EXPORTER_NAME:$VERSION
+
+      - name: Fake Upload master to Quay.io
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://sysdig-jenkins.internal.sysdig.com/view/Integrations/job/integrations-jmx-exporter/buildWithParameters?token=${{ secrets.JENKINS_PROMCAT_LAUNCH_TOKEN }}&EXPORTER=jmx-exporter&DRY_RUN=true'
+          method: 'POST'
+          username: david.lorite@sysdig.com
+          password: ${{ secrets.JENKINS_PROMCAT_API_TOKEN }}

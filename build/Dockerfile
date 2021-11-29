@@ -14,7 +14,7 @@ FROM anapsix/alpine-java:8
 
 RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
 
-ENV VERSION 0.16.1
+ENV VERSION 0.16.2
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT-jar-with-dependencies.jar /opt/jmx_exporter/$JAR
 
@@ -27,3 +27,9 @@ EXPOSE 5556
 USER 1001
 
 CMD ["/opt/jmx_exporter/start.sh"]
+
+FROM quay.io/sysdig/sysdig-mini-ubi:1.1.14 as ubi
+
+ENV VERSION 0.16.2
+ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
+COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT-jar-with-dependencies.jar /opt/jmx_exporter/$JAR
