@@ -5,7 +5,7 @@ name: Build, test and publish
 jobs:
   buildDockerImage:
     env:
-      EXPORTER_NAME: jmx-exporter
+      EXPORTER_NAME: promcat-jmx-exporter
     strategy:
       matrix:
         docker: ['ubi']
