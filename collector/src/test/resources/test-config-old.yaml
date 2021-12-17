@@ -1,0 +1,21 @@
+startDelaySeconds: 2
+hostPort: 127.0.0.1:1234
+username: prometheus
+password: secret
+ssl: true
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
+blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+rules:
+  - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
+    name: cassandra_$1_$2
+    value: $3
+    valueFactor: 0.001
+    labels:
+      name1: value1
+      name2: value2
+    help: "Cassandra metric $1 $2"
+    cache: false
+    type: GAUGE
+    attrNameSnakeCase: false

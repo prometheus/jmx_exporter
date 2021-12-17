@@ -1,0 +1,59 @@
+startDelaySeconds: 2
+
+collector:
+  hostPort: 127.0.0.1:1234
+  #jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
+  username: prometheus
+  password: secret
+  sslEnabled: true
+  sslClientAuth: true
+  sslKeyAlias: jmx
+
+httpServer:
+  address: 127.0.0.1
+  port: 9012
+  username: scraper
+  password: changeMe
+  sslEnabled: true
+  sslClientAuth: true
+  sslKeyAlias: server
+
+ssl:
+  sslKeyStore: /etc/my-key-store
+  sslKeyStorePassword: keyStorePwd
+  sslTrustStore: /etc/my-trust-store
+  sslTrustStorePassword: trustStorePwd
+
+jmxBeanFilter:
+  include:
+    - org.apache.cassandra.metrics:*
+  exclude:
+    - org.apache.cassandra.metrics:type=ColumnFamily,*
+
+metricFilter:
+  nameMustStartWith:
+    - jvm_
+  nameMustNotStartWith:
+    - io_
+  nameMustBeEqualTo:
+    - java_lang_Memory_HeapMemoryUsage_used
+    - jmx_config_reload_success_total
+  nameMustNotBeEqualTo:
+    - java_specification_version
+    - jvm_threads_deadlocked
+
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+
+rules:
+  - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
+    name: cassandra_$1_$2
+    value: $3
+    valueFactor: 0.001
+    labels:
+      name1: value1
+      name2: value2
+    help: "Cassandra metric $1 $2"
+    cache: false
+    type: GAUGE
+    attrNameSnakeCase: false
