@@ -13,6 +13,8 @@ Agent is thus strongly encouraged.
 
 ## Running
 
+### As Java Agent
+
 The Java agent is available in two versions with identical functionality:
 * [jmx_prometheus_javaagent-0.16.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar) requires Java >= 7.
 * [jmx_prometheus_javaagent-0.16.1_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.16.1/jmx_prometheus_javaagent_java6-0.16.1.jar) is compatible with Java 6.
@@ -26,6 +28,12 @@ java -javaagent:./jmx_prometheus_javaagent-0.16.1.jar=8080:config.yaml -jar your
 Metrics will now be accessible at http://localhost:8080/metrics
 
 To bind the java agent to a specific IP change the port number to `host:port`.
+
+If you start getting exceptions thrown like in here: #666, just follow the advice given there regarding IP:PORT configurations.
+
+### As HTTP Server
+
+Clone the repo and build the Project in order to get the http server jar to use.
 
 See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
 
@@ -41,8 +49,8 @@ The configuration is in YAML. An example with all possible options:
 ---
 startDelaySeconds: 0
 hostPort: 127.0.0.1:1234
-username: 
-password: 
+username:
+password:
 jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
 ssl: false
 lowercaseOutputName: false
@@ -128,7 +136,7 @@ You can run the tests with:
 
 ## Debugging
 
-You can start the jmx's scraper in standalone mode in order to debug what is called 
+You can start the jmx's scraper in standalone mode in order to debug what is called
 
 ```
 git clone https://github.com/prometheus/jmx_exporter.git
