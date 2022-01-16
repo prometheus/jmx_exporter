@@ -19,17 +19,37 @@ The Java agent is available in two versions with identical functionality:
 
 The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.1) for more info.
 
+Please note that due to the nature of JMX the `/metrics` endpoint might exceed Prometheus default scrape timeout of 10 seconds.
+
+### Agent mode
+
 To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.16.1.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.16.1.jar=8080:config.yaml -jar <your_application.jar>
 ```
+
 Metrics will now be accessible at http://localhost:8080/metrics
 
 To bind the java agent to a specific IP change the port number to `host:port`.
 
-See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
+__Note:__ The configuration file **must not** specify _hostPort_ or _jmxUrl_ when running in agent mode.
 
-Please note that due to the nature of JMX the `/metrics` endpoint might exceed Prometheus default scrape timeout of 10 seconds.
+### Standalone mode
+
+To run in standalone mode, run your application with external JMX access:
+
+```
+java -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=5555 -jar <your_application.jar>
+```
+
+Download one of the JARs and run:
+```
+java -jar ./jmx_prometheus_javaagent-0.16.1.jar 8080 config.yml
+```
+
+Metrics will now be accessible at http://localhost:8080/metrics
+
+__Note:__ The configuration file **must** specify _hostPort_ or _jmxUrl_ when running in standalone mode
 
 ## Building
 
