@@ -29,7 +29,12 @@ import static java.lang.String.format;
 
 public class JmxCollector extends Collector implements Collector.Describable {
 
-    private final boolean jmxUrlRequired;
+    public enum Mode {
+      AGENT,
+      STANDALONE
+    }
+
+    private final Mode mode;
 
     static final Counter configReloadSuccess = Counter.build()
       .name("jmx_config_reload_success_total")
@@ -77,36 +82,34 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
-        this(in, false);
+        this(in, null);
     }
 
-    public JmxCollector(File in, boolean jmxUrlRequired) throws IOException, MalformedObjectNameException {
+    public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
-        this.jmxUrlRequired = jmxUrlRequired;
+        this.mode = mode;
         config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
-        exitIfJmxUrlMissing();
+        exitOnConfigError();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
         config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
-        jmxUrlRequired = false;
+        mode = null;
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
         config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
-        jmxUrlRequired = false;
+        mode = null;
     }
 
-    private void exitIfJmxUrlMissing() {
-        // If the jmxUrl configuration is missing, the JmxScraper implicitly monitors the JVM it runs in.
-        // This is good if the JmxCollector is used in the Java agent, because the Java agent should monitor the JVM
-        // it is attached to.
-        // However, if the JmxCollector is used in the WebServer, the intention is that it monitors another process.
-        // If the jmxUrl configuration is missing, it should not silently ignore this and start monitoring itself.
-        // The WebServer sets jmxUrlRequired to true so that we can verify this and terminate with a proper error message.
-        if (jmxUrlRequired && config.jmxUrl.isEmpty()) {
-            LOGGER.severe("configuration error: one of jmxUrl or hostPort is required");
+    private void exitOnConfigError() {
+        if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
+            LOGGER.severe("Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
+            System.exit(-1);
+        }
+        if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
+            LOGGER.severe("Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
             System.exit(-1);
         }
     }
@@ -141,7 +144,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
               reloadConfig();
           }
       }
-      exitIfJmxUrlMissing();
+      exitOnConfigError();
       return config;
     }
 

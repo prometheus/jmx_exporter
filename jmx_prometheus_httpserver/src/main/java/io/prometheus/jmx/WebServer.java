@@ -27,7 +27,7 @@ public class WebServer {
      }
 
      new BuildInfoCollector().register();
-     new JmxCollector(new File(args[1]), true).register();
+     new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
      new HTTPServer(socket, CollectorRegistry.defaultRegistry);
    }
 }
