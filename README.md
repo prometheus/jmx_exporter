@@ -157,3 +157,10 @@ Add the following flag to your Java invocation:
 A Debian binary package is created as part of the build process and it can
 be used to install an executable into `/usr/bin/jmx_exporter` with configuration
 in `/etc/jmx_exporter/jmx_exporter.yaml`.
+
+
+## TLS support
+
+To use TLS you need to pass a third argument "tls" besides port and yaml config file and use following flags for the JKS file and the passphrase:
+
+`-Djavax.net.ssl.keyStore={{ jks_file_path }}`<br/>`-Djavax.net.ssl.keyStore.passphrase={{ certificate_password }}`

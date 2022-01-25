@@ -9,16 +9,27 @@ import java.util.regex.Pattern;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
-
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Set;
+import java.util.Vector;
 public class JavaAgent {
 
     static HTTPServer server;
 
-    public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
-        premain(agentArgument, instrumentation);
+    public static void agentmain(String agentArgument, Instrumentation instrumentation, String[] args) throws Exception {
+        premain(agentArgument, instrumentation, args);
     }
 
-    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
+    public static void premain(String agentArgument, Instrumentation instrumentation, String[] args) throws Exception {
         // Bind to all interfaces by default (this includes IPv6).
         String host = "0.0.0.0";
 
@@ -28,12 +39,33 @@ public class JavaAgent {
             new BuildInfoCollector().register();
             new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
-        }
-        catch (IllegalArgumentException e) {
-            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
+            // server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry,
+            // true);
+            if (args[2].equals("tls"))  {
+                HttpsServer httpsServer = HttpsServer.create(config.socket, 3);
+                SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                // to handle keystore types other than jks
+                String kstype = System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType());
+                KeyStore ks = KeyStore.getInstance(kstype);
+                // to avoid Null pointer when password is used instead of passphrase
+                char[] passphrase = System.getProperty("javax.net.ssl.keyStore.passphrase",
+                        System.getProperty("javax.net.ssl.keyStorePassword")).toCharArray();
+                ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), passphrase);
+                kmf.init(ks, passphrase);
+                sslContext.init(kmf.getKeyManagers(), null, null);
+                SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
+                sslParameters.setProtocols(new String[] { "TLSv1.2" });
+                httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+                new HTTPServer(httpsServer, CollectorRegistry.defaultRegistry, false);
+            } else {
+                server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+            }
+        } catch (IllegalArgumentException e) {
+            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> <[tls]>"
+                    + e.getMessage());
             System.exit(1);
-        }
+        } 
     }
 
     /**
