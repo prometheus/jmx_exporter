@@ -69,6 +69,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      List<String> blacklistBeanAttributeNames = new ArrayList<String>();
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
 
@@ -204,6 +205,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
           List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
           for (Object name : names) {
             cfg.blacklistObjectNames.add(new ObjectName((String)name));
+          }
+        }
+
+        if (yamlConfig.containsKey("blacklistBeanAttributeNames")) {
+          List<String> names = (List<String>) yamlConfig.get("blacklistBeanAttributeNames");
+          for (String name : names) {
+            cfg.blacklistBeanAttributeNames.add(name);
           }
         }
 
@@ -563,7 +571,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+              config.whitelistObjectNames, config.blacklistObjectNames, config.blacklistBeanAttributeNames, 
+              receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
