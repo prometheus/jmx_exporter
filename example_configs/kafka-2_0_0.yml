@@ -66,6 +66,19 @@ rules:
   name: kafka_$1_$2_$3
   type: GAUGE
 
+# Generic gauges for MeanRate Percent
+- pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>MeanRate
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+- pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>Value
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+- pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*, (.+)=(.+)><>Value
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+  labels:
+    "$4": "$5"
+
 # Emulate Prometheus 'Summary' metrics for the exported 'Histogram's.
 #
 # Note that these are missing the '_sum' metric!
