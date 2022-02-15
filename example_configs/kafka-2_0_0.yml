@@ -67,6 +67,7 @@ rules:
   type: GAUGE
 
 # Generic gauges for MeanRate Percent
+# Ex) kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>MeanRate
 - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>MeanRate
   name: kafka_$1_$2_$3_percent
   type: GAUGE
