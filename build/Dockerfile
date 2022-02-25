@@ -28,7 +28,7 @@ USER 1001
 
 CMD ["/opt/jmx_exporter/start.sh"]
 
-FROM quay.io/sysdig/sysdig-mini-ubi:1.1.14 as ubi
+FROM quay.io/sysdig/sysdig-mini-ubi:1.2.8 as ubi
 
 ENV VERSION 0.16.2
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
