@@ -335,7 +335,7 @@ class JmxScraper {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
       if (args.length >= 3){
-            new JmxScraper(args[0], args[1], args[2], false, objectNames, new LinkedList<ObjectName>(),
+            new JmxScraper(args[0], args[1], args[2], (args.length >3 && "ssl".equalsIgnoreCase(args[3])), objectNames, new LinkedList<ObjectName>(),
                     new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
         }
       else if (args.length > 0){
