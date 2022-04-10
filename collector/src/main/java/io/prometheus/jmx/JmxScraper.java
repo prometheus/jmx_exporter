@@ -77,7 +77,7 @@ class JmxScraper {
     public void doScrape() throws Exception {
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
-        if (jmxUrl.isEmpty()) {
+        if (jmxUrl == null || jmxUrl.isEmpty()) {
           beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
           Map<String, Object> environment = new HashMap<String, Object>();
@@ -98,9 +98,15 @@ class JmxScraper {
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectName> mBeanNames = new HashSet<ObjectName>();
-            for (ObjectName name : whitelistObjectNames) {
-                for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
+            if (whitelistObjectNames.isEmpty()) {
+                for (ObjectInstance instance : beanConn.queryMBeans(null, null)) {
                     mBeanNames.add(instance.getObjectName());
+                }
+            } else {
+                for (ObjectName name : whitelistObjectNames) {
+                    for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
+                        mBeanNames.add(instance.getObjectName());
+                    }
                 }
             }
 

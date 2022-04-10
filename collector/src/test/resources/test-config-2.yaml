@@ -1,0 +1,55 @@
+startDelaySeconds: 0
+
+collector:
+  hostPort: 127.0.0.1:1234
+  jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
+  username:
+  password:
+  sslEnabled: true
+  sslClientAuth: true # Default is taken from the System property: com.sun.management.jmxremote.ssl.need.client.auth
+  sslKeyAlias: jmx # see Tomcat's keyAlias
+
+httpServer:
+  address: 0.0.0.0
+  port: 8080
+  username: admin
+  password: admin
+  sslEnabled: true
+  sslClientAuth: true # Note: In Tomcat, possible values are 'true', 'false', and 'want'.
+  sslKeyAlias: server # see Tomcat's keyAlias
+
+# The SSL section is an alternative to the standard System properties.
+# Defaults are taken from the System properties.
+ssl:
+  sslKeyStore: /etc/my-keystore # System property: javax.net.ssl.keyStore
+  sslKeyStorePassword: changeit # System property: javax.net.ssl.keyStorePassword
+  sslTrustStore: /etc/my-trust-store # javax.net.ssl.trustStore
+  sslTrustStorePassword: changeit # System property: javax.net.ssl.trustStorePassword
+
+jmxBeanFilter:
+  include:
+  - org.apache.cassandra.metrics:*
+  exclude:
+  - org.apache.cassandra.metrics:type=ColumnFamily,*
+
+metricFilter:
+  nameMustNotBeEqualTo:
+    - jvm_threads_deadlocked
+    - io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail
+    - java_lang_Memory_HeapMemoryUsage_used
+    - jmx_config_reload_success_total
+    - java_specification_version
+
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+
+rules:
+  - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
+    name: cassandra_$1_$2
+    value: $3
+    valueFactor: 0.001
+    labels: {}
+    help: "Cassandra metric $1 $2"
+    cache: false
+    type: GAUGE
+    attrNameSnakeCase: false

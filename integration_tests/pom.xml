@@ -27,6 +27,7 @@
     <modules>
         <module>jmx_example_application</module>
         <module>smoke_tests</module>
+        <module>ssl_tests</module>
     </modules>
 
     <dependencyManagement>

@@ -34,246 +34,55 @@ public class JmxCollector extends Collector implements Collector.Describable {
       STANDALONE
     }
 
-    private final Mode mode;
-
-    static final Counter configReloadSuccess = Counter.build()
-      .name("jmx_config_reload_success_total")
-      .help("Number of times configuration have successfully been reloaded.").register();
-
-    static final Counter configReloadFailure = Counter.build()
-      .name("jmx_config_reload_failure_total")
-      .help("Number of times configuration have failed to be reloaded.").register();
+    private final long createTimeNanoSecs = System.nanoTime();
+    private final Supplier<Config> config;
+    private final MatchedRulesCache matchedRulesCache = new MatchedRulesCache();
+    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
-    static class Rule {
-      Pattern pattern;
-      String name;
-      String value;
-      Double valueFactor = 1.0;
-      String help;
-      boolean attrNameSnakeCase;
-      boolean cache = false;
-      Type type = Type.UNKNOWN;
-      ArrayList<String> labelNames;
-      ArrayList<String> labelValues;
+    public JmxCollector(File configFile) throws IOException, Config.ConfigException {
+        this(configFile, null);
     }
 
-    private static class Config {
-      Integer startDelaySeconds = 0;
-      String jmxUrl = "";
-      String username = "";
-      String password = "";
-      boolean ssl = false;
-      boolean lowercaseOutputName;
-      boolean lowercaseOutputLabelNames;
-      List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
-      List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
-      List<Rule> rules = new ArrayList<Rule>();
-      long lastUpdate = 0L;
-
-      MatchedRulesCache rulesCache;
+    public JmxCollector(File configFile, Mode mode) throws IOException, Config.ConfigException {
+        config = new DynamicConfigReloader(configFile, matchedRulesCache);
+        exitOnConfigError(mode);
+        matchedRulesCache.accept(config.get());
     }
 
-    private Config config;
-    private File configFile;
-    private long createTimeNanoSecs = System.nanoTime();
-
-    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
-
-    public JmxCollector(File in) throws IOException, MalformedObjectNameException {
-        this(in, null);
+    public JmxCollector(final Config config) {
+        this(config, null);
     }
 
-    public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
-        configFile = in;
-        this.mode = mode;
-        config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
-        config.lastUpdate = configFile.lastModified();
-        exitOnConfigError();
+    public JmxCollector(final Config config, Mode mode) {
+        this.config = new Supplier<Config>() {
+            @Override
+            public Config get() {
+                return config;
+            }
+        };
+        exitOnConfigError(mode);
+        matchedRulesCache.accept(this.config.get());
     }
 
-    public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
-        mode = null;
+    public JmxCollector(String yamlConfig) throws Config.ConfigException {
+        this(Config.load((Map<?, ?>) new Yaml().load(yamlConfig)));
     }
 
-    public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
-        mode = null;
+    public JmxCollector(InputStream inputStream) throws Config.ConfigException {
+        this(Config.load((Map<?, ?>) new Yaml().load(inputStream)));
     }
 
-    private void exitOnConfigError() {
-        if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
+    private void exitOnConfigError(Mode mode) {
+        if (mode == Mode.AGENT && !config.get().getCollectorConfig().getJmxUrl().isEmpty()) {
             LOGGER.severe("Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
             System.exit(-1);
         }
-        if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
+        if (mode == Mode.STANDALONE && config.get().getCollectorConfig().getJmxUrl().isEmpty()) {
             LOGGER.severe("Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
             System.exit(-1);
         }
-    }
-
-    private void reloadConfig() {
-      try {
-        FileReader fr = new FileReader(configFile);
-
-        try {
-          Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
-          config = loadConfig(newYamlConfig);
-          config.lastUpdate = configFile.lastModified();
-          configReloadSuccess.inc();
-        } catch (Exception e) {
-          LOGGER.severe("Configuration reload failed: " + e.toString());
-          configReloadFailure.inc();
-        } finally {
-          fr.close();
-        }
-
-      } catch (IOException e) {
-        LOGGER.severe("Configuration reload failed: " + e.toString());
-        configReloadFailure.inc();
-      }
-    }
-
-    private synchronized Config getLatestConfig() {
-      if (configFile != null) {
-          long mtime = configFile.lastModified();
-          if (mtime > config.lastUpdate) {
-              LOGGER.fine("Configuration file changed, reloading...");
-              reloadConfig();
-          }
-      }
-      exitOnConfigError();
-      return config;
-    }
-
-  private Config loadConfig(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
-        Config cfg = new Config();
-
-        if (yamlConfig == null) {  // Yaml config empty, set config to empty map.
-          yamlConfig = new HashMap<String, Object>();
-        }
-
-        if (yamlConfig.containsKey("startDelaySeconds")) {
-          try {
-            cfg.startDelaySeconds = (Integer) yamlConfig.get("startDelaySeconds");
-          } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
-          }
-        }
-        if (yamlConfig.containsKey("hostPort")) {
-          if (yamlConfig.containsKey("jmxUrl")) {
-            throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
-          }
-          cfg.jmxUrl ="service:jmx:rmi:///jndi/rmi://" + (String)yamlConfig.get("hostPort") + "/jmxrmi";
-        } else if (yamlConfig.containsKey("jmxUrl")) {
-          cfg.jmxUrl = (String)yamlConfig.get("jmxUrl");
-        }
-
-        if (yamlConfig.containsKey("username")) {
-          cfg.username = (String)yamlConfig.get("username");
-        }
-
-        if (yamlConfig.containsKey("password")) {
-          cfg.password = (String)yamlConfig.get("password");
-        }
-
-        if (yamlConfig.containsKey("ssl")) {
-          cfg.ssl = (Boolean)yamlConfig.get("ssl");
-        }
-
-        if (yamlConfig.containsKey("lowercaseOutputName")) {
-          cfg.lowercaseOutputName = (Boolean)yamlConfig.get("lowercaseOutputName");
-        }
-
-        if (yamlConfig.containsKey("lowercaseOutputLabelNames")) {
-          cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
-        }
-
-        if (yamlConfig.containsKey("whitelistObjectNames")) {
-          List<Object> names = (List<Object>) yamlConfig.get("whitelistObjectNames");
-          for(Object name : names) {
-            cfg.whitelistObjectNames.add(new ObjectName((String)name));
-          }
-        } else {
-          cfg.whitelistObjectNames.add(null);
-        }
-
-        if (yamlConfig.containsKey("blacklistObjectNames")) {
-          List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
-          for (Object name : names) {
-            cfg.blacklistObjectNames.add(new ObjectName((String)name));
-          }
-        }
-
-      if (yamlConfig.containsKey("rules")) {
-          List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
-          for (Map<String, Object> ruleObject : configRules) {
-            Map<String, Object> yamlRule = ruleObject;
-            Rule rule = new Rule();
-            cfg.rules.add(rule);
-            if (yamlRule.containsKey("pattern")) {
-              rule.pattern = Pattern.compile("^.*(?:" + (String)yamlRule.get("pattern") + ").*$");
-            }
-            if (yamlRule.containsKey("name")) {
-              rule.name = (String)yamlRule.get("name");
-            }
-            if (yamlRule.containsKey("value")) {
-              rule.value = String.valueOf(yamlRule.get("value"));
-            }
-            if (yamlRule.containsKey("valueFactor")) {
-              String valueFactor = String.valueOf(yamlRule.get("valueFactor"));
-              try {
-                rule.valueFactor = Double.valueOf(valueFactor);
-              } catch (NumberFormatException e) {
-                // use default value
-              }
-            }
-            if (yamlRule.containsKey("attrNameSnakeCase")) {
-              rule.attrNameSnakeCase = (Boolean)yamlRule.get("attrNameSnakeCase");
-            }
-            if (yamlRule.containsKey("cache")) {
-              rule.cache = (Boolean)yamlRule.get("cache");
-            }
-            if (yamlRule.containsKey("type")) {
-              String t = (String)yamlRule.get("type");
-              // Gracefully handle switch to OM data model.
-              if ("UNTYPED".equals(t)) {
-                t = "UNKNOWN";
-              }
-              rule.type = Type.valueOf(t);
-            }
-            if (yamlRule.containsKey("help")) {
-              rule.help = (String)yamlRule.get("help");
-            }
-            if (yamlRule.containsKey("labels")) {
-              TreeMap labels = new TreeMap((Map<String, Object>)yamlRule.get("labels"));
-              rule.labelNames = new ArrayList<String>();
-              rule.labelValues = new ArrayList<String>();
-              for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)labels.entrySet()) {
-                rule.labelNames.add(entry.getKey());
-                rule.labelValues.add((String)entry.getValue());
-              }
-            }
-
-            // Validation.
-            if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
-              throw new IllegalArgumentException("Must provide name, if help or labels are given: " + yamlRule);
-            }
-            if (rule.name != null && rule.pattern == null) {
-              throw new IllegalArgumentException("Must provide pattern, if name is given: " + yamlRule);
-            }
-          }
-        } else {
-          // Default to a single default rule.
-          cfg.rules.add(new Rule());
-        }
-
-        cfg.rulesCache = new MatchedRulesCache(cfg.rules);
-
-        return cfg;
-
     }
 
     static String toSnakeAndLowerCase(String attrName) {
@@ -386,10 +195,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       // Add the matched rule to the cached rules and tag it as not stale
       // if the rule is configured to be cached
-      private void addToCache(final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
-        if (rule.cache) {
-          config.rulesCache.put(rule, cacheKey, matchedRule);
-          stalenessTracker.add(rule, cacheKey);
+      private void addToCache(Config.RuleConfig ruleConfig, final String cacheKey, final MatchedRule matchedRule) {
+        if (ruleConfig.isCache()) {
+          matchedRulesCache.put(ruleConfig, cacheKey, matchedRule);
+          stalenessTracker.add(ruleConfig, cacheKey);
         }
       }
 
@@ -417,7 +226,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         name.append(attrName);
         String fullname = safeName(name.toString());
 
-        if (config.lowercaseOutputName) {
+        if (config.isLowercaseOutputName()) {
           fullname = fullname.toLowerCase();
         }
 
@@ -430,7 +239,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             while (iter.hasNext()) {
               Map.Entry<String, String> entry = iter.next();
               String labelName = safeName(entry.getKey());
-              if (config.lowercaseOutputLabelNames) {
+              if (config.isLowercaseOutputLabelNames()) {
                 labelName = labelName.toLowerCase();
               }
               labelNames.add(labelName);
@@ -463,17 +272,17 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         MatchedRule matchedRule = MatchedRule.unmatched();
 
-        for (Rule rule : config.rules) {
+        for (Config.RuleConfig ruleConfig : config.getRulesOrDefault()) {
           // Rules with bean values cannot be properly cached (only the value from the first scrape will be cached).
           // If caching for the rule is enabled, replace the value with a dummy <cache> to avoid caching different values at different times.
-          Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
+          Object matchBeanValue = ruleConfig.isCache() ? "<cache>" : beanValue;
 
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + matchBeanValue;
+          String matchName = beanName + (ruleConfig.isAttrNameSnakeCase() ? attrNameSnakeCase : attrName) + ": " + matchBeanValue;
 
-          if (rule.cache) {
-            MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
+          if (ruleConfig.isCache()) {
+            MatchedRule cachedRule = matchedRulesCache.get(ruleConfig, matchName);
             if (cachedRule != null) {
-              stalenessTracker.add(rule, matchName);
+              stalenessTracker.add(ruleConfig, matchName);
               if (cachedRule.isMatched()) {
                 matchedRule = cachedRule;
                 break;
@@ -486,17 +295,17 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
 
           Matcher matcher = null;
-          if (rule.pattern != null) {
-            matcher = rule.pattern.matcher(matchName);
+          if (ruleConfig.getPattern() != null) {
+            matcher = ruleConfig.getPattern().matcher(matchName);
             if (!matcher.matches()) {
-              addToCache(rule, matchName, MatchedRule.unmatched());
+              addToCache(ruleConfig, matchName, MatchedRule.unmatched());
               continue;
             }
           }
 
           Double value = null;
-          if (rule.value != null && !rule.value.isEmpty()) {
-            String val = matcher.replaceAll(rule.value);
+          if (ruleConfig.getValue() != null && !ruleConfig.getValue().isEmpty()) {
+            String val = matcher.replaceAll(ruleConfig.getValue());
             try {
               value = Double.valueOf(val);
             } catch (NumberFormatException e) {
@@ -506,37 +315,37 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
 
           // If there's no name provided, use default export format.
-          if (rule.name == null) {
-            matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
-            addToCache(rule, matchName, matchedRule);
+          if (ruleConfig.getName() == null) {
+            matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, ruleConfig.isAttrNameSnakeCase() ? attrNameSnakeCase : attrName, help, value, ruleConfig.getValueFactor(), ruleConfig.getType());
+            addToCache(ruleConfig, matchName, matchedRule);
             break;
           }
 
           // Matcher is set below here due to validation in the constructor.
-          String name = safeName(matcher.replaceAll(rule.name));
+          String name = safeName(matcher.replaceAll(ruleConfig.getName()));
           if (name.isEmpty()) {
             return;
           }
-          if (config.lowercaseOutputName) {
+          if (config.isLowercaseOutputName()) {
             name = name.toLowerCase();
           }
 
           // Set the help.
-          if (rule.help != null) {
-            help = matcher.replaceAll(rule.help);
+          if (ruleConfig.getHelp() != null) {
+            help = matcher.replaceAll(ruleConfig.getHelp());
           }
 
           // Set the labels.
           ArrayList<String> labelNames = new ArrayList<String>();
           ArrayList<String> labelValues = new ArrayList<String>();
-          if (rule.labelNames != null) {
-            for (int i = 0; i < rule.labelNames.size(); i++) {
-              final String unsafeLabelName = rule.labelNames.get(i);
-              final String labelValReplacement = rule.labelValues.get(i);
+          if (ruleConfig.getLabelNames() != null) {
+            for (int i = 0; i < ruleConfig.getLabelNames().size(); i++) {
+              final String unsafeLabelName = ruleConfig.getLabelNames().get(i);
+              final String labelValReplacement = ruleConfig.getLabelValues().get(i);
               try {
                 String labelName = safeName(matcher.replaceAll(unsafeLabelName));
                 String labelValue = matcher.replaceAll(labelValReplacement);
-                if (config.lowercaseOutputLabelNames) {
+                if (config.isLowercaseOutputLabelNames()) {
                   labelName = labelName.toLowerCase();
                 }
                 if (!labelName.isEmpty() && !labelValue.isEmpty()) {
@@ -550,8 +359,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
             }
           }
 
-          matchedRule = new MatchedRule(name, matchName, rule.type, help, labelNames, labelValues, value, rule.valueFactor);
-          addToCache(rule, matchName, matchedRule);
+          matchedRule = new MatchedRule(name, matchName, ruleConfig.getType(), help, labelNames, labelValues, value, ruleConfig.getValueFactor());
+          addToCache(ruleConfig, matchName, matchedRule);
           break;
         }
 
@@ -583,16 +392,19 @@ public class JmxCollector extends Collector implements Collector.Describable {
   public List<MetricFamilySamples> collect() {
       // Take a reference to the current config and collect with this one
       // (to avoid race conditions in case another thread reloads the config in the meantime)
-      Config config = getLatestConfig();
+
+      Config latestConfig = config.get();
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
-      Receiver receiver = new Receiver(config, stalenessTracker);
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+      Receiver receiver = new Receiver(latestConfig, stalenessTracker);
+      JmxScraper scraper = new JmxScraper(latestConfig.getCollectorConfig().getJmxUrl(), latestConfig.getCollectorConfig().getUsername(),
+          latestConfig.getCollectorConfig().getPassword(), latestConfig.getCollectorConfig().isSslEnabled(),
+          latestConfig.getJmxBeanFilterConfig().getIncludedObjectNames(), latestConfig.getJmxBeanFilterConfig().getExcludedObjectNames(),
+          receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
-      if ((config.startDelaySeconds > 0) &&
-        ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
+      if ((latestConfig.getStartDelaySeconds() > 0) &&
+        ((start - createTimeNanoSecs) / 1000000000L < latestConfig.getStartDelaySeconds())) {
         throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
       }
       try {
@@ -603,7 +415,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         e.printStackTrace(new PrintWriter(sw));
         LOGGER.severe("JMX scrape failed: " + sw.toString());
       }
-      config.rulesCache.evictStaleEntries(stalenessTracker);
+      matchedRulesCache.evictStaleEntries(stalenessTracker);
 
       List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
       mfsList.addAll(receiver.metricFamilySamplesMap.values());

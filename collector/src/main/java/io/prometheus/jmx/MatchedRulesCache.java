@@ -1,5 +1,7 @@
 package io.prometheus.jmx;
 
+import io.prometheus.jmx.Config.RuleConfig;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,54 +14,56 @@ import java.util.concurrent.ConcurrentHashMap;
  * The cache also retains unmatched entries (a bean name not matching a rule pattern) to avoid
  * matching against the same pattern in later bean collections.
  */
-public class MatchedRulesCache {
-    private final Map<JmxCollector.Rule, Map<String, MatchedRule>> cachedRules;
+public class MatchedRulesCache implements Consumer<Config> {
 
-    public MatchedRulesCache(Collection<JmxCollector.Rule> rules) {
-        this.cachedRules = new HashMap<JmxCollector.Rule, Map<String, MatchedRule>>(rules.size());
-        for (JmxCollector.Rule rule : rules) {
-            this.cachedRules.put(rule, new ConcurrentHashMap<String, MatchedRule>());
-        }
-    }
+    private final Map<RuleConfig, Map<String, MatchedRule>> cachedRules = new ConcurrentHashMap<RuleConfig, Map<String, MatchedRule>>();
 
-    public void put(final JmxCollector.Rule rule, final String cacheKey, final MatchedRule matchedRule) {
-        Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(rule);
+    public void put(RuleConfig ruleConfig, String cacheKey, MatchedRule matchedRule) {
+        Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(ruleConfig);
         cachedRulesForRule.put(cacheKey, matchedRule);
     }
 
-    public MatchedRule get(final JmxCollector.Rule rule, final String cacheKey) {
-        return cachedRules.get(rule).get(cacheKey);
+    public MatchedRule get(RuleConfig ruleConfig, final String cacheKey) {
+        return cachedRules.get(ruleConfig).get(cacheKey);
     }
 
     // Remove stale rules (in the cache but not collected in the last run of the collector)
     public void evictStaleEntries(final StalenessTracker stalenessTracker) {
-        for (Map.Entry<JmxCollector.Rule, Map<String, MatchedRule>> entry : cachedRules.entrySet()) {
-            JmxCollector.Rule rule = entry.getKey();
+        for (Map.Entry<RuleConfig, Map<String, MatchedRule>> entry : cachedRules.entrySet()) {
+            RuleConfig ruleConfig = entry.getKey();
             Map<String, MatchedRule> cachedRulesForRule = entry.getValue();
 
             for (String cacheKey : cachedRulesForRule.keySet()) {
-                if (!stalenessTracker.contains(rule, cacheKey)) {
+                if (!stalenessTracker.contains(ruleConfig, cacheKey)) {
                     cachedRulesForRule.remove(cacheKey);
                 }
             }
         }
     }
 
-    public static class StalenessTracker {
-        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries = new HashMap<JmxCollector.Rule, Set<String>>();
+    @Override
+    public void accept(Config config) {
+        cachedRules.clear();
+        for (RuleConfig ruleConfig : config.getRulesOrDefault()) {
+            cachedRules.put(ruleConfig, new ConcurrentHashMap<String, MatchedRule>());
+        }
+    }
 
-        public void add(final JmxCollector.Rule rule, final String cacheKey) {
-            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
+    public static class StalenessTracker {
+        private final Map<RuleConfig, Set<String>> lastCachedEntries = new HashMap<RuleConfig, Set<String>>();
+
+        public void add(RuleConfig ruleConfig, String cacheKey) {
+            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(ruleConfig);
             if (lastCachedEntriesForRule == null) {
                 lastCachedEntriesForRule = new HashSet<String>();
-                lastCachedEntries.put(rule, lastCachedEntriesForRule);
+                lastCachedEntries.put(ruleConfig, lastCachedEntriesForRule);
             }
 
             lastCachedEntriesForRule.add(cacheKey);
         }
 
-        public boolean contains(final JmxCollector.Rule rule, final String cacheKey) {
-            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
+        public boolean contains(RuleConfig ruleConfig, String cacheKey) {
+            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(ruleConfig);
             return (lastCachedEntriesForRule != null) && lastCachedEntriesForRule.contains(cacheKey);
         }
 

@@ -1,0 +1,20 @@
+startDelaySeconds: 0
+hostPort: 127.0.0.1:1234
+username:
+password:
+jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
+ssl: false
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
+blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+rules:
+  - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
+    name: cassandra_$1_$2
+    value: $3
+    valueFactor: 0.001
+    labels: {}
+    help: "Cassandra metric $1 $2"
+    cache: false
+    type: GAUGE
+    attrNameSnakeCase: false

@@ -5,6 +5,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Collector.MetricFamilySamples;
 
 import org.junit.Assert;
+import io.prometheus.client.Gauge;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,19 +50,19 @@ public class JmxCollectorTest {
       registry = new CollectorRegistry();
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected=Config.ConfigException.class)
     public void testRulesMustHaveNameWithHelp() throws Exception {
-      JmxCollector jc = new JmxCollector("---\nrules:\n- help: foo");
+      new JmxCollector("---\nrules:\n- help: foo");
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected=Config.ConfigException.class)
     public void testRulesMustHaveNameWithLabels() throws Exception {
-	  JmxCollector jc = new JmxCollector("---\nrules:\n- labels: {}");
+	  new JmxCollector("---\nrules:\n- labels: {}");
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected=Config.ConfigException.class)
     public void testRulesMustHavePatternWithName() throws Exception {
-	  JmxCollector jc = new JmxCollector("---\nrules:\n- name: foo");
+	  new JmxCollector("---\nrules:\n- name: foo");
     }
 
     @Test
@@ -217,6 +218,11 @@ public class JmxCollectorTest {
     @Test
     public void testValueEmpty() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:".replace('`','"')).register(registry);
+      for (MetricFamilySamples mfs : jc.collect()) {
+          for (MetricFamilySamples.Sample sample : mfs.samples) {
+              System.out.println(sample);
+          }
+      }
       assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
     }
 
