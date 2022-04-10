@@ -218,12 +218,7 @@ public class JmxCollectorTest {
     @Test
     public void testValueEmpty() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:".replace('`','"')).register(registry);
-      for (MetricFamilySamples mfs : jc.collect()) {
-          for (MetricFamilySamples.Sample sample : mfs.samples) {
-              System.out.println(sample);
-          }
-      }
-      assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+      assertNotNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
     }
 
     @Test

@@ -520,10 +520,10 @@ public class Config {
                 if (!(entry.getKey() instanceof String)) {
                     throw new ConfigException(prefix, entry.getKey() + ": invalid type for label name. Expected String, but got " + entry.getKey().getClass().getSimpleName());
                 }
-                if (!(entry.getValue() instanceof String)) {
+                if (Yaml.getAsString(entry.getValue()) == null) {
                     throw new ConfigException(prefix, entry.getValue() + ": invalid type for label value. Expected String, but got " + entry.getValue().getClass().getSimpleName());
                 }
-                sortedLabels.put((String) entry.getKey(), (String) entry.getValue());
+                sortedLabels.put((String) entry.getKey(), Yaml.getAsString(entry.getValue()));
             }
             labelNames = new ArrayList<String>(sortedLabels.size());
             labelValues = new ArrayList<String>(sortedLabels.size());
@@ -555,6 +555,9 @@ public class Config {
 
     private static Pattern loadPattern(String prefix, Yaml ruleConfig) throws ConfigException {
         String patternString = ruleConfig.getString(prefix, "pattern");
+        if (patternString == null) {
+            return null;
+        }
         try {
             return Pattern.compile("^.*(?:" + patternString + ").*$");
         } catch (PatternSyntaxException e) {
@@ -591,6 +594,7 @@ public class Config {
     }
 
 
+
     /**
      * Helper for accessing the YAML data.
      */
@@ -614,25 +618,20 @@ public class Config {
             Object value = map.get(key);
             if (value == null) {
                 return defaultValue;
-            } else if (value instanceof String) {
-                return (String) value;
-            } else if (hasSimpleType(value)) {
-                return value.toString();
+            }
+            String result = getAsString(value);
+            if (result != null) {
+                return result;
             } else {
                 throw new ConfigException("Illegal type for '" + prefix + "." + key + "': Expected String, got " + value.getClass().getSimpleName() + ".");
             }
         }
 
-        private boolean hasSimpleType(Object value) {
-            if (value == null) {
-                return false;
+        private static String getAsString(Object value) {
+            if (value != null && (String.class.isAssignableFrom(value.getClass()) || Boolean.class.isAssignableFrom(value.getClass()) || Number.class.isAssignableFrom(value.getClass()))) {
+                return value.toString();
             }
-            for (Class<?> type : new Class<?>[] { int.class, Integer.class, double.class, Double.class, long.class, Long.class, boolean.class, Boolean.class }) {
-                if (type.isAssignableFrom(value.getClass())) {
-                    return true;
-                }
-            }
-            return false;
+            return null;
         }
 
         private Integer getInteger(String prefix, String key) throws ConfigException {
