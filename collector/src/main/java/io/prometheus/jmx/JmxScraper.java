@@ -138,41 +138,31 @@ class JmxScraper {
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
-        Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
         for (int idx = 0; idx < attrInfos.length; ++idx) {
             MBeanAttributeInfo attr = attrInfos[idx];
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
                 continue;
             }
-            name2AttrInfo.put(attr.getName(), attr);
-        }
-        final AttributeList attributes;
-        try {
-            attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
-            if (attributes == null) {
-                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
-                return;
+
+            Object value;
+            try {
+                value = beanConn.getAttribute(mbeanName, attr.getName());
+            } catch(Exception e) {
+                logScrape(mbeanName, attr, "Fail: " + e);
+                continue;
             }
-        } catch (Exception e) {
-            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
-            return;
-        }
-        for (Object attributeObj : attributes.asList()) {
-            if (Attribute.class.isInstance(attributeObj)) {
-                Attribute attribute = (Attribute)(attributeObj);
-                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-                logScrape(mbeanName, attr, "process");
-                processBeanValue(
-                        mbeanName.getDomain(),
-                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                        new LinkedList<String>(),
-                        attr.getName(),
-                        attr.getType(),
-                        attr.getDescription(),
-                        attribute.getValue()
-                );
-            }
+
+            logScrape(mbeanName, attr, "process");
+            processBeanValue(
+                mbeanName.getDomain(),
+                jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                new LinkedList<String>(),
+                attr.getName(),
+                attr.getType(),
+                attr.getDescription(),
+                value
+            );
         }
     }
 
