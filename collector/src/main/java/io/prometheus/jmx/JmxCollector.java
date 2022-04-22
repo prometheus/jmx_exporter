@@ -451,8 +451,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           Object beanValue) {
 
         String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
-        // attrDescription tends not to be useful, so give the fully qualified name too.
-        String help = attrDescription + " (" + beanName + attrName + ")";
+
+        // Build the HELP string from the bean metadata.
+        String help = domain + ":name=" + beanProperties.get("name") + ",type=" + beanProperties.get("type") + ",attribute=" + attrName;
+        // Add the attrDescription to the HELP if it exists and is useful.
+        if (attrDescription != null && !attrDescription.equals(attrName)) {
+          help = attrDescription + " " + help;
+        }
+
         String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
         MatchedRule matchedRule = MatchedRule.unmatched();
