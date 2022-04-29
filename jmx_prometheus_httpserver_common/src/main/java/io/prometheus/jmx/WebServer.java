@@ -1,10 +1,10 @@
 package io.prometheus.jmx;
 
-import java.io.File;
-import java.net.InetSocketAddress;
-
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
+
+import java.io.File;
+import java.net.InetSocketAddress;
 
 public class WebServer {
 

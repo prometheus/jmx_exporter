@@ -75,14 +75,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
     private void exitOnConfigError(Mode mode) {
-        if (mode == Mode.AGENT && !config.get().getCollectorConfig().getJmxUrl().isEmpty()) {
+        if (mode == Mode.AGENT && !isNullOrEmpty(config.get().getCollectorConfig().getJmxUrl())) {
             LOGGER.severe("Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
             System.exit(-1);
         }
-        if (mode == Mode.STANDALONE && config.get().getCollectorConfig().getJmxUrl().isEmpty()) {
+        if (mode == Mode.STANDALONE && isNullOrEmpty(config.get().getCollectorConfig().getJmxUrl())) {
             LOGGER.severe("Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
             System.exit(-1);
         }
+    }
+
+    private boolean isNullOrEmpty(String s) {
+        return s == null || s.isEmpty();
     }
 
     static String toSnakeAndLowerCase(String attrName) {

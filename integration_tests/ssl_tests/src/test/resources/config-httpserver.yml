@@ -1,3 +1,7 @@
-hostPort: localhost:9999
+collector:
+  # the hostname "app" is set by withNetworkAliases() in HttpServerWithIT
+  hostPort: app:7092
+  sslEnabled: true
+
 rules:
 - pattern: ".*"

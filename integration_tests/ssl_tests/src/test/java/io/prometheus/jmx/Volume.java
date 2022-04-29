@@ -2,10 +2,9 @@ package io.prometheus.jmx;
 
 import org.junit.Assert;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,15 +50,27 @@ public class Volume implements Closeable {
                 .getParent() // ./
                 .resolve("jmx_prometheus_httpserver")
                 .resolve("target")
-                .resolve("jmx_prometheus_httpserver-" + loadProjectVersion() + "-jar-with-dependencies.jar");
+                .resolve("jmx_prometheus_httpserver-" + loadProjectVersion() + ".jar");
         Assert.assertTrue(httpServerJar + ": File not found.", Files.exists(httpServerJar));
         Files.copy(httpServerJar, tmpDir.resolve("jmx_prometheus_httpserver.jar"));
     }
 
-    public void copyConfigYaml(String filename) throws IOException, URISyntaxException {
-        Path configYaml = Paths.get(getClass().getClassLoader().getResource(filename).toURI());
-        Assert.assertTrue(filename + ": File not found.", Files.exists(configYaml));
-        Files.copy(configYaml, tmpDir.resolve("config.yaml"));
+    public void copy(String name) throws URISyntaxException, IOException {
+        copy(name, name);
+    }
+
+    public void copy(String src, String dest) throws URISyntaxException, IOException {
+        URL srcResource = getClass().getClassLoader().getResource(src);
+        Assert.assertNotNull(src + ": File not found.", srcResource);
+        Path srcPath = Paths.get(srcResource.toURI());
+        Assert.assertTrue(src + ": File not found.", Files.exists(srcPath));
+        System.out.println("cp " + srcPath + " " + tmpDir.resolve(dest));
+        Files.copy(srcPath, tmpDir.resolve(dest));
+    }
+
+    public void replace(String filename, String string, String replacement) throws IOException {
+        String content = new String(Files.readAllBytes(tmpDir.resolve(filename)));
+        Files.write(tmpDir.resolve(filename), content.replace(string, replacement).getBytes());
     }
 
     public void copyExampleApplication() throws IOException {
