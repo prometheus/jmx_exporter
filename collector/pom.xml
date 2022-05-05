@@ -28,7 +28,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.23</version> <!-- required for the Java 6 release -->
+      <version>1.30</version> <!-- The Java 6 build overrides this with 1.23. -->
     </dependency>
   </dependencies>
 

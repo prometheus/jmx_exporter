@@ -10,3 +10,5 @@ target/
 .settings/
 .classpath
 dependency-reduced-pom.xml
+
+pom.xml.versionsBackup
