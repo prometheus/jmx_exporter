@@ -26,8 +26,12 @@ public class JavaAgent {
             Config config = parseConfig(agentArgument, host);
 
             new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
-            DefaultExports.initialize();
+            new JmxCollector(new File(config.file)).register();
+
+            if (!config.disableDefaultExports) {
+                DefaultExports.initialize();
+            }
+
             server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
         }
         catch (IllegalArgumentException e) {
@@ -45,18 +49,20 @@ public class JavaAgent {
      */
     public static Config parseConfig(String args, String ifc) {
         Pattern pattern = Pattern.compile(
-                "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
-                        "(\\d{1,5}):" +              // port
-                        "(.+)");                     // config file
+          "^(disableDefaultExports:)?" +        // optional flag to disable default exports
+            "(?:((?:[\\w.]+)|(?:\\[.+])):)?" +  // host name, or ipv4, or ipv6 address in brackets
+            "(\\d{1,5}):" +              // port
+            "(.+)");                     // config file
 
         Matcher matcher = pattern.matcher(args);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Malformed arguments - " + args);
         }
 
-        String givenHost = matcher.group(1);
-        String givenPort = matcher.group(2);
-        String givenConfigFile = matcher.group(3);
+        boolean disableDefaultExports = "disableDefaultExports:".equals(matcher.group(1));
+        String givenHost = matcher.group(2);
+        String givenPort = matcher.group(3);
+        String givenConfigFile = matcher.group(4);
 
         int port = Integer.parseInt(givenPort);
 
@@ -69,7 +75,7 @@ public class JavaAgent {
             givenHost = ifc;
         }
 
-        return new Config(givenHost, port, givenConfigFile, socket);
+        return new Config(givenHost, port, givenConfigFile, socket, disableDefaultExports);
     }
 
     static class Config {
@@ -77,12 +83,14 @@ public class JavaAgent {
         int port;
         String file;
         InetSocketAddress socket;
+        boolean disableDefaultExports;
 
-        Config(String host, int port, String file, InetSocketAddress socket) {
+        Config(String host, int port, String file, InetSocketAddress socket, boolean disableDefaultExports) {
             this.host = host;
             this.port = port;
             this.file = file;
             this.socket = socket;
+            this.disableDefaultExports = disableDefaultExports;
         }
     }
 }
