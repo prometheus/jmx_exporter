@@ -29,6 +29,14 @@ public class JavaAgent {
             new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
             server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+            
+            // in case port was configured with port 0, then actual port (chosen by operating system) is known only after the socket is open
+            // in this case, we need a way to expose the actual port number used
+            // setting it as a system properties allows any other code running on the JVM to discover this
+            // this information could then be pushed into a discovery service
+            int actualServerPort = server.getPort();
+            System.setProperty("jmx_exporter.server.port.configured", String.valueOf(config.port));
+            System.setProperty("jmx_exporter.server.port.actual", String.valueOf(actualServerPort));
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
