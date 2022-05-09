@@ -37,7 +37,10 @@
 
   <modules>
     <module>collector</module>
+    <module>jmx_prometheus_httpserver_common</module>
+    <module>jmx_prometheus_httpserver_java6</module>
     <module>jmx_prometheus_httpserver</module>
+    <module>jmx_prometheus_javaagent_common</module>
     <module>jmx_prometheus_javaagent_java6</module>
     <module>jmx_prometheus_javaagent</module>
     <module>integration_tests</module>
@@ -152,6 +155,14 @@
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.10.0</version>
+          <configuration>
+            <rulesUri>file://${project.basedir}/version-rules.xml</rulesUri>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -38,20 +38,20 @@ public class AgentJavaVersionsIT {
         { "openjdk:11-jre", "jmx_prometheus_javaagent_java6" },
         { "openjdk:11-jre", "jmx_prometheus_javaagent" },
 
+        { "openjdk:17-oracle", "jmx_prometheus_javaagent_java6" },
+        { "openjdk:17-oracle", "jmx_prometheus_javaagent" },
+
         { "ticketfly/java:6",  "jmx_prometheus_javaagent_java6" },
 
         { "openjdk:7", "jmx_prometheus_javaagent_java6" },
         { "openjdk:7", "jmx_prometheus_javaagent" },
 
-        { "adoptopenjdk/openjdk16:ubi-minimal-jre", "jmx_prometheus_javaagent_java6" },
-        { "adoptopenjdk/openjdk16:ubi-minimal-jre", "jmx_prometheus_javaagent" },
-
         // OpenJ9
         { "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
         { "ibmjava:8-jre", "jmx_prometheus_javaagent" },
 
-        { "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
-        { "ibmjava:8-jre", "jmx_prometheus_javaagent" },
+        { "ibmjava:11", "jmx_prometheus_javaagent_java6" },
+        { "ibmjava:11", "jmx_prometheus_javaagent" },
 
         { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_javaagent_java6" },
         { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_javaagent" },
@@ -59,7 +59,7 @@ public class AgentJavaVersionsIT {
   }
 
   public AgentJavaVersionsIT(String baseImage, String agentModule) throws IOException, URISyntaxException {
-    volume = Volume.create("java-versions-integration-test-");
+    volume = Volume.create("agent-integration-test-");
     volume.copyAgentJar(agentModule);
     volume.copyConfigYaml("config.yml");
     volume.copyExampleApplication();
@@ -70,7 +70,7 @@ public class AgentJavaVersionsIT {
             .withExposedPorts(9000)
             .withCommand(cmd)
             .waitingFor(Wait.forLogMessage(".*registered.*", 1))
-            .withLogConsumer(System.out::print);
+            .withLogConsumer(frame -> System.out.print(frame.getUtf8String()));
     javaContainer.start();
     scraper = new Scraper(javaContainer.getHost(), javaContainer.getMappedPort(9000));
   }
