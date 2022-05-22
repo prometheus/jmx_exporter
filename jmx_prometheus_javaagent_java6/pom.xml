@@ -1,133 +1,113 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>io.prometheus.jmx</groupId>
-    <artifactId>parent</artifactId>
-    <version>0.16.2-SNAPSHOT</version>
-  </parent>
+    <parent>
+        <groupId>io.prometheus.jmx</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.16.2-SNAPSHOT</version>
+    </parent>
 
-  <artifactId>jmx_prometheus_javaagent_java6</artifactId>
-  <name>Prometheus JMX Exporter - Java Agent Java 6</name>
-  <description>
-    See https://github.com/prometheus/jmx_exporter/blob/master/README.md
-  </description>
-  <url>http://github.com/prometheus/jmx_exporter</url>
+    <artifactId>jmx_prometheus_javaagent_java6</artifactId>
+    <name>Prometheus JMX Exporter - Java Agent Java 6</name>
+    <description>
+        See https://github.com/prometheus/jmx_exporter/blob/master/README.md
+    </description>
+    <url>http://github.com/prometheus/jmx_exporter</url>
 
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-  <dependencies>
-    <dependency>
-      <groupId>io.prometheus.jmx</groupId>
-      <artifactId>jmx_prometheus_javaagent_common</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.yaml</groupId>
-          <artifactId>snakeyaml</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
-      <version>1.23</version>
-    </dependency>
-  </dependencies>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <relocations>
-                <relocation>
-                  <shadedPattern>io.prometheus.jmx.shaded.</shadedPattern>
-                  <includes>
-                    <include>org.yaml.**</include>
-                    <include>io.prometheus.client.**</include>
-                  </includes>
-                </relocation>
-              </relocations>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <manifestEntries>
-                    <Premain-Class>io.prometheus.jmx.JavaAgent</Premain-Class>
-                    <Agent-Class>io.prometheus.jmx.JavaAgent</Agent-Class>
-                    <Implementation-Version>${project.version}</Implementation-Version>
-                    <Implementation-Title>${project.artifactId}</Implementation-Title>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+    <dependencies>
+        <dependency>
+            <groupId>io.prometheus.jmx</groupId>
+            <artifactId>jmx_prometheus_javaagent_common</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.23</version> <!-- last version with Java 6 support -->
+        </dependency>
+    </dependencies>
 
-  <profiles>
-    <profile>
-      <id>release</id>
-      <build>
+    <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-                <configuration>
-                  <!-- Artifacts published to Maven central must have a source JAR. -->
-                  <!-- Include pom.xml so that the source JAR is not empty. -->
-                  <includePom>true</includePom>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-                <configuration>
-                  <!-- Artifacts published to Maven central must have a javadoc JAR. -->
-                  <!-- Copy the javadoc over from the Java 6 module. -->
-                  <includeDependencySources>true</includeDependencySources>
-                  <dependencySourceIncludes>
-                    <dependencySourceInclude>${project.groupId}:jmx_prometheus_javaagent_java6</dependencySourceInclude>
-                  </dependencySourceIncludes>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <shadedPattern>io.prometheus.jmx.shaded.</shadedPattern>
+                                    <includes>
+                                        <include>org.yaml.**</include>
+                                        <include>io.prometheus.client.**</include>
+                                    </includes>
+                                </relocation>
+                            </relocations>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Premain-Class>io.prometheus.jmx.JavaAgent</Premain-Class>
+                                        <Agent-Class>io.prometheus.jmx.JavaAgent</Agent-Class>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <createSourcesJar>true</createSourcesJar>
+                            <shadeSourcesContent>true</shadeSourcesContent>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
+            <plugin>
+                <!-- Every artifact on Maven central needs a javadoc JAR. -->
+                <!-- As this module does not have its own Java sources, we include the javadoc from the dependency. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <dependencySourceInclude>${project.groupId}:*</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

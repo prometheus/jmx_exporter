@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -23,6 +24,11 @@
         </license>
     </licenses>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
@@ -44,13 +50,35 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>io.prometheus.jmx.WebServer</Main-Class>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
+                            <createSourcesJar>true</createSourcesJar>
+                            <shadeSourcesContent>true</shadeSourcesContent>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <!-- Every artifact on Maven central needs a javadoc JAR. -->
+                <!-- As this module does not have its own Java sources, we include the javadoc from the dependency. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <dependencySourceInclude>${project.groupId}:*</dependencySourceInclude>
+                            </dependencySourceIncludes>
                         </configuration>
                     </execution>
                 </executions>
@@ -70,7 +98,6 @@
                         </goals>
                         <configuration>
                             <dataSet>
-
                                 <data>
                                     <src>${project.build.directory}/${project.build.finalName}.jar</src>
                                     <type>file</type>
@@ -80,7 +107,6 @@
                                         <filemode>644</filemode>
                                     </mapper>
                                 </data>
-
                                 <data>
                                     <src>${basedir}/src/deb/config</src>
                                     <type>directory</type>
@@ -89,7 +115,6 @@
                                         <prefix>/etc/jmx_exporter</prefix>
                                     </mapper>
                                 </data>
-
                                 <data>
                                     <src>${basedir}/src/deb/bin/jmx_exporter</src>
                                     <type>file</type>
@@ -99,7 +124,6 @@
                                         <filemode>755</filemode>
                                     </mapper>
                                 </data>
-
                             </dataSet>
                         </configuration>
                     </execution>
@@ -108,8 +132,4 @@
         </plugins>
     </build>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
 </project>
