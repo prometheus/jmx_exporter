@@ -138,14 +138,49 @@ class JmxScraper {
         }
         MBeanAttributeInfo[] attrInfos = info.getAttributes();
 
+        Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
         for (int idx = 0; idx < attrInfos.length; ++idx) {
             MBeanAttributeInfo attr = attrInfos[idx];
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
                 continue;
             }
+            name2AttrInfo.put(attr.getName(), attr);
+        }
+        final AttributeList attributes;
+        try {
+            // bulk load all attributes
+            attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
+            if (attributes == null) {
+                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
+                return;
+            }
+        } catch (Exception e) {
+            // couldn't get them all in one go, try them 1 by 1
+            processAttributesOneByOne(beanConn, mbeanName, name2AttrInfo);
+            return;
+        }
+        for (Object attributeObj : attributes.asList()) {
+            if (Attribute.class.isInstance(attributeObj)) {
+                Attribute attribute = (Attribute)(attributeObj);
+                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
+                logScrape(mbeanName, attr, "process");
+                processBeanValue(
+                        mbeanName.getDomain(),
+                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                        new LinkedList<String>(),
+                        attr.getName(),
+                        attr.getType(),
+                        attr.getDescription(),
+                        attribute.getValue()
+                );
+            }
+        }
+    }
 
-            Object value;
+    private void processAttributesOneByOne(MBeanServerConnection beanConn, ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
+        Object value;
+        for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
             try {
                 value = beanConn.getAttribute(mbeanName, attr.getName());
             } catch(Exception e) {
@@ -165,8 +200,6 @@ class JmxScraper {
             );
         }
     }
-
-
 
     /**
      * Recursive function for exporting the values of an mBean.
