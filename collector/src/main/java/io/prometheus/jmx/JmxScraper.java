@@ -149,13 +149,15 @@ class JmxScraper {
         }
         final AttributeList attributes;
         try {
+            // bulk load all attributes
             attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
             if (attributes == null) {
                 logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
                 return;
             }
         } catch (Exception e) {
-            logScrape(mbeanName, name2AttrInfo.keySet(), "Fail: " + e);
+            // couldn't get them all in one go, try them 1 by 1
+            processAttributesOneByOne(beanConn, mbeanName, name2AttrInfo);
             return;
         }
         for (Object attributeObj : attributes.asList()) {
@@ -176,7 +178,28 @@ class JmxScraper {
         }
     }
 
+    private void processAttributesOneByOne(MBeanServerConnection beanConn, ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
+        Object value;
+        for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
+            try {
+                value = beanConn.getAttribute(mbeanName, attr.getName());
+            } catch(Exception e) {
+                logScrape(mbeanName, attr, "Fail: " + e);
+                continue;
+            }
 
+            logScrape(mbeanName, attr, "process");
+            processBeanValue(
+                mbeanName.getDomain(),
+                jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                new LinkedList<String>(),
+                attr.getName(),
+                attr.getType(),
+                attr.getDescription(),
+                value
+            );
+        }
+    }
 
     /**
      * Recursive function for exporting the values of an mBean.
