@@ -26,4 +26,4 @@ jobs:
         tag_name: dev
         target: ${{ matrix.docker }}
         repository: artifactory.internal.sysdig.com
-        dockerfile: "./buid/Dockerfile"
+        dockerfile: "./build/Dockerfile"

@@ -22,4 +22,4 @@ jobs:
         tag_name: ${{ github.event.release.tag_name }}
         target: ${{ matrix.docker }}
         repository: artifactory.internal.sysdig.com
-        dockerfile: "./buid/Dockerfile"
+        dockerfile: "./build/Dockerfile"
