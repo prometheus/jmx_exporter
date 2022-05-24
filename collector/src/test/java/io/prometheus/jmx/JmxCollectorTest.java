@@ -4,12 +4,14 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Collector.MetricFamilySamples;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.logging.LogManager;
 
 import javax.management.MBeanServer;
 
@@ -25,6 +27,9 @@ public class JmxCollectorTest {
 
     @BeforeClass
     public static void OneTimeSetUp() throws Exception {
+
+        LogManager.getLogManager().readConfiguration(JmxCollectorTest.class.getResourceAsStream("/logging.properties"));
+
         // Get the Platform MBean Server.
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
@@ -213,6 +218,22 @@ public class JmxCollectorTest {
     public void testValueEmpty() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:".replace('`','"')).register(registry);
       assertNull(registry.getSampleValue("foo", new String[]{}, new String[]{}));
+    }
+
+    @Test
+    public void testDuplicateSamples() throws Exception {
+        // The following config will map all beans to Samples with name "foo" with empty labels.
+        // We still expect only one "foo" Sample, because all subsequent ones should be dropped.
+        JmxCollector jc = new JmxCollector("rules:\n- pattern: \".*\"\n  name: foo").register(registry);
+        int numberOfSamples = 0;
+        for (MetricFamilySamples mfs : jc.collect()) {
+            for (MetricFamilySamples.Sample sample : mfs.samples) {
+                if (sample.name.equals("foo") && sample.labelNames.isEmpty()) {
+                    numberOfSamples++;
+                }
+            }
+        }
+        Assert.assertEquals("Expected exactly one sample with name \"foo\" and empty labels", 1, numberOfSamples);
     }
 
     @Test

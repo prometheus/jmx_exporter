@@ -1,17 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>parent</artifactId>
-        <version>0.16.2-SNAPSHOT</version>
+        <version>0.17.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration_tests</artifactId>
+    <name>Prometheus JMX Exporter - Integration Tests</name>
+    <description>
+        See https://github.com/prometheus/jmx_exporter/blob/master/README.md
+    </description>
+    <url>http://github.com/prometheus/jmx_exporter</url>
+
     <packaging>pom</packaging>
 
-    <name>Prometheus JMX Exporter - Integration Tests</name>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -26,14 +30,14 @@
     </modules>
 
     <dependencyManagement>
-      <dependencies>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.15.2</version>
-            <scope>test</scope>
-        </dependency>
-      </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>1.17.2</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 
     <build>

@@ -2,6 +2,8 @@ package io.prometheus.jmx;
 
 import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -12,16 +14,47 @@ import java.net.URISyntaxException;
 /**
  * Simple test of the jmx_prometheus_httpserver getting metrics from the JmxExampleApplication.
  */
+@RunWith(Parameterized.class)
 public class HttpServerIT {
 
     private final Volume volume;
     private final GenericContainer<?> javaContainer;
     private final Scraper scraper;
 
-    public HttpServerIT() throws IOException, URISyntaxException {
-        String baseImage = "openjdk:11-jre";
+    @Parameterized.Parameters(name="{0}")
+    public static String[][] images() {
+        return new String[][] {
+
+            // HotSpot
+            { "openjdk:8-jre", "jmx_prometheus_httpserver" },
+            { "openjdk:8-jre","jmx_prometheus_httpserver_java6" },
+
+            { "openjdk:11-jre", "jmx_prometheus_httpserver_java6" },
+            { "openjdk:11-jre", "jmx_prometheus_httpserver" },
+
+            { "openjdk:17-oracle", "jmx_prometheus_httpserver_java6" },
+            { "openjdk:17-oracle", "jmx_prometheus_httpserver" },
+
+            { "ticketfly/java:6",  "jmx_prometheus_httpserver_java6" },
+
+            { "openjdk:7", "jmx_prometheus_httpserver_java6" },
+            { "openjdk:7", "jmx_prometheus_httpserver" },
+
+            // OpenJ9
+            { "ibmjava:8-jre", "jmx_prometheus_httpserver_java6" },
+            { "ibmjava:8-jre", "jmx_prometheus_httpserver" },
+
+            { "ibmjava:11", "jmx_prometheus_httpserver_java6" },
+            { "ibmjava:11", "jmx_prometheus_httpserver" },
+
+            { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_httpserver_java6" },
+            { "adoptopenjdk/openjdk11-openj9", "jmx_prometheus_httpserver" },
+        };
+    }
+
+    public HttpServerIT(String baseImage, String httpServerModule) throws IOException, URISyntaxException {
         volume = Volume.create("http-server-integration-test-");
-        volume.copyHttpServer();
+        volume.copyHttpServer(httpServerModule);
         volume.copyConfigYaml("config-httpserver.yml");
         volume.copyExampleApplication();
         String runExampleConfig = "java " +
@@ -36,7 +69,7 @@ public class HttpServerIT {
                 .withExposedPorts(9000)
                 .withCommand("/bin/bash", "-c", runExampleConfig + " & " + runHttpServer)
                 .waitingFor(Wait.forLogMessage(".*registered.*", 1))
-                .withLogConsumer(System.out::print);
+                .withLogConsumer(frame -> System.out.print(frame.getUtf8String()));
         javaContainer.start();
         scraper = new Scraper(javaContainer.getHost(), javaContainer.getMappedPort(9000));
     }

@@ -1,0 +1,9 @@
+Package: [[name]]
+Version: [[version]]
+Section: misc
+Priority: optional
+Architecture: all
+Depends: java-runtime
+Maintainer: Conor Hennessy <conor@soundcloud.com>
+Description: Expose jmx values as json webserver
+Distribution: development
