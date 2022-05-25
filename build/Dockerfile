@@ -24,7 +24,7 @@ ENV JAR jmx_prometheus_httpserver-$VERSION.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT.jar /opt/jmx_exporter/$JAR
 COPY --chown=sysdig:sysdig build/start.sh /opt/jmx_exporter
 COPY --chown=sysdig:sysdig build/config.yml /opt/jmx_exporter
-
+RUN chmod +x /opt/jmx_exporter/start.sh
 USER sysdig:sysdig
 
 CMD ["/opt/jmx_exporter/start.sh"]
