@@ -40,25 +40,24 @@ public class WebServer {
 
      new BuildInfoCollector().register();
      new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
-     
      if (args[2].equals("tls"))  {
-        HttpsServer httpsServer = HttpsServer.create(socket, 3);
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        // to handle keystore types other than jks
-        String kstype = System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType());
-        KeyStore ks = KeyStore.getInstance(kstype);
-        char[] passphrase = System.getProperty("javax.net.ssl.keyStore.passphrase",
-                    System.getProperty("javax.net.ssl.keyStorePassword")).toCharArray();
-        ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), passphrase);
-        kmf.init(ks, passphrase);
-        sslContext.init(kmf.getKeyManagers(), null, null);
-        SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
-        sslParameters.setProtocols(new String[] {"TLSv1.2"});
-        httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
-        new HTTPServer(httpsServer, CollectorRegistry.defaultRegistry, false);
-     } else {
-        new HTTPServer(socket, CollectorRegistry.defaultRegistry);
-     }
+      HttpsServer httpsServer = HttpsServer.create(socket, 3);
+      SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+      KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      // to handle keystore types other than jks
+      String kstype = System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType());
+      KeyStore ks = KeyStore.getInstance(kstype);
+      char[] passphrase = System.getProperty("javax.net.ssl.keyStore.passphrase",
+                  System.getProperty("javax.net.ssl.keyStorePassword")).toCharArray();
+      ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), passphrase);
+      kmf.init(ks, passphrase);
+      sslContext.init(kmf.getKeyManagers(), null, null);
+      SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
+      sslParameters.setProtocols(new String[] {"TLSv1.2"});
+      httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+      new HTTPServer(httpsServer, CollectorRegistry.defaultRegistry, false);
+   } else {
+      new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+   }
    }
 }

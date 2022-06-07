@@ -21,15 +21,16 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
+
 public class JavaAgent {
 
     static HTTPServer server;
 
-    public static void agentmain(String agentArgument, Instrumentation instrumentation, String[] args) throws Exception {
-        premain(agentArgument, instrumentation, args);
+    public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
+        premain(agentArgument, instrumentation);
     }
 
-    public static void premain(String agentArgument, Instrumentation instrumentation, String[] args) throws Exception {
+    public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
         // Bind to all interfaces by default (this includes IPv6).
         String host = "0.0.0.0";
 
@@ -39,9 +40,7 @@ public class JavaAgent {
             new BuildInfoCollector().register();
             new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
-            // server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry,
-            // true);
-            if (args[2].equals("tls"))  {
+            if (config.tls.equals("tls"))  {
                 HttpsServer httpsServer = HttpsServer.create(config.socket, 3);
                 SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -60,12 +59,11 @@ public class JavaAgent {
                 new HTTPServer(httpsServer, CollectorRegistry.defaultRegistry, false);
             } else {
                 server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
-            }
-        } catch (IllegalArgumentException e) {
-            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> <[tls]>"
-                    + e.getMessage());
+            }        }
+        catch (IllegalArgumentException e) {
+            System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file>:[<tls>] " + e.getMessage());
             System.exit(1);
-        } 
+        }
     }
 
     /**
@@ -79,7 +77,7 @@ public class JavaAgent {
         Pattern pattern = Pattern.compile(
                 "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
                         "(\\d{1,5}):" +              // port
-                        "(.+)");                     // config file
+                        "(?:((?!.*:).*)|(.+):(.+))");                       // config or config:tls
 
         Matcher matcher = pattern.matcher(args);
         if (!matcher.matches()) {
@@ -88,7 +86,16 @@ public class JavaAgent {
 
         String givenHost = matcher.group(1);
         String givenPort = matcher.group(2);
-        String givenConfigFile = matcher.group(3);
+        String givenConfigFile;
+        String givenTls = "";
+
+        if (matcher.group(5) != null) {
+             givenConfigFile = matcher.group(4);
+             givenTls = matcher.group(5);
+        }
+        else {
+             givenConfigFile = matcher.group(3);
+        }
 
         int port = Integer.parseInt(givenPort);
 
@@ -101,7 +108,7 @@ public class JavaAgent {
             givenHost = ifc;
         }
 
-        return new Config(givenHost, port, givenConfigFile, socket);
+        return new Config(givenHost, port, givenConfigFile, socket, givenTls);
     }
 
     static class Config {
@@ -109,12 +116,15 @@ public class JavaAgent {
         int port;
         String file;
         InetSocketAddress socket;
+        String tls;
 
-        Config(String host, int port, String file, InetSocketAddress socket) {
+        Config(String host, int port, String file, InetSocketAddress socket, String tls) {
             this.host = host;
             this.port = port;
             this.file = file;
             this.socket = socket;
+            this.tls = tls;
         }
     }
 }
+

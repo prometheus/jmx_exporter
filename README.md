@@ -79,7 +79,7 @@ name              | The metric name to set. Capture groups from the `pattern` ca
 value             | Value for the metric. Static values and capture groups from the `pattern` can be used. If not specified the scraped mBean value will be used.
 valueFactor       | Optional number that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.
 labels            | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.
-help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description and the full name of the attribute.
+help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description, domain, and name of the attribute.
 cache             | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value, as only the value from the first scrape will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.
 type              | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.
 
@@ -159,8 +159,17 @@ be used to install an executable into `/usr/bin/jmx_exporter` with configuration
 in `/etc/jmx_exporter/jmx_exporter.yaml`.
 
 
+
 ## TLS support
 
-To use TLS you need to pass a third argument "tls" besides port and yaml config file and use following flags for the JKS file and the passphrase:
+To use TLS you need to pass a third argument "tls" besides port and yaml config file and use following flags for the JKS file and the passphrase.
 
 `-Djavax.net.ssl.keyStore={{ jks_file_path }}`<br/>`-Djavax.net.ssl.keyStore.passphrase={{ certificate_password }}`
+
+For httpserver:
+
+`java -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=5555 -Djavax.net.ssl.keyStore=<jks file.jks> -Djavax.net.ssl.keyStore.passphrase=<password> -jar jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-${version}.jar 5556 sample_config.yml tls`
+
+For javaagent you need to add: 
+
+`-javaagent:jmx_prometheus_javaagent-${version}.jar=localhost:port:sample_config.yml:tls -Djavax.net.ssl.keyStore=<jks file.jks> -Djavax.net.ssl.keyStore.passphrase=<password>`

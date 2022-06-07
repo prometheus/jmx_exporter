@@ -362,7 +362,26 @@ public class JmxCollector extends Collector implements Collector.Describable {
           mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<MetricFamilySamples.Sample>());
           metricFamilySamplesMap.put(sample.name, mfs);
         }
-        mfs.samples.add(sample);
+        MetricFamilySamples.Sample existing = findExisting(sample, mfs);
+        if (existing != null) {
+            String labels = "{";
+            for (int i=0; i<existing.labelNames.size(); i++) {
+                labels += existing.labelNames.get(i) + "=" + existing.labelValues.get(i) + ",";
+            }
+            labels += "}";
+            LOGGER.fine("Metric " + existing.name + labels + " was created multiple times. Keeping the first occurrence. Dropping the others.");
+        } else {
+            mfs.samples.add(sample);
+        }
+      }
+
+      private MetricFamilySamples.Sample findExisting(MetricFamilySamples.Sample sample, MetricFamilySamples mfs) {
+        for (MetricFamilySamples.Sample existing : mfs.samples) {
+          if (existing.name.equals(sample.name) && existing.labelValues.equals(sample.labelValues) && existing.labelNames.equals(sample.labelNames)) {
+            return existing;
+          }
+        }
+        return null;
       }
 
       // Add the matched rule to the cached rules and tag it as not stale
@@ -432,8 +451,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           Object beanValue) {
 
         String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
-        // attrDescription tends not to be useful, so give the fully qualified name too.
-        String help = attrDescription + " (" + beanName + attrName + ")";
+
+        // Build the HELP string from the bean metadata.
+        String help = domain + ":name=" + beanProperties.get("name") + ",type=" + beanProperties.get("type") + ",attribute=" + attrName;
+        // Add the attrDescription to the HELP if it exists and is useful.
+        if (attrDescription != null && !attrDescription.equals(attrName)) {
+          help = attrDescription + " " + help;
+        }
+
         String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
         MatchedRule matchedRule = MatchedRule.unmatched();
