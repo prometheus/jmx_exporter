@@ -18,11 +18,14 @@ import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
 
+
 public class WebServer {
 
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
+
        System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file> <[tls]>");
+
        System.exit(1);
      }
 
@@ -40,6 +43,7 @@ public class WebServer {
 
      new BuildInfoCollector().register();
      new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
+
      if (args[2].equals("tls"))  {
       HttpsServer httpsServer = HttpsServer.create(socket, 3);
       SSLContext sslContext = SSLContext.getInstance("TLSv1.2");

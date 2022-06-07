@@ -5,31 +5,66 @@ JMX to Prometheus exporter: a collector that can configurably scrape and
 expose mBeans of a JMX target.
 
 This exporter is intended to be run as a Java Agent, exposing a HTTP server
-and serving metrics of the local JVM. It can be also run as an independent
+and serving metrics of the local JVM. It can be also run as a standalone
 HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
 process metrics (e.g., memory and CPU usage). Running the exporter as a Java
 Agent is thus strongly encouraged.
 
-## Running
+## Running the Java Agent
 
 The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.16.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.16.1_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.16.1/jmx_prometheus_javaagent_java6-0.16.1.jar) is compatible with Java 6.
+* [jmx_prometheus_javaagent-0.17.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.0/jmx_prometheus_javaagent-0.17.0.jar) requires Java >= 7.
+* [jmx_prometheus_javaagent-0.17.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.17.0/jmx_prometheus_javaagent_java6-0.17.0.jar) is compatible with Java 6.
 
-The only difference between these versions is the version of the bundled snakeyaml dependency. See [release notes](https://github.com/prometheus/jmx_exporter/releases/tag/parent-0.16.1) for more info.
+Both versions are built from the same code and differ only in the versions of the bundled dependencies.
 
 To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.16.1.jar=8080:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.17.0.jar=12345:config.yaml -jar yourJar.jar
 ```
-Metrics will now be accessible at http://localhost:8080/metrics
 
+Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
 To bind the java agent to a specific IP change the port number to `host:port`.
 
-See `./run_sample_httpserver.sh` for a sample script that runs the httpserver against itself.
+A minimal `config.yaml` looks like this:
 
-Please note that due to the nature of JMX the `/metrics` endpoint might exceed Prometheus default scrape timeout of 10 seconds.
+```yaml
+rules:
+- pattern: ".*"
+```
+
+Example configurations can be found in the `example_configs/` directory.
+
+## Running the Standalone HTTP Server
+
+The HTTP server is available in two versions with identical functionality:
+* [jmx_prometheus_httpserver-0.17.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.17.0/jmx_prometheus_httpserver-0.17.0.jar) requires Java >= 7.
+* [jmx_prometheus_httpserver-0.17.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.17.0/jmx_prometheus_httpserver_java6-0.17.0.jar) is compatible with Java 6.
+
+Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+
+To run the standalone HTTP server, download one of the JARs and run:
+
+```
+java -jar jmx_prometheus_httpserver-0.17.0.jar 12345 config.yaml
+```
+
+Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
+To bind the java agent to a specific IP change the port number to `host:port`.
+
+The standalone HTTP server will read JMX remotely over the network. Therefore, you need to specify
+either `hostPort` or `jmxUrl` in `config.yaml` to tell the HTTP server where the JMX beans can be accessed.
+
+A minimal `config.yaml` looks like this:
+
+```yaml
+hostPort: localhost:9999
+rules:
+- pattern: ".*"
+```
+
+As stated above, it is recommended to run JMX exporter as a Java agent and not as a standalone HTTP server.
 
 ## Building
 

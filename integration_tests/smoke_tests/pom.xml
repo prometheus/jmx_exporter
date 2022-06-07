@@ -5,7 +5,9 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>integration_tests</artifactId>
+
         <version>0.17.0</version>
+
     </parent>
 
     <artifactId>smoke_tests</artifactId>
