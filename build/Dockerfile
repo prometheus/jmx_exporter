@@ -13,7 +13,7 @@ ENV VERSION 0.17.1
 ENV JAR jmx_prometheus_httpserver-$VERSION-jar-with-dependencies.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT.jar /opt/jmx_exporter/$JAR
 
-FROM quay.io/sysdig/sysdig-mini-ubi:1.2.12 as ubi
+FROM quay.io/sysdig/sysdig-mini-ubi:1.3.0 as ubi
 RUN mkdir -p /opt/jmx_exporter
 RUN microdnf --assumeyes --disableplugin=subscription-manager --nodocs update && \
     microdnf --assumeyes --disableplugin=subscription-manager --nodocs install curl java-1.8.0-openjdk && \
