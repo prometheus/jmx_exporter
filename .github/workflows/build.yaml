@@ -20,7 +20,7 @@ jobs:
     - name: build
       uses: sysdiglabs/exporter-builder@v0.3
       with:
-        exporter: jmx-exporter
+        exporter: promcat-jmx-exporter
         artifactory_token: ${{ secrets.ARTI_TOKEN }}
         artifactory_username: david.lorite@sysdig.com
         tag_name: dev
