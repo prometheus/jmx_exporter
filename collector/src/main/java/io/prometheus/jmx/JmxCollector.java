@@ -6,6 +6,8 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,12 +26,18 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 import static java.lang.String.format;
 
 public class JmxCollector extends Collector implements Collector.Describable {
+
+    public enum Mode {
+      AGENT,
+      STANDALONE
+    }
+
+    private final Mode mode;
+
     static final Counter configReloadSuccess = Counter.build()
       .name("jmx_config_reload_success_total")
       .help("Number of times configuration have successfully been reloaded.").register();
@@ -76,17 +84,36 @@ public class JmxCollector extends Collector implements Collector.Describable {
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
+        this(in, null);
+    }
+
+    public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
+        this.mode = mode;
         config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
+        exitOnConfigError();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        mode = null;
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-      config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        mode = null;
+    }
+
+    private void exitOnConfigError() {
+        if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
+            LOGGER.severe("Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
+            System.exit(-1);
+        }
+        if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
+            LOGGER.severe("Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
+            System.exit(-1);
+        }
     }
 
     private void reloadConfig() {
@@ -115,11 +142,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
       if (configFile != null) {
           long mtime = configFile.lastModified();
           if (mtime > config.lastUpdate) {
-            LOGGER.fine("Configuration file changed, reloading...");
-            reloadConfig();
+              LOGGER.fine("Configuration file changed, reloading...");
+              reloadConfig();
           }
       }
-
+      exitOnConfigError();
       return config;
     }
 
@@ -337,7 +364,26 @@ public class JmxCollector extends Collector implements Collector.Describable {
           mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<MetricFamilySamples.Sample>());
           metricFamilySamplesMap.put(sample.name, mfs);
         }
-        mfs.samples.add(sample);
+        MetricFamilySamples.Sample existing = findExisting(sample, mfs);
+        if (existing != null) {
+            String labels = "{";
+            for (int i=0; i<existing.labelNames.size(); i++) {
+                labels += existing.labelNames.get(i) + "=" + existing.labelValues.get(i) + ",";
+            }
+            labels += "}";
+            LOGGER.fine("Metric " + existing.name + labels + " was created multiple times. Keeping the first occurrence. Dropping the others.");
+        } else {
+            mfs.samples.add(sample);
+        }
+      }
+
+      private MetricFamilySamples.Sample findExisting(MetricFamilySamples.Sample sample, MetricFamilySamples mfs) {
+        for (MetricFamilySamples.Sample existing : mfs.samples) {
+          if (existing.name.equals(sample.name) && existing.labelValues.equals(sample.labelValues) && existing.labelNames.equals(sample.labelNames)) {
+            return existing;
+          }
+        }
+        return null;
       }
 
       // Add the matched rule to the cached rules and tag it as not stale
@@ -407,8 +453,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           Object beanValue) {
 
         String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
-        // attrDescription tends not to be useful, so give the fully qualified name too.
-        String help = attrDescription + " (" + beanName + attrName + ")";
+
+        // Build the HELP string from the bean metadata.
+        String help = domain + ":name=" + beanProperties.get("name") + ",type=" + beanProperties.get("type") + ",attribute=" + attrName;
+        // Add the attrDescription to the HELP if it exists and is useful.
+        if (attrDescription != null && !attrDescription.equals(attrName)) {
+          help = attrDescription + " " + help;
+        }
+
         String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
 
         MatchedRule matchedRule = MatchedRule.unmatched();
