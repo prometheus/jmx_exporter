@@ -23,6 +23,7 @@ jobs:
         exporter: promcat-jmx-exporter
         artifactory_token: ${{ secrets.ARTI_TOKEN }}
         artifactory_username: david.lorite@sysdig.com
+        sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         tag_name: dev
         target: ${{ matrix.docker }}
         repository: artifactory.internal.sysdig.com
