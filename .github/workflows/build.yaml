@@ -12,13 +12,13 @@ jobs:
   build:
     strategy:
       matrix:
-        docker: ['ubi']
+        docker: ['ubi','scratch']
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     name: ${{ matrix.docker }}
     steps:
     - name: build
-      uses: sysdiglabs/exporter-builder@v0.3
+      uses: sysdiglabs/exporter-builder@v0.5
       with:
         exporter: promcat-jmx-exporter
         artifactory_token: ${{ secrets.ARTI_TOKEN }}
