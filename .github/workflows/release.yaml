@@ -6,7 +6,7 @@ jobs:
   buildDockerImage:
     strategy:
       matrix:
-        docker: ['ubi']
+        docker: ['ubi','scratch']
     name: Build docker image ${{ matrix.docker }}
     runs-on: ubuntu-latest
     steps:
