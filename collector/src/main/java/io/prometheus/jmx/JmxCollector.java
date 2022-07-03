@@ -14,6 +14,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -335,9 +337,50 @@ public class JmxCollector extends Collector implements Collector.Describable {
             (input >= '0' && input <= '9'));
   }
 
-    class Receiver implements JmxScraper.MBeanReceiver {
+    /**
+     * A sample is uniquely identified by its name, labelNames and labelValues
+     */
+    static class SampleKey {
+      String name;
+      List<String> labelNames;
+      List<String> labelValues;
+
+      SampleKey(String name, List<String> labelNames, List<String> labelValues) {
+        this.name = name;
+        this.labelNames = labelNames;
+        this.labelValues = labelValues;
+      }
+
+      static SampleKey of(MetricFamilySamples.Sample sample) {
+        return new SampleKey(sample.name, sample.labelNames, sample.labelValues);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SampleKey sampleKey = (SampleKey) o;
+
+        if (name != null ? !name.equals(sampleKey.name) : sampleKey.name != null) return false;
+        if (labelNames != null ? !labelNames.equals(sampleKey.labelNames) : sampleKey.labelNames != null) return false;
+        return labelValues != null ? labelValues.equals(sampleKey.labelValues) : sampleKey.labelValues == null;
+      }
+
+      @Override
+      public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (labelNames != null ? labelNames.hashCode() : 0);
+        result = 31 * result + (labelValues != null ? labelValues.hashCode() : 0);
+        return result;
+      }
+
+    }
+
+    static class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
+      Set<SampleKey> uniqueSampleKeys = new HashSet<SampleKey>();
 
       Config config;
       MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -362,16 +405,20 @@ public class JmxCollector extends Collector implements Collector.Describable {
           mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<MetricFamilySamples.Sample>());
           metricFamilySamplesMap.put(sample.name, mfs);
         }
-        MetricFamilySamples.Sample existing = findExisting(sample, mfs);
-        if (existing != null) {
+        SampleKey sampleKey = SampleKey.of(sample);
+        boolean exists = uniqueSampleKeys.contains(sampleKey);
+        if (exists) {
+          if (LOGGER.isLoggable(Level.FINE)) {
             String labels = "{";
-            for (int i=0; i<existing.labelNames.size(); i++) {
-                labels += existing.labelNames.get(i) + "=" + existing.labelValues.get(i) + ",";
+            for (int i = 0; i < sample.labelNames.size(); i++) {
+              labels += sample.labelNames.get(i) + "=" + sample.labelValues.get(i) + ",";
             }
             labels += "}";
-            LOGGER.fine("Metric " + existing.name + labels + " was created multiple times. Keeping the first occurrence. Dropping the others.");
+            LOGGER.fine("Metric " + sample.name + labels + " was created multiple times. Keeping the first occurrence. Dropping the others.");
+          }
         } else {
             mfs.samples.add(sample);
+            uniqueSampleKeys.add(sampleKey);
         }
       }
 
