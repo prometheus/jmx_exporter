@@ -340,18 +340,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
     /**
      * A sample is uniquely identified by its name, labelNames and labelValues
      */
-    static class SampleKey {
-      String name;
-      List<String> labelNames;
-      List<String> labelValues;
+    private static class SampleKey {
+      private final String name;
+      private final List<String> labelNames;
+      private final List<String> labelValues;
 
-      SampleKey(String name, List<String> labelNames, List<String> labelValues) {
+      private SampleKey(String name, List<String> labelNames, List<String> labelValues) {
         this.name = name;
         this.labelNames = labelNames;
         this.labelValues = labelValues;
       }
 
-      static SampleKey of(MetricFamilySamples.Sample sample) {
+      private static SampleKey of(MetricFamilySamples.Sample sample) {
         return new SampleKey(sample.name, sample.labelNames, sample.labelValues);
       }
 
@@ -363,8 +363,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
         SampleKey sampleKey = (SampleKey) o;
 
         if (name != null ? !name.equals(sampleKey.name) : sampleKey.name != null) return false;
-        if (labelNames != null ? !labelNames.equals(sampleKey.labelNames) : sampleKey.labelNames != null) return false;
-        return labelValues != null ? labelValues.equals(sampleKey.labelValues) : sampleKey.labelValues == null;
+        if (labelValues != null ? !labelValues.equals(sampleKey.labelValues) : sampleKey.labelValues != null) return false;
+        return labelNames != null ? labelNames.equals(sampleKey.labelNames) : sampleKey.labelNames == null;
       }
 
       @Override
@@ -380,7 +380,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
     static class Receiver implements JmxScraper.MBeanReceiver {
       Map<String, MetricFamilySamples> metricFamilySamplesMap =
         new HashMap<String, MetricFamilySamples>();
-      Set<SampleKey> uniqueSampleKeys = new HashSet<SampleKey>();
+      Set<SampleKey> sampleKeys = new HashSet<SampleKey>();
 
       Config config;
       MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -406,7 +406,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
           metricFamilySamplesMap.put(sample.name, mfs);
         }
         SampleKey sampleKey = SampleKey.of(sample);
-        boolean exists = uniqueSampleKeys.contains(sampleKey);
+        boolean exists = sampleKeys.contains(sampleKey);
         if (exists) {
           if (LOGGER.isLoggable(Level.FINE)) {
             String labels = "{";
@@ -418,17 +418,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         } else {
             mfs.samples.add(sample);
-            uniqueSampleKeys.add(sampleKey);
+            sampleKeys.add(sampleKey);
         }
-      }
-
-      private MetricFamilySamples.Sample findExisting(MetricFamilySamples.Sample sample, MetricFamilySamples mfs) {
-        for (MetricFamilySamples.Sample existing : mfs.samples) {
-          if (existing.name.equals(sample.name) && existing.labelValues.equals(sample.labelValues) && existing.labelNames.equals(sample.labelNames)) {
-            return existing;
-          }
-        }
-        return null;
       }
 
       // Add the matched rule to the cached rules and tag it as not stale
