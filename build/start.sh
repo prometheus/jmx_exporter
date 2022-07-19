@@ -12,4 +12,4 @@ if [ -z "$CONFIG_YML" ]; then
   CONFIG_YML=/opt/jmx_exporter/config.yml
 fi
 
-java $JVM_OPTS -jar /opt/jmx_exporter/jmx_prometheus_httpserver-$VERSION.jar $SERVICE_PORT $CONFIG_YML
+java $JVM_OPTS -jar /opt/jmx_exporter/jmx_prometheus_httpserver-${VERSION}.jar $SERVICE_PORT $CONFIG_YML
