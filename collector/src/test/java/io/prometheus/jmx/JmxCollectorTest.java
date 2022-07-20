@@ -222,7 +222,7 @@ public class JmxCollectorTest {
 
     @Test
     public void testDuplicateSamples() throws Exception {
-        // The following config will map all beans to Samples with name "foo" with empty labels.
+        // The following jmxCollectorConfig will map all beans to Samples with name "foo" with empty labels.
         // We still expect only one "foo" Sample, because all subsequent ones should be dropped.
         JmxCollector jc = new JmxCollector("rules:\n- pattern: \".*\"\n  name: foo").register(registry);
         int numberOfSamples = 0;

@@ -1,14 +1,22 @@
 package io.prometheus.jmx;
 
 import java.io.File;
+import java.io.FileReader;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
+import org.yaml.snakeyaml.Yaml;
+
+import static io.prometheus.jmx.Config.loadConfig;
 
 public class JavaAgent {
 
@@ -23,12 +31,25 @@ public class JavaAgent {
         String host = "0.0.0.0";
 
         try {
-            Config config = parseConfig(agentArgument, host);
+            AgentConfig agentConfig = parseConfig(agentArgument, host);
+
+            File file = new File(agentConfig.file);
+            Config config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(file)), file);
 
             new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
+            new JmxCollector(config, JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+
+            int minThreads = config.minThreads == null ? 5 : config.minThreads;
+            int maxThreads = config.maxThreads == null ? 5 : config.maxThreads;
+            server = new HTTPServer.Builder()
+                    .withInetSocketAddress(agentConfig.socket)
+                    .withRegistry(CollectorRegistry.defaultRegistry)
+                    .withDaemonThreads(true)
+                    .withExecutorService(new ThreadPoolExecutor(minThreads, maxThreads, 0L,
+                      TimeUnit.MILLISECONDS, new LinkedBlockingQueue(),
+                      NamedDaemonThreadFactory.defaultThreadFactory(true)))
+                    .build();
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
@@ -43,7 +64,7 @@ public class JavaAgent {
      * @param ifc default bind interface
      * @return configuration to use for our application
      */
-    public static Config parseConfig(String args, String ifc) {
+    public static AgentConfig parseConfig(String args, String ifc) {
         Pattern pattern = Pattern.compile(
                 "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
                         "(\\d{1,5}):" +              // port
@@ -69,16 +90,16 @@ public class JavaAgent {
             givenHost = ifc;
         }
 
-        return new Config(givenHost, port, givenConfigFile, socket);
+        return new AgentConfig(givenHost, port, givenConfigFile, socket);
     }
 
-    static class Config {
+    static class AgentConfig {
         String host;
         int port;
         String file;
         InetSocketAddress socket;
 
-        Config(String host, int port, String file, InetSocketAddress socket) {
+        AgentConfig(String host, int port, String file, InetSocketAddress socket) {
             this.host = host;
             this.port = port;
             this.file = file;

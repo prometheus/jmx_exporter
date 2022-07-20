@@ -1,10 +1,18 @@
 package io.prometheus.jmx;
 
 import java.io.File;
+import java.io.FileReader;
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
+import org.yaml.snakeyaml.Yaml;
+
+import static io.prometheus.jmx.Config.loadConfig;
 
 public class WebServer {
 
@@ -27,7 +35,20 @@ public class WebServer {
      }
 
      new BuildInfoCollector().register();
-     new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
-     new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+
+     File file = new File(args[1]);
+     Config config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(file)), file);
+     new JmxCollector(config, JmxCollector.Mode.STANDALONE).register();
+
+     int minThreads = config.minThreads == null ? 5 : config.minThreads;
+     int maxThreads = config.maxThreads == null ? 5 : config.maxThreads;
+     new HTTPServer.Builder()
+       .withInetSocketAddress(socket)
+       .withRegistry(CollectorRegistry.defaultRegistry)
+       .withDaemonThreads(true)
+       .withExecutorService(new ThreadPoolExecutor(minThreads, maxThreads, 0L,
+         TimeUnit.MILLISECONDS, new LinkedBlockingQueue(),
+         NamedDaemonThreadFactory.defaultThreadFactory(true)))
+       .build();
    }
 }
