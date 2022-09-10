@@ -4,7 +4,7 @@
 
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.17.1-SNAPSHOT</version>
+    <version>0.17.1</version>
 
     <name>Prometheus JMX Exporter</name>
     <description>
@@ -31,7 +31,7 @@
         <connection>scm:git:git@github.com:prometheus/jmx_exporter.git</connection>
         <developerConnection>scm:git:git@github.com:prometheus/jmx_exporter.git</developerConnection>
         <url>git@github.com:prometheus/jmx_exporter.git</url>
-        <tag>HEAD</tag>
+        <tag>parent-0.17.1</tag>
     </scm>
 
     <developers>
