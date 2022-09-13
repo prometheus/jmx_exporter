@@ -1,14 +1,18 @@
 package io.prometheus.jmx;
 
-import java.io.File;
-import java.lang.instrument.Instrumentation;
-import java.net.InetSocketAddress;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.instrument.Instrumentation;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.yaml.snakeyaml.Yaml;
 
 public class JavaAgent {
 
@@ -28,7 +32,15 @@ public class JavaAgent {
             new BuildInfoCollector().register();
             new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+
+            BasicAuthenticator authenticator = new SimpleAuthenticator("Basic", config.username, config.password);
+            HTTPServer.Builder serverBuilder = new HTTPServer.Builder();
+            serverBuilder.withAuthenticator(authenticator)
+                    .withDaemonThreads(true)
+                    .withInetSocketAddress(config.socket)
+                    .withRegistry(CollectorRegistry.defaultRegistry);
+
+            server = serverBuilder.build();
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
@@ -69,7 +81,17 @@ public class JavaAgent {
             givenHost = ifc;
         }
 
-        return new Config(givenHost, port, givenConfigFile, socket);
+        String username = null;
+        String password = null;
+        try {
+            Map<String, Object> map = new Yaml().load(new FileReader(givenConfigFile));
+            username = map.containsKey("username") ? map.get("username").toString() : null;
+            password = map.containsKey("password") ? map.get("password").toString() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Config(givenHost, port, givenConfigFile, socket, username, password);
     }
 
     static class Config {
@@ -78,11 +100,16 @@ public class JavaAgent {
         String file;
         InetSocketAddress socket;
 
-        Config(String host, int port, String file, InetSocketAddress socket) {
+        String username;
+        String password;
+
+        Config(String host, int port, String file, InetSocketAddress socket, String username, String password) {
             this.host = host;
             this.port = port;
             this.file = file;
             this.socket = socket;
+            this.username = username;
+            this.password = password;
         }
     }
 }
