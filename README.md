@@ -14,14 +14,14 @@ Agent is thus strongly encouraged.
 ## Running the Java Agent
 
 The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.17.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.1/jmx_prometheus_javaagent-0.17.1.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.17.1_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.17.1/jmx_prometheus_javaagent_java6-0.17.1.jar) is compatible with Java 6.
+* [jmx_prometheus_javaagent-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.2/jmx_prometheus_javaagent-0.17.2.jar) requires Java >= 7.
+* [jmx_prometheus_javaagent-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.17.2/jmx_prometheus_javaagent_java6-0.17.2.jar) is compatible with Java 6.
 
 Both versions are built from the same code and differ only in the versions of the bundled dependencies.
 
 To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.17.1.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.17.2.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -39,15 +39,15 @@ Example configurations can be found in the `example_configs/` directory.
 ## Running the Standalone HTTP Server
 
 The HTTP server is available in two versions with identical functionality:
-* [jmx_prometheus_httpserver-0.17.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.17.1/jmx_prometheus_httpserver-0.17.1.jar) requires Java >= 7.
-* [jmx_prometheus_httpserver-0.17.1_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.17.1/jmx_prometheus_httpserver_java6-0.17.1.jar) is compatible with Java 6.
+* [jmx_prometheus_httpserver-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.17.2/jmx_prometheus_httpserver-0.17.2.jar) requires Java >= 7.
+* [jmx_prometheus_httpserver-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.17.2/jmx_prometheus_httpserver_java6-0.17.2.jar) is compatible with Java 6.
 
 Both versions are built from the same code and differ only in the versions of the bundled dependencies.
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-0.17.1.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-0.17.2.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
