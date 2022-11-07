@@ -160,9 +160,15 @@ class JmxScraper {
             processAttributesOneByOne(beanConn, mbeanName, name2AttrInfo);
             return;
         }
-        for (Object attributeObj : attributes.asList()) {
-            if (Attribute.class.isInstance(attributeObj)) {
-                Attribute attribute = (Attribute)(attributeObj);
+        final List<Attribute> attributeList;
+        try {
+            attributeList = attributes.asList();
+        } catch (IllegalArgumentException iae) {
+            logScrape(mbeanName.toString(), "some attributes are not of type javax.management.Attribute");
+            return;
+        }
+        for (Attribute attribute : attributeList) {
+            if (attribute != null) {
                 MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
                 logScrape(mbeanName, attr, "process");
                 processBeanValue(
@@ -290,7 +296,7 @@ class JmxScraper {
                             // Skip appending 'value' to the name
                             attrNames = attrKeys;
                             name = attrName;
-                        } 
+                        }
                         processBeanValue(
                             domain,
                             l2s,
@@ -344,7 +350,7 @@ class JmxScraper {
             String attrDescription,
             Object value) {
             System.out.println(domain +
-                               beanProperties + 
+                               beanProperties +
                                attrKeys +
                                attrName +
                                ": " + value);
