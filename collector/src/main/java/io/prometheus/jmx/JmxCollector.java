@@ -65,6 +65,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       String username = "";
       String password = "";
       boolean ssl = false;
+      boolean scrapeAllAttributes = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
@@ -181,6 +182,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         if (yamlConfig.containsKey("ssl")) {
           cfg.ssl = (Boolean)yamlConfig.get("ssl");
+        }
+
+        if (yamlConfig.containsKey("scrapeAllAttributes")) {
+          cfg.scrapeAllAttributes = (Boolean)yamlConfig.get("scrapeAllAttributes");
         }
 
         if (yamlConfig.containsKey("lowercaseOutputName")) {
@@ -587,7 +592,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
-      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
+      JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl, config.scrapeAllAttributes
               config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
