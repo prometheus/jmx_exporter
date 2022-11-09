@@ -52,11 +52,12 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
+    private final boolean scrapeAllAttributes;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
     private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
-    public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
+    public JmxScraper(String jmxUrl, String username, String password, boolean ssl, boolean scrapeAllAttributes,
                       List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
                       MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
@@ -64,6 +65,7 @@ class JmxScraper {
         this.username = username;
         this.password = password;
         this.ssl = ssl;
+        this.scrapeAllAttributes = scrapeAllAttributes;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
@@ -160,21 +162,26 @@ class JmxScraper {
             processAttributesOneByOne(beanConn, mbeanName, name2AttrInfo);
             return;
         }
-        for (Object attributeObj : attributes.asList()) {
-            if (Attribute.class.isInstance(attributeObj)) {
-                Attribute attribute = (Attribute)(attributeObj);
-                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-                logScrape(mbeanName, attr, "process");
-                processBeanValue(
-                        mbeanName.getDomain(),
-                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                        new LinkedList<String>(),
-                        attr.getName(),
-                        attr.getType(),
-                        attr.getDescription(),
-                        attribute.getValue()
-                );
+        
+        List<Attribute> attrList = attributes.asList();
+        for (int i = 0; i < attrList.size(); i++) {
+            Object value = attrList.get(i);
+            boolean isMxAttribute = value instanceof Attribute;
+            if (isMxAttribute) {
+                value = ((Attribute) (value)).getValue();
             }
+            if (!isMxAttribute && !scrapeAllAttributes) {
+                return;
+            }
+            MBeanAttributeInfo attr = attrInfos[i];
+            logScrape(mbeanName, attr, "process");
+            processBeanValue(mbeanName.getDomain(),
+                             jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                             new LinkedList<String>(),
+                             attr.getName(),
+                             attr.getType(),
+                             attr.getDescription(),
+                             value);
         }
     }
 
@@ -358,15 +365,15 @@ class JmxScraper {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
       if (args.length >= 3){
-            new JmxScraper(args[0], args[1], args[2], (args.length >3 && "ssl".equalsIgnoreCase(args[3])), objectNames, new LinkedList<ObjectName>(),
+            new JmxScraper(args[0], args[1], args[2], (args.length >3 && "ssl".equalsIgnoreCase(args[3])), false, objectNames, new LinkedList<ObjectName>(),
                     new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
         }
       else if (args.length > 0){
-          new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper(args[0], "", "", false, false, objectNames, new LinkedList<ObjectName>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
       else {
-          new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper("", "", "", false, false, objectNames, new LinkedList<ObjectName>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
     }
