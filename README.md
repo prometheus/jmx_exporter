@@ -103,6 +103,7 @@ username   | The username to be used in remote JMX password authentication.
 password   | The password to be used in remote JMX password authentication.
 jmxUrl     | A full JMX URL to connect to. Should not be specified if hostPort is.
 ssl        | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
+scrapeAllAttributes | Option to scrape everything from JMX, otherwise only Attribute instances will be scraped, default: false
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
