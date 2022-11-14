@@ -271,7 +271,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
 
         cfg.rulesCache = new MatchedRulesCache(cfg.rules);
-
+        LOGGER.fine("Configuration loaded.");
         return cfg;
 
     }
@@ -597,6 +597,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       }
       try {
         scraper.doScrape();
+        LOGGER.fine("Logging completed.");
       } catch (Exception e) {
         error = 1;
         StringWriter sw = new StringWriter();

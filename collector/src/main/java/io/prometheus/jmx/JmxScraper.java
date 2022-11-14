@@ -75,6 +75,7 @@ class JmxScraper {
       * Values are passed to the receiver in a single thread.
       */
     public void doScrape() throws Exception {
+        logger.fine("Beggining scrape");
         MBeanServerConnection beanConn;
         JMXConnector jmxc = null;
         if (jmxUrl.isEmpty()) {
