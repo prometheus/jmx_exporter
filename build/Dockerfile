@@ -23,6 +23,7 @@ RUN mkdir -p /opt/jmx_exporter
 RUN microdnf --assumeyes --disableplugin=subscription-manager --nodocs update && \
     microdnf --assumeyes --disableplugin=subscription-manager --nodocs install curl java-1.8.0-openjdk && \
     microdnf --assumeyes --disableplugin=subscription-manager --nodocs clean all && \
+    rm -rf /usr/lib/python3.6 && \
     rm -rf /var/cache/yum
 ENV VERSION 0.17.3
 ENV JAR jmx_prometheus_httpserver-$VERSION.jar
