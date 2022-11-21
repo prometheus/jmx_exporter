@@ -4,7 +4,7 @@
 
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.17.1-SNAPSHOT</version>
+    <version>0.17.3-SNAPSHOT</version>
 
     <name>Prometheus JMX Exporter</name>
     <description>

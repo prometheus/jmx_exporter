@@ -9,7 +9,7 @@ FROM anapsix/alpine-java:8 as scratch
 
 RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
 
-ENV VERSION 0.17.1
+ENV VERSION 0.17.3
 ENV JAR jmx_prometheus_httpserver-$VERSION.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT.jar /opt/jmx_exporter/$JAR
 COPY build/start.sh /opt/jmx_exporter
@@ -24,7 +24,7 @@ RUN microdnf --assumeyes --disableplugin=subscription-manager --nodocs update &&
     microdnf --assumeyes --disableplugin=subscription-manager --nodocs install curl java-1.8.0-openjdk && \
     microdnf --assumeyes --disableplugin=subscription-manager --nodocs clean all && \
     rm -rf /var/cache/yum
-ENV VERSION 0.17.1
+ENV VERSION 0.17.3
 ENV JAR jmx_prometheus_httpserver-$VERSION.jar
 COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT.jar /opt/jmx_exporter/$JAR
 COPY --chown=sysdig:sysdig build/start.sh /opt/jmx_exporter
