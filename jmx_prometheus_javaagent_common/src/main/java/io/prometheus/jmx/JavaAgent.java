@@ -6,7 +6,10 @@ import java.net.InetSocketAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sun.net.httpserver.HttpServer;
+
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.Predicate;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 
@@ -26,9 +29,20 @@ public class JavaAgent {
             Config config = parseConfig(agentArgument, host);
 
             new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
+            final JmxCollector collector = new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
-            server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
+            HTTPServer.Builder builder = new HTTPServer.Builder()
+            		.withInetSocketAddress(config.socket)
+            		.withRegistry(CollectorRegistry.defaultRegistry)
+            		.withDaemonThreads(true);            
+            if(collector.getCollectorNamePattern() != null && collector.getCollectorNamePattern().trim().length() > 0) {
+            	builder = builder.withSampleNameFilter(new Predicate<String>() {
+                	public boolean test(String t) {
+                		return t.matches(collector.getCollectorNamePattern().trim());
+                	}
+                });
+            }
+            server = builder.build();
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());

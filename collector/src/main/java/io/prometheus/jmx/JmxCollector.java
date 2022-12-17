@@ -73,6 +73,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       long lastUpdate = 0L;
 
       MatchedRulesCache rulesCache;
+      String collectorNamePattern = "";
     }
 
     private Config config;
@@ -207,6 +208,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         }
 
+        if (yamlConfig.containsKey("collectorNamePattern")) {
+            cfg.collectorNamePattern = (String)yamlConfig.get("collectorNamePattern");
+          }
+        
       if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
@@ -274,6 +279,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         return cfg;
 
+    }
+  
+    public String getCollectorNamePattern() {
+    	return config.collectorNamePattern;
     }
 
     static String toSnakeAndLowerCase(String attrName) {

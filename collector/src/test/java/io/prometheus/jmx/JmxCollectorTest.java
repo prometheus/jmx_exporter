@@ -279,6 +279,18 @@ public class JmxCollectorTest {
       Thread.sleep(2000);
       assertEquals(1.0, registry.getSampleValue("boolean_Test_True", new String[]{}, new String[]{}), .001);
     }
+    
+    @Test
+    public void testCollectorNamePatternNotSet() throws Exception {
+      JmxCollector jc = new JmxCollector("---\n").register(registry);
+      assertEquals("", jc.getCollectorNamePattern());
+    }
+    
+    @Test
+    public void testCollectorNamePatternSet() throws Exception {
+      JmxCollector jc = new JmxCollector("---\ncollectorNamePattern: `jmx_collector_v1`".replace('`','"')).register(registry);
+      assertEquals("jmx_collector_v1", jc.getCollectorNamePattern());
+    }
 
     @Test
     public void testCamelLastExchangFailureTimestamp() throws Exception{
