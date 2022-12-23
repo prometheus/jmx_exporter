@@ -6,8 +6,6 @@ import java.net.InetSocketAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.sun.net.httpserver.HttpServer;
-
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Predicate;
 import io.prometheus.client.exporter.HTTPServer;

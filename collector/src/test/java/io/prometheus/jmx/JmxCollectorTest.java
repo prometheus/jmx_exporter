@@ -291,7 +291,12 @@ public class JmxCollectorTest {
       JmxCollector jc = new JmxCollector("---\ncollectorNamePattern: `jmx_collector_v1`".replace('`','"')).register(registry);
       assertEquals("jmx_collector_v1", jc.getCollectorNamePattern());
     }
-
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testCollectorNamePatternInvalidRegex() throws Exception {
+        JmxCollector jc = new JmxCollector("---\ncollectorNamePattern: `(`".replace('`','"')).register(registry);
+      }
+    
     @Test
     public void testCamelLastExchangFailureTimestamp() throws Exception{
       String rulePattern =
