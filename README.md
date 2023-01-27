@@ -36,6 +36,59 @@ rules:
 
 Example configurations can be found in the `example_configs/` directory.
 
+## Running the MultiPort Java Agent
+
+The reason for creation of this agent is monitoring and providing multiple webserver running on 1 machine. Origin of it
+stems from running Apache Spark jobs on EMR clusters, where it's typical to have more than 1 executor running on 1 machine.
+
+Differences compared to **Java Agent**
+* different configuration string format
+* it is capable of running more than 1 webserver on 1 machine
+
+### Apache Spark configuration
+
+```bash
+# version of the agent
+AGENT_VERSION="0.17.2-SNAPSHOT"
+
+# path to javagent_multiport jar on S3
+JMX_JAVA_AGENT_JAR_S3_PATH="s3://jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar"
+
+# path to configuration file for the agent on S3 
+JMX_JAVA_AGENT_CONFIG_S3_PATH="s3://jmx_exporter.yaml"
+
+
+spark-submit --master yarn --deploy-mode cluster \
+--jars "${JMX_JAVA_AGENT_JAR_S3_PATH}" \
+--files "${JMX_JAVA_AGENT_CONFIG_S3_PATH}" \
+--conf "spark.driver.extraJavaOptions=-javaagent:./jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar=portStart=222,portEnd=333,configFile=./jmx_exporter.yaml" \
+--conf "spark.executor.extraJavaOptions=-javaagent:./jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar=portStart=222,portEnd=333,configFile=./jmx_exporter.yaml" \
+```
+
+### Configuration
+
+With 6 parameters in total it has become rather impractical to extend the config line parsing with regex.
+
+The configuration string has following shape `hostname=some_host.dc,portStart=222,portEnd=333,timeout=500,backoffMin=2000,backoffMax=4000,configFile=/some/path.yaml`.
+
+| Parameter  | value                                                                         | optional | note                                                                                                                |
+|------------|-------------------------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------|
+| hostname   | typically not used                                                            | true     | defaults to 0.0.0.0                                                                                                 |
+| portStart  | port number - start of the range                                              | false    |                                                                                                                     |
+| portEnd    | port number - start of the range                                              | false    | the range must be continuous                                                                                        |
+| timeout    | timeout on how long will the agent try to connect to an supposedly empty port | true     | default is 500ms                                                                                                    |
+| backoffMin | backoff before the agent will try to lookup and start on a given port         | true     | default is 2000ms                                                                                                   |
+| backoffMax | backoff before the agent will try to lookup and start on a given port         | true     | default is 4000ms                                                                                                   |                              
+| configFile | path to the config file                                                       | false    | if used with `spark-submit --files`, it will be located on the same level as the jar. For example (`./config.yaml`) |                              
+
+
+
+### Caveats
+
+* You need to know how many ports you will need. This will depend on your system
+* To play it safe, give enough headroom for your application
+
+
 ## Running the Standalone HTTP Server
 
 The HTTP server is available in two versions with identical functionality:
@@ -95,28 +148,28 @@ rules:
     type: GAUGE
     attrNameSnakeCase: false
 ```
-Name     | Description
----------|------------
-startDelaySeconds | start delay before serving requests. Any requests within the delay period will result in an empty metrics set.
-hostPort   | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.
-username   | The username to be used in remote JMX password authentication.
-password   | The password to be used in remote JMX password authentication.
-jmxUrl     | A full JMX URL to connect to. Should not be specified if hostPort is.
-ssl        | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
-lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
-lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
-whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
-blacklistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `whitelistObjectNames`. Defaults to none.
-rules      | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
-pattern           | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.
-attrNameSnakeCase | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.
-name              | The metric name to set. Capture groups from the `pattern` can be used. If not specified, the default format will be used. If it evaluates to empty, processing of this attribute stops with no output.
-value             | Value for the metric. Static values and capture groups from the `pattern` can be used. If not specified the scraped mBean value will be used.
-valueFactor       | Optional number that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.
-labels            | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.
-help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description, domain, and name of the attribute.
-cache             | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value, as only the value from the first scrape will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.
-type              | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.
+| Name                      | Description                                                                                                                                                                                                                                                                                                                          |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| startDelaySeconds         | start delay before serving requests. Any requests within the delay period will result in an empty metrics set.                                                                                                                                                                                                                       |
+| hostPort                  | The host and port to connect to via remote JMX. If neither this nor jmxUrl is specified, will talk to the local JVM.                                                                                                                                                                                                                 |
+| username                  | The username to be used in remote JMX password authentication.                                                                                                                                                                                                                                                                       |
+| password                  | The password to be used in remote JMX password authentication.                                                                                                                                                                                                                                                                       |
+| jmxUrl                    | A full JMX URL to connect to. Should not be specified if hostPort is.                                                                                                                                                                                                                                                                |
+| ssl                       | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit` |
+| lowercaseOutputName       | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.                                                                                                                                                                                                                                           |
+| lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.                                                                                                                                                                                                                                  |
+| whitelistObjectNames      | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.                                                                                                                                                                                                 |
+| blacklistObjectNames      | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `whitelistObjectNames`. Defaults to none.                                                                                                                                                     |
+| rules                     | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.                                                                                                                          |
+| pattern                   | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.                                                                                                                                                                       |
+| attrNameSnakeCase         | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.                                                                                                                                                    |
+| name                      | The metric name to set. Capture groups from the `pattern` can be used. If not specified, the default format will be used. If it evaluates to empty, processing of this attribute stops with no output.                                                                                                                               |
+| value                     | Value for the metric. Static values and capture groups from the `pattern` can be used. If not specified the scraped mBean value will be used.                                                                                                                                                                                        |
+| valueFactor               | Optional number that `value` (or the scraped mBean value if `value` is not specified) is multiplied by, mainly used to convert mBean values from milliseconds to seconds.                                                                                                                                                            |
+| labels                    | A map of label name to label value pairs. Capture groups from `pattern` can be used in each. `name` must be set to use this. Empty names and values are ignored. If not specified and the default format is not being used, no labels are set.                                                                                       |
+| help                      | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description, domain, and name of the attribute.                                                                                                                                                 |
+| cache                     | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value, as only the value from the first scrape will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.                                           |
+| type                      | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.                                                                                                                                                                                                               |
 
 Metric names and label names are sanitized. All characters other than `[a-zA-Z0-9:_]` are replaced with underscores,
 and adjacent underscores are collapsed. There's no limitations on label values or the help text.
