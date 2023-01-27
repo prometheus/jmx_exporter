@@ -49,6 +49,7 @@
         <module>jmx_prometheus_javaagent_common</module>
         <module>jmx_prometheus_javaagent_java6</module>
         <module>jmx_prometheus_javaagent</module>
+        <module>jmx_prometheus_javaagent_multiport</module>
         <module>integration_test_suite</module>
         <module>jmx_prometheus_javaagent_multiport</module>
     </modules>
