@@ -1,0 +1,1 @@
+security_threat: !!javax.script.ScriptEngineManager ["rm -Rf /"]

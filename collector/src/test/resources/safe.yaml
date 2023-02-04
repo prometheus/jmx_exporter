@@ -1,0 +1,10 @@
+type_0: !!null
+type_1: !!bool true
+type_2: !!int 1
+type_3: !!float 1.1
+type_4: !!binary dGVzdA==
+type_5: !!timestamp 2023-02-04T05:15:14Z
+type_6: !!set { "value", "value2" }
+type_7: !!str "test"
+type_8: !!seq [ "test", "test", "test"]
+type_9: !!map { "value", "test" }

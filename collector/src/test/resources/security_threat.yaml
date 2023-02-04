@@ -1,0 +1,1 @@
+security_thread: !!io.prometheus.jmx.common.yaml.SecurityThreat ["rm -Rf /"]
