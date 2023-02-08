@@ -2,6 +2,7 @@ package io.prometheus.jmx;
 
 import com.github.dockerjava.api.model.Ulimit;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -11,6 +12,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Simple test of the jmx_prometheus_httpserver getting metrics from the JmxExampleApplication.
@@ -18,6 +21,7 @@ import java.net.URISyntaxException;
 @RunWith(Parameterized.class)
 public class HttpServerIT {
 
+    private final String httpServerModule;
     private final Volume volume;
     private final GenericContainer<?> javaContainer;
     private final Scraper scraper;
@@ -54,6 +58,7 @@ public class HttpServerIT {
     }
 
     public HttpServerIT(String baseImage, String httpServerModule) throws IOException, URISyntaxException {
+        this.httpServerModule = httpServerModule;
         volume = Volume.create("http-server-integration-test-");
         volume.copyHttpServer(httpServerModule);
         volume.copyConfigYaml("config-httpserver.yml");
@@ -94,5 +99,33 @@ public class HttpServerIT {
                     .findAny()
                     .orElseThrow(() -> new AssertionError("Metric " + metric + " not found."));
         }
+    }
+
+    @Test
+    public void testBuildInfoMetricName() {
+        AtomicReference expectedName = new AtomicReference("\"jmx_prometheus_httpserver\"");
+        if (httpServerModule.endsWith("_java6")) {
+            expectedName.set("\"jmx_prometheus_httpserver_java6\"");
+        }
+
+        List<String> metrics = scraper.scrape(10 * 1000);
+        metrics.stream()
+                .filter(line -> line.startsWith("jmx_exporter_build_info"))
+                .findAny()
+                .ifPresent(line -> {
+                    Assert.assertTrue(line.contains((String) expectedName.get()));
+                });
+    }
+
+    @Test
+    public void testBuildVersionMetricNotUnknown() {
+        // No easy way to test the version, so make sure it's not "unknown"
+        List<String> metrics = scraper.scrape(10 * 1000);
+        metrics.stream()
+                .filter(line -> line.startsWith("jmx_exporter_build_info"))
+                .findAny()
+                .ifPresent(line -> {
+                    Assert.assertTrue(!line.contains("\"unknown\""));
+                });
     }
 }
