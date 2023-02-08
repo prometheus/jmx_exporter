@@ -12,6 +12,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Runs the JmxExampleApplication on different Java Docker images with the jmx_exporter agent attached,
@@ -23,6 +25,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class AgentJavaVersionsIT {
 
+  private final String agentModule;
   private final GenericContainer<?> javaContainer;
   private final Volume volume;
   private final Scraper scraper;
@@ -59,6 +62,7 @@ public class AgentJavaVersionsIT {
   }
 
   public AgentJavaVersionsIT(String baseImage, String agentModule) throws IOException, URISyntaxException {
+    this.agentModule = agentModule;
     volume = Volume.create("agent-integration-test-");
     volume.copyAgentJar(agentModule);
     volume.copyConfigYaml("config.yml");
@@ -107,5 +111,33 @@ public class AgentJavaVersionsIT {
           .findAny()
           .orElseThrow(() -> new AssertionError("Metric " + expectedMetric + " not found."));
     }
+  }
+
+  @Test
+  public void testBuildInfoMetricName() {
+    AtomicReference expectedName = new AtomicReference("\"jmx_prometheus_javaagent\"");
+    if (agentModule.endsWith("_java6")) {
+      expectedName.set("\"jmx_prometheus_javaagent_java6\"");
+    }
+
+    List<String> metrics = scraper.scrape(10 * 1000);
+    metrics.stream()
+            .filter(line -> line.startsWith("jmx_exporter_build_info"))
+            .findAny()
+            .ifPresent(line -> {
+              Assert.assertTrue(line.contains((String) expectedName.get()));
+            });
+  }
+
+  @Test
+  public void testBuildVersionMetricNotUnknown() {
+    // No easy way to test the version, so make sure it's not "unknown"
+    List<String> metrics = scraper.scrape(10 * 1000);
+    metrics.stream()
+            .filter(line -> line.startsWith("jmx_exporter_build_info"))
+            .findAny()
+            .ifPresent(line -> {
+              Assert.assertTrue(!line.contains("\"unknown\""));
+            });
   }
 }
