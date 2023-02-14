@@ -105,9 +105,9 @@ public class JavaAgentMultiPort {
                 }
                 System.out.println("Port has been taken before server started - retrying to start." + "(retries left: " + retries + ")");
                 /*
-                 * This has to be introduced, because of competition for resources. There is 'n' number of executors/agents
+                 * This had to be introduced, because of competition for resources. There is 'n' number of executors/agents
                  * which will compete for first port in range. It can happen that port is determined to be free, but
-                 * before server start, it will be taken both a different agent. Each agent acts independently.
+                 * before server start, it will be taken by a different agent. Each agent acts independently.
                  */
                 if (failedAttempts.containsKey(config.socket.getPort())) {
                     failedAttempts.put(config.socket.getPort(), failedAttempts.get(config.socket.getPort()) + 1);
