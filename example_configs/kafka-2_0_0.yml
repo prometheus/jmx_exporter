@@ -35,12 +35,20 @@ rules:
   name: kafka_$1_$2_$3_total
   type: COUNTER
 
+# Quota specific rules
 - pattern: kafka.server<type=(.+), client-id=(.+)><>([a-z-]+)
   name: kafka_server_quota_$3
   type: GAUGE
   labels:
     resource: "$1"
     clientId: "$2"
+    
+- pattern: kafka.server<type=(.+), user=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
+  type: GAUGE
+  labels:
+    resource: "$1"
+    user: "$2"
 
 - pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
   name: kafka_server_quota_$4
