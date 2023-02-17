@@ -1,5 +1,6 @@
 package io.prometheus.jmx;
 
+import com.github.dockerjava.api.model.Ulimit;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,6 +67,8 @@ public class HttpServerIT {
         javaContainer = new GenericContainer<>(baseImage)
                 .withFileSystemBind(volume.getHostPath(), "/app", BindMode.READ_ONLY)
                 .withWorkingDirectory("/app")
+                // The firefly/java:6 container needs an increased number of file descriptors, so set the nofile ulimit here.
+                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                 .withExposedPorts(9000)
                 .withCommand("/bin/bash", "-c", runExampleConfig + " & " + runHttpServer)
                 .waitingFor(Wait.forLogMessage(".*registered.*", 1))
