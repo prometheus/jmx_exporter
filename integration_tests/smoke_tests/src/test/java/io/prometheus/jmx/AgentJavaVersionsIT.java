@@ -1,5 +1,6 @@
 package io.prometheus.jmx;
 
+import com.github.dockerjava.api.model.Ulimit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -66,6 +67,8 @@ public class AgentJavaVersionsIT {
     String cmd = "java -javaagent:agent.jar=9000:config.yaml -jar jmx_example_application.jar";
     javaContainer = new GenericContainer<>(baseImage)
             .withFileSystemBind(volume.getHostPath(), "/app", BindMode.READ_ONLY)
+            // The firefly/java:6 container needs an increased number of file descriptors, so set the nofile ulimit here.
+            .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
             .withWorkingDirectory("/app")
             .withExposedPorts(9000)
             .withCommand(cmd)
