@@ -88,18 +88,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
         this.mode = mode;
-        config = loadConfig((Map<String, Object>)new Yaml().load(new FileReader(in)));
+        config = loadConfig((Map<String, Object>)new Yaml(new FilteringSafeConstructor()).load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
         exitOnConfigError();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>)new Yaml().load(yamlConfig));
+        config = loadConfig((Map<String, Object>)new Yaml(new FilteringSafeConstructor()).load(yamlConfig));
         mode = null;
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>)new Yaml().load(inputStream));
+        config = loadConfig((Map<String, Object>)new Yaml(new FilteringSafeConstructor()).load(inputStream));
         mode = null;
     }
 
@@ -119,7 +119,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         FileReader fr = new FileReader(configFile);
 
         try {
-          Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml().load(fr);
+          Map<String, Object> newYamlConfig = (Map<String, Object>)new Yaml(new FilteringSafeConstructor()).load(fr);
           config = loadConfig(newYamlConfig);
           config.lastUpdate = configFile.lastModified();
           configReloadSuccess.inc();
