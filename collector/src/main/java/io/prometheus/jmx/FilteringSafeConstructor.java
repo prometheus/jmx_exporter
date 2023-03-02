@@ -6,7 +6,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 /**
  * Class to implement an extension to SafeConstructor to handle SnakeYAML version differences
  *
- * This is a SnakeYAML version 2.0.0 which provides safe filtering
+ * This is a SnakeYAML 2.0.0 version implementation which provides safe filtering
  *
  * Java 6 versions of this class implement safe filtering of entity types
  */
