@@ -2,11 +2,17 @@ package io.prometheus.jmx;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 
 public class WebServer {
+
+   private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
+      new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
    public static void main(String[] args) throws Exception {
      if (args.length < 2) {
@@ -29,5 +35,12 @@ public class WebServer {
      new BuildInfoCollector().register();
      new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
      new HTTPServer(socket, CollectorRegistry.defaultRegistry);
+
+     System.out.println(
+       String.format("%s | %s | INFO | %s | %s",
+         SIMPLE_DATE_FORMAT.format(new Date()),
+         Thread.currentThread().getName(),
+         WebServer.class.getName(),
+         "Running"));
    }
 }

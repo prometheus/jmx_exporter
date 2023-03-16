@@ -1,0 +1,6 @@
+httpServer:
+  threads:
+    keepAlive: 9223372036854775807
+hostPort: application:9999
+rules:
+  - pattern: ".*"

@@ -1,0 +1,13 @@
+httpServer:
+  authentication:
+    enabled: true
+    algorithm: Basic
+    username: prometheus
+    password: secret
+
+hostPort: application:9999
+ssl: false
+username: jmx-exporter
+password: secret
+rules:
+  - pattern: ".*"

@@ -1,0 +1,10 @@
+httpServer:
+  ssl:
+    enabled: true
+    certificateAlias: localhost
+
+hostPort: application:9999
+username: jmx-exporter
+password: secret
+rules:
+  - pattern: ".*"

@@ -1,0 +1,3 @@
+collectorNamePattern : "^(?!jvm_threads_state$).*$"
+rules:
+  - pattern: ".*"

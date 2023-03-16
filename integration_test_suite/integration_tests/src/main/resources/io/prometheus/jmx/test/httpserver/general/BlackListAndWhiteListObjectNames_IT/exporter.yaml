@@ -1,0 +1,5 @@
+hostPort: application:9999
+whitelistObjectNames: ["java.lang:*", "io.prometheus.jmx:*"]
+blacklistObjectNames: ["io.prometheus.jmx:*"]
+rules:
+  - pattern: ".*"

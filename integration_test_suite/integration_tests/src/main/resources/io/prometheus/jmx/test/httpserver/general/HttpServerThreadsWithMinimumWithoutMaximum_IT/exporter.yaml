@@ -1,0 +1,6 @@
+httpServer:
+  threads:
+    minimum: 2
+hostPort: application:9999
+rules:
+  - pattern: ".*"

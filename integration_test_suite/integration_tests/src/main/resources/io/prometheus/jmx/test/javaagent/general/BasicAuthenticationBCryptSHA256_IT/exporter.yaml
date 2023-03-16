@@ -1,0 +1,8 @@
+httpServer:
+  authentication:
+    enabled: true
+    algorithm: BasicBCryptSHA256
+    username: prometheus
+    password: $2a$10$qB1V9OFQncOa5S1897sXcuPMb6Ys1SP0fI1Z2H0ck6Bt3YOG2ci42
+rules:
+  - pattern: ".*"

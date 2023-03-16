@@ -1,0 +1,14 @@
+httpServer:
+  authentication:
+    enabled: true
+    algorithm: Basic
+    username: prometheus
+    password: secret
+  ssl:
+    enabled: true
+    certificateAlias: localhost
+
+hostPort: application:9999
+ssl: true
+rules:
+  - pattern: ".*"

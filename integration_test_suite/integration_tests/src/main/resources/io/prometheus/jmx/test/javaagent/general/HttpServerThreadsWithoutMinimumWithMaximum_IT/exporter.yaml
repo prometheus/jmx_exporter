@@ -1,0 +1,5 @@
+httpServer:
+  threads:
+    maximum: 6
+rules:
+  - pattern: ".*"

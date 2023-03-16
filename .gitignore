@@ -12,3 +12,4 @@ target/
 dependency-reduced-pom.xml
 
 pom.xml.versionsBackup
+integration_test_suite/integration_tests/src/main/resources/common/**.jar

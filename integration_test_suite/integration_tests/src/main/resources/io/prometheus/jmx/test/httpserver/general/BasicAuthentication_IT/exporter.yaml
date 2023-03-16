@@ -1,0 +1,9 @@
+httpServer:
+  authentication:
+    enabled: true
+    algorithm: Basic
+    username: prometheus
+    password: secret
+hostPort: application:9999
+rules:
+  - pattern: ".*"

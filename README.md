@@ -68,7 +68,7 @@ As stated above, it is recommended to run JMX exporter as a Java agent and not a
 
 ## Building
 
-`./mvnw package` to build.
+`./mvnw clean package` to build.
 
 ## Configuration
 The configuration is in YAML. An example with all possible options:
@@ -144,6 +144,7 @@ No escaping or other changes are made to these values, with the exception of if 
 The default help includes this string, except for the value.
 
 ### Default format
+
 The default format will transform beans in a way that should produce sane metrics in most cases. It is
 ```
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
@@ -152,18 +153,19 @@ If a given part isn't set, it'll be excluded.
 
 ## Testing
 
-The JMX exporter uses [Testcontainers](https://www.testcontainers.org/) to run tests with different Java versions.
+The JMX exporter uses the [Devopology Test Engine](https://www.devopology.org) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+
 You need to have Docker installed to run these tests.
 
-You can run the tests with:
+Build and run the integration tests
 
 ```
-./mvnw verify
+./mvnw clean package verify
 ```
 
 ## Debugging
 
-You can start the jmx's scraper in standalone mode in order to debug what is called 
+You can start the JMX scraper in standalone mode in order to debug what is called 
 
 ```
 git clone https://github.com/prometheus/jmx_exporter.git

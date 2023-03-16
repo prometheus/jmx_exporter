@@ -1,0 +1,4 @@
+startDelaySeconds: 5
+hostPort: application:9999
+rules:
+  - pattern: ".*"
