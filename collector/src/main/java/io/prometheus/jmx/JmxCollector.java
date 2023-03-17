@@ -72,6 +72,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
       List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
       List<Rule> rules = new ArrayList<Rule>();
+      Map<ObjectName, HashSet<String>> excludeBeanAttributeNames = new HashMap<ObjectName, HashSet<String>>();
       long lastUpdate = 0L;
 
       MatchedRulesCache rulesCache;
@@ -206,6 +207,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
           List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
           for (Object name : names) {
             cfg.blacklistObjectNames.add(new ObjectName((String)name));
+          }
+        }
+
+        if (yamlConfig.containsKey("excludeBeanAttributeNames")) {
+          List<Map<String, Object>> attributeObjects = (List<Map<String, Object>>)  yamlConfig.get("excludeBeanAttributeNames");
+          for (Map<String, Object> attributeObject : attributeObjects) {
+            cfg.excludeBeanAttributeNames.put(new ObjectName((String)attributeObject.get("name")), new HashSet((List)attributeObject.get("values")));
           }
         }
 
@@ -626,7 +634,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+              config.whitelistObjectNames, config.blacklistObjectNames, config.excludeBeanAttributeNames,
+              receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&

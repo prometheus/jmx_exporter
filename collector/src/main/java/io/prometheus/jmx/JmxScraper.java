@@ -53,12 +53,14 @@ class JmxScraper {
     private final String password;
     private final boolean ssl;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
+    private final Map<ObjectName, HashSet<String>> excludeBeanAttributeNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
     private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
                       List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
-                      MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
+                      Map<ObjectName, HashSet<String>> excludeBeanAttributeNames, MBeanReceiver receiver,
+                      JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
@@ -66,6 +68,7 @@ class JmxScraper {
         this.ssl = ssl;
         this.whitelistObjectNames = whitelistObjectNames;
         this.blacklistObjectNames = blacklistObjectNames;
+        this.excludeBeanAttributeNames = excludeBeanAttributeNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
 
@@ -110,12 +113,23 @@ class JmxScraper {
                 }
             }
 
+            Map<ObjectName, HashSet<String>> attributesToExcludeFromBeans = new HashMap<ObjectName, HashSet<String>>();
+            for (Map.Entry<ObjectName, HashSet<String>> entry : excludeBeanAttributeNames.entrySet()) {
+                for (ObjectInstance instance: beanConn.queryMBeans(entry.getKey(), null)) {
+                    attributesToExcludeFromBeans.put(instance.getObjectName(), entry.getValue());
+                }
+            }
+
             // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache:
             jmxMBeanPropertyCache.onlyKeepMBeans(mBeanNames);
 
             for (ObjectName objectName : mBeanNames) {
                 long start = System.nanoTime();
-                scrapeBean(beanConn, objectName);
+                HashSet<String> attributesToExclude = new HashSet<String>();
+                if (attributesToExcludeFromBeans.containsKey(objectName)) {
+                    attributesToExclude = attributesToExcludeFromBeans.get(objectName);
+                }
+                scrapeBean(beanConn, objectName, attributesToExclude);
                 logger.fine("TIME: " + (System.nanoTime() - start) + " ns for " + objectName.toString());
             }
         } finally {
@@ -125,7 +139,7 @@ class JmxScraper {
         }
     }
 
-    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
+    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName, HashSet<String> attributeNamesToExclude) {
         MBeanInfo info;
         try {
           info = beanConn.getMBeanInfo(mbeanName);
@@ -143,6 +157,11 @@ class JmxScraper {
             MBeanAttributeInfo attr = attrInfos[idx];
             if (!attr.isReadable()) {
                 logScrape(mbeanName, attr, "not readable");
+                continue;
+            }
+
+            if (attributeNamesToExclude.contains(attr.getName())) {
+                logScrape(mbeanName.toString(), "Excluding attribute: '" + attr.getName() + "'");
                 continue;
             }
             name2AttrInfo.put(attr.getName(), attr);
@@ -358,15 +377,15 @@ class JmxScraper {
       List<ObjectName> objectNames = new LinkedList<ObjectName>();
       objectNames.add(null);
       if (args.length >= 3){
-            new JmxScraper(args[0], args[1], args[2], (args.length >3 && "ssl".equalsIgnoreCase(args[3])), objectNames, new LinkedList<ObjectName>(),
+            new JmxScraper(args[0], args[1], args[2], (args.length >3 && "ssl".equalsIgnoreCase(args[3])), objectNames, new LinkedList<ObjectName>(), new HashMap<ObjectName, HashSet<String>>(),
                     new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
         }
       else if (args.length > 0){
-          new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper(args[0], "", "", false, objectNames, new LinkedList<ObjectName>(), new HashMap<ObjectName, HashSet<String>>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
       else {
-          new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(),
+          new JmxScraper("", "", "", false, objectNames, new LinkedList<ObjectName>(), new HashMap<ObjectName, HashSet<String>>(),
                   new StdoutWriter(), new JmxMBeanPropertyCache()).doScrape();
       }
     }

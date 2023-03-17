@@ -42,6 +42,7 @@ public class JmxCollectorTest {
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
         Camel.registerBean(mbs);
+        Debezium.registerBean(mbs);
     }
 
     @Before
@@ -318,5 +319,106 @@ public class JmxCollectorTest {
         assertEquals("help message", samples.get(0).help);
         samples = jc.collect();
         assertEquals("help message", samples.get(0).help);
+    }
+
+    @Test
+    public void testWithoutExcludeBeanAttributeNames() throws Exception {
+      String rulePattern =
+              "\n---\nlowercaseOutputName: true\n" +
+              "lowercaseOutputLabelNames: true\n"+
+              "rules:\n- pattern: \"debezium.mysql<type=connector-metrics, context=streaming, server=([^>]+)><>(TotalNumberOfEventsSeen|TotalNumberOfCreateEventsSeen)\"\n" +
+                      "  name: debezium_$2\n" +
+                      "  labels:\n" +
+                      "    plugin: \"mysql\"\n" +
+                      "    context: \"streaming\"\n" +
+                      "    name: \"$1\"";
+
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      // Test Debezium beans.
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}), 0.001);
+    }
+
+    @Test
+    public void testWithExcludeBeanAttributeNames() throws Exception {
+      String rulePattern =
+              "\n---\nlowercaseOutputName: true\n" +
+              "lowercaseOutputLabelNames: true\n"+
+              "excludeBeanAttributeNames:\n" +
+              "- name: \"debezium.mysql:type=*,context=*,server=*\"\n" +
+              "  values:\n" +
+              "  - TotalNumberOfEventsSeen\n" +
+              "rules:\n- pattern: \"debezium.mysql<type=connector-metrics, context=streaming, server=([^>]+)><>(TotalNumberOfEventsSeen|TotalNumberOfCreateEventsSeen)\"\n" +
+                      "  name: debezium_$2\n" +
+                      "  labels:\n" +
+                      "    plugin: \"mysql\"\n" +
+                      "    context: \"streaming\"\n" +
+                      "    name: \"$1\"";
+
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      // Test Debezium beans.
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}));
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}), 0.001);
+    }
+
+    @Test
+    public void testWithExcludeBeanAttributes__ExcludeSpecificBeanServer() throws Exception {
+      String rulePattern =
+              "\n---\nlowercaseOutputName: true\n" +
+              "lowercaseOutputLabelNames: true\n"+
+              "excludeBeanAttributeNames:\n" +
+              "- name: \"debezium.mysql:type=*,context=*,server=dbserver3\"\n" +
+              "  values:\n" +
+              "  - TotalNumberOfEventsSeen\n" +
+              "rules:\n- pattern: \"debezium.mysql<type=connector-metrics, context=streaming, server=([^>]+)><>(TotalNumberOfEventsSeen|TotalNumberOfCreateEventsSeen)\"\n" +
+                      "  name: debezium_$2\n" +
+                      "  labels:\n" +
+                      "    plugin: \"mysql\"\n" +
+                      "    context: \"streaming\"\n" +
+                      "    name: \"$1\"";
+
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      // Test Debezium beans.
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}), 0.001);
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}));
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}), 0.001);
+      assertEquals(1, registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}), 0.001);
+    }
+
+    @Test
+    public void testWithMultipleExcludeBeanAttributeNames() throws Exception {
+      String rulePattern =
+              "\n---\nlowercaseOutputName: true\n" +
+              "lowercaseOutputLabelNames: true\n"+
+              "excludeBeanAttributeNames:\n" +
+              "- name: \"debezium.mysql:type=*,context=*,server=*\"\n" +
+              "  values:\n" +
+              "  - TotalNumberOfEventsSeen\n" +
+              "  - TotalNumberOfCreateEventsSeen\n" +
+              "rules:\n- pattern: \"debezium.mysql<type=connector-metrics, context=streaming, server=([^>]+)><>(TotalNumberOfEventsSeen|TotalNumberOfCreateEventsSeen)\"\n" +
+                      "  name: debezium_$2\n" +
+                      "  labels:\n" +
+                      "    plugin: \"mysql\"\n" +
+                      "    context: \"streaming\"\n" +
+                      "    name: \"$1\"";
+
+      JmxCollector jc = new JmxCollector(rulePattern).register(registry);
+      // Test Debezium beans.
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver1","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver2","mysql"}));
+      assertNull(registry.getSampleValue("debezium_totalnumberofcreateeventsseen", new String[]{"context","name","plugin"}, new String[]{"streaming","dbserver3","mysql"}));
     }
 }
