@@ -32,7 +32,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jmx.core.root>../..</jmx.core.root>
         <!-- smoke test containers -->
-        <docker.image.names>azul/zulu-openjdk:8 azul/zulu-openjdk:11 azul/zulu-openjdk:17 azul/zulu-openjdk:19 devopolog/openjdk:20 openjdk:6 ticketfly/java:6</docker.image.names>
+        <docker.image.names>azul/zulu-openjdk:8 azul/zulu-openjdk:11 azul/zulu-openjdk:17 azul/zulu-openjdk:19 devopology/openjdk:20 openjdk:6 ticketfly/java:6</docker.image.names>
         <!-- all test containers (empty value) -->
         <!-- <docker.image.names></docker.image.names> -->
     </properties>
