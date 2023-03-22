@@ -2,7 +2,7 @@
 
 ### Smoke test Docker images tested
 
-By default, integration tests only test these containers...
+By default, integration tests only run using these containers
 
 ```
 azul/zulu-openjdk:8
@@ -13,9 +13,7 @@ openjdk:6
 ticketfly/java:6
 ```
 
-### Docker images tested
-
-By changing the `integration_tests/pom.xml` file you can test some or all of these containers...
+### Docker images tested (all test containers)
 
 ```
 amazoncorretto:8
@@ -85,15 +83,14 @@ ticketfly/java:6
 
 **Notes**
 
-- For any core `jmx_exporter` project changes, you have to build the core project and then build the `integration_test_suite` project
+- Runs all tests using smoke test containers
 
 
-- The integration test suite uses the core `jmx_exporter` project jars as resources
-  - This was preferred to allow the integration test suite to be autonomous  
+- The integration test suite uses the core project jars as resources
 
 ---
 
-Pull Docker images (not required, but you may see test timeouts)
+Stage Docker images (not required, but you may see test timeouts, pull failures)
 
 ```
 ./integration_test_suite/docker-pull-images.sh
@@ -101,19 +98,24 @@ Pull Docker images (not required, but you may see test timeouts)
 
 **Notes**
 
-- you may need to set up Docker hub login to pull images
+- You may need to set up Docker hub login to pull images
 
 ---
 
-Run integration tests using smoke test containers (requires building first)
+Run all integration tests using smoke test containers (requires building first)
 
 ```
 ./mvnw verify
 ```
 
-**Notes**
+---
 
-- To test all containers, edit the `integration_tests/pom.xml` file and set the property `docker.image.names` to be empty
+Run all integration test using all test containers (require building first)
+
+```shell
+export DOCKER_NAME_NAMES=
+./mvnw verify
+```
 
 # Test time
 
