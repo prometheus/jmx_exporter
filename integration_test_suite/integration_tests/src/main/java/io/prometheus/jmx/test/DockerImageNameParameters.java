@@ -84,21 +84,21 @@ public final class DockerImageNameParameters {
         String[] dockerImageNames = null;
 
         // Environment variable to define specific Docker image names
-        String dockerImageNamesEnv = System.getenv(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE);
-        if (dockerImageNamesEnv != null) {
-            dockerImageNamesEnv = dockerImageNamesEnv.trim();
-            if (!dockerImageNamesEnv.isEmpty()) {
-                dockerImageNames = dockerImageNamesEnv.split("\\s+");
+        String dockerImageNamesEnvironmentVariable = System.getenv(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE);
+        if (dockerImageNamesEnvironmentVariable != null) {
+            dockerImageNamesEnvironmentVariable = dockerImageNamesEnvironmentVariable.trim();
+            if (!dockerImageNamesEnvironmentVariable.isEmpty()) {
+                dockerImageNames = dockerImageNamesEnvironmentVariable.split("\\s+");
             }
         }
 
         if (dockerImageNames == null) {
             // System property value to defined specific Docker image names
-            String docketImageNamesProperty = System.getProperty(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY);
-            if (docketImageNamesProperty != null) {
-                docketImageNamesProperty = docketImageNamesProperty.trim();
-                if (!docketImageNamesProperty.isEmpty()) {
-                    dockerImageNames = docketImageNamesProperty.split("\\s+");
+            String docketImageNamesSystemProperty = System.getProperty(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY);
+            if (docketImageNamesSystemProperty != null) {
+                docketImageNamesSystemProperty = docketImageNamesSystemProperty.trim();
+                if (!docketImageNamesSystemProperty.isEmpty()) {
+                    dockerImageNames = docketImageNamesSystemProperty.split("\\s+");
                 }
             }
         }
