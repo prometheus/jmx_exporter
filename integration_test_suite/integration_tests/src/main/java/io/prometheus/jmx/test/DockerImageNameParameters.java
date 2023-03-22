@@ -25,7 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -82,29 +84,19 @@ public final class DockerImageNameParameters {
         }
 
         String[] dockerImageNames = null;
+        String dockerImageNameValue = null;
+        Map<String, String> environmentVariableMap = System.getenv();
+        Properties systemProperties = System.getProperties();
 
-        // Environment variable to define specific Docker image names
-        String dockerImageNamesEnvironmentVariable = System.getenv(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE);
-        if (dockerImageNamesEnvironmentVariable != null) {
-            dockerImageNamesEnvironmentVariable = dockerImageNamesEnvironmentVariable.trim();
-            if (!dockerImageNamesEnvironmentVariable.isEmpty()) {
-                dockerImageNames = dockerImageNamesEnvironmentVariable.split("\\s+");
-            }
+        if (environmentVariableMap.containsKey(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE)) {
+            dockerImageNameValue = environmentVariableMap.get(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE);
+        } else if (systemProperties.containsKey(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY)) {
+            dockerImageNameValue = systemProperties.getProperty(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY);
         }
 
-        if (dockerImageNames == null) {
-            // System property value to defined specific Docker image names
-            String docketImageNamesSystemProperty = System.getProperty(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY);
-            if (docketImageNamesSystemProperty != null) {
-                docketImageNamesSystemProperty = docketImageNamesSystemProperty.trim();
-                if (!docketImageNamesSystemProperty.isEmpty()) {
-                    dockerImageNames = docketImageNamesSystemProperty.split("\\s+");
-                }
-            }
-        }
-
-        if (dockerImageNames == null) {
-            // Default to all Docker image names;
+        if ((dockerImageNameValue != null) && !dockerImageNameValue.trim().isEmpty()) {
+            dockerImageNames = dockerImageNameValue.trim().split("\\s+");
+        } else {
             dockerImageNames = DOCKER_IMAGE_NAMES;
         }
 
