@@ -117,6 +117,10 @@ export DOCKER_NAME_NAMES=
 ./mvnw verify
 ```
 
+**Notes**
+
+- the environment variable `=` is required
+
 # Test time
 
 Total test time is dependent on the number of test containers and hardware
