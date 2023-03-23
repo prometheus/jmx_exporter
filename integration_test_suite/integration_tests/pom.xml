@@ -40,7 +40,7 @@
     <repositories>
         <repository>
             <id>devopology-test-engine</id>
-            <url>https://repository.devopology.org/test-engine</url>
+	    <url>https://packagecloud.io/devopology/test-engine/maven2</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -53,7 +53,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>devopology-test-engine-maven-plugin</id>
-            <url>https://repository.devopology.org/test-engine-maven-plugin</url>
+            <url>https://packagecloud.io/devopology/test-engine-maven-plugin/maven2</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
