@@ -32,15 +32,23 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jmx.core.root>../..</jmx.core.root>
         <!-- smoke test containers -->
-        <docker.image.names>azul/zulu-openjdk:8 azul/zulu-openjdk:11 azul/zulu-openjdk:17 azul/zulu-openjdk:19 devopology/openjdk:20 openjdk:6 ticketfly/java:6</docker.image.names>
+        <docker.image.names>
+            azul/zulu-openjdk:8
+            azul/zulu-openjdk:11
+            azul/zulu-openjdk:17
+            azul/zulu-openjdk:19
+            azul/zulu-openjdk:20
+            openjdk:6
+            ticketfly/java:6
+        </docker.image.names>
         <!-- all test containers (empty value) -->
-        <!-- <docker.image.names></docker.image.names> -->
+        <!-- <docker.image.names/> -->
     </properties>
 
     <repositories>
         <repository>
             <id>devopology-test-engine</id>
-	    <url>https://packagecloud.io/devopology/test-engine/maven2</url>
+            <url>https://repository.devopology.org/test-engine</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -53,7 +61,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>devopology-test-engine-maven-plugin</id>
-            <url>https://packagecloud.io/devopology/test-engine-maven-plugin/maven2</url>
+            <url>https://repository.devopology.org/test-engine-maven-plugin</url>
             <releases>
                 <enabled>true</enabled>
             </releases>

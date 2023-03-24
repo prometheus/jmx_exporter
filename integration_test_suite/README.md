@@ -24,6 +24,7 @@ azul/zulu-openjdk:8
 azul/zulu-openjdk:11
 azul/zulu-openjdk:17
 azul/zulu-openjdk:19
+azul/zulu-openjdk:20
 azul/prime:8
 azul/prime:11
 azul/prime:17
@@ -38,7 +39,6 @@ bitnami/java:17
 devopology/dragonwell:8
 devopology/dragonwell:11
 devopology/dragonwell:17
-devopology/openjdk:20
 devopology/openlogic-openjdk:8
 devopology/openlogic-openjdk:11
 eclipse-temurin:8
