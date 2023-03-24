@@ -11,7 +11,6 @@ azul/prime:8
 azul/prime:11
 azul/prime:17
 azul/prime:19
-azul/prime:20
 bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
