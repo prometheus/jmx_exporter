@@ -16,7 +16,7 @@
 
 package io.prometheus.jmx.test;
 
-import org.devopology.test.engine.api.Parameter;
+import org.antublue.test.engine.api.Parameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;

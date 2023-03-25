@@ -153,7 +153,7 @@ If a given part isn't set, it'll be excluded.
 
 ## Testing
 
-The JMX exporter uses the [Devopology Test Engine](https://www.devopology.org) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+The JMX exporter uses the [AntuBLUE Test Engine](https://www.antublue.org) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
 You need to have Docker installed to run these tests.
 
