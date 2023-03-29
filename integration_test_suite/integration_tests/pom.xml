@@ -45,32 +45,6 @@
         <!-- <docker.image.names/> -->
     </properties>
 
-    <repositories>
-        <repository>
-            <id>test-engine</id>
-            <url>https://repository.antublue.org/test-engine</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>test-engine-maven-plugin</id>
-            <url>https://repository.antublue.org/test-engine-maven-plugin</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-
     <build>
         <plugins>
             <plugin>
