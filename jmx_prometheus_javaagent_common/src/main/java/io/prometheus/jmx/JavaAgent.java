@@ -35,13 +35,6 @@ public class JavaAgent {
             new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
             DefaultExports.initialize();
             server = new HTTPServer(config.socket, CollectorRegistry.defaultRegistry, true);
-
-            System.out.println(
-                    String.format("%s | %s | INFO | %s | %s",
-                            SIMPLE_DATE_FORMAT.format(new Date()),
-                            Thread.currentThread().getName(),
-                            JavaAgent.class.getName(),
-                            "Running"));
         }
         catch (IllegalArgumentException e) {
             System.err.println("Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> " + e.getMessage());
