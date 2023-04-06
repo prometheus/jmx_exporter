@@ -191,7 +191,7 @@ public class LowerCaseOutputAndLabelNames_IT {
 
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
-        assertThat(metricList.size()).isGreaterThan(0);
+        assertThat(metricList).isNotEmpty();
 
         // Assert that all metrics names and label names are lowercase
         metricList

@@ -191,7 +191,7 @@ public class BasicAuthentication_D_Ssl_D_JmxAuthentication_E_JmxSsl_E_IT {
 
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
-        assertThat(metricList.size()).isGreaterThan(0);
+        assertThat(metricList).isNotEmpty();
 
         // Assert that we have a metric...
         //

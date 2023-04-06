@@ -306,7 +306,7 @@ public class BasicAuthentication_E_Ssl_D_IT {
 
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
-        assertThat(metricList.size()).isGreaterThan(0);
+        assertThat(metricList).isNotEmpty();
 
         // Assert that we have a metric...
         //
