@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test.javaagent.general;
 
+import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
@@ -60,8 +61,8 @@ public class BasicAuthenticationBCryptSHA256_IT {
         return DockerImageNameParameters.parameters();
     }
 
-    @TestEngine.ParameterSetter
-    public void setParameter(Parameter parameter) {
+    @TestEngine.Parameter
+    public void parameter(Parameter parameter) {
         dockerImageName = parameter.value();
     }
 
@@ -78,7 +79,8 @@ public class BasicAuthenticationBCryptSHA256_IT {
     public void beforeAll() throws Exception {
         // Application container
         applicationContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 2))
+                .waitingFor(Wait.forHttp("/"))
+                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)

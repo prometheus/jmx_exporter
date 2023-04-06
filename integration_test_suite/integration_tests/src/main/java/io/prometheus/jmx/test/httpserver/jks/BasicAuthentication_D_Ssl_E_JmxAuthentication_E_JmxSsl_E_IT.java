@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test.httpserver.jks;
 
+import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
@@ -57,8 +58,8 @@ public class BasicAuthentication_D_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
         return DockerImageNameParameters.parameters(DockerImageNameParameters.OMIT_JAVA_6_VERSIONS);
     }
 
-    @TestEngine.ParameterSetter
-    public void setParameter(Parameter parameter) {
+    @TestEngine.Parameter
+    public void parameter(Parameter parameter) {
         dockerImageName = parameter.value();
     }
 
@@ -78,6 +79,7 @@ public class BasicAuthentication_D_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
                 .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
@@ -95,9 +97,10 @@ public class BasicAuthentication_D_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
 
         // Exporter container
         exporterContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
+                .waitingFor(Wait.forHttp("/"))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
                 .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))

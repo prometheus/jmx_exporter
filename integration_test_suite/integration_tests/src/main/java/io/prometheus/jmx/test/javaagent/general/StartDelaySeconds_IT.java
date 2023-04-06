@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test.javaagent.general;
 
+import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
@@ -40,7 +41,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 @TestEngine.Tag("/startDelay/")
 public class StartDelaySeconds_IT {
@@ -56,8 +56,8 @@ public class StartDelaySeconds_IT {
         return DockerImageNameParameters.parameters();
     }
 
-    @TestEngine.ParameterSetter
-    public void setParameter(Parameter parameter) {
+    @TestEngine.Parameter
+    public void parameter(Parameter parameter) {
         dockerImageName = parameter.value();
     }
 
@@ -74,9 +74,10 @@ public class StartDelaySeconds_IT {
     public void beforeAll() throws Exception {
         // Application container
         applicationContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 2))
+                .waitingFor(Wait.forHttp("/"))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
                 .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
@@ -90,28 +91,16 @@ public class StartDelaySeconds_IT {
             applicationContainer.withCommand("/bin/sh application_java6.sh");
         }
 
+        long startTimeMilliseconds = System.currentTimeMillis();
+
         applicationContainer.start();
+
+        long endTimeMillisecond = System.currentTimeMillis();
+
+        assertThat(endTimeMillisecond - startTimeMilliseconds).isGreaterThanOrEqualTo(5000);
 
         // HTTP client
         httpClient = new HttpClient("http://localhost:" + applicationContainer.getMappedPort(8888));
-
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-
-        try {
-            httpClient.execute(requestBuilder);
-            fail("Expected IOException");
-        } catch (IOException e) {
-            // Expected per JMX Exporter documentation
-            // during startDelaySeconds no response is sent
-        }
-
-        // startDelaySeconds = 5 seconds, so sleep for startDelaySeconds + buffer amount before running tests
-        try {
-            Thread.sleep(7000);
-        } catch (InterruptedException e) {
-            // DO NOTHING
-        }
     }
 
     @TestEngine.Test
