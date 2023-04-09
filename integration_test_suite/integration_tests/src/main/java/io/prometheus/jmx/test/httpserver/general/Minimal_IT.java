@@ -21,7 +21,7 @@ import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.httpserver.Base_IT;
+import io.prometheus.jmx.test.httpserver.BaseHttpServer_IT;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Minimal_IT extends Base_IT {
+public class Minimal_IT extends BaseHttpServer_IT {
 
     private static Network network;
 
@@ -128,6 +128,7 @@ public class Minimal_IT extends Base_IT {
     public void afterAll() {
         destroy(applicationContainer);
         destroy(exporterContainer);
+        httpClient = null;
     }
 
     @TestEngine.AfterClass

@@ -16,26 +16,21 @@
 
 package io.prometheus.jmx.test.httpserver.pkcs12;
 
-import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.TestUtils;
+import io.prometheus.jmx.test.httpserver.BaseHttpServer_IT;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -45,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @TestEngine.Disabled
 @TestEngine.Tag("/basicAuthentication/https/")
-public class BasicAuthentication_E_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
+public class BasicAuthentication_E_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT extends BaseHttpServer_IT {
 
     private static final String USERNAME = "prometheus";
     private static final String PASSWORD = "secret";
@@ -69,58 +64,18 @@ public class BasicAuthentication_E_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
 
     @TestEngine.BeforeClass
     public static void beforeClass() {
-        // Shared network
-        network = Network.newNetwork();
-
-        // Get the id to force the network creation
-        network.getId();
+        network = createNetwork();
     }
 
     @TestEngine.BeforeAll
     public void beforeAll() throws Exception {
-        // Application container
-        applicationContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(9999)
-                .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .withStartupTimeout(Duration.ofMillis(30000))
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withWorkingDirectory("/temp");
-
-        if (DockerImageNameParameters.isJava6(dockerImageName)) {
-            applicationContainer.withCommand("/bin/sh application_java6.sh");
-        }
-
+        applicationContainer = createApplicationContainer(this, dockerImageName, network);
         applicationContainer.start();
 
-        // Exporter container
-        exporterContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forHttp("/"))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                .withCommand("/bin/sh exporter.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
-                .withNetwork(network)
-                .withNetworkAliases("exporter")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withWorkingDirectory("/temp");
-
-        if (DockerImageNameParameters.isJava6(dockerImageName)) {
-            exporterContainer.withCommand("/bin/sh exporter_java6.sh");
-        }
-
+        exporterContainer = createExporterContainer(this, dockerImageName, network);
         exporterContainer.start();
 
-        // HTTP client
-        httpClient = new HttpClient("https://localhost:" + exporterContainer.getMappedPort(8888));
+        httpClient = createHttpClient(exporterContainer, "https://localhost");
     }
 
     @TestEngine.Test
@@ -315,14 +270,14 @@ public class BasicAuthentication_E_Ssl_E_JmxAuthentication_E_JmxSsl_E_IT {
 
     @TestEngine.AfterAll
     public void afterAll() {
-        exporterContainer = TestUtils.close(exporterContainer);
-        applicationContainer = TestUtils.close(applicationContainer);
+        destroy(exporterContainer);
+        destroy(applicationContainer);
         httpClient = null;
     }
 
     @TestEngine.AfterClass
     public static void afterClass() {
-        network = TestUtils.close(network);
+        destroy(network);
     }
 
     private static void assertMetricsResponse(Response response) throws IOException {

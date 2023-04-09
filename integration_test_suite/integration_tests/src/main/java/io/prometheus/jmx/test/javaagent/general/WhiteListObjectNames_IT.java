@@ -16,33 +16,28 @@
 
 package io.prometheus.jmx.test.javaagent.general;
 
-import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.TestUtils;
+import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhiteListObjectNames_IT {
+public class WhiteListObjectNames_IT extends BaseJavaAgent_IT {
 
     private static Network network;
 
@@ -62,38 +57,15 @@ public class WhiteListObjectNames_IT {
 
     @TestEngine.BeforeClass
     public static void beforeClass() {
-        // Shared network
-        network = Network.newNetwork();
-
-        // Get the id to force the network creation
-        network.getId();
+        network = createNetwork();
     }
 
     @TestEngine.BeforeAll
     public void beforeAll() throws Exception {
-        // Application container
-        applicationContainer = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forHttp("/"))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(getClass().getName().replace(".", "/"), "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
-                .withNetwork(network)                
-                .withNetworkAliases("application")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp");
-
-        if (DockerImageNameParameters.isJava6(dockerImageName)) {
-            applicationContainer.withCommand("/bin/sh application_java6.sh");
-        }
-
+        applicationContainer = createApplicationContainer(this, dockerImageName, network);
         applicationContainer.start();
-
-        // HTTP client
-        httpClient = new HttpClient("http://localhost:" + applicationContainer.getMappedPort(8888));
+        
+        httpClient = createHttpClient(applicationContainer, "http://localhost");
     }
 
     @TestEngine.Test
@@ -150,13 +122,13 @@ public class WhiteListObjectNames_IT {
 
     @TestEngine.AfterAll
     public void afterAll() {
-        applicationContainer = TestUtils.close(applicationContainer);
+        destroy(applicationContainer);
         httpClient = null;
     }
 
     @TestEngine.AfterClass
     public static void afterClass() {
-        network = TestUtils.close(network);
+        destroy(network);
     }
 
     private static void assertMetrics(Response response) throws IOException {
