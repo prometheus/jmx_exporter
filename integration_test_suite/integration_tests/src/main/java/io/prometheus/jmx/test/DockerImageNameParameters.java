@@ -25,9 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -36,8 +35,7 @@ import java.util.stream.Stream;
  */
 public final class DockerImageNameParameters {
 
-    private static final String DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE = "DOCKER_IMAGE_NAMES";
-    private static final String DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY = "docker.image.names";
+    private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
     private static final String DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.txt";
 
     private static String[] DOCKER_IMAGE_NAMES;
@@ -83,21 +81,25 @@ public final class DockerImageNameParameters {
             }
         }
 
-        String[] dockerImageNames = null;
-        String dockerImageNameValue = null;
-        Map<String, String> environmentVariableMap = System.getenv();
-        Properties systemProperties = System.getProperties();
+        String[] dockerImageNames;
 
-        if (environmentVariableMap.containsKey(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE)) {
-            dockerImageNameValue = environmentVariableMap.get(DOCKER_IMAGE_NAMES_ENVIRONMENT_VARIABLE);
-        } else if (systemProperties.containsKey(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY)) {
-            dockerImageNameValue = systemProperties.getProperty(DOCKER_IMAGE_NAMES_SYSTEM_PROPERTY);
+        String dockerImageNameValue =
+                System.getenv(DOCKER_IMAGE_NAMES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
+
+        if (dockerImageNameValue == null) {
+            dockerImageNameValue = System.getProperty(DOCKER_IMAGE_NAMES_CONFIGURATION);
         }
 
-        if ((dockerImageNameValue != null) && !dockerImageNameValue.trim().isEmpty()) {
-            dockerImageNames = dockerImageNameValue.trim().split("\\s+");
-        } else {
+        if (dockerImageNameValue != null) {
+            dockerImageNameValue = dockerImageNameValue.trim();
+        }
+
+        if (dockerImageNameValue == null) {
             dockerImageNames = DOCKER_IMAGE_NAMES;
+        } else if (dockerImageNameValue.isEmpty() || dockerImageNameValue.equals("ALL")) {
+            dockerImageNames = DOCKER_IMAGE_NAMES;
+        } else {
+            dockerImageNames = dockerImageNameValue.trim().split("\\s+");
         }
 
         Collection<Parameter> parameters = new ArrayList<>();
