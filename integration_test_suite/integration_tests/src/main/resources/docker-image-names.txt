@@ -2,6 +2,7 @@ amazoncorretto:8
 amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:19
+amazoncorretto:20
 azul/zulu-openjdk:8
 azul/zulu-openjdk:11
 azul/zulu-openjdk:17
@@ -15,6 +16,7 @@ bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
 bellsoft/liberica-openjdk-debian:19
+bellsoft/liberica-openjdk-debian:20
 bitnami/java:11
 bitnami/java:17
 bitnami/java:17
@@ -27,6 +29,7 @@ eclipse-temurin:8
 eclipse-temurin:11
 eclipse-temurin:17
 eclipse-temurin:19
+eclipse-temurin:20
 ghcr.io/graalvm/jdk:java8
 ghcr.io/graalvm/jdk:java11
 ghcr.io/graalvm/jdk:java17
@@ -49,7 +52,9 @@ openjdk:8
 openjdk:11
 openjdk:17
 openjdk:19
+openjdk:20
 sapmachine:11
 sapmachine:17
 sapmachine:19
+sapmachine:20
 ticketfly/java:6
