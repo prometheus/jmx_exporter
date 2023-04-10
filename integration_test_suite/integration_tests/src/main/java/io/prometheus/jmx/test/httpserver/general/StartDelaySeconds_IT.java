@@ -37,7 +37,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@TestEngine.Tag("/startDelay/")
 public class StartDelaySeconds_IT extends BaseHttpServer_IT {
 
     private static Network network;

@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestEngine.Disabled
-@TestEngine.Tag("/https/")
 public class BasicAuthentication_D_Ssl_E_IT extends BaseJavaAgent_IT {
 
     private static Network network;

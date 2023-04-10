@@ -39,7 +39,6 @@ import static io.prometheus.jmx.test.HttpClient.basicAuthentication;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestEngine.Disabled
-@TestEngine.Tag("/basicAuthentication/")
 public class BasicAuthentication_IT extends BaseHttpServer_IT {
 
     private static final String USERNAME = "prometheus";
