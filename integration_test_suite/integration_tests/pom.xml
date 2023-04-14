@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>integration_tests</artifactId>
-    <name>Prometheus JMX Exporter - Integration Test Suite</name>
+    <name>Prometheus JMX Exporter - Integration Tests</name>
     <description>
         See https://github.com/prometheus/jmx_exporter/blob/master/README.md
     </description>
@@ -41,8 +41,8 @@
             openjdk:6
             ticketfly/java:6
         </docker.image.names>
-        <!-- all test containers (empty value) -->
-        <!-- <docker.image.names/> -->
+        <!-- all test containers -->
+        <!-- <docker.image.names>ALL</docker.image.names> -->
     </properties>
 
     <build>
@@ -87,23 +87,23 @@
                             <fileSets>
                                 <fileSet>
                                     <sourceFile>${jmx.core.root}/jmx_prometheus_javaagent_java6/target/jmx_prometheus_javaagent_java6-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/main/resources/common/jmx_prometheus_javaagent_java6.jar</destinationFile>
+                                    <destinationFile>src/test/resources/common/jmx_prometheus_javaagent_java6.jar</destinationFile>
                                 </fileSet>
                                 <fileSet>
                                     <sourceFile>${jmx.core.root}/jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/main/resources/common/jmx_prometheus_javaagent.jar</destinationFile>
+                                    <destinationFile>src/test/resources/common/jmx_prometheus_javaagent.jar</destinationFile>
                                 </fileSet>
                                 <fileSet>
                                     <sourceFile>${jmx.core.root}/jmx_prometheus_httpserver_java6/target/jmx_prometheus_httpserver_java6-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/main/resources/common/jmx_prometheus_httpserver_java6.jar</destinationFile>
+                                    <destinationFile>src/test/resources/common/jmx_prometheus_httpserver_java6.jar</destinationFile>
                                 </fileSet>
                                 <fileSet>
                                     <sourceFile>${jmx.core.root}/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/main/resources/common/jmx_prometheus_httpserver.jar</destinationFile>
+                                    <destinationFile>src/test/resources/common/jmx_prometheus_httpserver.jar</destinationFile>
                                 </fileSet>
                                 <fileSet>
                                     <sourceFile>../jmx_example_application/target/jmx_example_application.jar</sourceFile>
-                                    <destinationFile>src/main/resources/common/jmx_example_application.jar</destinationFile>
+                                    <destinationFile>src/test/resources/common/jmx_example_application.jar</destinationFile>
                                 </fileSet>
                             </fileSets>
                         </configuration>
@@ -114,7 +114,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
-                <inherited>true</inherited>
                 <configuration>
                     <source>11</source>
                     <target>11</target>
@@ -131,16 +130,11 @@
             <plugin>
                 <groupId>org.antublue</groupId>
                 <artifactId>test-engine-maven-plugin</artifactId>
-                <version>0.0.4</version>
+                <version>3.0.0</version>
                 <configuration>
-                    <java>
-                        <systemProperties>
-                            <systemProperty>
-                                <key>docker.image.names</key>
-                                <value>${docker.image.names}</value>
-                            </systemProperty>
-                        </systemProperties>
-                    </java>
+                    <properties>
+                        <docker.image.names>${docker.image.names}</docker.image.names>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>
@@ -156,19 +150,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
-            <version>1.9.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.antublue</groupId>
-            <artifactId>test-engine</artifactId>
-            <version>2.0.7</version>
+            <artifactId>test-engine-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -194,6 +178,30 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.24.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antublue</groupId>
+            <artifactId>test-engine</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+            <version>1.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <version>1.9.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
