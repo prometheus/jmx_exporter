@@ -66,8 +66,8 @@ public class BaseHttpServer_IT {
                         .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
                         .withNetwork(network)
                         .withNetworkAliases("application")
-                        .withStartupTimeout(Duration.ofMillis(30000))
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                        .withStartupTimeout(Duration.ofMillis(30000))
                         .withWorkingDirectory("/temp");
 
         if (DockerImageNameParameters.isJava6(dockerImageName)) {
@@ -101,6 +101,7 @@ public class BaseHttpServer_IT {
                         .withNetwork(network)
                         .withNetworkAliases("exporter")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                        .withStartupTimeout(Duration.ofMillis(30000))
                         .withWorkingDirectory("/temp");
 
         if (DockerImageNameParameters.isJava6(dockerImageName)) {
