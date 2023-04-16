@@ -16,54 +16,116 @@
 
 package io.prometheus.jmx.test.support;
 
-import java.util.function.Consumer;
+import okhttp3.Headers;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Objects;
 
 public class TestResult {
 
     private int code;
-    private String contentType;
+    private Headers headers;
     private String content;
 
-    private String resultContentType;
-    private String resultContent;
-
     public TestResult(int code, String contentType, String content) {
+        Headers.Builder headersBuilder = new Headers.Builder();
+        if (contentType != null) {
+            System.out.println(String.format("Content-Type [%s]", contentType));
+            headersBuilder.add("Content-Type", contentType);
+        }
+        Headers headers = headersBuilder.build();
+        initialize(code, headers, content);
+    }
+
+    public TestResult(int code, Headers headers, String content) {
+        initialize(code, headers, content);
+    }
+
+    private void initialize(int code, Headers headers, String content) {
         this.code = code;
-        this.contentType = contentType;
+        this.headers = headers;
         this.content = content;
     }
 
-    public TestResult expect(int code, String contentType, String content) {
-        assertThat(code).isEqualTo(this.code);
+    public int code() {
+        return code;
+    }
 
-        if (this.contentType != null) {
-            assertThat(contentType).isEqualTo(this.contentType);
-        }
+    public Headers headers() {
+        return headers;
+    }
 
-        if (this.content != null) {
-            assertThat(content).isEqualTo(this.content);
-        }
+    public String content() {
+        return content;
+    }
 
+    public TestResult isEqualTo(TestResult testResult) {
+        equals(testResult);
         return this;
     }
 
-    public void dispatch(Consumer<String> consumer) {
-        if (consumer != null) {
-            consumer.accept(resultContent);
+    public TestResult accept(CodeConsumer consume) {
+        consume.accept(code);
+        return this;
+    }
+
+    public TestResult accept(HeadersConsumer consumer) {
+        consumer.accept(headers);
+        return this;
+    }
+
+    public TestResult accept(ContentConsumer consumer) {
+        consumer.accept(content);
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TestResult that = (TestResult) o;
+
+        if (code != that.code) {
+            return false;
+        }
+
+        if ((this.headers != null) && (that.headers == null)) {
+            return false;
+        } else if ((this.headers == null) && (that.headers != null)) {
+            return false;
+        } else if ((this.headers != null) && (that.headers != null)) {
+            Headers thatHeaders = that.headers;
+            for (String name : thatHeaders.names()) {
+                System.out.println(String.format("header name [%s]", name));
+                List<String> values = headers.values(name);
+                for (String value : values) {
+                    System.out.println(String.format("value [%s]", value));
+                }
+                List<String> thatValues = thatHeaders.values(name);
+                for (String thatValue : thatValues) {
+                    System.out.println(String.format("thatValue [%s]", thatValue));
+                    if (!values.contains(thatValue)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (that.content != null) {
+            return Objects.equals(content, that.content);
+        } else {
+            return true;
         }
     }
 
-    String contentType() {
-        return contentType;
-    }
-
-    void contentType(String contentType) {
-        resultContentType = contentType;
-    }
-
-    void content(String content) {
-        resultContent = content;
+    @Override
+    public int hashCode() {
+        return Objects.hash(code, headers, content);
     }
 }

@@ -22,8 +22,6 @@ import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
-import io.prometheus.jmx.test.support.TestResult;
-import io.prometheus.jmx.test.support.HealthyTest;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;

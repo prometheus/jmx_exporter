@@ -17,19 +17,19 @@
 package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.HttpHeader;
-import io.prometheus.jmx.test.util.ThrowableUtils;
 import io.prometheus.jmx.test.credentials.Credentials;
+import io.prometheus.jmx.test.util.ThrowableUtils;
+import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HealthyTest {
+public class HealthyTest implements Test {
 
-    public static final TestResult RESULT_200 = new TestResult(200, null, "Exporter is Healthy.");
-    public static final TestResult RESULT_401 = new TestResult(401, null, null);
+    public static final TestResult RESULT_200 = new TestResult(200, (String) null, "Exporter is Healthy.");
+    public static final TestResult RESULT_401 = new TestResult(401, (String) null, null);
 
     private final HttpClient httpClient;
     private Credentials credentials;
@@ -43,7 +43,9 @@ public class HealthyTest {
         return this;
     }
 
-    public void expect(TestResult testResult) {
+    public TestResult execute() {
+        TestResult actualTestResult = null;
+
         try {
             Request.Builder requestBuilder = httpClient.createRequest("/-/healthy");
 
@@ -51,22 +53,20 @@ public class HealthyTest {
                 credentials.apply(requestBuilder);
             }
 
-            if (testResult.contentType() != null) {
-                requestBuilder.addHeader(HttpHeader.ACCEPT, testResult.contentType());
-            }
-
             try (Response response = httpClient.execute(requestBuilder)) {
                 assertThat(response).isNotNull();
                 int code = response.code();
-                String contentType = response.header(HttpHeader.CONTENT_TYPE);
+                Headers headers = response.headers();
                 ResponseBody body = response.body();
                 assertThat(body).isNotNull();
                 String content = body.string();
                 assertThat(content).isNotNull();
-                testResult.expect(code, contentType, content);
+                actualTestResult = new TestResult(code, headers, content);
             }
         } catch (Throwable t) {
             ThrowableUtils.throwUnchecked(t);
         }
+
+        return actualTestResult;
     }
 }

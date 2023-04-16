@@ -21,6 +21,7 @@ import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
+import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyTest;
 import io.prometheus.jmx.test.support.MetricsTest;
 import org.antublue.test.engine.api.Parameter;
@@ -30,12 +31,12 @@ import org.testcontainers.containers.Network;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static io.prometheus.jmx.test.support.AssertTest.assertTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Minimal_IT extends BaseJavaAgent_IT implements Consumer<String> {
+public class Minimal_IT extends BaseJavaAgent_IT implements ContentConsumer {
 
     private static Network network;
 
@@ -68,22 +69,22 @@ public class Minimal_IT extends BaseJavaAgent_IT implements Consumer<String> {
 
     @TestEngine.Test
     public void testHealthy() throws Exception {
-        new HealthyTest(httpClient).expect(HealthyTest.RESULT_200);
+        assertTest(new HealthyTest(httpClient)).isEqualTo(HealthyTest.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200).dispatch(this);
+       assertTest(new MetricsTest(httpClient)).isEqualTo(MetricsTest.RESULT_200).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
+        assertTest(new MetricsTest(httpClient).withOpenMetricsHeader()).isEqualTo(MetricsTest.RESULT_200_OPEN_METRICS).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
+        assertTest(new MetricsTest(httpClient).withPrometheusHeader()).isEqualTo(MetricsTest.RESULT_200_PROMETHEUS_METRICS).accept(this);
     }
 
     @TestEngine.AfterAll
