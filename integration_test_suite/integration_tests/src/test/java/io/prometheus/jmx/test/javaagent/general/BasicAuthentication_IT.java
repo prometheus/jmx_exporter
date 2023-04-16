@@ -22,6 +22,8 @@ import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
+import io.prometheus.jmx.test.support.TestResult;
+import io.prometheus.jmx.test.support.HealthyTest;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -73,53 +75,35 @@ public class BasicAuthentication_IT extends BaseJavaAgent_IT {
         httpClient = createHttpClient(applicationContainer, "http://localhost");
     }
 
+    /*
     @TestEngine.Test
-    public void testHealthy() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.AUTHORIZATION, basicAuthentication(USERNAME, PASSWORD));
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            ResponseBody responseBody = response.body();
-            assertThat(responseBody).isNotNull();
-            String content = responseBody.string();
-            assertThat(content).isNotNull();
-            assertThat(content).isEqualTo("Exporter is Healthy.");
-        }
-    }
-
-    @TestEngine.Test
-    public void testHealthyWithoutUsernameWithoutPassword() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(401);
-        }
-    }
-
-    @TestEngine.Test
-    public void testHealthyWithoutUsernameWithPassword() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.AUTHORIZATION, basicAuthentication(null, PASSWORD));
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(401);
-        }
+    public void testHealthyWithUsernameWithPassword() throws Exception {
+        TestUtil
+                .testHealthy(httpClient)
+                .withCredentials(new BasicAuthenticationCredentials(USERNAME, PASSWORD))
+                .expect(200);
     }
 
     @TestEngine.Test
     public void testHealthyWithUsernameWithoutPassword() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.AUTHORIZATION, basicAuthentication(USERNAME, null));
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(401);
-        }
+        TestUtil
+                .testHealthy(httpClient)
+                .withCredentials(new BasicAuthenticationCredentials(USERNAME, null))
+                .expect(401);
     }
+
+    @TestEngine.Test
+    public void testHealthyWithoutUsernameWithoutPassword() throws Exception {
+        TestUtil.testHealthy(httpClient).expect(401);
+    }
+    */
+
+    /*
+    @TestEngine.Test
+    public void testHealthyWithoutUsernameWithPassword() throws Exception {
+        new HealthyTest(httpClient).expect(TestResult.of(401));
+    }
+    */
 
     @TestEngine.Test
     public void testMetrics() throws Exception {

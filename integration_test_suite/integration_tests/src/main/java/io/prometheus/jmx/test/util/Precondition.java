@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test;
+package io.prometheus.jmx.test.util;
 
 import java.io.File;
 

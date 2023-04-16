@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test;
 
+import io.prometheus.jmx.test.util.Precondition;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

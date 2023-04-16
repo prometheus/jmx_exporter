@@ -22,6 +22,8 @@ import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
+import io.prometheus.jmx.test.support.HealthyTest;
+import io.prometheus.jmx.test.support.MetricsTest;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -33,11 +35,12 @@ import org.testcontainers.containers.Network;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhiteListObjectNames_IT extends BaseJavaAgent_IT {
+public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements Consumer<String>  {
 
     private static Network network;
 
@@ -70,54 +73,22 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT {
 
     @TestEngine.Test
     public void testHealthy() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            ResponseBody responseBody = response.body();
-            assertThat(responseBody).isNotNull();
-            String content = responseBody.string();
-            assertThat(content).isNotNull();
-            assertThat(content).isEqualTo("Exporter is Healthy.");
-        }
+        new HealthyTest(httpClient).expect(HealthyTest.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetrics(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "application/openmetrics-text; version=1.0.0; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertMetrics(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "text/plain; version=0.0.4; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetrics(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
     }
 
     @TestEngine.AfterAll
@@ -131,31 +102,33 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT {
         destroy(network);
     }
 
-    private static void assertMetrics(Response response) throws IOException {
-        ResponseBody body = response.body();
-        assertThat(body).isNotNull();
-
-        String content = body.string();
-        assertThat(content).isNotNull();
-
+    /**
+     * Method to process the response content
+     *
+     * @param content the input argument
+     */
+    public void accept(String content) {
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
         assertThat(metricList).isNotEmpty();
 
-        // Assert that we have a metric...
-        //
-        // name = java_lang_Memory_NonHeapMemoryUsage_committed
+        /**
+         * Assert that we have a metric...
+         * name = java_lang_Memory_NonHeapMemoryUsage_committed
+         */
         Optional<Metric> optional =
                 metricList
                         .stream()
                         .filter(m ->
                                 m.getName().equals("java_lang_Memory_NonHeapMemoryUsage_committed"))
                         .findFirst();
+
         assertThat(optional).isPresent();
 
-        // Assert that we don't have a metric...
-        //
-        // name = io_prometheus_jmx*
+        /**
+         * Assert that we don't have a metric...
+         * name = io_prometheus_jmx*
+         */
         metricList
                 .stream()
                 .forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));

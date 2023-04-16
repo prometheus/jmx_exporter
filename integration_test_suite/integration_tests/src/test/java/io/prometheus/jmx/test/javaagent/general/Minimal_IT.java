@@ -18,26 +18,24 @@ package io.prometheus.jmx.test.javaagent.general;
 
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import io.prometheus.jmx.test.support.HealthyTest;
+import io.prometheus.jmx.test.support.MetricsTest;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Minimal_IT extends BaseJavaAgent_IT {
+public class Minimal_IT extends BaseJavaAgent_IT implements Consumer<String> {
 
     private static Network network;
 
@@ -70,54 +68,22 @@ public class Minimal_IT extends BaseJavaAgent_IT {
 
     @TestEngine.Test
     public void testHealthy() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            ResponseBody responseBody = response.body();
-            assertThat(responseBody).isNotNull();
-            String content = responseBody.string();
-            assertThat(content).isNotNull();
-            assertThat(content).isEqualTo("Exporter is Healthy.");
-        }
+        new HealthyTest(httpClient).expect(HealthyTest.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetricsResponse(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "application/openmetrics-text; version=1.0.0; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertMetricsResponse(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "text/plain; version=0.0.4; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetricsResponse(response);
-        }
+        new MetricsTest(httpClient).expect(MetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
     }
 
     @TestEngine.AfterAll
@@ -131,27 +97,29 @@ public class Minimal_IT extends BaseJavaAgent_IT {
         destroy(network);
     }
 
-    private void assertMetricsResponse(Response response) throws IOException {
-        ResponseBody body = response.body();
-        assertThat(body).isNotNull();
-
-        String content = body.string();
-        assertThat(content).isNotNull();
-
+    /**
+     * Method to process the response content
+     *
+     * @param content the input argument
+     */
+    public void accept(String content) {
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
         assertThat(metricList).isNotEmpty();
 
-        // Assert that we have a metric...
-        //
-        // name = jmx_exporter_build_info
+        /**
+         * Assert that we have a metric...
+         * name = jmx_exporter_build_info
+         */
         Optional<Metric> optional =
                 metricList
                         .stream()
                         .filter(m ->
                                 m.getName().equals("jmx_exporter_build_info"))
                         .findFirst();
+
         assertThat(optional).isPresent();
+
         Metric metric = optional.get();
         assertThat(metric.getLabels().containsKey("name")).isTrue();
 
@@ -163,9 +131,10 @@ public class Minimal_IT extends BaseJavaAgent_IT {
 
         assertThat(metric.getLine().indexOf("unknown")).isEqualTo(-1);
 
-        // Assert that we have a metric...
-        //
-        // name = java_lang_memory_nonheapmemoryusage_committed
+        /**
+         * Assert that we have a metric...         *
+         * name = java_lang_memory_nonheapmemoryusage_committed
+         */
         optional =
                 metricList
                         .stream()
@@ -174,12 +143,13 @@ public class Minimal_IT extends BaseJavaAgent_IT {
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert that we have a metric...
-        //
-        // name = io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size
-        // label = source
-        // label value = /dev/sda1
-        // value = 7.516192768E9
+        /**
+         * Assert that we have a metric...         *
+         * name = io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size
+         * label = source
+         * label value = /dev/sda1
+         * value = 7.516192768E9
+         */
         optional =
                 metricList
                         .stream()
@@ -187,15 +157,17 @@ public class Minimal_IT extends BaseJavaAgent_IT {
                                 m.getName().equals("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                                         && "/dev/sda1".equals(m.getLabels().get("source")))
                         .findFirst();
+
         assertThat(optional).isPresent();
 
         // Assert the specific metrics value
         metric = optional.get();
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
 
-        // Assert that we have a metric...
-        //
-        // name = jvm_threads_state
+        /**
+         * Assert that we have a metric...         *
+         * name = jvm_threads_state
+         */
         optional =
                 metricList
                         .stream()

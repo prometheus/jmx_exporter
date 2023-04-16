@@ -43,7 +43,7 @@ public final class MetricsParser {
      * @return
      * @throws IOException
      */
-    public static List<Metric> parse(String content) throws IOException {
+    public static List<Metric> parse(String content)  {
         List<Metric> metricList = new ArrayList<>();
 
         BufferedReader bufferedReader = null;
@@ -59,6 +59,8 @@ public final class MetricsParser {
                     metricList.add(new Metric(line));
                 }
             }
+        } catch (Throwable t) {
+            throw new MetricsParserException("Exception parsing metrics", t);
         } finally {
             if (bufferedReader != null) {
                 try {
