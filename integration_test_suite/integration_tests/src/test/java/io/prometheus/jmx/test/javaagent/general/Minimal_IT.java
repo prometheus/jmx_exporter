@@ -24,6 +24,8 @@ import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyTest;
 import io.prometheus.jmx.test.support.MetricsTest;
+import io.prometheus.jmx.test.support.OpenMetricsTest;
+import io.prometheus.jmx.test.support.PrometheusMetricsTest;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
@@ -74,17 +76,17 @@ public class Minimal_IT extends BaseJavaAgent_IT implements ContentConsumer {
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-       assertTest(new MetricsTest(httpClient)).isEqualTo(MetricsTest.RESULT_200).accept(this);
+       assertTest(new MetricsTest(httpClient)).isEqualTo(MetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        assertTest(new MetricsTest(httpClient).withOpenMetricsHeader()).isEqualTo(MetricsTest.RESULT_200_OPEN_METRICS).accept(this);
+        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        assertTest(new MetricsTest(httpClient).withPrometheusHeader()).isEqualTo(MetricsTest.RESULT_200_PROMETHEUS_METRICS).accept(this);
+        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
     }
 
     @TestEngine.AfterAll

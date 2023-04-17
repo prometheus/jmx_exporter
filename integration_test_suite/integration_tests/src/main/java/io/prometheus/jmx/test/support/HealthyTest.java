@@ -17,56 +17,24 @@
 package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.credentials.Credentials;
-import io.prometheus.jmx.test.util.ThrowableUtils;
-import okhttp3.Headers;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * Class to implement a healthy test
+ */
+public class HealthyTest extends BaseTest {
 
-public class HealthyTest implements Test {
+    private static final String CONTENT = "Exporter is Healthy.";
 
-    public static final TestResult RESULT_200 = new TestResult(200, (String) null, "Exporter is Healthy.");
-    public static final TestResult RESULT_401 = new TestResult(401, (String) null, null);
+    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContent(CONTENT);
+    public static final TestResult RESULT_401 = new TestResult().withCode(401);
 
-    private final HttpClient httpClient;
-    private Credentials credentials;
-
+    /**
+     * Constructor
+     *
+     * @param httpClient
+     */
     public HealthyTest(HttpClient httpClient) {
-        this.httpClient = httpClient;
-    }
-
-    public HealthyTest withCredentials(Credentials credentials) {
-        this.credentials = credentials;
-        return this;
-    }
-
-    public TestResult execute() {
-        TestResult actualTestResult = null;
-
-        try {
-            Request.Builder requestBuilder = httpClient.createRequest("/-/healthy");
-
-            if (credentials != null) {
-                credentials.apply(requestBuilder);
-            }
-
-            try (Response response = httpClient.execute(requestBuilder)) {
-                assertThat(response).isNotNull();
-                int code = response.code();
-                Headers headers = response.headers();
-                ResponseBody body = response.body();
-                assertThat(body).isNotNull();
-                String content = body.string();
-                assertThat(content).isNotNull();
-                actualTestResult = new TestResult(code, headers, content);
-            }
-        } catch (Throwable t) {
-            ThrowableUtils.throwUnchecked(t);
-        }
-
-        return actualTestResult;
+        super(httpClient);
+        withPath("/-/healthy");
     }
 }

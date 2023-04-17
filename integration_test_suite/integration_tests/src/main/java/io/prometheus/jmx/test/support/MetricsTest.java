@@ -17,73 +17,25 @@
 package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.credentials.Credentials;
-import io.prometheus.jmx.test.util.ThrowableUtils;
-import okhttp3.Headers;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * Class to implement a metrics test (no Content-Type)
+ */
+public class MetricsTest extends BaseTest {
 
-public class MetricsTest implements Test {
+    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
 
-    public static final TestResult RESULT_200 = new TestResult(200, "text/plain; version=0.0.4; charset=utf-8", null);
-    public static final TestResult RESULT_200_PROMETHEUS_METRICS = RESULT_200;
-    public static final TestResult RESULT_200_OPEN_METRICS = new TestResult(200, "application/openmetrics-text; version=1.0.0; charset=utf-8", null);
+    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
 
-    private final HttpClient httpClient;
-    private Headers.Builder headersBuilder;
-    private Credentials credentials;
+    public static final TestResult RESULT_401 = new TestResult().withCode(401);
 
+    /**
+     * Constructor
+     *
+     * @param httpClient
+     */
     public MetricsTest(HttpClient httpClient) {
-        this.httpClient = httpClient;
-        this.headersBuilder = new Headers.Builder();
-    }
-
-    public MetricsTest withOpenMetricsHeader() {
-        return withHeader("Content-Type", "application/openmetrics-text; version=1.0.0; charset=utf-8");
-    }
-
-    public MetricsTest withPrometheusHeader() {
-        return withHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
-    }
-
-    public MetricsTest withHeader(String name, String value) {
-        headersBuilder.add(name, value);
-        return this;
-    }
-
-    public MetricsTest withCredentials(Credentials credentials) {
-        this.credentials = credentials;
-        return this;
-    }
-
-    public TestResult execute() {
-        TestResult actualTestResult = null;
-
-        try {
-            Request.Builder requestBuilder = httpClient.createRequest("/");
-            requestBuilder.headers(headersBuilder.build());
-
-            if (credentials != null) {
-                credentials.apply(requestBuilder);
-            }
-
-            try (Response response = httpClient.execute(requestBuilder)) {
-                assertThat(response).isNotNull();
-                int code = response.code();
-                Headers headers = response.headers();
-                ResponseBody body = response.body();
-                assertThat(body).isNotNull();
-                String content = body.string();
-                assertThat(content).isNotNull();
-                actualTestResult = new TestResult(code, headers, content);
-            }
-        } catch (Throwable t) {
-            ThrowableUtils.throwUnchecked(t);
-        }
-
-        return actualTestResult;
+        super(httpClient);
+        withPath("/");
     }
 }

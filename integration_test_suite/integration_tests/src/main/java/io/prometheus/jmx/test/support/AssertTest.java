@@ -16,12 +16,24 @@
 
 package io.prometheus.jmx.test.support;
 
+/**
+ * Class to implement assert test methods
+ */
 public class AssertTest {
 
+    /**
+     * Constructor
+     */
     private AssertTest() {
         // DO NOTHING
     }
 
+    /**
+     * Method to execute a test and return the test result
+     *
+     * @param test
+     * @return the TestResult
+     */
     public static TestResult assertTest(Test test) {
         return test.execute();
     }

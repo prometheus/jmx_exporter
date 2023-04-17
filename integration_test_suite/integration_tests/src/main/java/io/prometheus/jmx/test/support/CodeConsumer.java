@@ -18,6 +18,9 @@ package io.prometheus.jmx.test.support;
 
 import java.util.function.Consumer;
 
+/**
+ * Interface to accept a code
+ */
 public interface CodeConsumer extends Consumer<Integer> {
 
     void accept(int code);

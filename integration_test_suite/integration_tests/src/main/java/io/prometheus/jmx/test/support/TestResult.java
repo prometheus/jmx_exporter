@@ -21,60 +21,146 @@ import okhttp3.Headers;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Class to implement a TestResult
+ */
 public class TestResult {
 
-    private int code;
+    private Integer code;
+
     private Headers headers;
+
+    private boolean hasContent;
     private String content;
 
-    public TestResult(int code, String contentType, String content) {
-        Headers.Builder headersBuilder = new Headers.Builder();
+    private Headers.Builder headersBuilder;
+
+    /**
+     * Constructor
+     */
+    public TestResult() {
+        headersBuilder = new Headers.Builder();
+    }
+
+    /**
+     * Method to set the test result code
+     *
+     * @param code
+     * @return
+     */
+    public TestResult withCode(int code) {
+        this.code = code;
+        return this;
+    }
+
+    /**
+     * Method to set the test result Headers
+     *
+     * @param headers
+     * @return
+     */
+    public TestResult withHeaders(Headers headers) {
+        if (headers != null) {
+            headersBuilder.addAll(headers);
+        }
+        return this;
+    }
+
+    /**
+     * Method to set the test result Content-Type
+     *
+     * @param contentType
+     * @return
+     */
+    public TestResult withContentType(String contentType) {
         if (contentType != null) {
-            System.out.println(String.format("Content-Type [%s]", contentType));
             headersBuilder.add("Content-Type", contentType);
         }
-        Headers headers = headersBuilder.build();
-        initialize(code, headers, content);
+        return this;
     }
 
-    public TestResult(int code, Headers headers, String content) {
-        initialize(code, headers, content);
-    }
-
-    private void initialize(int code, Headers headers, String content) {
-        this.code = code;
-        this.headers = headers;
+    /**
+     * Method to set the test result content
+     *
+     * @param content
+     * @return
+     */
+    public TestResult withContent(String content) {
+        this.hasContent = true;
         this.content = content;
+        return this;
     }
 
+    /**
+     * Method to get the test result code
+     *
+     * @return
+     */
     public int code() {
         return code;
     }
 
+    /**
+     * Method to get the test result Headers
+     *
+     * @return
+     */
     public Headers headers() {
+        if (headers == null) {
+            headers = headersBuilder.build();
+        }
         return headers;
     }
 
+    /**
+     * Method to get the test result content
+     *
+     * @return
+     */
     public String content() {
         return content;
     }
 
+    /**
+     * Method to compare whether a TestResult is equal to this test result
+     *
+     * @param testResult
+     * @return
+     */
     public TestResult isEqualTo(TestResult testResult) {
         equals(testResult);
         return this;
     }
 
-    public TestResult accept(CodeConsumer consume) {
+    /**
+     * Method to set the test result CodeConsumer
+     *
+     * @param consume
+     * @return
+     */
+    public TestResult dispatch(CodeConsumer consume) {
         consume.accept(code);
         return this;
     }
 
-    public TestResult accept(HeadersConsumer consumer) {
+    /**
+     * Method to set the test result HeadersConsumer
+     *
+     * @param consumer
+     * @return
+     */
+    public TestResult dispatch(HeadersConsumer consumer) {
         consumer.accept(headers);
         return this;
     }
 
-    public TestResult accept(ContentConsumer consumer) {
+    /**
+     * Method to set the test result ContentConsumer
+     *
+     * @param consumer
+     * @return
+     */
+    public TestResult dispatch(ContentConsumer consumer) {
         consumer.accept(content);
         return this;
     }
@@ -102,14 +188,9 @@ public class TestResult {
         } else if ((this.headers != null) && (that.headers != null)) {
             Headers thatHeaders = that.headers;
             for (String name : thatHeaders.names()) {
-                System.out.println(String.format("header name [%s]", name));
                 List<String> values = headers.values(name);
-                for (String value : values) {
-                    System.out.println(String.format("value [%s]", value));
-                }
                 List<String> thatValues = thatHeaders.values(name);
                 for (String thatValue : thatValues) {
-                    System.out.println(String.format("thatValue [%s]", thatValue));
                     if (!values.contains(thatValue)) {
                         return false;
                     }

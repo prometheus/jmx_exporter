@@ -16,15 +16,24 @@
 
 package io.prometheus.jmx.test.support;
 
+import io.prometheus.jmx.test.HttpClient;
+
 /**
- * Interface for all tests
+ * Class to implement an Prometheus metrics test (Content-Type for Prometheus metrics)
  */
-public interface Test {
+public class PrometheusMetricsTest extends BaseTest {
+
+    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+
+    public static final TestResult RESULT_200_PROMETHEUS_METRICS = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
 
     /**
-     * Method to execute a test
+     * Constructor
      *
-     * @return the TestResult
+     * @param httpClient
      */
-    TestResult execute();
+    public PrometheusMetricsTest(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/").withContentType(CONTENT_TYPE);
+    }
 }
