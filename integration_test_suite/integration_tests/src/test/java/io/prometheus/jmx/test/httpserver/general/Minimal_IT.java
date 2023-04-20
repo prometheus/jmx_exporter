@@ -85,12 +85,12 @@ public class Minimal_IT extends BaseHttpServer_IT implements ContentConsumer {
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
+        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
+        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.AfterAll

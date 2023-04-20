@@ -25,7 +25,7 @@ public class PrometheusMetricsTest extends BaseTest {
 
     private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
 
-    public static final TestResult RESULT_200_PROMETHEUS_METRICS = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
+    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
 
     /**
      * Constructor

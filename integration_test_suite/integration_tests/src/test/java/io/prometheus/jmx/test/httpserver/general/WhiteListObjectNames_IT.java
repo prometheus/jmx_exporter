@@ -18,7 +18,6 @@ package io.prometheus.jmx.test.httpserver.general;
 
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.httpserver.BaseHttpServer_IT;
@@ -27,15 +26,11 @@ import io.prometheus.jmx.test.support.HealthyTest;
 import io.prometheus.jmx.test.support.MetricsTest;
 import io.prometheus.jmx.test.support.OpenMetricsTest;
 import io.prometheus.jmx.test.support.PrometheusMetricsTest;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -90,12 +85,12 @@ public class WhiteListObjectNames_IT extends BaseHttpServer_IT implements Conten
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200_OPEN_METRICS).dispatch(this);
+        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200_PROMETHEUS_METRICS).dispatch(this);
+        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200).dispatch(this);
     }
 
     @TestEngine.AfterAll
