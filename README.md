@@ -151,17 +151,21 @@ domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanProp
 ```
 If a given part isn't set, it'll be excluded.
 
-## Testing
+## Integration Testing
 
-The JMX exporter uses the [AntuBLUE Test Engine](https://www.antublue.org) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
 You need to have Docker installed to run these tests.
 
-Build and run the integration tests
+Build and run the integration tests:
 
 ```
-./mvnw clean package verify
+./mvnw clean verify
 ```
+
+**Notes**
+
+- To run the integration tests in IntelliJ, you must build the project from the parent (root).
 
 ## Debugging
 
