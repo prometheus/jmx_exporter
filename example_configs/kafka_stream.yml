@@ -1,0 +1,65 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+- pattern: kafka.streams<type=stream-processor-node-metrics,.*>process-rate
+  name: kafka_streams_processor_node_process_rate
+  help: Process rate of a stream processor node
+  type: GAUGE
+- pattern: kafka.streams<type=stream-processor-node-metrics,.*>process-total
+  name: kafka_streams_processor_node_process_total
+  help: Total number of processed records by a stream processor node
+  type: GAUGE
+- pattern: kafka.streams<type=stream-thread-metrics,.*>poll-latency-max
+  name: kafka_streams_thread_poll_latency_max
+  help: Maximum poll latency of a stream thread
+  type: GAUGE
+- pattern: kafka.streams<type=stream-thread-metrics,.*>poll-latency-avg
+  name: kafka_streams_thread_poll_latency_avg
+  help: Average poll latency of a stream thread
+  type: GAUGE
+- pattern: kafka.streams<type=stream-thread-metrics,.*>commit-rate
+  name: kafka_streams_thread_commit_rate
+  help: Commit rate of a stream thread
+  type: GAUGE
+- pattern: kafka.streams<type=stream-thread-metrics,.*>process-records-avg
+  name: kafka_streams_thread_process_records_avg
+  help: Average number of processed records per second by a stream thread
+  type: GAUGE
+- pattern: kafka.streams<type=stream-metrics,.*>alive-stream-threads
+  name: kafka_streams_alive_stream_threads
+  help: Number of alive stream threads in a Kafka stream
+  type: GAUGE
+- pattern: kafka.streams<type=stream-metrics,.*>failed-stream-threads
+  name: kafka_streams_failed_stream_threads
+  help: Number of failed stream threads in a Kafka stream
+  type: GAUGE
+- pattern: kafka.streams<type=stream-state-metrics,.*>block-cache-usage
+  name: kafka_streams_state_block_cache_usage
+  help: Block cache usage of a Kafka stream
+  type: GAUGE
+- pattern: kafka.streams<type=stream-state-metrics,.*>size-all-mem-tables
+  name: kafka_streams_state_size_all_mem_tables
+  help: Total size of all memory tables in a Kafka stream
+  type: GAUGE
+- pattern: kafka.streams<type=stream-state-metrics,.*>estimate-table-readers-mem
+  name: kafka_streams_state_estimate_table_readers_mem
+  help: Estimated memory used by table readers in a Kafka stream
+  type: GAUGE
+- pattern: kafka.streams<type=stream-state-metrics,.*>block-cache-capacity
+  name: kafka_streams_state_block_cache_capacity
+  help: Block cache capacity of a Kafka stream
+  type: GAUGE
+- pattern: 'kafka.streams<type=stream-metrics,.*client-id=(.+)><>state: RUNNING'
+  name: kafka_streams_state_running
+  help: Kafka stream client is in state RUNNING
+  type: GAUGE
+  value: 1
+  labels:
+    clientid: "$1"
+- pattern: 'kafka.streams<type=stream-metrics,.*client-id=(.+)><>state: REBALANCING'
+  name: kafka_streams_state_rebalancing
+  help: Kafka stream client is in state REBALANCING
+  type: GAUGE
+  value: 1
+  labels:
+    clientid: "$1"

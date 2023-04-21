@@ -38,6 +38,7 @@ public class JmxCollectorTest {
         CassandraMetrics.registerBean(mbs);
         Hadoop.registerBean(mbs);
         HadoopDataNode.registerBean(mbs);
+        BeanWithEnum.registerBean(mbs);
 
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
@@ -264,6 +265,12 @@ public class JmxCollectorTest {
     public void testValueFactor() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: 1\n  valueFactor: 0.001".replace('`','"')).register(registry);
       assertEquals(0.001, registry.getSampleValue("foo", new String[]{}, new String[]{}), .001);
+    }
+
+    @Test
+    public void testEnumValue() throws Exception {
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `org.bean.enum<type=StateMetrics.*>State: RUNNING`\n  name: bean_running\n  value: 1".replace('`','"')).register(registry);
+        assertEquals(1.0, registry.getSampleValue("bean_running", new String[]{}, new String[]{}), .001);
     }
 
     @Test(expected=IllegalStateException.class)
