@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// TODO implement functionality and refactor
 @TestEngine.Disabled
 public class BasicAuthentication_D_Ssl_E_IT extends BaseJavaAgent_IT {
 

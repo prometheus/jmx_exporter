@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 import static io.prometheus.jmx.test.support.AssertThatRequestResponse.assertThatRequestResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
+// TODO implement functionality and refactor
 @TestEngine.Disabled
 public class CollectorNamePattern_IT extends BaseJavaAgent_IT implements ContentConsumer {
 
