@@ -19,21 +19,19 @@ package io.prometheus.jmx.test.support;
 import io.prometheus.jmx.test.HttpClient;
 
 /**
- * Class to implement an Prometheus metrics test (Content-Type for Prometheus metrics)
+ * Class to implement a healthy test
  */
-public class PrometheusMetricsTest extends BaseTest {
+public class HealthyRequest extends BaseRequest {
 
-    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
-
-    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
+    private static final String CONTENT = "Exporter is Healthy.";
 
     /**
      * Constructor
      *
      * @param httpClient
      */
-    public PrometheusMetricsTest(HttpClient httpClient) {
+    public HealthyRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
+        withPath("/-/healthy");
     }
 }

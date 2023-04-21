@@ -142,13 +142,13 @@ public class LowerCaseOutputName_IT extends BaseJavaAgent_IT {
         assertThat(metricList).isNotEmpty();
 
         // Assert that all metrics names are lowercase
-        metricList
-                .stream()
-                .forEach(m -> assertThat(m.getName()).isEqualTo(m.getName().toLowerCase()));
+        metricList.forEach(m -> assertThat(m.getName()).isEqualTo(m.getName().toLowerCase()));
 
-        // Assert that we have a metric...
-        //
-        // name = lowercase(java_lang_Memory_NonHeapMemoryUsage_committed)
+        /*
+         * Assert that we have a metric...
+         *
+         * name = lowercase(java_lang_Memory_NonHeapMemoryUsage_committed)
+         */
         Optional<Metric> optional =
                 metricList
                         .stream()
@@ -157,12 +157,14 @@ public class LowerCaseOutputName_IT extends BaseJavaAgent_IT {
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert that we have a metric...
-        //
-        // name = lowercase(io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size)
-        // label = source
-        // label value = /dev/sda1
-        // value = 7.516192768E9
+        /*
+         * Assert that we have a metric...
+         *
+         * name = lowercase(io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size)
+         * label = source
+         * label value = /dev/sda1
+         * value = 7.516192768E9
+         */
         optional =
                 metricList
                         .stream()
@@ -172,7 +174,7 @@ public class LowerCaseOutputName_IT extends BaseJavaAgent_IT {
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert the specific metrics value
+        // Assert the specific metric's value
         Metric metric = optional.get();
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
     }

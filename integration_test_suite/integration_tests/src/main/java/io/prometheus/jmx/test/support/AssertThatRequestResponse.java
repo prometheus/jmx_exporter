@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Douglas Hoard
+ * Copyright 2022-2023 Douglas Hoard
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,24 @@
 package io.prometheus.jmx.test.support;
 
 /**
- * Interface for all tests
+ * Class to implement Request Response assertions
  */
-public interface Test {
+public class AssertThatRequestResponse {
 
     /**
-     * Method to execute a test
+     * Constructor
+     */
+    private AssertThatRequestResponse() {
+        // DO NOTHING
+    }
+
+    /**
+     * Method to execute a Request and return the Response
      *
+     * @param request
      * @return the TestResult
      */
-    TestResult execute();
+    public static Response assertThatRequestResponse(Request request) {
+        return request.execute();
+    }
 }

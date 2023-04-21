@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Douglas Hoard
+ * Copyright 2023 Douglas Hoard
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,24 @@
 
 package io.prometheus.jmx.test.support;
 
+import io.prometheus.jmx.test.HttpClient;
+
 /**
- * Class to implement assert test methods
+ * Class to implement an Prometheus metrics test (Content-Type for Prometheus metrics)
  */
-public class AssertTest {
+public class PrometheusMetricsRequest extends BaseRequest {
+
+    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+
+    public static final BaseResponse RESULT_200 = new BaseResponse().withCode(200).withContentType(CONTENT_TYPE);
 
     /**
      * Constructor
-     */
-    private AssertTest() {
-        // DO NOTHING
-    }
-
-    /**
-     * Method to execute a test and return the test result
      *
-     * @param test
-     * @return the TestResult
+     * @param httpClient
      */
-    public static TestResult assertTest(Test test) {
-        return test.execute();
+    public PrometheusMetricsRequest(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/").withContentType(CONTENT_TYPE);
     }
 }

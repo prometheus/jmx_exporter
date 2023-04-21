@@ -173,7 +173,7 @@ public class HttpServerThreadsWithoutMinimumWithMaximum_IT extends BaseJavaAgent
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert the specific metrics value
+        // Assert the specific metric's value
         Metric metric = optional.get();
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
     }

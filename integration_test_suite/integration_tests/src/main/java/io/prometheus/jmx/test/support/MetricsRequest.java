@@ -21,20 +21,14 @@ import io.prometheus.jmx.test.HttpClient;
 /**
  * Class to implement a metrics test (no Content-Type)
  */
-public class MetricsTest extends BaseTest {
-
-    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
-
-    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
-
-    public static final TestResult RESULT_401 = new TestResult().withCode(401);
+public class MetricsRequest extends BaseRequest {
 
     /**
      * Constructor
      *
      * @param httpClient
      */
-    public MetricsTest(HttpClient httpClient) {
+    public MetricsRequest(HttpClient httpClient) {
         super(httpClient);
         withPath("/");
     }

@@ -1,6 +1,6 @@
-# Integration test suite
+# Integration request suite
 
-### Smoke test Docker images tested
+### Smoke request Docker images tested
 
 By default, integration tests only run using these containers
 
@@ -13,7 +13,7 @@ openjdk:6
 ticketfly/java:6
 ```
 
-### Docker images tested (all test containers)
+### Docker images tested (all request containers)
 
 ```
 amazoncorretto:8
@@ -80,7 +80,7 @@ ticketfly/java:6
 
 ---
 
-### Running the integration test suite
+### Running the integration request suite
 
 ```
 ./mvnw clean package verify
@@ -88,14 +88,14 @@ ticketfly/java:6
 
 **Notes**
 
-- Runs all tests using smoke test containers
+- Runs all tests using smoke request containers
 
 
-- The integration test suite uses the core project jars as resources
+- The integration request suite uses the core project jars as resources
 
 ---
 
-Stage Docker images (not required, but you may see test timeouts, pull failures)
+Stage Docker images (not required, but you may see request timeouts, pull failures)
 
 ```
 ./integration_test_suite/docker-pull-images.sh
@@ -107,7 +107,7 @@ Stage Docker images (not required, but you may see test timeouts, pull failures)
 
 ---
 
-Run all integration tests using smoke test containers (requires building first)
+Run all integration tests using smoke request containers (requires building first)
 
 ```
 ./mvnw verify
@@ -115,7 +115,7 @@ Run all integration tests using smoke test containers (requires building first)
 
 ---
 
-Run all integration test using all test containers (require building first)
+Run all integration request using all request containers (require building first)
 
 ```shell
 export DOCKER_NAME_NAMES=
@@ -128,9 +128,9 @@ export DOCKER_NAME_NAMES=
 
 # Test time
 
-Total test time is dependent on the number of test containers and hardware
+Total request time is dependent on the number of request containers and hardware
 
-| Hardware                                  | Smoke test containers | All test containers |
+| Hardware                                  | Smoke request containers | All request containers |
 |-------------------------------------------|-----------------------|---------------------|
 | AMD Ryzen 9 7900 + NVMe 4.0 Gen4 PCIe M.2 | ~3.5 minutes          | ~30 minutes         |
 | Intel Core i5-3470 CPU + SATA SSD         | ~16 minutes           | 2+ hours            |

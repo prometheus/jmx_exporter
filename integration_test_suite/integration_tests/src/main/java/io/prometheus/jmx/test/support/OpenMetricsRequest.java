@@ -21,18 +21,16 @@ import io.prometheus.jmx.test.HttpClient;
 /**
  * Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics)
  */
-public class OpenMetricsTest extends BaseTest {
+public class OpenMetricsRequest extends BaseRequest {
 
     private static String CONTENT_TYPE = "application/openmetrics-text; version=1.0.0; charset=utf-8";
-
-    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContentType(CONTENT_TYPE);
 
     /**
      * Constructor
      *
      * @param httpClient
      */
-    public OpenMetricsTest(HttpClient httpClient) {
+    public OpenMetricsRequest(HttpClient httpClient) {
         super(httpClient);
         withPath("/").withContentType(CONTENT_TYPE);
     }

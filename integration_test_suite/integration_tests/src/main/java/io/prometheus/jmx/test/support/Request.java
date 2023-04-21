@@ -16,25 +16,15 @@
 
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.HttpClient;
-
 /**
- * Class to implement a healthy test
+ * Interface for all tests
  */
-public class HealthyTest extends BaseTest {
-
-    private static final String CONTENT = "Exporter is Healthy.";
-
-    public static final TestResult RESULT_200 = new TestResult().withCode(200).withContent(CONTENT);
-    public static final TestResult RESULT_401 = new TestResult().withCode(401);
+public interface Request {
 
     /**
-     * Constructor
+     * Method to execute a Request
      *
-     * @param httpClient
+     * @return the Response
      */
-    public HealthyTest(HttpClient httpClient) {
-        super(httpClient);
-        withPath("/-/healthy");
-    }
+    Response execute();
 }

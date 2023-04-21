@@ -18,26 +18,31 @@ package io.prometheus.jmx.test.httpserver.general;
 
 import io.prometheus.jmx.test.DockerImageNameParameters;
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.HttpHeader;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.httpserver.BaseHttpServer_IT;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import io.prometheus.jmx.test.support.ContentConsumer;
+import io.prometheus.jmx.test.support.HealthyRequest;
+import io.prometheus.jmx.test.support.HealthyResponse;
+import io.prometheus.jmx.test.support.MetricsRequest;
+import io.prometheus.jmx.test.support.MetricsResponse;
+import io.prometheus.jmx.test.support.OpenMetricsRequest;
+import io.prometheus.jmx.test.support.OpenMetricsResponse;
+import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static io.prometheus.jmx.test.support.AssertThatRequestResponse.assertThatRequestResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT {
+public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT implements ContentConsumer {
 
     private static Network network;
 
@@ -74,60 +79,35 @@ public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT {
 
     @TestEngine.Test
     public void testHealthy() throws Exception {
-        String path = "/-/healthy";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            ResponseBody responseBody = response.body();
-            assertThat(responseBody).isNotNull();
-            String content = responseBody.string();
-            assertThat(content).isNotNull();
-            assertThat(content).isEqualTo("Exporter is Healthy.");
-        }
+        assertThatRequestResponse(new HealthyRequest(httpClient))
+                .isEqualTo(HealthyResponse.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetrics(response);
-        }
+        assertThatRequestResponse(new MetricsRequest(httpClient))
+                .isEqualTo(MetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "application/openmetrics-text; version=1.0.0; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertMetrics(response);
-        }
+        assertThatRequestResponse(new OpenMetricsRequest(httpClient))
+                .isEqualTo(OpenMetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        String path = "/";
-        Request.Builder requestBuilder = httpClient.createRequest(path);
-        requestBuilder.addHeader(HttpHeader.ACCEPT, "text/plain; version=0.0.4; charset=utf-8");
-        try (Response response = httpClient.execute(requestBuilder)) {
-            assertThat(response).isNotNull();
-            assertThat(response.code()).isEqualTo(200);
-            assertThat(response.header(HttpHeader.CONTENT_TYPE)).isEqualTo("text/plain; version=0.0.4; charset=utf-8");
-            assertMetrics(response);
-        }
+        assertThatRequestResponse(new PrometheusMetricsRequest(httpClient))
+                .isEqualTo(PrometheusMetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.AfterAll
     public void afterAll() {
-        destroy(exporterContainer);
         destroy(applicationContainer);
+        destroy(exporterContainer);
         httpClient = null;
     }
 
@@ -136,13 +116,8 @@ public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT {
         destroy(network);
     }
 
-    private static void assertMetrics(Response response) throws IOException {
-        ResponseBody body = response.body();
-        assertThat(body).isNotNull();
-
-        String content = body.string();
-        assertThat(content).isNotNull();
-
+    @Override
+    public void accept(String content) {
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
         assertThat(metricList).isNotEmpty();
@@ -161,8 +136,6 @@ public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT {
         // Assert that we don't have a metric...
         //
         // name = io_prometheus_jmx*
-        metricList
-                .stream()
-                .forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));
+        metricList.forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));
     }
 }

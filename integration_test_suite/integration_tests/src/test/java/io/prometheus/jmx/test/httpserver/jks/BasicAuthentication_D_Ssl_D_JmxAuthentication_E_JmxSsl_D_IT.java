@@ -174,7 +174,7 @@ public class BasicAuthentication_D_Ssl_D_JmxAuthentication_E_JmxSsl_D_IT extends
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert the specific metrics value
+        // Assert the specific metric's value
         Metric metric = optional.get();
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
     }

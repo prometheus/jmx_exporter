@@ -20,8 +20,6 @@ import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.credentials.Credentials;
 import io.prometheus.jmx.test.util.ThrowableUtils;
 import okhttp3.Headers;
-import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Base class for all tests
  */
-public abstract class BaseTest implements Test {
+public abstract class BaseRequest implements Request {
 
-    public static final TestResult RESULT_401 = new TestResult().withCode(401);
+    public static final BaseResponse RESULT_401 = new BaseResponse().withCode(401);
 
     protected final HttpClient httpClient;
     protected final Headers.Builder headersBuilder;
@@ -43,7 +41,7 @@ public abstract class BaseTest implements Test {
      *
      * @param httpClient
      */
-    public BaseTest(HttpClient httpClient) {
+    public BaseRequest(HttpClient httpClient) {
         this.httpClient = httpClient;
         this.headersBuilder = new Headers.Builder();
     }
@@ -54,7 +52,7 @@ public abstract class BaseTest implements Test {
      * @param path
      * @return
      */
-    public BaseTest withPath(String path) {
+    public BaseRequest withPath(String path) {
         this.path = path;
         return this;
     }
@@ -65,7 +63,7 @@ public abstract class BaseTest implements Test {
      * @param headers
      * @return
      */
-    public BaseTest withHeaders(Headers headers) {
+    public BaseRequest withHeaders(Headers headers) {
         if (headers != null) {
             headersBuilder.addAll(headers);
         }
@@ -78,7 +76,7 @@ public abstract class BaseTest implements Test {
      * @param contentType
      * @return
      */
-    public BaseTest withContentType(String contentType) {
+    public BaseRequest withContentType(String contentType) {
         if (contentType != null) {
             headersBuilder.add("Content-Type", contentType);
         }
@@ -91,7 +89,7 @@ public abstract class BaseTest implements Test {
      * @param credentials
      * @return
      */
-    public BaseTest withCredentials(Credentials credentials) {
+    public BaseRequest withCredentials(Credentials credentials) {
         this.credentials = credentials;
         return this;
     }
@@ -101,17 +99,18 @@ public abstract class BaseTest implements Test {
      *
      * @return the TestResult
      */
-    public TestResult execute() {
-        TestResult actualTestResult = null;
+    @Override
+    public Response execute() {
+        Response actualResponse = null;
 
         try {
-            Request.Builder requestBuilder = httpClient.createRequest(path);
+            okhttp3.Request.Builder requestBuilder = httpClient.createRequest(path);
 
             if (credentials != null) {
                 credentials.apply(requestBuilder);
             }
 
-            try (Response response = httpClient.execute(requestBuilder)) {
+            try (okhttp3.Response response = httpClient.execute(requestBuilder)) {
                 assertThat(response).isNotNull();
                 int code = response.code();
                 Headers headers = response.headers();
@@ -119,12 +118,12 @@ public abstract class BaseTest implements Test {
                 assertThat(body).isNotNull();
                 String content = body.string();
                 assertThat(content).isNotNull();
-                actualTestResult = new TestResult().withCode(code).withHeaders(headers).withContent(content);
+                actualResponse = new BaseResponse().withCode(code).withHeaders(headers).withContent(content);
             }
         } catch (Throwable t) {
             ThrowableUtils.throwUnchecked(t);
         }
 
-        return actualTestResult;
+        return actualResponse;
     }
 }

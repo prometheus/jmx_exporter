@@ -22,10 +22,14 @@ import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.javaagent.BaseJavaAgent_IT;
 import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyTest;
-import io.prometheus.jmx.test.support.MetricsTest;
-import io.prometheus.jmx.test.support.OpenMetricsTest;
-import io.prometheus.jmx.test.support.PrometheusMetricsTest;
+import io.prometheus.jmx.test.support.HealthyRequest;
+import io.prometheus.jmx.test.support.HealthyResponse;
+import io.prometheus.jmx.test.support.MetricsRequest;
+import io.prometheus.jmx.test.support.MetricsResponse;
+import io.prometheus.jmx.test.support.OpenMetricsRequest;
+import io.prometheus.jmx.test.support.OpenMetricsResponse;
+import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
@@ -35,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static io.prometheus.jmx.test.support.AssertTest.assertTest;
+import static io.prometheus.jmx.test.support.AssertThatRequestResponse.assertThatRequestResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements ContentConsumer {
@@ -71,22 +75,29 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements Content
 
     @TestEngine.Test
     public void testHealthy() throws Exception {
-        assertTest(new HealthyTest(httpClient)).isEqualTo(HealthyTest.RESULT_200);
+        assertThatRequestResponse(new HealthyRequest(httpClient))
+                .isEqualTo(HealthyResponse.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() throws Exception {
-        assertTest(new MetricsTest(httpClient)).isEqualTo(MetricsTest.RESULT_200).dispatch(this);
+        assertThatRequestResponse(new MetricsRequest(httpClient))
+                .isEqualTo(MetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() throws Exception {
-        assertTest(new OpenMetricsTest(httpClient)).isEqualTo(OpenMetricsTest.RESULT_200).dispatch(this);
+        assertThatRequestResponse(new OpenMetricsRequest(httpClient))
+                .isEqualTo(OpenMetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() throws Exception {
-        assertTest(new PrometheusMetricsTest(httpClient)).isEqualTo(PrometheusMetricsTest.RESULT_200).dispatch(this);
+        assertThatRequestResponse(new PrometheusMetricsRequest(httpClient))
+                .isEqualTo(PrometheusMetricsResponse.RESULT_200)
+                .dispatch(this);
     }
 
     @TestEngine.AfterAll
@@ -100,18 +111,15 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements Content
         destroy(network);
     }
 
-    /**
-     * Method to process the response content
-     *
-     * @param content the input argument
-     */
+    @Override
     public void accept(String content) {
         List<Metric> metricList = MetricsParser.parse(content);
         assertThat(metricList).isNotNull();
         assertThat(metricList).isNotEmpty();
 
-        /**
+        /*
          * Assert that we have a metric...
+         *
          * name = java_lang_Memory_NonHeapMemoryUsage_committed
          */
         Optional<Metric> optional =
@@ -123,8 +131,9 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements Content
 
         assertThat(optional).isPresent();
 
-        /**
+        /*
          * Assert that we don't have a metric...
+         *
          * name = io_prometheus_jmx*
          */
         metricList

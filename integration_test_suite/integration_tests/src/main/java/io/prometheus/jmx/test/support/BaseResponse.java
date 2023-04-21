@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Class to implement a TestResult
+ * Class to implement a Response
  */
-public class TestResult {
+public class BaseResponse implements Response {
 
     private Integer code;
 
@@ -38,28 +38,28 @@ public class TestResult {
     /**
      * Constructor
      */
-    public TestResult() {
+    public BaseResponse() {
         headersBuilder = new Headers.Builder();
     }
 
     /**
-     * Method to set the test result code
+     * Method to set the response code
      *
      * @param code
      * @return
      */
-    public TestResult withCode(int code) {
+    public BaseResponse withCode(int code) {
         this.code = code;
         return this;
     }
 
     /**
-     * Method to set the test result Headers
+     * Method to set the response Headers
      *
      * @param headers
      * @return
      */
-    public TestResult withHeaders(Headers headers) {
+    public BaseResponse withHeaders(Headers headers) {
         if (headers != null) {
             headersBuilder.addAll(headers);
         }
@@ -67,12 +67,12 @@ public class TestResult {
     }
 
     /**
-     * Method to set the test result Content-Type
+     * Method to set the response Content-Type
      *
      * @param contentType
      * @return
      */
-    public TestResult withContentType(String contentType) {
+    public BaseResponse withContentType(String contentType) {
         if (contentType != null) {
             headersBuilder.add("Content-Type", contentType);
         }
@@ -80,31 +80,33 @@ public class TestResult {
     }
 
     /**
-     * Method to set the test result content
+     * Method to set the response content
      *
      * @param content
      * @return
      */
-    public TestResult withContent(String content) {
+    public BaseResponse withContent(String content) {
         this.hasContent = true;
         this.content = content;
         return this;
     }
 
     /**
-     * Method to get the test result code
+     * Method to get the response code
      *
      * @return
      */
+    @Override
     public int code() {
         return code;
     }
 
     /**
-     * Method to get the test result Headers
+     * Method to get the response Headers
      *
      * @return
      */
+    @Override
     public Headers headers() {
         if (headers == null) {
             headers = headersBuilder.build();
@@ -113,54 +115,59 @@ public class TestResult {
     }
 
     /**
-     * Method to get the test result content
+     * Method to get the response content
      *
      * @return
      */
+    @Override
     public String content() {
         return content;
     }
 
-    /**
-     * Method to compare whether a TestResult is equal to this test result
+    /**f
+     * Method to compare whether this Response is equals to another Object
      *
-     * @param testResult
+     * @param response
      * @return
      */
-    public TestResult isEqualTo(TestResult testResult) {
-        equals(testResult);
+    @Override
+    public Response isEqualTo(Response response) {
+        equals(response);
         return this;
     }
 
     /**
-     * Method to set the test result CodeConsumer
+     * Method to dispatch the response code to a CodeConsumer
      *
      * @param consume
      * @return
      */
-    public TestResult dispatch(CodeConsumer consume) {
+    @Override
+    public Response dispatch(CodeConsumer consume) {
         consume.accept(code);
         return this;
     }
 
     /**
-     * Method to set the test result HeadersConsumer
+     * Method to dispatch the response Headers to a HeadersConsumer
      *
      * @param consumer
      * @return
      */
-    public TestResult dispatch(HeadersConsumer consumer) {
+    @Override
+    public Response dispatch(HeadersConsumer consumer) {
         consumer.accept(headers);
         return this;
     }
 
     /**
-     * Method to set the test result ContentConsumer
+     * Method to dispatch the response content to a ContentConsumer
      *
      * @param consumer
      * @return
      */
-    public TestResult dispatch(ContentConsumer consumer) {
+    @Override
+    public Response dispatch(ContentConsumer consumer) {
         consumer.accept(content);
         return this;
     }
@@ -175,7 +182,7 @@ public class TestResult {
             return false;
         }
 
-        TestResult that = (TestResult) o;
+        BaseResponse that = (BaseResponse) o;
 
         if (code != that.code) {
             return false;
