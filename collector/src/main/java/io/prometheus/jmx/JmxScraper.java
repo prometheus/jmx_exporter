@@ -316,6 +316,16 @@ class JmxScraper {
                     attrType,
                     attrDescription,
                     optionalValueExtractor.getOptionalValueOrNull(value));
+        } else if (value.getClass().isEnum()) {
+            logScrape(domain + beanProperties + attrName, value.toString());
+            processBeanValue(
+                    domain,
+                    beanProperties,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    value.toString());
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
