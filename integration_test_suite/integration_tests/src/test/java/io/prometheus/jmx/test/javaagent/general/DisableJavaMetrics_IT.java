@@ -163,9 +163,10 @@ public class DisableJavaMetrics_IT extends BaseJavaAgent_IT implements ContentCo
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
 
         // Assert that we don't have metrics that start with "jvm" or "java"
-        metricList.forEach(metric1 -> {
-            assertThat(metric1.getName()).doesNotStartWith("jvm");
-            assertThat(metric1.getName()).doesNotStartWith("java");
+        metricList.forEach(m -> {
+            String name = m.getName();
+            assertThat(name).doesNotStartWith("jvm");
+            assertThat(name).doesNotStartWith("java");
         });
     }
 }

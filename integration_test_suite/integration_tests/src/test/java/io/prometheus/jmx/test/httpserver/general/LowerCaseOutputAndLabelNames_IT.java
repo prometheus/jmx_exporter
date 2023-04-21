@@ -125,7 +125,6 @@ public class LowerCaseOutputAndLabelNames_IT extends BaseHttpServer_IT implement
 
         // Assert that all metrics names and label names are lowercase
         metricList
-                .stream()
                 .forEach(m -> {
                     assertThat(m.getName()).isEqualTo(m.getName().toLowerCase());
                     Map<String, String> labelsMap = m.getLabels();

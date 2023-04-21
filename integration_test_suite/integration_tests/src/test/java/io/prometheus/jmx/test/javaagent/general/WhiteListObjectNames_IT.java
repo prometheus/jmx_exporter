@@ -136,8 +136,6 @@ public class WhiteListObjectNames_IT extends BaseJavaAgent_IT implements Content
          *
          * name = io_prometheus_jmx*
          */
-        metricList
-                .stream()
-                .forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));
+        metricList.forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));
     }
 }

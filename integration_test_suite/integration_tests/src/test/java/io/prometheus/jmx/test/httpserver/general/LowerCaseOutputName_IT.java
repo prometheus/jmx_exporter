@@ -123,9 +123,7 @@ public class LowerCaseOutputName_IT extends BaseHttpServer_IT implements Content
         assertThat(metricList).isNotEmpty();
 
         // Assert that all metrics names are lowercase
-        metricList
-                .stream()
-                .forEach(m -> assertThat(m.getName()).isEqualTo(m.getName().toLowerCase()));
+        metricList.forEach(m -> assertThat(m.getName()).isEqualTo(m.getName().toLowerCase()));
 
         /*
          * Assert that we have a metric...
