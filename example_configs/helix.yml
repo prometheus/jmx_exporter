@@ -1,0 +1,150 @@
+rules:
+  # Cluster status
+  - pattern: "ClusterStatus<cluster=([^,]*),  jobType=([^,]*)><>([^,]*)Gauge\\.([^,]*):"
+    name: "helix_job_status_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      job_type: "$2"
+      quantile: "$4"
+  - pattern: "ClusterStatus<cluster=([^,]*),  jobType=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_job_status_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      job_type: "$2"
+  - pattern: "ClusterStatus<cluster=([^,]*),  jobType=([^,]*)><>([^,]*)Counter"
+    name: "helix_job_status_$3_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$1"
+      job_type: "$2"
+  - pattern: "ClusterStatus<cluster=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_cluster_status_$2"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+  - pattern: "ClusterStatus<cluster=([^,]*)><>([^,]*)Count[^,]*"
+    name: "helix_cluster_status_$2_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$1"
+  - pattern: "ClusterStatus<cluster=([^,]*), eventName=([^,]*), phaseName=([^,]*)><>([^,]*)Gauge\\.([^,]*):"
+    name: "helix_$2_$3_$4"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      quantile: "$5"
+  - pattern: "ClusterStatus<cluster=([^,]*), eventName=([^,]*), phaseName=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_$2_$3_$4"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+  - pattern: "ClusterStatus<cluster=([^,]*), eventName=([^,]*), phaseName=([^,]*)><>([^,]*)Counter"
+    name: "helix_$2_$3_$4_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$1"
+  - pattern: "ClusterStatus<cluster=([^,]*), instanceName=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_participant_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      participant: "$2"
+  - pattern: "ClusterStatus<cluster=([^,]*), instanceName=([^,]*), resourceName=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_participant_$4"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      participant: "$2"
+      resource: "$3"
+
+  - pattern: "ClusterStatus<cluster=([^,]*), messageQueue=([^,]*)><>([^,]*):"
+    name: "helix_message_queue_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      controller: "$2"
+  - pattern: "ClusterStatus<cluster=([^,]*), resourceName=([^,]*)><>([^,]*)Gauge\\.([^,]*):"
+    name: "helix_resource_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      resource: "$2"
+      quantile: "$4"
+  - pattern: "ClusterStatus<cluster=([^,]*), resourceName=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_resource_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      resource: "$2"
+  - pattern: "ClusterStatus<cluster=([^,]*), resourceName=([^,]*)><>([^,]*)Counter"
+    name: "helix_resource_$3_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$1"
+      resource: "$2"
+  # HelixCallback
+  - pattern: "HelixCallback<Type=([^,]*), Key=([^,]*)\\.([^,]*), Change=([^,]*)><>(.*)Gauge\\.(.*):"
+    name: "helix_callback_$4_$5"
+    type: "GAUGE"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+      type: "$1"
+      quantile: "$6"
+  - pattern: "HelixCallback<Type=([^,]*), Key=([^,]*)\\.([^,]*), Change=([^,]*)><>(.*)Counter"
+    name: "helix_callback_$1_$5_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+      type: "$4"
+  # HelixZKCallback
+  - pattern: "HelixZkClient<Type=([^,]*), Key=([^,]*)\\.([^,]*)><>([^,]*)Gauge:"
+    name: "helix_zk_callback_$1_$4"
+    type: "GAUGE"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+  - pattern: "HelixZkClient<Type=([^,]*), Key=([^,]*)\\.([^,]*)><>([^,]*)Counter"
+    name: "helix_zk_callback_$1_$4_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+  - pattern: "HelixZkClient<Type=([^,]*), Key=([^,]*)\\.([^,]*), PATH=([^,]*)><>([^,]*)Gauge\\.([^,]*):"
+    name: "helix_zk_callback_$1_$5"
+    type: "GAUGE"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+      path: "$4"
+      quantile: "$6"
+  - pattern: "HelixZkClient<Type=([^,]*), Key=([^,]*)\\.([^,]*), PATH=([^,]*)><>([^,]*)Counter"
+    name: "helix_zk_callback_$1_$5_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$2"
+      controller: "$3"
+      path: "$4"
+#   Rebalancer
+  - pattern: "Rebalancer<ClusterName=([^,]*),  EntityName=([^,]*)><>([^,]*)Gauge:"
+    name: "helix_rebalancer_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      rebalancer: "$2"
+  - pattern: "Rebalancer<ClusterName=([^,]*),  EntityName=([^,]*)><>([^,]*)Gauge\\.([^,]*):"
+    name: "helix_rebalancer_$3"
+    type: "GAUGE"
+    labels:
+      cluster: "$1"
+      rebalancer: "$2"
+      quantile: "$4"
+  - pattern: "Rebalancer<ClusterName=([^,]*),  EntityName=([^,]*)><>([^,]*)Counter"
+    name: "helix_rebalancer_$3_total"
+    type: "COUNTER"
+    labels:
+      cluster: "$1"
+      rebalancer: "$2"
