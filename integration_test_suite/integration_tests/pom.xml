@@ -39,6 +39,7 @@
             azul/zulu-openjdk:17
             azul/zulu-openjdk:19
             azul/zulu-openjdk:20
+            ibmjava:8-jre
             openjdk:6
             ticketfly/java:6
         </docker.image.names>
