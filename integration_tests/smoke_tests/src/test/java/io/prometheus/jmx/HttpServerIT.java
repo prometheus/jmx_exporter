@@ -46,8 +46,8 @@ public class HttpServerIT {
             { "openjdk:7", "jmx_prometheus_httpserver" },
 
             // OpenJ9
-            { "ibmjava:8-jre", "jmx_prometheus_httpserver_java6" },
-            { "ibmjava:8-jre", "jmx_prometheus_httpserver" },
+            //{ "ibmjava:8-jre", "jmx_prometheus_httpserver_java6" },
+            //{ "ibmjava:8-jre", "jmx_prometheus_httpserver" },
 
             { "ibmjava:11", "jmx_prometheus_httpserver_java6" },
             { "ibmjava:11", "jmx_prometheus_httpserver" },

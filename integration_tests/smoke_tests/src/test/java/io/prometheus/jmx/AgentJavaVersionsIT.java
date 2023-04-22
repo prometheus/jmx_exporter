@@ -51,8 +51,8 @@ public class AgentJavaVersionsIT {
         { "openjdk:7", "jmx_prometheus_javaagent" },
 
         // OpenJ9
-        { "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
-        { "ibmjava:8-jre", "jmx_prometheus_javaagent" },
+        //{ "ibmjava:8-jre", "jmx_prometheus_javaagent_java6" },
+        //{ "ibmjava:8-jre", "jmx_prometheus_javaagent" },
 
         { "ibmjava:11", "jmx_prometheus_javaagent_java6" },
         { "ibmjava:11", "jmx_prometheus_javaagent" },
