@@ -35,7 +35,6 @@ ghcr.io/graalvm/jdk:java11
 ghcr.io/graalvm/jdk:java17
 ibmjava:8
 ibmjava:11
-ibmjava:8-jre
 ibm-semeru-runtimes:open-8-jdk-focal
 ibm-semeru-runtimes:open-11-jdk-focal
 ibm-semeru-runtimes:open-17-jdk-focal
