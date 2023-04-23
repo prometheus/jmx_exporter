@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static java.lang.String.format;
 
@@ -75,6 +76,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       long lastUpdate = 0L;
 
       MatchedRulesCache rulesCache;
+      String collectorNamePattern = "";
     }
 
     private Config config;
@@ -209,6 +211,16 @@ public class JmxCollector extends Collector implements Collector.Describable {
           }
         }
 
+        if (yamlConfig.containsKey("collectorNamePattern")) {
+        	final String pattern = (String)yamlConfig.get("collectorNamePattern");
+            try {
+            	Pattern.compile(pattern);
+                cfg.collectorNamePattern = pattern;
+            } catch (PatternSyntaxException e) {
+            	throw new IllegalArgumentException("Invalid collectNamePattern regular expression: " + pattern);
+            }
+        }
+        
       if (yamlConfig.containsKey("rules")) {
           List<Map<String,Object>> configRules = (List<Map<String,Object>>) yamlConfig.get("rules");
           for (Map<String, Object> ruleObject : configRules) {
@@ -276,6 +288,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
         return cfg;
 
+    }
+  
+    public String getCollectorNamePattern() {
+    	return config.collectorNamePattern;
     }
 
     static String toSnakeAndLowerCase(String attrName) {
