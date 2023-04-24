@@ -31,7 +31,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jmx.core.root>../..</jmx.core.root>
-        <test.engine.version>3.0.3</test.engine.version>
+        <test.engine.version>3.1.0</test.engine.version>
         <!-- smoke test containers -->
         <docker.image.names>
             azul/zulu-openjdk:8
