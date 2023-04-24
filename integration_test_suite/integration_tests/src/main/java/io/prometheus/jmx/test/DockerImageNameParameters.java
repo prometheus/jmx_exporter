@@ -96,7 +96,7 @@ public final class DockerImageNameParameters {
 
         if (dockerImageNameValue == null) {
             dockerImageNames = DOCKER_IMAGE_NAMES;
-        } else if (dockerImageNameValue.isEmpty() || dockerImageNameValue.equals("ALL")) {
+        } else if (dockerImageNameValue.isEmpty() || dockerImageNameValue.equalsIgnoreCase("ALL")) {
             dockerImageNames = DOCKER_IMAGE_NAMES;
         } else {
             dockerImageNames = dockerImageNameValue.trim().split("\\s+");
