@@ -5,7 +5,7 @@ COPY . /opt/jmx_exporter
 WORKDIR /opt/jmx_exporter/
 RUN mvn package -DskipTests
 
-FROM anapsix/alpine-java:8 as scratch
+FROM anapsix/alpine-java:9 as scratch
 
 RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
 
