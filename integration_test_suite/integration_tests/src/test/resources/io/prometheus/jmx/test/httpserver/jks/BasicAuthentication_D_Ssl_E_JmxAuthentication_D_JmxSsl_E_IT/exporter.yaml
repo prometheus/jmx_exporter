@@ -1,9 +1,0 @@
-httpServer:
-  ssl:
-    enabled: true
-    certificateAlias: localhost
-
-hostPort: application:9999
-ssl: true
-rules:
-  - pattern: ".*"

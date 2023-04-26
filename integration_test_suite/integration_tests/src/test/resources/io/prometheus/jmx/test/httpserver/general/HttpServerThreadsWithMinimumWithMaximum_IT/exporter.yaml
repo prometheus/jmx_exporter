@@ -1,8 +1,0 @@
-httpServer:
-  threads:
-    minimum: 2
-    maximum: 6
-    keelAlive: 60000
-hostPort: application:9999
-rules:
-  - pattern: ".*"

@@ -1,6 +1,0 @@
-hostPort: application:9999
-ssl: true
-username: jmx-exporter
-password: secret
-rules:
-  - pattern: ".*"

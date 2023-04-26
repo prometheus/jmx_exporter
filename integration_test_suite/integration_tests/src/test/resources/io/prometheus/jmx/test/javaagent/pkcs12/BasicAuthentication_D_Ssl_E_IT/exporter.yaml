@@ -1,7 +1,0 @@
-httpServer:
-  ssl:
-    enabled: true
-    certificateAlias: localhost
-
-rules:
-  - pattern: ".*"
