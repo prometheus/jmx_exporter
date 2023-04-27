@@ -17,9 +17,12 @@
 package io.prometheus.jmx.test.support;
 
 import okhttp3.Headers;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.List;
 import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Class to implement a Response
@@ -132,7 +135,9 @@ public class BaseResponse implements Response {
      */
     @Override
     public Response isEqualTo(Response response) {
-        equals(response);
+        if (!equals(response)) {
+            throw new AssertionFailedError("Actual response doesn't match expected response");
+        }
         return this;
     }
 
@@ -184,7 +189,7 @@ public class BaseResponse implements Response {
 
         BaseResponse that = (BaseResponse) o;
 
-        if (code != that.code) {
+        if (!Objects.equals(code, that.code)) {
             return false;
         }
 
