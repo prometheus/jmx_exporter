@@ -121,3 +121,9 @@ rules:
   type: GAUGE
   labels:
     "$4": "$5"
+
+# Kraft metrics - https://kafka.apache.org/documentation/#kraft_monitoring
+- pattern: 'kafka.server<type=(.+)><>(.+): (.+)'
+  name: kafka_server_$1
+  labels:
+    name: "$2"
