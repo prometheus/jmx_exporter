@@ -67,7 +67,7 @@ public class WhiteListObjectNames_IT extends BaseHttpServer_IT implements Conten
     }
 
     @TestEngine.BeforeAll
-    public void beforeAll() throws Exception {
+    public void beforeAll() {
         applicationContainer = createApplicationContainer(this, dockerImageName, network);
         applicationContainer.start();
 
@@ -78,29 +78,29 @@ public class WhiteListObjectNames_IT extends BaseHttpServer_IT implements Conten
     }
 
     @TestEngine.Test
-    public void testHealthy() throws Exception {
+    public void testHealthy() {
         assertThatRequestResponse(new HealthyRequest(httpClient))
-                .isEqualTo(HealthyResponse.RESULT_200);
+                .isSuperset(HealthyResponse.RESULT_200);
     }
 
     @TestEngine.Test
-    public void testMetrics() throws Exception {
+    public void testMetrics() {
         assertThatRequestResponse(new MetricsRequest(httpClient))
-                .isEqualTo(MetricsResponse.RESULT_200)
+                .isSuperset(MetricsResponse.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() throws Exception {
+    public void testMetricsOpenMetricsFormat() {
         assertThatRequestResponse(new OpenMetricsRequest(httpClient))
-                .isEqualTo(OpenMetricsResponse.RESULT_200)
+                .isSuperset(OpenMetricsResponse.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
-    public void testMetricsPrometheusFormat() throws Exception {
+    public void testMetricsPrometheusFormat() {
         assertThatRequestResponse(new PrometheusMetricsRequest(httpClient))
-                .isEqualTo(PrometheusMetricsResponse.RESULT_200)
+                .isSuperset(PrometheusMetricsResponse.RESULT_200)
                 .dispatch(this);
     }
 

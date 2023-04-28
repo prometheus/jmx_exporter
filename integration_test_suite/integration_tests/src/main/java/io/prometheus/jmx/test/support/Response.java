@@ -31,7 +31,7 @@ public interface Response {
      * @param response
      * @return
      */
-    Response isEqualTo(Response response);
+    Response isSuperset(Response response);
 
     /**
      * Method to dispatch the response code to a CodeConsumer

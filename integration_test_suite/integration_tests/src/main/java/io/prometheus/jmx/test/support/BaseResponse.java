@@ -127,16 +127,16 @@ public class BaseResponse implements Response {
         return content;
     }
 
-    /**f
-     * Method to compare whether this Response is equals to another Object
+    /**
+     * Method to check if this Response is a superset of another Response
      *
      * @param response
      * @return
      */
     @Override
-    public Response isEqualTo(Response response) {
-        if (!equals(response)) {
-            throw new AssertionFailedError("Actual response doesn't match expected response");
+    public Response isSuperset(Response response) {
+        if (!checkSuperset(response)) {
+            throw new AssertionFailedError("Actual response isn't a superset of the expected response");
         }
         return this;
     }
@@ -189,6 +189,35 @@ public class BaseResponse implements Response {
 
         BaseResponse that = (BaseResponse) o;
 
+        return hasContent == that.hasContent
+                && Objects.equals(code, that.code)
+                && Objects.equals(headers, that.headers)
+                && Objects.equals(content, that.content)
+                && Objects.equals(headersBuilder, that.headersBuilder);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(code, headers, content);
+    }
+
+    /**
+     * Method to check if this Object is a superset of another object
+     *
+     * @param o o
+     * @return the return value
+     */
+    private boolean checkSuperset(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        BaseResponse that = (BaseResponse) o;
+
         if (!Objects.equals(code, that.code)) {
             return false;
         }
@@ -215,10 +244,5 @@ public class BaseResponse implements Response {
         } else {
             return true;
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(code, headers, content);
     }
 }
