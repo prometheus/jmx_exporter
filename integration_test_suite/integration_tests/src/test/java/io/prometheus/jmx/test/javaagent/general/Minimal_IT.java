@@ -176,7 +176,7 @@ public class Minimal_IT extends BaseJavaAgent_IT implements ContentConsumer {
         metric = optional.get();
         assertThat(metric.getValue()).isEqualTo(7.516192768E9);
 
-        /**
+        /*
          * Assert that we have a metric...         *
          * name = jvm_threads_state
          */

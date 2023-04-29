@@ -122,9 +122,11 @@ public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT imple
         assertThat(metricList).isNotNull();
         assertThat(metricList).isNotEmpty();
 
-        // Assert that we have a metric...
-        //
-        // name = java_lang_Memory_NonHeapMemoryUsage_committed
+        /*
+         * Assert that we have a metric...
+         *
+         * name = java_lang_Memory_NonHeapMemoryUsage_committed
+         */
         Optional<Metric> optional =
                 metricList
                         .stream()
@@ -133,9 +135,11 @@ public class BlackListAndWhiteListObjectNames_IT extends BaseHttpServer_IT imple
                         .findFirst();
         assertThat(optional).isPresent();
 
-        // Assert that we don't have a metric...
-        //
-        // name = io_prometheus_jmx*
+        /*
+         * Assert that we don't have a metric...
+         *
+         * name = io_prometheus_jmx*
+         */
         metricList.forEach(m -> assertThat(m.getName()).doesNotStartWith("io_prometheus_jmx"));
     }
 }
