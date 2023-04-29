@@ -19,10 +19,10 @@ package io.prometheus.jmx.test;
 import io.prometheus.jmx.test.util.Precondition;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 public class Metric {
 
@@ -109,7 +109,7 @@ public class Metric {
     }
 
     private static Map<String, String> parseLabels(String line) {
-        Map<String, String> map = new LinkedHashMap<>();
+        Map<String, String> map = new TreeMap<>();
 
         int index = line.indexOf("{");
         int lastIndex = line.lastIndexOf("}");
