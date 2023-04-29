@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,10 +41,10 @@ public final class MetricsParser {
      * A List is used because Metrics could have the same name, but with different labels
      *
      * @param content
-     * @return
+     * @return the return value
      * @throws IOException
      */
-    public static List<Metric> parse(String content)  {
+    public static Collection<Metric> parse(String content)  {
         List<Metric> metricList = new ArrayList<>();
 
         BufferedReader bufferedReader = null;

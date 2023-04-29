@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
-
-import io.prometheus.jmx.test.HttpClient;
+package io.prometheus.jmx.test;
 
 /**
- * Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics)
+ * Enum of the two operational modes
  */
-public class OpenMetricsRequest extends BaseRequest {
+public enum Mode {
 
-    private static String CONTENT_TYPE = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+    Standalone, JavaAgent;
 
-    /**
-     * Constructor
-     *
-     * @param httpClient
-     */
-    public OpenMetricsRequest(HttpClient httpClient) {
-        super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
-    }
+    public static final Mode[] VALUES = new Mode[] { JavaAgent, Standalone };
 }

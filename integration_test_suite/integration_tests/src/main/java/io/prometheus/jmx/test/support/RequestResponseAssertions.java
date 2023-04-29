@@ -16,22 +16,25 @@
 
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.HttpClient;
-
 /**
- * Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics)
+ * Class to implement Request Response assertions
  */
-public class OpenMetricsRequest extends BaseRequest {
-
-    private static String CONTENT_TYPE = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+public class RequestResponseAssertions {
 
     /**
      * Constructor
-     *
-     * @param httpClient
      */
-    public OpenMetricsRequest(HttpClient httpClient) {
-        super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
+    private RequestResponseAssertions() {
+        // DO NOTHING
+    }
+
+    /**
+     * Method to execute a Request and return the Response
+     *
+     * @param request request
+     * @return the TestResult
+     */
+    public static Response assertThatResponseForRequest(Request request) {
+        return request.execute();
     }
 }

@@ -1,4 +1,0 @@
-defaultExports: false
-blacklistObjectNames: ["JMImplementation:*", "java.lang:*", "java.nio:*", "java.util:*", "java.util.logging:*", "jdk.management.jfr:*", "com.sun.management:*"]
-rules:
-  - pattern: ".*"

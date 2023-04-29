@@ -1,4 +1,0 @@
-hostPort: application:9999
-blacklistObjectNames: ["io.prometheus.jmx:*"]
-rules:
-  - pattern: ".*"

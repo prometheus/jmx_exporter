@@ -1,3 +1,0 @@
-jmxUrl: service:jmx:rmi:///jndi/rmi://application:9999/jmxrmi
-rules:
-  - pattern: ".*"

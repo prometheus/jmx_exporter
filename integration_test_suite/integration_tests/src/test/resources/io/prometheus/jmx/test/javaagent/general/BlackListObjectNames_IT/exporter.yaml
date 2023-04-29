@@ -1,3 +1,0 @@
-blacklistObjectNames: ["io.prometheus.jmx:*"]
-rules:
-  - pattern: ".*"

@@ -23,5 +23,5 @@ import java.util.function.Consumer;
  */
 public interface ContentConsumer extends Consumer<String> {
 
-    void accept(String contents);
+    void accept(String content);
 }

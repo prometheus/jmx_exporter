@@ -16,22 +16,34 @@
 
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.HttpClient;
+import io.prometheus.jmx.test.Metric;
+
+import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics)
+ * Class to implement a metrics assertion
  */
-public class OpenMetricsRequest extends BaseRequest {
-
-    private static String CONTENT_TYPE = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+public class MetricsAssertions {
 
     /**
      * Constructor
-     *
-     * @param httpClient
      */
-    public OpenMetricsRequest(HttpClient httpClient) {
-        super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
+    private MetricsAssertions() {
+        // DO NOTHING
+    }
+
+    /**
+     * Method to create a MetricAssertion
+     *
+     * @param metrics metrics
+     * @return the return value
+     */
+    public static MetricAssertion assertMetricIn(Collection<Metric> metrics) {
+        assertThat(metrics).isNotNull();
+        assertThat(metrics).isNotEmpty();
+
+        return new MetricAssertion(metrics);
     }
 }
