@@ -40,7 +40,7 @@ public class MetricsAssertions {
      * @param metrics metrics
      * @return the return value
      */
-    public static MetricAssertion assertMetricIn(Collection<Metric> metrics) {
+    public static MetricAssertion assertThatMetricIn(Collection<Metric> metrics) {
         assertThat(metrics).isNotNull();
         assertThat(metrics).isNotEmpty();
 

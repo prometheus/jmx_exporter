@@ -33,7 +33,7 @@ import org.testcontainers.containers.Network;
 
 import java.util.Collection;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertMetricIn;
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 
 public class Minimal_IT extends Abstract_IT implements ContentConsumer {
@@ -128,33 +128,33 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
                 .withLabel("name", deriveBuildName(mode, isJava6))
                 .exists();
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
                 .withLabel("name", deriveBuildName(mode, isJava6))
                 .exists();
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
                 .exists();
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .withLabel("source", "/dev/sda1")
                 .withValue(7.516192768E9)
                 .exists();
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8)
                 .exists();
 
-        assertMetricIn(metrics)
+        assertThatMetricIn(metrics)
                 .withName("jvm_threads_state")
                 .exists(mode == Mode.JavaAgent ? true : false);
     }

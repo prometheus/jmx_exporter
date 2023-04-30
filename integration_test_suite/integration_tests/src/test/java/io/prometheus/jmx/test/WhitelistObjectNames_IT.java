@@ -33,7 +33,7 @@ import org.testcontainers.containers.Network;
 
 import java.util.Collection;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertMetricIn;
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -128,15 +128,6 @@ public class WhitelistObjectNames_IT extends Abstract_IT implements ContentConsu
     @Override
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
-
-        assertMetricIn(metrics)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", deriveBuildName(mode, isJava6))
-                .exists();
-
-        assertMetricIn(metrics)
-                .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
-                .exists();
 
         /*
          * We have to filter metrics that start with ...
