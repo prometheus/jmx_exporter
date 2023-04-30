@@ -31,7 +31,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jmx.core.root>../..</jmx.core.root>
-        <test.engine.version>3.1.3</test.engine.version>
+        <antublue.test.engine.version>3.1.3</antublue.test.engine.version>
+        <antublue.test.engine.thread.count>1</antublue.test.engine.thread.count>
         <!-- smoke test containers -->
         <docker.image.names>
             azul/zulu-openjdk:8
@@ -131,10 +132,11 @@
             <plugin>
                 <groupId>org.antublue</groupId>
                 <artifactId>test-engine-maven-plugin</artifactId>
-                <version>${test.engine.version}</version>
+                <version>${antublue.test.engine.version}</version>
                 <configuration>
                     <properties>
                         <docker.image.names>${docker.image.names}</docker.image.names>
+                        <antublue.test.engine.thread.count>${antublue.test.engine.thread.count}</antublue.test.engine.thread.count>
                     </properties>
                 </configuration>
                 <executions>
@@ -153,7 +155,7 @@
         <dependency>
             <groupId>org.antublue</groupId>
             <artifactId>test-engine-api</artifactId>
-            <version>${test.engine.version}</version>
+            <version>${antublue.test.engine.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -183,7 +185,7 @@
         <dependency>
             <groupId>org.antublue</groupId>
             <artifactId>test-engine</artifactId>
-            <version>${test.engine.version}</version>
+            <version>${antublue.test.engine.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
