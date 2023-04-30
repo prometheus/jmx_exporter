@@ -22,6 +22,4 @@ package io.prometheus.jmx.test;
 public enum Mode {
 
     Standalone, JavaAgent;
-
-    public static final Mode[] VALUES = new Mode[] { JavaAgent, Standalone };
 }

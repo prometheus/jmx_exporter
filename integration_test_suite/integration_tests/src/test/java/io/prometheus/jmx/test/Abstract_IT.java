@@ -49,7 +49,7 @@ public class Abstract_IT {
         DockerImageNames
                 .names()
                 .forEach(dockerImageName -> {
-                    for (Mode mode : Mode.VALUES) {
+                    for (Mode mode : Mode.values()) {
                         parameters.add(
                                 ParameterMap
                                         .named(dockerImageName + " / " + mode)
