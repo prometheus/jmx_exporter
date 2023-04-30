@@ -37,6 +37,9 @@ public class Abstract_IT {
     public static final String IS_JAVA_6 = "isJava6";
     public static final String MODE = "mode";
 
+    private static final long MEMORY_BYTES = 1073741824; // 1GB
+    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+
     /**
      * Method to get the list of Docker image names
      *
@@ -92,6 +95,7 @@ public class Abstract_IT {
                         .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
+                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh application.sh")
                         .withExposedPorts(9999)
@@ -125,6 +129,7 @@ public class Abstract_IT {
                         .waitingFor(Wait.forHttp("/"))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
+                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh exporter.sh")
                         .withExposedPorts(8888)
@@ -157,6 +162,7 @@ public class Abstract_IT {
                         .waitingFor(Wait.forHttp("/"))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
+                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh application.sh")
                         .withExposedPorts(8888)
