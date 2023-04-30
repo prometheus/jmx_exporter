@@ -49,7 +49,7 @@
         <module>jmx_prometheus_javaagent_common</module>
         <module>jmx_prometheus_javaagent_java6</module>
         <module>jmx_prometheus_javaagent</module>
-        <module>integration_tests</module>
+        <module>integration_test_suite</module>
     </modules>
 
     <distributionManagement>
@@ -123,7 +123,7 @@
                 <!-- Plugins with groupId org.apache.maven.plugins that are not part of default bindings. -->
                 <plugin>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.4</version>
+                    <version>3.4.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
