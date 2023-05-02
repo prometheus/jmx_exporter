@@ -33,7 +33,6 @@ import org.testcontainers.containers.Network;
 
 import java.util.Collection;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -147,6 +146,10 @@ public class WhitelistObjectNames_IT extends Abstract_IT implements ContentConsu
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
-                .forEach(metric -> assertThat(metric.getName().toLowerCase()).startsWith("java_lang"));
+                .forEach(metric -> {
+                    String name = metric.getName();
+                    boolean match = name.startsWith("java_lang") || name.startsWith("io_prometheus_jmx");
+                    assertThat(match).isTrue();
+                });
     }
 }

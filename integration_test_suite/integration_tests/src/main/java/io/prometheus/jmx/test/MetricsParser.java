@@ -37,10 +37,10 @@ public final class MetricsParser {
 
     /**
      * Method to parse a response as a list of Metric objects
-     * <p/>
+     * <p>
      * A List is used because Metrics could have the same name, but with different labels
      *
-     * @param content
+     * @param content content
      * @return the return value
      * @throws IOException
      */

@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx;
 
-public class PrometheusMetricsResponse extends BaseResponse {
+import java.util.concurrent.atomic.AtomicInteger;
 
-    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+public class AutoIncrementing implements AutoIncrementingMBean {
 
-    public static final BaseResponse RESULT_200 = new BaseResponse().withCode(200).withContentType(CONTENT_TYPE);
+    private final AtomicInteger atomicInteger;
+
+    public AutoIncrementing() {
+        atomicInteger = new AtomicInteger(1);
+    }
+
+    @Override
+    public int getValue() {
+        return atomicInteger.getAndIncrement();
+    }
 }

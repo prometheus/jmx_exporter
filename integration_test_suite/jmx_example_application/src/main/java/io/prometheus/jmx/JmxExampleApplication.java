@@ -30,14 +30,20 @@ public class JmxExampleApplication {
 
     public static void main(String[] args) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
         ObjectName tabularMBean = new ObjectName("io.prometheus.jmx:type=tabularData");
         server.registerMBean(new TabularMBean(), tabularMBean);
+
+        ObjectName autoIncrementingMBan = new ObjectName("io.prometheus.jmx:type=autoIncrementing");
+        server.registerMBean(new AutoIncrementing(), autoIncrementingMBan);
+
         System.out.println(
                 String.format("%s | %s | INFO | %s | %s",
                         SIMPLE_DATE_FORMAT.format(new Date()),
                         Thread.currentThread().getName(),
                         JmxExampleApplication.class.getName(),
                         "Running"));
+
         Thread.currentThread().join(); // wait forever
     }
 }
