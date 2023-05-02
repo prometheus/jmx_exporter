@@ -27,13 +27,22 @@ import java.util.Objects;
  */
 public class BaseResponse implements Response {
 
+    public static final Response RESULT_401 = new BaseResponse().withCode(401);
+
+    private enum Status {
+        OBJECT_NULL,
+        OBJECT_CLASS_MISMATCH,
+        STATUS_CODE_MISMATCH,
+        HEADERS_MISMATCH_1,
+        HEADERS_MISMATCH_2,
+        HEADERS_MISMATCH_3,
+        CONTENT_MISMATCH_1,
+        MATCH }
+
     private Integer code;
-
     private Headers headers;
-
     private boolean hasContent;
     private String content;
-
     private Headers.Builder headersBuilder;
 
     /**
@@ -133,8 +142,16 @@ public class BaseResponse implements Response {
      */
     @Override
     public Response isSuperset(Response response) {
-        if (!checkSuperset(response)) {
-            throw new AssertionFailedError("Actual response isn't a superset of the expected response");
+        Status status = checkSuperset(response);
+        switch (status) {
+            case MATCH: {
+                break;
+            } default: {
+                throw new AssertionFailedError(
+                        String.format(
+                                "Actual response is not a superset of the expected response, error [%s]",
+                                status));
+            }
         }
         return this;
     }
@@ -205,42 +222,46 @@ public class BaseResponse implements Response {
      * @param o o
      * @return the return value
      */
-    private boolean checkSuperset(Object o) {
+    private Status checkSuperset(Object o) {
         if (this == o) {
-            return true;
+            return Status.MATCH;
         }
 
-        if (o == null || getClass() != o.getClass()) {
-            return false;
+        if (o == null) {
+            return Status.OBJECT_NULL;
+        }
+
+        if (getClass() != o.getClass()) {
+            return Status.OBJECT_CLASS_MISMATCH;
         }
 
         BaseResponse that = (BaseResponse) o;
 
-        if (!Objects.equals(code, that.code)) {
-            return false;
+        if (!Objects.equals(this.code, that.code)) {
+            return Status.STATUS_CODE_MISMATCH;
         }
 
-        if ((this.headers != null) && (that.headers == null)) {
-            return false;
-        } else if ((this.headers == null) && (that.headers != null)) {
-            return false;
-        } else if ((this.headers != null) && (that.headers != null)) {
+        if (this.headers != null && that.headers == null) {
+            return Status.HEADERS_MISMATCH_1;
+        } else if (this.headers == null && that.headers != null) {
+            return Status.HEADERS_MISMATCH_2;
+        } else if (this.headers != null && that.headers != null) {
             Headers thatHeaders = that.headers;
             for (String name : thatHeaders.names()) {
-                List<String> values = headers.values(name);
+                List<String> values = this.headers.values(name);
                 List<String> thatValues = thatHeaders.values(name);
                 for (String thatValue : thatValues) {
                     if (!values.contains(thatValue)) {
-                        return false;
+                        return Status.HEADERS_MISMATCH_3;
                     }
                 }
             }
         }
 
-        if (that.content != null) {
-            return Objects.equals(content, that.content);
-        } else {
-            return true;
+        if (that.content != null && !Objects.equals(this.content, that.content)) {
+            return Status.CONTENT_MISMATCH_1;
         }
+
+        return Status.MATCH;
     }
 }

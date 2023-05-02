@@ -29,6 +29,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class Abstract_IT {
@@ -39,6 +40,21 @@ public class Abstract_IT {
 
     private static final long MEMORY_BYTES = 1073741824; // 1GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+
+    private static final Predicate<Integer> STATUS_CODE_200_OR_401_PREDICATE = new Predicate<>() {
+
+        /**
+         * Evaluates this predicate on the given argument.
+         *
+         * @param statusCode the input argument
+         * @return {@code true} if the input argument matches the predicate,
+         * otherwise {@code false}
+         */
+        @Override
+        public boolean test(Integer statusCode) {
+            return 200 == statusCode || 401 == statusCode;
+        }
+    };
 
     /**
      * Method to get the list of Docker image names
@@ -126,7 +142,7 @@ public class Abstract_IT {
         // Exporter container
         GenericContainer<?> exporterContainer =
                 new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forHttp("/"))
+                        .waitingFor(Wait.forHttp("/").forStatusCodeMatching(STATUS_CODE_200_OR_401_PREDICATE))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
@@ -159,7 +175,7 @@ public class Abstract_IT {
             Network network, String dockerImageName, String testName) {
         GenericContainer<?> applicationContainer =
                 new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forHttp("/"))
+                        .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))

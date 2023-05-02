@@ -23,8 +23,6 @@ import io.prometheus.jmx.test.HttpClient;
  */
 public class HealthyRequest extends BaseRequest {
 
-    private static final String CONTENT = "Exporter is Healthy.";
-
     /**
      * Constructor
      *
