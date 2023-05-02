@@ -21,22 +21,19 @@ import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
 import io.prometheus.jmx.test.support.MetricsRequest;
 import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import org.antublue.test.engine.api.Parameter;
 import org.antublue.test.engine.api.ParameterMap;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
 import java.util.Collection;
 
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LowerCaseOutputLabelNames_IT extends Abstract_IT implements ContentConsumer {
+public class AutoIncrementing_IT extends Abstract_IT {
 
     private static final String BASE_URL = "http://localhost";
 
@@ -93,23 +90,50 @@ public class LowerCaseOutputLabelNames_IT extends Abstract_IT implements Content
 
     @TestEngine.Test
     public void testMetrics() {
+        AtomicDouble value1 = new AtomicDouble();
+        AtomicDouble value2 = new AtomicDouble();
+        AtomicDouble value3 = new AtomicDouble();
+
         assertThatResponseForRequest(new MetricsRequest(httpClient))
                 .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch(this);
-    }
+                .dispatch((ContentConsumer) content -> {
+                    Collection<Metric> metrics = MetricsParser.parse(content);
+                    metrics
+                            .forEach(metric -> {
+                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
+                                    assertThat(metric.getValue()).isGreaterThanOrEqualTo(1);
+                                    value1.set(metric.getValue());
+                                }
+                            });
+                });
 
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequest(httpClient))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
-                .dispatch(this);
-    }
+        assertThatResponseForRequest(new MetricsRequest(httpClient))
+                .isSuperset(MetricsResponse.RESULT_200)
+                .dispatch((ContentConsumer) content -> {
+                    Collection<Metric> metrics = MetricsParser.parse(content);
+                    metrics
+                            .forEach(metric -> {
+                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
+                                    value2.set(metric.getValue());
+                                }
+                            });
+                });
 
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequest(httpClient))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
-                .dispatch(this);
+        assertThatResponseForRequest(new MetricsRequest(httpClient))
+                .isSuperset(MetricsResponse.RESULT_200)
+                .dispatch((ContentConsumer) content -> {
+                    Collection<Metric> metrics = MetricsParser.parse(content);
+                    metrics
+                            .forEach(metric -> {
+                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
+                                    value3.set(metric.getValue());
+                                }
+                            });
+                });
+
+        // Use value1 as a baseline value
+        assertThat(value2.get()).isEqualTo(value1.get() + 1);
+        assertThat(value3.get()).isEqualTo(value2.get() + 1);
     }
 
     @TestEngine.AfterAll
@@ -122,20 +146,5 @@ public class LowerCaseOutputLabelNames_IT extends Abstract_IT implements Content
     @TestEngine.AfterClass
     public static void afterClass() {
         destroy(network);
-    }
-
-    @Override
-    public void accept(String content) {
-        Collection<Metric> metricCollection = MetricsParser.parse(content);
-
-        /*
-         * Assert that all metrics have lower case label names
-         */
-        metricCollection
-                .forEach(metric -> {
-                    metric
-                            .getLabels()
-                            .forEach((key, value) -> assertThat(key).isEqualTo(key.toLowerCase()));
-                });
     }
 }

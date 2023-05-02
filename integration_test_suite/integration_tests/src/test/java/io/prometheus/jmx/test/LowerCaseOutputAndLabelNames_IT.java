@@ -136,9 +136,7 @@ public class LowerCaseOutputAndLabelNames_IT extends Abstract_IT implements Cont
                         assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase());
                         metric
                                 .getLabels()
-                                .entrySet()
-                                .stream()
-                                .forEach(entry -> assertThat(entry.getKey()).isEqualTo(entry.getKey().toLowerCase()));
+                                .forEach((key, value) -> assertThat(key).isEqualTo(key.toLowerCase()));
                     });
     }
 }

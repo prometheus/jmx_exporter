@@ -18,10 +18,7 @@ package io.prometheus.jmx.test;
 
 public class HttpHeader {
 
-    public static final String ACCEPT = "Accept";
     public static final String AUTHORIZATION = "Authorization";
-
-    public static final String CONTENT_TYPE = "Content-Type";
 
     private HttpHeader() {
         // DO NOTHING

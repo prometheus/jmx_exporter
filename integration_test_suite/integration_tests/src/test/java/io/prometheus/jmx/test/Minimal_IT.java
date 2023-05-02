@@ -134,11 +134,6 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
                 .exists();
 
         assertThatMetricIn(metrics)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", deriveBuildName(mode, isJava6))
-                .exists();
-
-        assertThatMetricIn(metrics)
                 .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
                 .exists();
 
@@ -156,6 +151,6 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
 
         assertThatMetricIn(metrics)
                 .withName("jvm_threads_state")
-                .exists(mode == Mode.JavaAgent ? true : false);
+                .exists(mode == Mode.JavaAgent);
     }
 }

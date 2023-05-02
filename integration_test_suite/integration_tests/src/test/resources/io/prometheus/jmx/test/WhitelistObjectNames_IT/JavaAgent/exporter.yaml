@@ -1,3 +1,3 @@
-whitelistObjectNames: ["java.lang:*"]
+whitelistObjectNames: ["java.lang:*", "io.prometheus.jmx:*"]
 rules:
   - pattern: ".*"
