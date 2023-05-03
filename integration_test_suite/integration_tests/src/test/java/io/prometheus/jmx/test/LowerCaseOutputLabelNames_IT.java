@@ -44,7 +44,6 @@ public class LowerCaseOutputLabelNames_IT extends Abstract_IT implements Content
 
     private String testName;
     private String dockerImageName;
-    private boolean isJava6;
     private Mode mode;
 
     private GenericContainer<?> applicationContainer;
@@ -56,7 +55,6 @@ public class LowerCaseOutputLabelNames_IT extends Abstract_IT implements Content
         ParameterMap parameterMap = parameter.value();
         testName = getClass().getName();
         dockerImageName = parameterMap.get(DOCKER_IMAGE_NAME);
-        isJava6 = parameterMap.get(IS_JAVA_6);
         mode = parameterMap.get(MODE);
     }
 

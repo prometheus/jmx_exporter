@@ -29,32 +29,15 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class Abstract_IT {
 
     public static final String DOCKER_IMAGE_NAME = "dockerImageName";
-    public static final String IS_JAVA_6 = "isJava6";
     public static final String MODE = "mode";
 
     private static final long MEMORY_BYTES = 1073741824; // 1GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
-
-    private static final Predicate<Integer> STATUS_CODE_200_OR_401_PREDICATE = new Predicate<>() {
-
-        /**
-         * Evaluates this predicate on the given argument.
-         *
-         * @param statusCode the input argument
-         * @return {@code true} if the input argument matches the predicate,
-         * otherwise {@code false}
-         */
-        @Override
-        public boolean test(Integer statusCode) {
-            return 200 == statusCode || 401 == statusCode;
-        }
-    };
 
     /**
      * Method to get the list of Docker image names
@@ -74,7 +57,6 @@ public class Abstract_IT {
                                         .named(dockerImageName + " / " + mode)
                                         .put("dockerImageName", dockerImageName)
                                         .put("mode", mode)
-                                        .put("isJava6", dockerImageName.contains(":6"))
                                         .parameter());
                     }
                 });
@@ -106,7 +88,7 @@ public class Abstract_IT {
      */
     protected static GenericContainer<?> createStandaloneApplicationContainer(
             Network network, String dockerImageName, String testName) {
-        GenericContainer<?> applicationContainer =
+        return
                 new GenericContainer<>(dockerImageName)
                         .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
@@ -115,18 +97,17 @@ public class Abstract_IT {
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh application.sh")
                         .withExposedPorts(9999)
-                        .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
+                        .withLogConsumer(outputFrame -> {
+                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+                            if (!string.isBlank()) {
+                                System.out.println(string);
+                            }
+                        })
                         .withNetwork(network)
                         .withNetworkAliases("application")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                         .withStartupTimeout(Duration.ofMillis(30000))
                         .withWorkingDirectory("/temp");
-
-        if (DockerImageNames.isJava6(dockerImageName)) {
-            applicationContainer.withCommand("/bin/sh application_java6.sh");
-        }
-
-        return applicationContainer;
     }
 
     /**
@@ -139,28 +120,26 @@ public class Abstract_IT {
      */
     protected static GenericContainer<?> createStandaloneExporterContainer(
             Network network, String dockerImageName, String testName) {
-        // Exporter container
-        GenericContainer<?> exporterContainer =
+        return
                 new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forHttp("/").forStatusCodeMatching(STATUS_CODE_200_OR_401_PREDICATE))
+                        .waitingFor(Wait.forListeningPort())
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                         .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh exporter.sh")
                         .withExposedPorts(8888)
-                        .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
+                        .withLogConsumer(outputFrame -> {
+                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+                            if (!string.isBlank()) {
+                                System.out.println(string);
+                            }
+                        })
                         .withNetwork(network)
                         .withNetworkAliases("exporter")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                         .withStartupTimeout(Duration.ofMillis(30000))
                         .withWorkingDirectory("/temp");
-
-        if (DockerImageNames.isJava6(dockerImageName)) {
-            exporterContainer.withCommand("/bin/sh exporter_java6.sh");
-        }
-
-        return exporterContainer;
     }
 
     /**
@@ -173,7 +152,7 @@ public class Abstract_IT {
      */
     protected static GenericContainer<?> createJavaAgentApplicationContainer(
             Network network, String dockerImageName, String testName) {
-        GenericContainer<?> applicationContainer =
+        return
                 new GenericContainer<>(dockerImageName)
                         .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                         .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
@@ -182,18 +161,17 @@ public class Abstract_IT {
                         .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
                         .withCommand("/bin/sh application.sh")
                         .withExposedPorts(8888)
-                        .withLogConsumer(outputFrame -> System.out.print(outputFrame.getUtf8String()))
+                        .withLogConsumer(outputFrame -> {
+                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+                            if (!string.isBlank()) {
+                                System.out.println(string);
+                            }
+                        })
                         .withNetwork(network)
                         .withNetworkAliases("application")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                         .withStartupTimeout(Duration.ofMillis(30000))
                         .withWorkingDirectory("/temp");
-
-        if (DockerImageNames.isJava6(dockerImageName)) {
-            applicationContainer.withCommand("/bin/sh application_java6.sh");
-        }
-
-        return applicationContainer;
     }
 
     /**
@@ -227,27 +205,5 @@ public class Abstract_IT {
         if (network != null) {
             network.close();
         }
-    }
-
-    /**
-     * Method to derive the build name based on the mode and Java version
-     *
-     * @param mode mode
-     * @param isJava6 isJava6
-     * @return the return value
-     */
-    public static String deriveBuildName(Mode mode, boolean isJava6) {
-        String buildInfoName;
-        if (mode == Mode.JavaAgent) {
-            buildInfoName = "jmx_prometheus_javaagent";
-        } else {
-            buildInfoName = "jmx_prometheus_httpserver";
-        }
-
-        if (isJava6) {
-            buildInfoName += "_java6";
-        }
-
-        return buildInfoName;
     }
 }

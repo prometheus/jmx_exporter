@@ -1,7 +1,7 @@
 JMX Exporter
 =====
 
-JMX to Prometheus exporter: a collector that can configurably scrape and
+JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
 
 This exporter is intended to be run as a Java Agent, exposing a HTTP server
@@ -13,13 +13,10 @@ Agent is thus strongly encouraged.
 
 ## Running the Java Agent
 
-The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.18.0/jmx_prometheus_javaagent-0.18.0.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.18.0/jmx_prometheus_javaagent_java6-0.18.0.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_javaagent-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.18.0/jmx_prometheus_javaagent-0.18.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
+
 ```
 java -javaagent:./jmx_prometheus_javaagent-0.18.0.jar=12345:config.yaml -jar yourJar.jar
 ```
@@ -38,11 +35,7 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-The HTTP server is available in two versions with identical functionality:
-* [jmx_prometheus_httpserver-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.18.0/jmx_prometheus_httpserver-0.18.0.jar) requires Java >= 7.
-* [jmx_prometheus_httpserver-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.18.0/jmx_prometheus_httpserver_java6-0.18.0.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_httpserver-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.18.0/jmx_prometheus_httpserver-0.18.0.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
@@ -151,13 +144,107 @@ domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanProp
 ```
 If a given part isn't set, it'll be excluded.
 
-## Integration Testing
+## HTTP Authentication (optional)
+
+HTTP BASIC authentication it supported using various configuration formats.
+
+---
+
+Simple example (plaintext configuration value):
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+```
+
+---
+
+More secure example (SHA-1 using a salted password):
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: f43eab5fac834f683a1b9453d5e9cb356599c082
+      algorithm: SHA-1
+      salt: uv=//2NtFCUS{::tY9P.DCv_jzmPja#%
+```
+
+**Notes**
+
+- `algorithm` type must match a supported Java algorithm (JVM specific)
+
+- `salt` is random string that you choose
+
+- `password` is the hexadecimal hash of `<salt>:<real password>` using the specified algorithm
+
+---
+
+Secure example (PBKDF2WithHmacSHA1):
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: 54a270866a9966eb67687f493f1ff96b
+      algorithm: PBKDF2WithHmacSHA1
+      salt: PvrLg8tJphqTM8286VfH2w==
+      iterations: 1000
+      keyLength: 128
+```
+
+**Notes**
+
+- `algorithm` type must match a supported Java secret key algorithm (JVM specific)
+
+- `salt` is random string that you choose
+
+- `iterations` is the number of iterations to use
+
+- `keyLength` is the key length to use
+
+- `password` is the hexadecimal hash of real password using the specified algorithm
+
+### Generating passwords
+
+To generate a salted MessageDigest algorithm-based password, you can use either the Java agent or standalone exporter jar.
+
+```
+java -cp jmx_prometheus_httpserver-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator <algorithm> <salt>
+```
+
+Example:
+
+```
+java -cp jmx_prometheus_javaagent-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator SHA-512 54a270866a9966eb67687f493f1ff96b
+```
+
+To generate a PBKDF algorithm-based password, you can use either the Java agent or standalone exporter jar.
+
+```
+java -cp jmx_prometheus_javaagent-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator <algorithm> <salt> <iterations> <keyLength>
+```
+
+Example:
+
+```
+java -cp jmx_prometheus_httpserver-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator PBKDF2WithHmacSHA1 PvrLg8tJphqTM8286VfH2w== 1000 128
+```
+
+---
+
+## Integration Test Suite
 
 The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
-You need to have Docker installed to run these tests.
+You need to have Docker installed to run the integration test suite.
 
-Build and run the integration tests:
+Build and run the integration test suite:
 
 ```
 ./mvnw clean verify
@@ -165,7 +252,11 @@ Build and run the integration tests:
 
 **Notes**
 
-- To run the integration tests in IntelliJ, you must build the project from the parent (root).
+- To run the integration tests in IntelliJ, you must build first the project from the parent (root) using Maven
+  - The Maven build copies the core artifacts as resources to the `integration_tests` project 
+
+
+- Additional information can be found in the [Integration Test Suite](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/README.md) readme.
 
 ## Debugging
 
@@ -191,7 +282,6 @@ io.prometheus.jmx.shaded.io.prometheus.jmx.level=ALL
 Add the following flag to your Java invocation:
 
 `-Djava.util.logging.config.file=/path/to/logging.properties`
-
 
 ## Installing
 

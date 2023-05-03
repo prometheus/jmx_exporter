@@ -44,7 +44,6 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
 
     private String testName;
     private String dockerImageName;
-    private boolean isJava6;
     private Mode mode;
 
     private GenericContainer<?> applicationContainer;
@@ -56,7 +55,6 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
         ParameterMap parameterMap = parameter.value();
         testName = getClass().getName();
         dockerImageName = parameterMap.get(DOCKER_IMAGE_NAME);
-        isJava6 = parameterMap.get(IS_JAVA_6);
         mode = parameterMap.get(MODE);
     }
 
@@ -128,9 +126,11 @@ public class Minimal_IT extends Abstract_IT implements ContentConsumer {
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
 
+        String buildInfoName = mode == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
-                .withLabel("name", deriveBuildName(mode, isJava6))
+                .withLabel("name", buildInfoName)
                 .exists();
 
         assertThatMetricIn(metrics)

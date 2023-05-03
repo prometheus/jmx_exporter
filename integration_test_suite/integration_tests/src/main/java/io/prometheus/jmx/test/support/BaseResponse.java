@@ -159,12 +159,12 @@ public class BaseResponse implements Response {
     /**
      * Method to dispatch the response code to a CodeConsumer
      *
-     * @param consume
+     * @param consumer
      * @return
      */
     @Override
-    public Response dispatch(CodeConsumer consume) {
-        consume.accept(code);
+    public Response dispatch(CodeConsumer consumer) {
+        consumer.accept(code);
         return this;
     }
 

@@ -21,28 +21,30 @@ import okhttp3.Request;
 
 import static io.prometheus.jmx.test.HttpClient.basicAuthentication;
 
+/**
+ * Class to implement Basic authentication credentials
+ */
 public class BasicAuthenticationCredentials implements Credentials {
-
-    private static final BasicAuthenticationCredentials USERNAME__PASSWORD = new BasicAuthenticationCredentials("prometheus", "secret");
-    private static final BasicAuthenticationCredentials USERNAME__BAD_PASSWORD = new BasicAuthenticationCredentials("prometheus", "bad");
-    private static final BasicAuthenticationCredentials USERNAME__NULL_PASSWORD = new BasicAuthenticationCredentials("prometheus", null);
-
-    private static final BasicAuthenticationCredentials BAD_USERNAME__PASSWORD = new BasicAuthenticationCredentials("bad", "secret");
-    private static final BasicAuthenticationCredentials BAD_USERNAME__BAD_PASSWORD = new BasicAuthenticationCredentials("bad", "bad");
-    private static final BasicAuthenticationCredentials BAD_USERNAME__NULL_PASSWORD = new BasicAuthenticationCredentials("bad", null);
-
-    private static final BasicAuthenticationCredentials NULL_USERNAME__PASSWORD = new BasicAuthenticationCredentials(null, "secret");
-    private static final BasicAuthenticationCredentials NULL_USERNAME__NULL_PASSWORD = new BasicAuthenticationCredentials(null, null);
-
 
     private final String username;
     private final String password;
 
+    /**
+     * Constructor
+     *
+     * @param username username
+     * @param password password
+     */
     public BasicAuthenticationCredentials(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
+    /**
+     * Method to apply the Credentials to a Request.Builder
+     *
+     * @param requestBuilder requestBuilder
+     */
     public void apply(Request.Builder requestBuilder) {
         if ((username != null) && (password != null)) {
             requestBuilder.addHeader(HttpHeader.AUTHORIZATION, basicAuthentication(username, password));

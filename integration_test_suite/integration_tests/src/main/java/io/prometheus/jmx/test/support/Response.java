@@ -52,10 +52,10 @@ public interface Response {
     /**
      * Method to dispatch the response code to a CodeConsumer
      *
-     * @param consume
+     * @param consumer
      * @return
      */
-    Response dispatch(CodeConsumer consume);
+    Response dispatch(CodeConsumer consumer);
 
     /**
      * Method to dispatch the response Headers to a HeadersConsumer
