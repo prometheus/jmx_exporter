@@ -34,11 +34,24 @@ public class JavaAgentMultiPort {
             DefaultExports.initialize();
             startMultipleServers(config, config.portEnd - config.portStart + 1, config.backoffMin, config.backoffMax);
         } catch (Exception e) {
-            System.err.println("Example Usage: -javaagent:/path/to/JavaAgent.jar=hostname=some_host.dc,portStart=222,portEnd=333,timeout=500,backoffMin=2000,backoffMax=4000,configFile=/some/path.yaml \n" + e.getMessage());
+            System.err.println("Example Usage: -javaagent:/path/to/JavaAgent.jar=hostname=some_host.dc,portStart=222,portEnd=333,[timeout=500],[backoffMin=2000],[backoffMax=4000],configFile=/some/path.yaml \n" + e.getMessage());
             System.exit(1);
         }
     }
 
+    /**
+     * Checks if a connection can be made to host:port. If A connection is successful, it means there is already an agent
+     * running on that host:port. In this case we will look to the next port (port + 1) and repeat, until we run out of
+     * ports defined a range or fail to make a connection. Failure to make connection means there is no agent running yet,
+     * on that host:port
+     *
+     * @param host Host we are checking (typically 0.0.0.0)
+     * @param timeout Timeout on connection attempt
+     * @param port Port we are checking (automatically incremented)
+     * @param portLookupAttempts Limits how many look-ups we will make on this host
+     * @return A connection on which will an agent start
+     * @throws ConnectException
+     */
     public static InetSocketAddress findAvailableSocket(final String host, final int timeout, int port, int portLookupAttempts) throws ConnectException {
         System.out.println("Looking up free port. Checking: " + port + ", remaining ports in range: " + portLookupAttempts);
         if (portLookupAttempts == 0) {
@@ -86,8 +99,8 @@ public class JavaAgentMultiPort {
         }
         /*
          * Retries indicate how many times the agent will try to start (including port search). Sometimes a port is
-         * selected, but more than 1 agent has picked it and only 1 will get it. The ones who lose out, will be given
-         * the <retries> to start again.
+         * deemed free, but more than 1 agent has picked that particular port and only 1 will get it. The ones who
+         * lose out, will be given the #<retries> to start again.
          *
          * portLookupAttempts is "just" for scanning the range of ports.
          */
