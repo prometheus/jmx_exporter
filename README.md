@@ -66,8 +66,6 @@ rules:
 
 As stated above, it is recommended to run JMX exporter as a Java agent and not as a standalone HTTP server.
 
-## Building
-
 `./mvnw clean package` to build.
 
 ## Configuration
@@ -150,6 +148,58 @@ The default format will transform beans in a way that should produce sane metric
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
 ```
 If a given part isn't set, it'll be excluded.
+
+## Running the MultiPort Java Agent
+
+The reason for creation of this agent is monitoring and providing multiple webserver running on 1 machine. Origin of it
+stems from running Apache Spark jobs on EMR clusters, where it's typical to have more than 1 executor running on 1 machine.
+
+Differences compared to **Java Agent**
+* different configuration string format
+* it is capable of running more than 1 webserver on 1 machine
+
+### Apache Spark example configuration
+
+```bash
+# version of the agent
+AGENT_VERSION="0.17.2"
+
+# path to javagent_multiport jar on S3
+JMX_JAVA_AGENT_JAR_S3_PATH="s3://bucket/jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar"
+
+# path to configuration file for the agent on S3 
+JMX_JAVA_AGENT_CONFIG_S3_PATH="s3://bucket/jmx_exporter.yaml"
+
+spark-submit --master yarn --deploy-mode cluster \
+--jars "${JMX_JAVA_AGENT_JAR_S3_PATH}" \
+--files "${JMX_JAVA_AGENT_CONFIG_S3_PATH}" \
+--conf "spark.driver.extraJavaOptions=-javaagent:./jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar=portStart=222,portEnd=333,configFile=./jmx_exporter.yaml" \
+--conf "spark.executor.extraJavaOptions=-javaagent:./jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar=portStart=222,portEnd=333,configFile=./jmx_exporter.yaml" \
+```
+
+### Configuration
+
+With 6 parameters in total it has become rather impractical to extend the config line parsing with regex.
+
+The configuration string has following shape `hostname=some_host.dc,portStart=222,portEnd=333,timeout=500,backoffMin=2000,backoffMax=4000,configFile=/some/path.yaml`.
+
+| Parameter  | value                                                                         | optional | note                                                                                                                |
+|------------|-------------------------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------|
+| hostname   | typically not used                                                            | true     | defaults to 0.0.0.0                                                                                                 |
+| portStart  | port number - start of the range                                              | false    |                                                                                                                     |
+| portEnd    | port number - start of the range                                              | false    | the range must be continuous                                                                                        |
+| timeout    | timeout on how long will the agent try to connect to an supposedly empty port | true     | default is 500ms                                                                                                    |
+| backoffMin | backoff before the agent will try to lookup and start on a given port         | true     | default is 2000ms                                                                                                   |
+| backoffMax | backoff before the agent will try to lookup and start on a given port         | true     | default is 4000ms                                                                                                   |                              
+| configFile | path to the config file                                                       | false    | if used with `spark-submit --files`, it will be located on the same level as the jar. For example (`./config.yaml`) |                              
+
+
+
+### Caveats
+
+* You need to know how many ports you will need. This will depend on your system
+* To play it safe, give enough headroom for your application
+## Building
 
 ## Integration Testing
 
