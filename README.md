@@ -66,6 +66,8 @@ rules:
 
 As stated above, it is recommended to run JMX exporter as a Java agent and not as a standalone HTTP server.
 
+## Building
+
 `./mvnw clean package` to build.
 
 ## Configuration
@@ -162,7 +164,7 @@ Differences compared to **Java Agent**
 
 ```bash
 # version of the agent
-AGENT_VERSION="0.17.2"
+AGENT_VERSION="0.18.1"
 
 # path to javagent_multiport jar on S3
 JMX_JAVA_AGENT_JAR_S3_PATH="s3://bucket/jmx_prometheus_javaagent_multiport-${AGENT_VERSION}.jar"
@@ -197,9 +199,8 @@ The configuration string has following shape `hostname=some_host.dc,portStart=22
 
 ### Caveats
 
-* You need to know how many ports you will need. This will depend on your system
-* To play it safe, give enough headroom for your application
-## Building
+* You need to know how many JVMs will run on each node and play it safe by giving enough headroom for your application
+* Some ports will be wasted and never used
 
 ## Integration Testing
 
