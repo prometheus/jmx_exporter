@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import io.prometheus.jmx.test.Abstract_IT;
-import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
@@ -30,89 +28,15 @@ import io.prometheus.jmx.test.support.MetricsResponse;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import io.prometheus.jmx.test.support.Response;
-import org.antublue.test.engine.api.Parameter;
-import org.antublue.test.engine.api.ParameterMap;
 import org.antublue.test.engine.api.TestEngine;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT implements ContentConsumer {
-
-    private static final String VALID_USERNAME = "Prometheus";
-    private static final String VALID_PASSWORD = "secret";
-    private static final String[] TEST_USERNAMES = new String[] { VALID_USERNAME, "prometheus", "bad", "", null };
-    private static final String[] TEST_PASSWORDS = new String[] { VALID_PASSWORD, "Secret", "bad", "", null };
-    private static final String BASE_URL = "http://localhost";
-
-    private static Network network;
-
-    private String testName;
-    private String dockerImageName;
-    private Mode mode;
-
-    private GenericContainer<?> applicationContainer;
-    private GenericContainer<?> exporterContainer;
-    private HttpClient httpClient;
-
-    @TestEngine.ParameterSupplier
-    protected static Stream<Parameter> parameters() {
-        // Filter specific Docker images that don't support PBKDF2WithHmacSHA256
-        Set<String> filteredDockerImages = new HashSet<>();
-        filteredDockerImages.add("ibmjava:8");
-        filteredDockerImages.add("ibmjava:8-jre");
-        filteredDockerImages.add("ibmjava:8-sdk");
-        filteredDockerImages.add("ibmjava:8-sfj");
-
-        return Abstract_IT
-                .parameters()
-                .filter(parameter -> {
-                    ParameterMap parameterMap = parameter.value();
-                    String dockerImageName = parameterMap.get(DOCKER_IMAGE_NAME);
-                    return !filteredDockerImages.contains(dockerImageName);
-                });
-    }
-
-    @TestEngine.Parameter
-    public void parameter(Parameter parameter) {
-        ParameterMap parameterMap = parameter.value();
-        testName = getClass().getName();
-        dockerImageName = parameterMap.get(DOCKER_IMAGE_NAME);
-        mode = parameterMap.get(MODE);
-    }
-
-    @TestEngine.BeforeClass
-    public static void beforeClass() {
-        network = createNetwork();
-    }
-
-    @TestEngine.BeforeAll
-    public void beforeAll() {
-        switch (mode) {
-            case JavaAgent: {
-                applicationContainer = createJavaAgentApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                httpClient = createHttpClient(applicationContainer, BASE_URL);
-                break;
-            }
-            case Standalone: {
-                applicationContainer = createStandaloneApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                exporterContainer = createStandaloneExporterContainer(network, dockerImageName, testName);
-                exporterContainer.start();
-                httpClient = createHttpClient(exporterContainer, BASE_URL);
-                break;
-            }
-        }
-    }
+public class BasicAuthenticationPlaintextTest extends BasicAuthenticationBaseTest implements ContentConsumer {
 
     @TestEngine.Test
     public void testHealthy() {
@@ -125,7 +49,7 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
                 }
 
                 assertThatResponseForRequest(
-                        new HealthyRequest(httpClient)
+                        new HealthyRequest(testState.httpClient())
                                 .withCredentials(new BasicAuthenticationCredentials(username, password)))
                         .isSuperset(expectedHealthyResponse);
             }
@@ -143,9 +67,9 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(httpClient)
-                            .withCredentials(new BasicAuthenticationCredentials(username, password))
-                            .execute();
+                        new MetricsRequest(testState.httpClient())
+                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
 
@@ -167,7 +91,7 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(httpClient)
+                        new MetricsRequest(testState.httpClient())
                                 .withCredentials(new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
@@ -191,7 +115,7 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(httpClient)
+                        new MetricsRequest(testState.httpClient())
                                 .withCredentials(new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
@@ -204,23 +128,12 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
         }
     }
 
-    @TestEngine.AfterAll
-    public void afterAll() {
-        destroy(applicationContainer);
-        destroy(exporterContainer);
-        httpClient = null;
-    }
-
-    @TestEngine.AfterClass
-    public static void afterClass() {
-        destroy(network);
-    }
-
     @Override
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
 
-        String buildInfoName = mode == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+        String buildInfoName =
+                testParameter.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
@@ -245,6 +158,6 @@ public class BasicAuthentication_PBKDF2WithHmacSHA256_IT extends Abstract_IT imp
 
         assertThatMetricIn(metrics)
                 .withName("jvm_threads_state")
-                .exists(mode == Mode.JavaAgent);
+                .exists(testParameter.mode() == Mode.JavaAgent);
     }
 }

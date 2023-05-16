@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package io.prometheus.jmx.test;
 
 import com.github.dockerjava.api.model.Ulimit;
-import org.antublue.test.engine.api.Parameter;
-import org.antublue.test.engine.api.ParameterMap;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -31,51 +29,104 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class Abstract_IT {
+@TestEngine.BaseClass
+public class BaseTest {
 
-    public static final String DOCKER_IMAGE_NAME = "dockerImageName";
-    public static final String MODE = "mode";
-
+    private static final String BASE_URL = "http://localhost";
     private static final long MEMORY_BYTES = 1073741824; // 1GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
 
+    protected TestState testState;
+
+    @TestEngine.Parameter
+    protected TestParameter testParameter;
+
     /**
-     * Method to get the list of Docker image names
+     * Method to get the list of TestParameters
      *
      * @return the return value
      */
     @TestEngine.ParameterSupplier
-    protected static Stream<Parameter> parameters() {
-        List<Parameter> parameters = new ArrayList<>();
+    protected static Stream<TestParameter> parameters() {
+        List<TestParameter> testParameters = new ArrayList<>();
 
         DockerImageNames
                 .names()
                 .forEach(dockerImageName -> {
                     for (Mode mode : Mode.values()) {
-                        parameters.add(
-                                ParameterMap
-                                        .named(dockerImageName + " / " + mode)
-                                        .put("dockerImageName", dockerImageName)
-                                        .put("mode", mode)
-                                        .parameter());
+                        testParameters.add(
+                                TestParameter.of(
+                                        dockerImageName + " / " + mode,
+                                        dockerImageName,
+                                        mode));
                     }
                 });
 
-        return parameters.stream();
+        return testParameters.stream();
     }
 
-    /**
-     * Method to create a Network
-     *
-     * @return the return value
-     */
-    protected static Network createNetwork() {
-        Network network = Network.newNetwork();
+    @TestEngine.Prepare
+    @TestEngine.Order(Integer.MIN_VALUE)
+    // Use the minimum int value to force execution before any subclass @TestEngine.Prepare methods
+    protected final void prepare() {
+        testState = new TestState();
 
-        // Get the id to force the network creation
+        // Get the Network and get the id to force the network creation
+        Network network = Network.newNetwork();
         network.getId();
 
-        return network;
+        testState.network(network);
+        testState.baseUrl(BASE_URL);
+    }
+
+    @TestEngine.BeforeAll
+    public final void beforeAll() {
+        testState.reset();
+
+        Network network = testState.network();
+        String dockerImageName = testParameter.dockerImageName();
+        String testName = this.getClass().getName();
+        String baseUrl = testState.baseUrl();
+
+        switch (testParameter.mode()) {
+            case JavaAgent: {
+                GenericContainer<?> applicationContainer = createJavaAgentApplicationContainer(network, dockerImageName, testName);
+                applicationContainer.start();
+                testState.applicationContainer(applicationContainer);
+
+                HttpClient httpClient = createHttpClient(applicationContainer, baseUrl);
+                testState.httpClient(httpClient);
+
+                break;
+            }
+            case Standalone: {
+                GenericContainer<?> applicationContainer = createStandaloneApplicationContainer(network, dockerImageName, testName);
+                applicationContainer.start();
+                testState.applicationContainer(applicationContainer);
+
+                GenericContainer<?> exporterContainer = createStandaloneExporterContainer(network, dockerImageName, testName);
+                exporterContainer.start();
+                testState.exporterContainer(exporterContainer);
+
+                HttpClient httpClient = createHttpClient(exporterContainer, baseUrl);
+                testState.httpClient(httpClient);
+
+                break;
+            }
+        }
+    }
+
+    @TestEngine.AfterAll
+    public final void afterAll() {
+        testState.reset();
+    }
+
+    @TestEngine.Conclude
+    @TestEngine.Order(Integer.MAX_VALUE)
+    // Use the maximum int value to force execution after any subclass @TestEngine.Conclude methods
+    public final void conclude() {
+        testState.dispose();
+        testState = null;
     }
 
     /**
@@ -86,7 +137,7 @@ public class Abstract_IT {
      * @param testName testName
      * @return the return value
      */
-    protected static GenericContainer<?> createStandaloneApplicationContainer(
+    private static GenericContainer<?> createStandaloneApplicationContainer(
             Network network, String dockerImageName, String testName) {
         return
                 new GenericContainer<>(dockerImageName)
@@ -118,7 +169,7 @@ public class Abstract_IT {
      * @param testName testName
      * @return the return value
      */
-    protected static GenericContainer<?> createStandaloneExporterContainer(
+    private static GenericContainer<?> createStandaloneExporterContainer(
             Network network, String dockerImageName, String testName) {
         return
                 new GenericContainer<>(dockerImageName)
@@ -150,7 +201,7 @@ public class Abstract_IT {
      * @param testName testName
      * @return the return value
      */
-    protected static GenericContainer<?> createJavaAgentApplicationContainer(
+    private static GenericContainer<?> createJavaAgentApplicationContainer(
             Network network, String dockerImageName, String testName) {
         return
                 new GenericContainer<>(dockerImageName)
@@ -181,29 +232,7 @@ public class Abstract_IT {
      * @param baseUrl baseUrl
      * @return the return value
      */
-    protected static HttpClient createHttpClient(GenericContainer<?> genericContainer, String baseUrl) {
+    private static HttpClient createHttpClient(GenericContainer<?> genericContainer, String baseUrl) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(8888));
-    }
-
-    /**
-     * Method to destroy a GenericContainer (null safe)
-     *
-     * @param genericContainer genericContainer
-     */
-    protected static void destroy(GenericContainer<?> genericContainer) {
-        if (genericContainer != null) {
-            genericContainer.close();
-        }
-    }
-
-    /**
-     * Method to destroy a Network (null safe)
-     *
-     * @param network network
-     */
-    protected static void destroy(Network network) {
-        if (network != null) {
-            network.close();
-        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,7 @@ import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
 import io.prometheus.jmx.test.support.MetricsRequest;
 import io.prometheus.jmx.test.support.MetricsResponse;
-import org.antublue.test.engine.api.Parameter;
-import org.antublue.test.engine.api.ParameterMap;
 import org.antublue.test.engine.api.TestEngine;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
 import java.util.Collection;
@@ -33,56 +29,11 @@ import java.util.Collection;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AutoIncrementing_IT extends Abstract_IT {
-
-    private static final String BASE_URL = "http://localhost";
-
-    private static Network network;
-
-    private String testName;
-    private String dockerImageName;
-    private Mode mode;
-
-    private GenericContainer<?> applicationContainer;
-    private GenericContainer<?> exporterContainer;
-    private HttpClient httpClient;
-
-    @TestEngine.Parameter
-    public void parameter(Parameter parameter) {
-        ParameterMap parameterMap = parameter.value();
-        testName = getClass().getName();
-        dockerImageName = parameterMap.get(DOCKER_IMAGE_NAME);
-        mode = parameterMap.get(MODE);
-    }
-
-    @TestEngine.BeforeClass
-    public static void beforeClass() {
-        network = createNetwork();
-    }
-
-    @TestEngine.BeforeAll
-    public void beforeAll() {
-        switch (mode) {
-            case JavaAgent: {
-                applicationContainer = createJavaAgentApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                httpClient = createHttpClient(applicationContainer, BASE_URL);
-                break;
-            }
-            case Standalone: {
-                applicationContainer = createStandaloneApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                exporterContainer = createStandaloneExporterContainer(network, dockerImageName, testName);
-                exporterContainer.start();
-                httpClient = createHttpClient(exporterContainer, BASE_URL);
-                break;
-            }
-        }
-    }
+public class AutoIncrementingMBeanTest extends BaseTest {
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequest(httpClient))
+        assertThatResponseForRequest(new HealthyRequest(testState.httpClient()))
                 .isSuperset(HealthyResponse.RESULT_200);
     }
 
@@ -92,7 +43,7 @@ public class AutoIncrementing_IT extends Abstract_IT {
         AtomicDouble value2 = new AtomicDouble();
         AtomicDouble value3 = new AtomicDouble();
 
-        assertThatResponseForRequest(new MetricsRequest(httpClient))
+        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
                 .dispatch((ContentConsumer) content -> {
                     Collection<Metric> metrics = MetricsParser.parse(content);
@@ -105,7 +56,7 @@ public class AutoIncrementing_IT extends Abstract_IT {
                             });
                 });
 
-        assertThatResponseForRequest(new MetricsRequest(httpClient))
+        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
                 .dispatch((ContentConsumer) content -> {
                     Collection<Metric> metrics = MetricsParser.parse(content);
@@ -117,7 +68,7 @@ public class AutoIncrementing_IT extends Abstract_IT {
                             });
                 });
 
-        assertThatResponseForRequest(new MetricsRequest(httpClient))
+        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
                 .dispatch((ContentConsumer) content -> {
                     Collection<Metric> metrics = MetricsParser.parse(content);
@@ -132,17 +83,5 @@ public class AutoIncrementing_IT extends Abstract_IT {
         // Use value1 as a baseline value
         assertThat(value2.get()).isEqualTo(value1.get() + 1);
         assertThat(value3.get()).isEqualTo(value2.get() + 1);
-    }
-
-    @TestEngine.AfterAll
-    public void afterAll() {
-        destroy(applicationContainer);
-        destroy(exporterContainer);
-        httpClient = null;
-    }
-
-    @TestEngine.AfterClass
-    public static void afterClass() {
-        destroy(network);
     }
 }
