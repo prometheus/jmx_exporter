@@ -132,13 +132,6 @@ public class HTTPServerFactory {
                             .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/username must not be blank")))
                             .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/username is a required string"));
 
-            String password =
-                    httpServerAuthenticationBasicMapAccessor
-                            .get("/password")
-                            .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must be a string")))
-                            .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must not be blank")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/password is a required string"));
-
             String algorithm =
                     httpServerAuthenticationBasicMapAccessor
                             .get("/algorithm")
@@ -149,21 +142,37 @@ public class HTTPServerFactory {
             Authenticator authenticator;
 
             if ("plaintext".equalsIgnoreCase(algorithm)) {
+                String password =
+                        httpServerAuthenticationBasicMapAccessor
+                                .get("/password")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must not be blank")))
+                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/password is a required string"));
+
                 authenticator = new PlaintextAuthenticator("/", username, password);
-            } else if (algorithm.startsWith("SHA-")) {
-                authenticator = createMessageDigestAuthenticator(
-                        httpServerAuthenticationBasicMapAccessor,
-                        "/",
-                        username,
-                        password,
-                        algorithm);
-            } else if (algorithm.startsWith("PBKDF2")) {
-                authenticator = createPBKDF2Authenticator(
-                        httpServerAuthenticationBasicMapAccessor,
-                        "/",
-                        username,
-                        password,
-                        algorithm);
+            } else if (algorithm.startsWith("SHA-") || algorithm.startsWith("PBKDF2")) {
+                String hash =
+                        httpServerAuthenticationBasicMapAccessor
+                                .get("/hash")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/hash must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/hash must not be blank")))
+                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/hash is a required string"));
+
+                if (algorithm.startsWith("SHA-")) {
+                    authenticator = createMessageDigestAuthenticator(
+                            httpServerAuthenticationBasicMapAccessor,
+                            "/",
+                            username,
+                            hash,
+                            algorithm);
+                } else {
+                    authenticator = createPBKDF2Authenticator(
+                            httpServerAuthenticationBasicMapAccessor,
+                            "/",
+                            username,
+                            hash,
+                            algorithm);
+                }
             } else {
                 throw new ConfigurationException(
                         String.format("Unsupported /httpServer/authentication/basic/algorithm [%s]", algorithm));
