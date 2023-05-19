@@ -212,28 +212,24 @@ httpServer:
 
 ### Generating passwords
 
-To generate a salted MessageDigest algorithm-based password, you can use either the Java agent or standalone exporter jar.
+To generate a salted MessageDigest algorithm-based password, use the appropriate application for the algorithm
+
+Example:
+
+SHA-256 configuration password generation
 
 ```
-java -cp jmx_prometheus_httpserver-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator <algorithm> <salt>
+echo -n "98LeBWIjca:secret" | sha256sum
 ```
 
 Example:
 
-```
-java -cp jmx_prometheus_javaagent-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator SHA-512 54a270866a9966eb67687f493f1ff96b
-```
-
-To generate a PBKDF algorithm-based password, you can use either the Java agent or standalone exporter jar.
-
-```
-java -cp jmx_prometheus_javaagent-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator <algorithm> <salt> <iterations> <keyLength>
-```
+PBKDF2WithHmac256 configuration password generation
 
 Example:
 
 ```
-java -cp jmx_prometheus_httpserver-0.18.1-SNAPSHOT.jar io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator PBKDF2WithHmacSHA1 PvrLg8tJphqTM8286VfH2w== 1000 128
+openssl kdf -keylen 128 -kdfopt digest:SHA256 -kdfopt pass:secret -kdfopt salt:98LeBWIjca -kdfopt iter:1000 PBKDF2
 ```
 
 ---

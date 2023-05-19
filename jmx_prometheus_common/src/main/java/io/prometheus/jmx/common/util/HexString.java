@@ -41,11 +41,12 @@ public class HexString {
      * @return the return value
      */
     public static String toHex(byte [] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int i = 0, j = 0; i < 0 + bytes.length; i++) {
+        char[] hexChars = new char[bytes.length * 3];
+        for (int i = 0, j = 0; i < bytes.length; i++) {
             hexChars[j++] = HEX_ARRAY[(0xF0 & bytes[i]) >>> 4];
             hexChars[j++] = HEX_ARRAY[0x0F & bytes[i]];
+            hexChars[j++] = ':';
         }
-        return new String(hexChars);
+        return new String(hexChars, 0, hexChars.length - 1);
     }
 }

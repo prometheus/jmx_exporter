@@ -17,9 +17,9 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
-import io.prometheus.jmx.common.util.HexString;
 import io.prometheus.jmx.common.util.Precondition;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -60,7 +60,7 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         MessageDigest.getInstance(algorithm);
 
         this.username = username;
-        this.hash = hash.toLowerCase();
+        this.hash = hash.toUpperCase();
         this.algorithm = algorithm;
         this.salt = salt;
         this.cacheKeys = Collections.synchronizedSet(new HashSet<>());
@@ -105,42 +105,14 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @param password password
      * @return the hash
      */
-    public static String generateHash(String algorithm, String salt, String password) {
+    private static String generateHash(String algorithm, String salt, String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance(algorithm);
             byte[] hash = digest.digest((salt + ":" + password).getBytes(StandardCharsets.UTF_8));
-            return HexString.toHex(hash);
+            BigInteger number = new BigInteger(1, hash);
+            return number.toString(16).toUpperCase();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Method to create a salted message digest password
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        if (args == null || args.length != 2) {
-            System.out.println("Usage: <algorithm> <salt>");
-            System.exit(1);
-        }
-
-        String algorithm = args[0];
-        String salt = args[1];
-
-        System.out.print("password? ");
-        String password1 = new String(System.console().readPassword());
-        System.out.print("confirm password? ");
-        String password2 = new String(System.console().readPassword());
-
-        if (password1.equals(password2)) {
-            System.out.println(String.format("algorithm  [%s]", algorithm));
-            System.out.println(String.format("salt       [%s]", salt));
-            System.out.println(String.format("password   [%s]", generateHash(algorithm, salt, password1)));
-        } else {
-            System.out.println("passwords don't match");
-            System.exit(1);
         }
     }
 }

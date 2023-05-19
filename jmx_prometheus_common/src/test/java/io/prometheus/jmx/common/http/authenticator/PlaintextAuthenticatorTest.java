@@ -21,26 +21,18 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class PlaintextAuthenticatorTest {
+public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void test() {
-        String[] usernames = new String[] { "Prometheus", "prometheus", "bad", "", null };
-        String[] passwords = new String[] { "secret", "Secret", "bad", "", null };
-
         BasicAuthenticator plainTextAuthenticator =
-                new PlaintextAuthenticator("/", "Prometheus", "secret");
+                new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
 
-        for (String username : usernames) {
-            for (String password : passwords) {
-                boolean expectedIsAuthenticated = false;
-                if ("Prometheus".equals(username) && "secret".equals(password)) {
-                    expectedIsAuthenticated = true;
-                }
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
                 boolean actualIsAuthenticated = plainTextAuthenticator.checkCredentials(username, password);
-                if (expectedIsAuthenticated != actualIsAuthenticated) {
-                    assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
-                }
+                assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
     }

@@ -22,31 +22,23 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
-public class MessageDigestAuthenticatorTest {
+public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void test() throws Exception {
         String[] algorithms = new String[] { "SHA-1", "SHA-256", "SHA-512" };
-        String[] usernames = new String[] { "Prometheus", "prometheus", "bad", "", null };
-        String[] passwords = new String[] { "secret", "Secret", "bad", "", null };
 
         for (String algorithm : algorithms) {
-            String salt = UUID.randomUUID().toString();
-            String hash = hash(algorithm, "secret", salt);
-
+            String hash = hash(algorithm, VALID_PASSWORD, SALT);
             MessageDigestAuthenticator messageDigestAuthenticator =
-                    new MessageDigestAuthenticator("/", "Prometheus", hash, algorithm, salt);
+                    new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);
 
-            for (String username : usernames) {
-                for (String password : passwords) {
-                    boolean expectedIsAuthenticated = false;
-                    if ("Prometheus".equals(username) && "secret".equals(password)) {
-                        expectedIsAuthenticated = true;
-                    }
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
                     boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
                     assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
                 }
@@ -59,11 +51,6 @@ public class MessageDigestAuthenticatorTest {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         byte[] hashedBytes = digest.digest((salt + ":" + value).getBytes("UTF-8"));
         BigInteger number = new BigInteger(1, hashedBytes);
-        StringBuilder hexString = new StringBuilder(number.toString(16));
-        int digestLength = 2 * digest.getDigestLength();
-        while (hexString.length() < digestLength) {
-            hexString.insert(0, '0');
-        }
-        return hexString.toString().toLowerCase();
+        return number.toString(16).toUpperCase();
     }
 }
