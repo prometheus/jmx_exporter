@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.util.function;
+package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
+import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Class to validate a String is not blank, throwing a RuntimeException
+ * Class to convert an Object to a Map, throwing a RuntimeException
  * from the Supplier if there is a ClassCastException
  */
-public class ValidatStringIsNotBlank implements Function<String, String> {
+@SuppressWarnings("unchecked")
+public class ConvertToMapAccessor implements Function<Object, YamlMapAccessor> {
 
     private Supplier<? extends RuntimeException> supplier;
 
@@ -34,7 +37,7 @@ public class ValidatStringIsNotBlank implements Function<String, String> {
      *
      * @param supplier supplier
      */
-    public ValidatStringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
+    public ConvertToMapAccessor(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
@@ -46,11 +49,11 @@ public class ValidatStringIsNotBlank implements Function<String, String> {
      * @return the return value
      */
     @Override
-    public String apply(String value) {
-        if (value.trim().isEmpty()) {
+    public YamlMapAccessor apply(Object value) {
+        try {
+            return new YamlMapAccessor((Map<Object, Object>) value);
+        } catch (ClassCastException e) {
             throw supplier.get();
         }
-
-        return value;
     }
 }

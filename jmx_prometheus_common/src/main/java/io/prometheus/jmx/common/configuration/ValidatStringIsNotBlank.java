@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.util.function;
+package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
-import io.prometheus.jmx.util.map.MapAccessor;
 
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Class to convert an Object to a Map, throwing a RuntimeException
+ * Class to validate a String is not blank, throwing a RuntimeException
  * from the Supplier if there is a ClassCastException
  */
-@SuppressWarnings("unchecked")
-public class ConvertToMapAccessor implements Function<Object, MapAccessor> {
+public class ValidatStringIsNotBlank implements Function<String, String> {
 
     private Supplier<? extends RuntimeException> supplier;
 
@@ -37,7 +34,7 @@ public class ConvertToMapAccessor implements Function<Object, MapAccessor> {
      *
      * @param supplier supplier
      */
-    public ConvertToMapAccessor(Supplier<? extends RuntimeException> supplier) {
+    public ValidatStringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
@@ -49,11 +46,11 @@ public class ConvertToMapAccessor implements Function<Object, MapAccessor> {
      * @return the return value
      */
     @Override
-    public MapAccessor apply(Object value) {
-        try {
-            return new MapAccessor((Map<Object, Object>) value);
-        } catch (ClassCastException e) {
+    public String apply(String value) {
+        if (value.trim().isEmpty()) {
             throw supplier.get();
         }
+
+        return value;
     }
 }

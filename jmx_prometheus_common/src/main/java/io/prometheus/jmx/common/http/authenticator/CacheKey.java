@@ -34,6 +34,10 @@ public class CacheKey {
         this.password = password;
     }
 
+    @Override
+    public String toString() {
+        return String.format("CacheKey{username=[%s],password=[%s]}", username, password);
+    }
 
     @Override
     public boolean equals(Object o) {

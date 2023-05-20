@@ -22,12 +22,12 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
-import io.prometheus.jmx.common.util.function.ConvertToInteger;
-import io.prometheus.jmx.common.util.function.ConvertToMapAccessor;
-import io.prometheus.jmx.common.util.function.ConvertToString;
-import io.prometheus.jmx.common.util.function.ValidatStringIsNotBlank;
-import io.prometheus.jmx.common.util.function.ValidateIntegerInRange;
-import io.prometheus.jmx.util.map.MapAccessor;
+import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.jmx.common.configuration.ConvertToInteger;
+import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
+import io.prometheus.jmx.common.configuration.ConvertToString;
+import io.prometheus.jmx.common.configuration.ValidatStringIsNotBlank;
+import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -35,16 +35,43 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.InetSocketAddress;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the standalone exporter
  */
-@SuppressWarnings("unchecked")
 public class HTTPServerFactory {
 
-    private MapAccessor rootMapAccessor;
+    private static final String REALM = "/";
+    private static final String PLAINTEXT = "plaintext";
+    private static final Set<String> SHA_ALGORITHMS;
+    private static final Set<String> PBKDF2_ALGORITHMS;
+    private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
+
+    private static final int PBKDF2_KEY_LENGTH_BITS = 128;
+
+    static {
+        SHA_ALGORITHMS = new HashSet<>();
+        SHA_ALGORITHMS.add("SHA-1");
+        SHA_ALGORITHMS.add("SHA-256");
+        SHA_ALGORITHMS.add("SHA-512");
+
+        PBKDF2_ALGORITHMS = new HashSet<>();
+        PBKDF2_ALGORITHMS.add("PBKDF2WithHmacSHA1");
+        PBKDF2_ALGORITHMS.add("PBKDF2WithHmacSHA256");
+        PBKDF2_ALGORITHMS.add("PBKDF2WithHmacSHA512");
+
+        PBKDF2_ALGORITHM_ITERATIONS = new HashMap<>();
+        PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA1", 1300000);
+        PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA256", 600000);
+        PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA512", 210000);
+    }
+
+    private YamlMapAccessor rootYamlMapAccessor;
 
     /**
      * Constructor
@@ -87,28 +114,15 @@ public class HTTPServerFactory {
      * @param exporterYamlFile exporterYamlFile
      */
     private void createMapAccessor(File exporterYamlFile) {
-        try {
-            Reader reader = null;
-
-            try {
-                reader = new FileReader(exporterYamlFile);
-                Map<Object, Object> yamlMap = new Yaml().load(reader);
-                rootMapAccessor = new MapAccessor(yamlMap);
-            } finally {
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (Throwable t) {
-                        // DO NOTHING
-                    }
-                }
-            }
-        } catch (IOException e) {
+        try (Reader reader = new FileReader(exporterYamlFile)) {
+            Map<Object, Object> yamlMap = new Yaml().load(reader);
+            rootYamlMapAccessor = new YamlMapAccessor(yamlMap);
+        } catch (Throwable t) {
             throw new ConfigurationException(
                     String.format(
                             "Exception loading exporter YAML file [%s]",
                             exporterYamlFile),
-                    e);
+                    t);
         }
     }
 
@@ -118,57 +132,57 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     private void configureAuthentication(HTTPServer.Builder httpServerBuilder) {
-        MapAccessor httpServerAuthenticationBasicMapAccessor =
-                rootMapAccessor
+        YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
+                rootYamlMapAccessor
                         .get("/httpServer/authentication/basic")
                         .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
                         .orElse(null);
 
-        if (httpServerAuthenticationBasicMapAccessor != null) {
+        if (httpServerAuthenticationBasicYamlMapAccessor != null) {
             String username =
-                    httpServerAuthenticationBasicMapAccessor
+                    httpServerAuthenticationBasicYamlMapAccessor
                             .get("/username")
                             .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/username must be a string")))
                             .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/username must not be blank")))
                             .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/username is a required string"));
 
             String algorithm =
-                    httpServerAuthenticationBasicMapAccessor
+                    httpServerAuthenticationBasicYamlMapAccessor
                             .get("/algorithm")
                             .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/algorithm must be a string")))
                             .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/algorithm must not be blank")))
-                            .orElse("plaintext");
+                            .orElse(PLAINTEXT);
 
             Authenticator authenticator;
 
-            if ("plaintext".equalsIgnoreCase(algorithm)) {
+            if (PLAINTEXT.equalsIgnoreCase(algorithm)) {
                 String password =
-                        httpServerAuthenticationBasicMapAccessor
+                        httpServerAuthenticationBasicYamlMapAccessor
                                 .get("/password")
                                 .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must be a string")))
                                 .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must not be blank")))
                                 .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/password is a required string"));
 
                 authenticator = new PlaintextAuthenticator("/", username, password);
-            } else if (algorithm.startsWith("SHA-") || algorithm.startsWith("PBKDF2")) {
+            } else if (SHA_ALGORITHMS.contains(algorithm) || PBKDF2_ALGORITHMS.contains(algorithm)) {
                 String hash =
-                        httpServerAuthenticationBasicMapAccessor
-                                .get("/hash")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/hash must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/hash must not be blank")))
-                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/hash is a required string"));
+                        httpServerAuthenticationBasicYamlMapAccessor
+                                .get("/passwordHash")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/passwordHash must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/passwordHash must not be blank")))
+                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/passwordHash is a required string"));
 
-                if (algorithm.startsWith("SHA-")) {
+                if (SHA_ALGORITHMS.contains(algorithm)) {
                     authenticator = createMessageDigestAuthenticator(
-                            httpServerAuthenticationBasicMapAccessor,
-                            "/",
+                            httpServerAuthenticationBasicYamlMapAccessor,
+                            REALM,
                             username,
                             hash,
                             algorithm);
                 } else {
                     authenticator = createPBKDF2Authenticator(
-                            httpServerAuthenticationBasicMapAccessor,
-                            "/",
+                            httpServerAuthenticationBasicYamlMapAccessor,
+                            REALM,
                             username,
                             hash,
                             algorithm);
@@ -185,7 +199,7 @@ public class HTTPServerFactory {
     /**
      * Method to create a MessageDigestAuthenticator
      *
-     * @param httpServerAuthenticationBasicMapAccessor httpServerAuthenticationBasicMapAccessor
+     * @param httpServerAuthenticationBasicYamlMapAccessor httpServerAuthenticationBasicMapAccessor
      * @param realm realm
      * @param username username
      * @param password password
@@ -193,9 +207,9 @@ public class HTTPServerFactory {
      * @return a MessageDigestAuthenticator
      */
     private Authenticator createMessageDigestAuthenticator(
-            MapAccessor httpServerAuthenticationBasicMapAccessor, String realm, String username, String password, String algorithm) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor, String realm, String username, String password, String algorithm) {
         String salt =
-                httpServerAuthenticationBasicMapAccessor
+                httpServerAuthenticationBasicYamlMapAccessor
                         .get("/salt")
                         .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be a string")))
                         .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must not be blank")))
@@ -203,10 +217,10 @@ public class HTTPServerFactory {
 
         try {
             return new MessageDigestAuthenticator(realm, username, password, algorithm, salt);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
                     String.format(
-                            "Invalid /httpServer/authentication/basic/algorithm, message digest [%s] not found",
+                            "Invalid /httpServer/authentication/basic/algorithm, unsupported algorithm [%s]",
                             algorithm));
         }
     }
@@ -214,7 +228,7 @@ public class HTTPServerFactory {
     /**
      * Method to create a PBKDF2Authenticator
      *
-     * @param httpServerAuthenticationBasicMapAccessor httpServerAuthenticationBasicMapAccessor
+     * @param httpServerAuthenticationBasicYamlMapAccessor httpServerAuthenticationBasicMapAccessor
      * @param realm realm
      * @param username username
      * @param password password
@@ -222,34 +236,34 @@ public class HTTPServerFactory {
      * @return a PBKDF2Authenticator
      */
     private Authenticator createPBKDF2Authenticator(
-            MapAccessor httpServerAuthenticationBasicMapAccessor, String realm, String username, String password, String algorithm) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor, String realm, String username, String password, String algorithm) {
         String salt =
-                httpServerAuthenticationBasicMapAccessor
+                httpServerAuthenticationBasicYamlMapAccessor
                         .get("/salt")
                         .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be a string")))
                         .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be not blank")))
                         .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/salt is a required string"));
 
         int iterations =
-                httpServerAuthenticationBasicMapAccessor
+                httpServerAuthenticationBasicYamlMapAccessor
                         .get("/iterations")
                         .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/iterations must be an integer")))
                         .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/iterations must be between greater than 0")))
-                        .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/iterations is a required integer"));
+                        .orElse(PBKDF2_ALGORITHM_ITERATIONS.get(algorithm));
 
         int keyLength =
-                httpServerAuthenticationBasicMapAccessor
+                httpServerAuthenticationBasicYamlMapAccessor
                         .get("/keyLength")
                         .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/keyLength must be an integer")))
                         .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/keyLength must be greater than 0")))
-                        .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/keyLength is a required integer"));
+                        .orElse(PBKDF2_KEY_LENGTH_BITS);
 
         try {
             return new PBKDF2Authenticator(realm, username, password, algorithm, salt, iterations, keyLength);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
                     String.format(
-                            "Invalid /httpServer/authentication/basic/algorithm, algorithm [%s] not found",
+                            "Invalid /httpServer/authentication/basic/algorithm, unsupported algorithm [%s]",
                             algorithm));
         }
     }

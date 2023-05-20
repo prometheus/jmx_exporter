@@ -28,11 +28,32 @@ import static org.junit.Assert.assertEquals;
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
-    public void test() throws Exception {
+    public void test_lowerCase() throws Exception {
         String[] algorithms = new String[] { "SHA-1", "SHA-256", "SHA-512" };
 
         for (String algorithm : algorithms) {
-            String hash = hash(algorithm, VALID_PASSWORD, SALT);
+            String hash = hash(algorithm, VALID_PASSWORD, SALT).toLowerCase();
+
+            MessageDigestAuthenticator messageDigestAuthenticator =
+                    new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);
+
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                    boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
+                    assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void test_upperCase() throws Exception {
+        String[] algorithms = new String[] { "SHA-1", "SHA-256", "SHA-512" };
+
+        for (String algorithm : algorithms) {
+            String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase();
+
             MessageDigestAuthenticator messageDigestAuthenticator =
                     new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);
 
@@ -51,6 +72,6 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         byte[] hashedBytes = digest.digest((salt + ":" + value).getBytes("UTF-8"));
         BigInteger number = new BigInteger(1, hashedBytes);
-        return number.toString(16).toUpperCase();
+        return number.toString(16).toLowerCase();
     }
 }

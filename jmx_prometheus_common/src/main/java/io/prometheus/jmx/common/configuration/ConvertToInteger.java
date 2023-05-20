@@ -14,30 +14,24 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.util.function;
+package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class ValidateIntegerInRange implements Function<Integer, Integer> {
+public class ConvertToInteger implements Function<Object, Integer> {
 
-    private final int minimum;
-    private final int maximum;
-    private final Supplier<? extends RuntimeException> supplier;
+    private Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor
      *
-     * @param minimum minimum
-     * @param maximum maximum
      * @param supplier supplier
      */
-    public ValidateIntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
+    public ConvertToInteger(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
-        this.minimum = minimum;
-        this.maximum = maximum;
         this.supplier = supplier;
     }
 
@@ -48,11 +42,15 @@ public class ValidateIntegerInRange implements Function<Integer, Integer> {
      * @return the return value
      */
     @Override
-    public Integer apply(Integer value) {
-        if (value < minimum || value > maximum) {
-            throw supplier.get();
+    public Integer apply(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
         }
 
-        return value;
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (Throwable t) {
+            throw supplier.get();
+        }
     }
 }

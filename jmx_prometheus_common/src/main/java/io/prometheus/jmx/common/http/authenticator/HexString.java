@@ -21,7 +21,7 @@
  * Reference: https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
  */
 
-package io.prometheus.jmx.common.util;
+package io.prometheus.jmx.common.http.authenticator;
 
 public class HexString {
 
@@ -41,12 +41,11 @@ public class HexString {
      * @return the return value
      */
     public static String toHex(byte [] bytes) {
-        char[] hexChars = new char[bytes.length * 3];
+        char[] hexChars = new char[bytes.length * 2];
         for (int i = 0, j = 0; i < bytes.length; i++) {
             hexChars[j++] = HEX_ARRAY[(0xF0 & bytes[i]) >>> 4];
             hexChars[j++] = HEX_ARRAY[0x0F & bytes[i]];
-            hexChars[j++] = ':';
         }
-        return new String(hexChars, 0, hexChars.length - 1);
+        return new String(hexChars).toLowerCase();
     }
 }

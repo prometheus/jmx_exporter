@@ -21,10 +21,12 @@ import io.prometheus.jmx.common.util.Precondition;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -32,38 +34,47 @@ import java.util.Set;
  */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
+    private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
+
     private final String username;
-    private final String hash;
+    private final String passwordHash;
     private final String algorithm;
     private final String salt;
-    private final Set<CacheKey> cacheKeys;
+    private final Set<CacheKey> validCacheKeys;
+    private final LinkedList<CacheKey> invalidCacheKeys;
 
     /**
      * Constructor
      *
      * @param realm realm
      * @param username username
-     * @param hash hash
+     * @param passwordHash passwordHash
      * @param algorithm algorithm
      * @param salt salt
      * @throws NoSuchAlgorithmException NoSuchAlgorithmException
      */
-    public MessageDigestAuthenticator(String realm, String username, String hash, String algorithm, String salt)
-            throws NoSuchAlgorithmException {
+    public MessageDigestAuthenticator(
+            String realm,
+            String username,
+            String passwordHash,
+            String algorithm,
+            String salt)
+            throws GeneralSecurityException {
         super(realm);
 
         Precondition.notNullOrEmpty(username);
-        Precondition.notNullOrEmpty(hash);
+        Precondition.notNullOrEmpty(passwordHash);
         Precondition.notNullOrEmpty(algorithm);
         Precondition.notNullOrEmpty(salt);
 
         MessageDigest.getInstance(algorithm);
 
         this.username = username;
-        this.hash = hash.toUpperCase();
+        this.passwordHash = passwordHash.toLowerCase().replace(":", "");
         this.algorithm = algorithm;
         this.salt = salt;
-        this.cacheKeys = Collections.synchronizedSet(new HashSet<>());
+        this.validCacheKeys = Collections.synchronizedSet(new HashSet<>());
+        this.invalidCacheKeys = new LinkedList<>();
     }
 
     /**
@@ -84,14 +95,29 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         }
 
         CacheKey cacheKey = new CacheKey(username, password);
-        if (cacheKeys.contains(cacheKey)) {
+        if (validCacheKeys.contains(cacheKey)) {
             return true;
+        } else {
+            synchronized (invalidCacheKeys) {
+                if (invalidCacheKeys.contains(cacheKey)) {
+                    return false;
+                }
+            }
         }
 
-        boolean isValid = this.username.equals(username)
-                && this.hash.equals(generateHash(algorithm, salt, password));
+        boolean isValid =
+                this.username.equals(username)
+                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, password));
+
         if (isValid) {
-            cacheKeys.add(cacheKey);
+            validCacheKeys.add(cacheKey);
+        } else {
+            synchronized (invalidCacheKeys) {
+                invalidCacheKeys.add(cacheKey);
+                if (invalidCacheKeys.size() > MAXIMUM_INVALID_CACHE_KEY_ENTRIES) {
+                    invalidCacheKeys.removeFirst();
+                }
+            }
         }
 
         return isValid;
@@ -105,13 +131,13 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @param password password
      * @return the hash
      */
-    private static String generateHash(String algorithm, String salt, String password) {
+    private static String generatePasswordHash(String algorithm, String salt, String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance(algorithm);
             byte[] hash = digest.digest((salt + ":" + password).getBytes(StandardCharsets.UTF_8));
             BigInteger number = new BigInteger(1, hash);
-            return number.toString(16).toUpperCase();
-        } catch (NoSuchAlgorithmException e) {
+            return number.toString(16).toLowerCase();
+        } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
     }

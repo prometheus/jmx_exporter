@@ -17,16 +17,17 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
-import io.prometheus.jmx.common.util.HexString;
 import io.prometheus.jmx.common.util.Precondition;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -34,20 +35,23 @@ import java.util.Set;
  */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
+    private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
+
     private final String username;
-    private final String hash;
+    private final String passwordHash;
     private final String algorithm;
     private final String salt;
     private final int iterations;
     private final int keyLength;
     private final Set<CacheKey> cacheKeys;
+    private final LinkedList<CacheKey> invalidCacheKeys;
 
     /**
      * Constructor
      *
      * @param realm realm
      * @param username username
-     * @param hash hash
+     * @param passwordHash passwordHash
      * @param algorithm algorithm
      * @param salt salt
      * @param iterations iterations
@@ -55,12 +59,18 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      * @throws NoSuchAlgorithmException NoSuchAlgorithmException
      */
     public PBKDF2Authenticator(
-            String realm, String username, String hash, String algorithm, String salt, int iterations, int keyLength)
-            throws NoSuchAlgorithmException {
+            String realm,
+            String username,
+            String passwordHash,
+            String algorithm,
+            String salt,
+            int iterations,
+            int keyLength)
+            throws GeneralSecurityException {
         super(realm);
 
         Precondition.notNullOrEmpty(username);
-        Precondition.notNullOrEmpty(hash);
+        Precondition.notNullOrEmpty(passwordHash);
         Precondition.notNullOrEmpty(algorithm);
         Precondition.notNullOrEmpty(salt);
         Precondition.IsGreaterThanOrEqualTo(1, iterations);
@@ -69,12 +79,13 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         SecretKeyFactory.getInstance(algorithm);
 
         this.username = username;
-        this.hash = hash.toUpperCase();
+        this.passwordHash = passwordHash.toLowerCase().replace(":", "");
         this.algorithm = algorithm;
         this.salt = salt;
         this.iterations = iterations;
         this.keyLength = keyLength;
         this.cacheKeys = Collections.synchronizedSet(new HashSet<>());
+        this.invalidCacheKeys = new LinkedList<>();
     }
 
     /**
@@ -97,12 +108,25 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         CacheKey cacheKey = new CacheKey(username, password);
         if (cacheKeys.contains(cacheKey)) {
             return true;
+        } else {
+            synchronized (invalidCacheKeys) {
+                if (invalidCacheKeys.contains(cacheKey)) {
+                    return false;
+                }
+            }
         }
 
         boolean isValid = this.username.equals(username)
-                && this.hash.equals(generateHash(algorithm, salt, iterations, keyLength, password));
+                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, iterations, keyLength, password));
         if (isValid) {
             cacheKeys.add(cacheKey);
+        } else {
+            synchronized (invalidCacheKeys) {
+                invalidCacheKeys.add(cacheKey);
+                if (invalidCacheKeys.size() > MAXIMUM_INVALID_CACHE_KEY_ENTRIES) {
+                    invalidCacheKeys.removeFirst();
+                }
+            }
         }
 
         return isValid;
@@ -118,7 +142,12 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      * @param password password
      * @return the hash
      */
-    private static String generateHash(String algorithm, String salt, int iterations, int keyLength, String password) {
+    private static String generatePasswordHash(
+            String algorithm,
+            String salt,
+            int iterations,
+            int keyLength,
+            String password) {
         try {
             PBEKeySpec pbeKeySpec =
                     new PBEKeySpec(
@@ -128,10 +157,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
                             keyLength * 8);
             SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithm);
             byte[] secretKeyBytes = secretKeyFactory.generateSecret(pbeKeySpec).getEncoded();
-            return HexString.toHex(secretKeyBytes).toUpperCase();
-        } catch (InvalidKeySpecException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
+            return HexString.toHex(secretKeyBytes);
+        } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
     }

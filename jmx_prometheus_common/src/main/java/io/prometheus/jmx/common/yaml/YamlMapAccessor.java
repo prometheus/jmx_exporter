@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.util.map;
+package io.prometheus.jmx.common.yaml;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * Class to implement a MapAccessor to work with nested Maps / values
  */
 @SuppressWarnings("unchecked")
-public class MapAccessor {
+public class YamlMapAccessor {
 
     private final Map<Object, Object> map;
 
@@ -35,7 +35,7 @@ public class MapAccessor {
      *
      * @param map map
      */
-    public MapAccessor(Map<Object, Object> map) {
+    public YamlMapAccessor(Map<Object, Object> map) {
         if (map == null) {
             throw new IllegalArgumentException("Map is null");
         }
@@ -177,8 +177,8 @@ public class MapAccessor {
      *
      * @return the return value
      */
-    public static MapAccessor empty() {
-        return new MapAccessor(new LinkedHashMap<>());
+    public static YamlMapAccessor empty() {
+        return new YamlMapAccessor(new LinkedHashMap<>());
     }
 
     /**
