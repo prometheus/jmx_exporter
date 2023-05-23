@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test.http.authentication;
 
 import io.prometheus.jmx.test.BaseTest;
-import io.prometheus.jmx.test.TestParameter;
+import io.prometheus.jmx.test.TestArgument;
 import org.antublue.test.engine.api.TestEngine;
 
 import java.util.HashSet;
@@ -32,14 +32,14 @@ public class BasicAuthenticationBaseTest extends BaseTest {
     protected final String[] TEST_USERNAMES = new String[] { VALID_USERNAME, "prometheus", "bad", "", null };
     protected final String[] TEST_PASSWORDS = new String[] { VALID_PASSWORD, "Secret", "bad", "", null };
 
-    protected final static PBKDF2WithHmacTestParameterFilter PBKDF2WITHHMAC_TEST_PARAMETER_FILTER =
-            new PBKDF2WithHmacTestParameterFilter();
+    protected final static PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_PARAMETER_FILTER =
+            new PBKDF2WithHmacTestArgumentFilter();
 
-    private static class PBKDF2WithHmacTestParameterFilter implements Predicate<TestParameter> {
+    private static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {
 
         private Set<String> filteredDockerImages;
 
-        public PBKDF2WithHmacTestParameterFilter() {
+        public PBKDF2WithHmacTestArgumentFilter() {
             filteredDockerImages = new HashSet<>();
             filteredDockerImages.add("ibmjava:8");
             filteredDockerImages.add("ibmjava:8-jre");
@@ -50,13 +50,13 @@ public class BasicAuthenticationBaseTest extends BaseTest {
         /**
          * Evaluates this predicate on the given argument.
          *
-         * @param testParameter the input argument
+         * @param testArgument the input argument
          * @return {@code true} if the input argument matches the predicate,
          * otherwise {@code false}
          */
         @Override
-        public boolean test(TestParameter testParameter) {
-            return !filteredDockerImages.contains(testParameter.dockerImageName());
+        public boolean test(TestArgument testArgument) {
+            return !filteredDockerImages.contains(testArgument.dockerImageName());
         }
     }
 }

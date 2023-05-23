@@ -114,14 +114,14 @@ public final class DockerImageNames {
             dockerImageNames = dockerImageNameValue.split("\\s+");
         }
 
-        Collection<String> parameters = new ArrayList<>();
+        Collection<String> dockerImageNamesCollection = new ArrayList<>();
         for (String dockerImageName : dockerImageNames) {
             if (predicate.test(dockerImageName)) {
-                parameters.add(dockerImageName);
+                dockerImageNamesCollection.add(dockerImageName);
             }
         }
 
-        return parameters.stream();
+        return dockerImageNamesCollection.stream();
     }
 
     /**

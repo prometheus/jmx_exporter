@@ -38,31 +38,31 @@ public class BaseTest {
 
     protected TestState testState;
 
-    @TestEngine.Parameter
-    protected TestParameter testParameter;
+    @TestEngine.Argument
+    protected TestArgument testArgument;
 
     /**
-     * Method to get the list of TestParameters
+     * Method to get the list of TestArguments
      *
      * @return the return value
      */
-    @TestEngine.ParameterSupplier
-    protected static Stream<TestParameter> parameters() {
-        List<TestParameter> testParameters = new ArrayList<>();
+    @TestEngine.ArgumentSupplier
+    protected static Stream<TestArgument> arguments() {
+        List<TestArgument> testArguments = new ArrayList<>();
 
         DockerImageNames
                 .names()
                 .forEach(dockerImageName -> {
                     for (Mode mode : Mode.values()) {
-                        testParameters.add(
-                                TestParameter.of(
+                        testArguments.add(
+                                TestArgument.of(
                                         dockerImageName + " / " + mode,
                                         dockerImageName,
                                         mode));
                     }
                 });
 
-        return testParameters.stream();
+        return testArguments.stream();
     }
 
     @TestEngine.Prepare
@@ -84,11 +84,11 @@ public class BaseTest {
         testState.reset();
 
         Network network = testState.network();
-        String dockerImageName = testParameter.dockerImageName();
+        String dockerImageName = testArgument.dockerImageName();
         String testName = this.getClass().getName();
         String baseUrl = testState.baseUrl();
 
-        switch (testParameter.mode()) {
+        switch (testArgument.mode()) {
             case JavaAgent: {
                 GenericContainer<?> applicationContainer = createJavaAgentApplicationContainer(network, dockerImageName, testName);
                 applicationContainer.start();

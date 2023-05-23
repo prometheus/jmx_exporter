@@ -19,7 +19,7 @@ package io.prometheus.jmx.test.http.authentication;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
-import io.prometheus.jmx.test.TestParameter;
+import io.prometheus.jmx.test.TestArgument;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
@@ -41,14 +41,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticationBaseTest implements ContentConsumer {
 
     /**
-     * Method to get the list of TestParameters
+     * Method to get the list of TestArguments
      *
      * @return the return value
      */
-    @TestEngine.ParameterSupplier
-    protected static Stream<TestParameter> parameters() {
+    @TestEngine.ArgumentSupplier
+    protected static Stream<TestArgument> arguments() {
         System.out.println("here");
-        return BasicAuthenticationBaseTest.parameters().filter(PBKDF2WITHHMAC_TEST_PARAMETER_FILTER);
+        return BasicAuthenticationBaseTest.arguments().filter(PBKDF2WITHHMAC_TEST_PARAMETER_FILTER);
     }
 
     @TestEngine.Test
@@ -146,7 +146,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testParameter.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
@@ -171,6 +171,6 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
 
         assertThatMetricIn(metrics)
                 .withName("jvm_threads_state")
-                .exists(testParameter.mode() == Mode.JavaAgent);
+                .exists(testArgument.mode() == Mode.JavaAgent);
     }
 }

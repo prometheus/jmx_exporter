@@ -16,15 +16,15 @@
 
 package io.prometheus.jmx.test;
 
-import org.antublue.test.engine.api.Parameter;
+import org.antublue.test.engine.api.Argument;
 
-public class TestParameter implements Parameter {
+public class TestArgument implements Argument {
 
     private final String name;
     private final String dockerImageName;
     private final Mode mode;
 
-    private TestParameter(String name, String dockerImageName, Mode mode) {
+    private TestArgument(String name, String dockerImageName, Mode mode) {
         this.name = name;
         this.dockerImageName = dockerImageName;
         this.mode = mode;
@@ -45,10 +45,10 @@ public class TestParameter implements Parameter {
 
     @Override
     public String toString() {
-        return String.format("TestParameter{name=[%s],dockerImageName=[%s],mode=[%s]}", name, dockerImageName, mode);
+        return String.format("TestArgument{name=[%s],dockerImageName=[%s],mode=[%s]}", name, dockerImageName, mode);
     }
 
-    public static TestParameter of(String name, String dockerImageName, Mode mode) {
-        return new TestParameter(name, dockerImageName, mode);
+    public static TestArgument of(String name, String dockerImageName, Mode mode) {
+        return new TestArgument(name, dockerImageName, mode);
     }
 }

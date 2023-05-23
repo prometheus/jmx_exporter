@@ -133,7 +133,7 @@ public class BasicAuthenticationSHA1Test extends BasicAuthenticationBaseTest imp
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testParameter.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")
@@ -158,6 +158,6 @@ public class BasicAuthenticationSHA1Test extends BasicAuthenticationBaseTest imp
 
         assertThatMetricIn(metrics)
                 .withName("jvm_threads_state")
-                .exists(testParameter.mode() == Mode.JavaAgent);
+                .exists(testArgument.mode() == Mode.JavaAgent);
     }
 }

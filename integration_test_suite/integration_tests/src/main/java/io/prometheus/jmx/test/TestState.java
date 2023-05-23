@@ -93,10 +93,12 @@ public class TestState {
     public void dispose() {
         if (exporterContainer != null) {
             exporterContainer.close();
+            exporterContainer = null;
         }
 
         if (applicationContainer != null) {
             applicationContainer.close();
+            applicationContainer = null;
         }
 
         if (network != null) {

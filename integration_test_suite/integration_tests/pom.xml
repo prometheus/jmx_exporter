@@ -31,7 +31,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jmx.core.root>../..</jmx.core.root>
-        <antublue.test.engine.version>4.0.0</antublue.test.engine.version>
+        <antublue.test.engine.version>4.0.1</antublue.test.engine.version>
         <!-- smoke test containers -->
         <docker.image.names/>
         <!-- all test containers -->
