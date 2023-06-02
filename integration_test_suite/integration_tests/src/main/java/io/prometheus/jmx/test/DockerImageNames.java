@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,12 @@ import java.util.stream.Stream;
 public final class DockerImageNames {
 
     private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
-    private static final String DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.txt";
 
-    private static String[] DOCKER_IMAGE_NAMES;
+    private static final String ALL_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.all.txt";
+    private static String[] ALL_DOCKER_IMAGE_NAMES;
+
+    private static final String SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.smoke-test.txt";
+    private static String[] SMOKE_TEST_DOCKER_IMAGE_NAMES;
 
     /**
      * Predicate to accept all Docker image names
@@ -74,8 +77,11 @@ public final class DockerImageNames {
         Objects.requireNonNull(predicate);
 
         synchronized (DockerImageNames.class) {
-            if (DOCKER_IMAGE_NAMES == null) {
-                DOCKER_IMAGE_NAMES = load(DOCKER_IMAGE_NAMES_RESOURCE);
+            if (ALL_DOCKER_IMAGE_NAMES == null) {
+                ALL_DOCKER_IMAGE_NAMES = load(ALL_DOCKER_IMAGE_NAMES_RESOURCE);
+            }
+            if (SMOKE_TEST_DOCKER_IMAGE_NAMES == null) {
+                SMOKE_TEST_DOCKER_IMAGE_NAMES = load(SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE);
             }
         }
 
@@ -84,40 +90,38 @@ public final class DockerImageNames {
         String dockerImageNameValue =
                 System.getenv(DOCKER_IMAGE_NAMES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
-        if (dockerImageNameValue == null) {
-            dockerImageNameValue = System.getProperty(DOCKER_IMAGE_NAMES_CONFIGURATION);
-        }
-
         if (dockerImageNameValue != null) {
             dockerImageNameValue = dockerImageNameValue.trim();
-        }
-
-        if (dockerImageNameValue == null) {
-            dockerImageNames = DOCKER_IMAGE_NAMES;
-        } else if (dockerImageNameValue.isEmpty() || dockerImageNameValue.equalsIgnoreCase("ALL")) {
-            dockerImageNames = DOCKER_IMAGE_NAMES;
-        } else {
-            dockerImageNames = dockerImageNameValue.trim().split("\\s+");
-        }
-
-        Collection<String> parameters = new ArrayList<>();
-        for (String dockerImageName : dockerImageNames) {
-            if (predicate.test(dockerImageName)) {
-                parameters.add(dockerImageName);
+            if (dockerImageNameValue.isBlank()) {
+                dockerImageNameValue = null;
             }
         }
 
-        return parameters.stream();
-    }
+        if (dockerImageNameValue == null) {
+            dockerImageNameValue = System.getProperty(DOCKER_IMAGE_NAMES_CONFIGURATION);
+            if (dockerImageNameValue != null) {
+                if (dockerImageNameValue.isBlank()) {
+                    dockerImageNameValue = null;
+                }
+            }
+        }
 
-    /**
-     * Method to determine if a Docker image is Java 6 based on the Docker image name (name contains ":6")
-     *
-     * @param dockerImageName
-     * @return
-     */
-    public static boolean isJava6(String dockerImageName) {
-        return dockerImageName.contains(":6");
+        if (dockerImageNameValue == null) {
+            dockerImageNames = SMOKE_TEST_DOCKER_IMAGE_NAMES;
+        } else if (dockerImageNameValue.equalsIgnoreCase("ALL")) {
+            dockerImageNames = ALL_DOCKER_IMAGE_NAMES;
+        } else {
+            dockerImageNames = dockerImageNameValue.split("\\s+");
+        }
+
+        Collection<String> dockerImageNamesCollection = new ArrayList<>();
+        for (String dockerImageName : dockerImageNames) {
+            if (predicate.test(dockerImageName)) {
+                dockerImageNamesCollection.add(dockerImageName);
+            }
+        }
+
+        return dockerImageNamesCollection.stream();
     }
 
     /**
@@ -151,7 +155,7 @@ public final class DockerImageNames {
 
             return dockerImageNames.toArray(new String[0]);
         } catch (IOException e) {
-            throw new RuntimeException("Exception reading resource " + DOCKER_IMAGE_NAMES_RESOURCE, e);
+            throw new RuntimeException("Exception reading resource " + ALL_DOCKER_IMAGE_NAMES_RESOURCE, e);
         }
     }
 }
