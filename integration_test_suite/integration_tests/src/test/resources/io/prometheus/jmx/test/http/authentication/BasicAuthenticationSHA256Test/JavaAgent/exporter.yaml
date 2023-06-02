@@ -1,0 +1,9 @@
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: 2bf7ed4906ac065bde39f7508d6102a6cdd7153a929ea883ff6cd04442772c99
+      algorithm: SHA-256
+      salt: U9i%=N+m]#i9yvUV:bA/3n4X9JdPXf=n
+rules:
+  - pattern: ".*"

@@ -39,15 +39,16 @@
             <name>Fabian Stäber</name>
             <email>fabian@fstab.de</email>
         </developer>
+        <developer>
+            <name>Doug Hoard</name>
+            <email>doug.hoard@gmail.com</email>
+        </developer>
     </developers>
 
     <modules>
         <module>collector</module>
-        <module>jmx_prometheus_httpserver_common</module>
-        <module>jmx_prometheus_httpserver_java6</module>
+        <module>jmx_prometheus_common</module>
         <module>jmx_prometheus_httpserver</module>
-        <module>jmx_prometheus_javaagent_common</module>
-        <module>jmx_prometheus_javaagent_java6</module>
         <module>jmx_prometheus_javaagent</module>
         <module>integration_test_suite</module>
     </modules>
@@ -237,8 +238,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
         </plugins>

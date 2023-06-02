@@ -15,6 +15,7 @@ jobs:
       - checkout
       - restore_cache:
           key: maven-dependencies-{{ checksum "pom.xml" }}
+      - run: ./integration_test_suite/docker-pull-images.smoke-test.sh
       - run: ./mvnw clean install
       - run: ./mvnw javadoc:jar
       - save_cache:

@@ -1,6 +1,5 @@
 package io.prometheus.jmx;
 
-import javax.management.*;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
