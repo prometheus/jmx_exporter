@@ -1,7 +1,7 @@
 JMX Exporter
 =====
 
-JMX to Prometheus exporter: a collector that can configurably scrape and
+JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
 
 This exporter is intended to be run as a Java Agent, exposing a HTTP server
@@ -13,13 +13,10 @@ Agent is thus strongly encouraged.
 
 ## Running the Java Agent
 
-The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.18.0/jmx_prometheus_javaagent-0.18.0.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.18.0/jmx_prometheus_javaagent_java6-0.18.0.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_javaagent-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.18.0/jmx_prometheus_javaagent-0.18.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
+
 ```
 java -javaagent:./jmx_prometheus_javaagent-0.18.0.jar=12345:config.yaml -jar yourJar.jar
 ```
@@ -38,11 +35,7 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-The HTTP server is available in two versions with identical functionality:
-* [jmx_prometheus_httpserver-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.18.0/jmx_prometheus_httpserver-0.18.0.jar) requires Java >= 7.
-* [jmx_prometheus_httpserver-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.18.0/jmx_prometheus_httpserver_java6-0.18.0.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_httpserver-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.18.0/jmx_prometheus_httpserver-0.18.0.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
@@ -151,13 +144,82 @@ domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanProp
 ```
 If a given part isn't set, it'll be excluded.
 
-## Integration Testing
+## HTTP Authentication (optional)
+
+HTTP BASIC authentication supports using the following configuration algorithms:
+
+- plaintext - plaintext password
+- SHA-1 - SHA-1(`<salt>:<password>`)
+- SHA-256 - SHA-256(`<salt>:<password>`) 
+- SHA-512 - SHA-512(`<salt>:<password>`)
+- PBKDF2WithHmacSHA1
+- PBKDF2WithHmacSHA256
+- PBKDF2WithHmacSHA512
+
+---
+
+Plaintext example:
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+```
+
+---
+
+SHA-256 example using a salted password SHA-256(`<salt>:<password>`) with a password of `secret`
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: 2bf7ed4906ac065bde39f7508d6102a6cdd7153a929ea883ff6cd04442772c99
+      algorithm: SHA-256
+      salt: U9i%=N+m]#i9yvUV:bA/3n4X9JdPXf=n
+```
+
+---
+
+PBKDF2WithHmacSHA256 example with a password of `secret`
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: A1:0E:4E:62:F7:1E:0B:59:0A:32:EA:CC:7C:65:37:1F:6D:A6:F1:F1:ED:3F:73:ED:C9:65:19:37:21:5B:6D:4E:9D:C6:61:DF:B5:BF:BB:16:B8:9A:50:14:57:CE:3D:14:67:73:A3:71:1B:87:3B:C4:B1:0E:DC:2D:0B:10:65:D6:F5:B6:DA:07:DD:EE:DA:AC:9C:60:CD:B4:59:0C:C9:CB:A7:3D:7E:30:3E:43:83:E9:E4:13:34:A1:F1:87:5C:24:46:8E:13:90:A6:66:E1:A6:F3:0B:5A:E7:14:8A:98:6A:81:2B:B6:F8:EF:95:D4:82:7E:FB:5E:2D:D3:24:FE:96
+      algorithm: `PBKDF2WithHmacSHA256`
+      salt: U9i%=N+m]#i9yvUV:bA/3n4X9JdPXf=n
+```
+
+- iterations = `600000` (default value for PBKDF2WithHmacSHA256 )
+- keyLength = `128` bits (default value)
+
+**Notes**
+
+- PBKDF2WithHmacSHA1 default iterations = `1300000`
+- PBKDF2WithHmacSHA256 default iterations = `600000`
+- PBKDF2WithHmacSHA256 default iterations = `210000`
+- default keyLength = `128` (bits)
+
+## Generation of `passwordHash`
+
+- `sha1sum`, `sha256sum`, and `sha512sum` can be used to generate the `passwordHash`
+- `openssl` can be used to generate a PBKDF2WithHmac based algorithm `passwordHash`
+
+---
+
+## Integration Test Suite
 
 The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
-You need to have Docker installed to run these tests.
+You need to have Docker installed to run the integration test suite.
 
-Build and run the integration tests:
+Build and run the integration test suite:
 
 ```
 ./mvnw clean verify
@@ -165,7 +227,11 @@ Build and run the integration tests:
 
 **Notes**
 
-- To run the integration tests in IntelliJ, you must build the project from the parent (root).
+- To run the integration tests in IntelliJ, you must build first the project from the parent (root) using Maven
+  - The Maven build copies the core artifacts as resources to the `integration_tests` project 
+
+
+- Additional information can be found in the [Integration Test Suite](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/README.md) readme.
 
 ## Debugging
 
@@ -191,7 +257,6 @@ io.prometheus.jmx.shaded.io.prometheus.jmx.level=ALL
 Add the following flag to your Java invocation:
 
 `-Djava.util.logging.config.file=/path/to/logging.properties`
-
 
 ## Installing
 

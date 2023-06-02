@@ -1,19 +1,17 @@
 package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Collector.MetricFamilySamples;
-
+import io.prometheus.client.CollectorRegistry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.logging.LogManager;
-
-import javax.management.MBeanServer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

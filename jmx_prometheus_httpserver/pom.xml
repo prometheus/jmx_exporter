@@ -31,7 +31,7 @@
     <dependencies>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
-            <artifactId>jmx_prometheus_httpserver_common</artifactId>
+            <artifactId>jmx_prometheus_common</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -63,7 +63,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <!-- Every artifact on Maven central needs a javadoc JAR. -->
                 <!-- As this module does not have its own Java sources, we include the javadoc from the dependency. -->
@@ -84,13 +83,11 @@
                     </execution>
                 </executions>
             </plugin>
-
             <!-- debian package builder -->
             <plugin>
                 <artifactId>jdeb</artifactId>
                 <groupId>org.vafer</groupId>
                 <version>1.0</version>
-
                 <executions>
                     <execution>
                         <phase>package</phase>
