@@ -24,7 +24,6 @@ Download the artifacts from the staging repository [https://oss.sonatype.org/#st
 /usr/lib/jvm/java-8-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
 /usr/lib/jvm/java-11-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
 /usr/lib/jvm/java-17-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-/usr/lib/jvm/jre1.6.0_45/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent_java6-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
 
 # standalone
 java -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
@@ -32,7 +31,6 @@ java -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.aut
 /usr/lib/jvm/java-8-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
 /usr/lib/jvm/java-11-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
 /usr/lib/jvm/java-17-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
-/usr/lib/jvm/jre1.6.0_45/bin/java -jar ~/Downloads/jmx_prometheus_httpserver_java6-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
 ```
 
 If everything looks good, click `Close` to trigger Sonatype's verification, then click `Release`.

@@ -1,9 +1,9 @@
 package io.prometheus.jmx;
 
-import java.util.HashMap;
-import java.util.Map;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.util.HashMap;
+import java.util.Map;
 
 public interface HadoopDataNodeMXBean {
     public Map<String, Map<String, Long>> getDatanodeNetworkCounts();
