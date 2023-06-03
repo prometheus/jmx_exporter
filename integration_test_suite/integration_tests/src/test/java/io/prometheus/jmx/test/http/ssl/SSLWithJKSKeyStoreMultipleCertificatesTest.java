@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 
-public class MinimalSSLWithJKSKeyStoreWithMultipleCertificatesTest extends BaseTest implements ContentConsumer {
+public class SSLWithJKSKeyStoreMultipleCertificatesTest extends BaseTest implements ContentConsumer {
 
     private static final String BASE_URL = "https://localhost";
 

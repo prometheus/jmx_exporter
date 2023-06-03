@@ -33,14 +33,48 @@ import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import org.antublue.test.engine.api.TestEngine;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 
-public class MinimalSSLWithJKSKeyStoreTest extends BaseTest implements ContentConsumer {
+public class SSLWithPKCS12KeyStoreMultipleCertificatesTest extends BaseTest implements ContentConsumer {
 
     private static final String BASE_URL = "https://localhost";
+
+    protected final static Predicate<TestArgument> PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER =
+            new PKCS12KeyStoreTestArgumentFilter();
+
+    private static class PKCS12KeyStoreTestArgumentFilter implements Predicate<TestArgument> {
+
+        private Set<String> filteredDockerImages;
+
+        public PKCS12KeyStoreTestArgumentFilter() {
+            filteredDockerImages = new HashSet<>();
+            filteredDockerImages.add("eclipse-temurin:8-alpine");
+            filteredDockerImages.add("ghcr.io/graalvm/jdk:java8");
+            filteredDockerImages.add("ibmjava:8");
+            filteredDockerImages.add("ibmjava:8-jre");
+            filteredDockerImages.add("ibmjava:8-sdk");
+            filteredDockerImages.add("ibmjava:8-sfj");
+            filteredDockerImages.add("ibmjava:11");
+        }
+
+        /**
+         * Evaluates this predicate on the given argument.
+         *
+         * @param testArgument the input argument
+         * @return {@code true} if the input argument matches the predicate,
+         * otherwise {@code false}
+         */
+        @Override
+        public boolean test(TestArgument testArgument) {
+            return !filteredDockerImages.contains(testArgument.dockerImageName());
+        }
+    }
 
     /**
      * Method to get the list of TestArguments
@@ -49,11 +83,11 @@ public class MinimalSSLWithJKSKeyStoreTest extends BaseTest implements ContentCo
      */
     @TestEngine.ArgumentSupplier
     protected static Stream<TestArgument> arguments() {
-        // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
-        // https://github.com/adoptium/temurin-build/issues/3002
+        // Filter Java versions that don't support the PKCS12 keystore
+        // format or don't support the required TLS cipher suites
         return BaseTest
                 .arguments()
-                .filter(testParameter -> !testParameter.dockerImageName().contains("eclipse-temurin:8-alpine"));
+                .filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
     }
 
     @TestEngine.Prepare
