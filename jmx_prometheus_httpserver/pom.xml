@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>parent</artifactId>
-        <version>0.17.3-SNAPSHOT</version>
+        <version>0.18.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>jmx_prometheus_httpserver</artifactId>
@@ -52,6 +52,8 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>io.prometheus.jmx.WebServer</Main-Class>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Title>${project.artifactId}</Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>

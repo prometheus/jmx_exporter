@@ -7,12 +7,10 @@ jobs:
     working_directory: ~/circleci-java
     steps:
       - run:
-          # OpenJDK 8 is only needed for JavaAgentIT. Once we refactored that
-          # test to run with OpenJDK 11, we don't need OpenJDK 8 on the build image anymore.
-          name: Install OpenJDK 8
+          name: Install OpenJDK 11
           command: |
-            sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
-            sudo update-java-alternatives --jre-headless --jre --set java-1.8.0-openjdk-amd64
+            sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
+            sudo update-java-alternatives --jre-headless --jre --set java-1.11.0-openjdk-amd64
             java -version
       - checkout
       - restore_cache:

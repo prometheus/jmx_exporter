@@ -14,14 +14,14 @@ Agent is thus strongly encouraged.
 ## Running the Java Agent
 
 The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.2/jmx_prometheus_javaagent-0.17.2.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.17.2/jmx_prometheus_javaagent_java6-0.17.2.jar) is compatible with Java 6.
+* [jmx_prometheus_javaagent-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.18.0/jmx_prometheus_javaagent-0.18.0.jar) requires Java >= 7.
+* [jmx_prometheus_javaagent-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.18.0/jmx_prometheus_javaagent_java6-0.18.0.jar) is compatible with Java 6.
 
 Both versions are built from the same code and differ only in the versions of the bundled dependencies.
 
 To run as a Java agent, download one of the JARs and run:
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.17.2.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.18.0.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -39,15 +39,15 @@ Example configurations can be found in the `example_configs/` directory.
 ## Running the Standalone HTTP Server
 
 The HTTP server is available in two versions with identical functionality:
-* [jmx_prometheus_httpserver-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.17.2/jmx_prometheus_httpserver-0.17.2.jar) requires Java >= 7.
-* [jmx_prometheus_httpserver-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.17.2/jmx_prometheus_httpserver_java6-0.17.2.jar) is compatible with Java 6.
+* [jmx_prometheus_httpserver-0.18.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.18.0/jmx_prometheus_httpserver-0.18.0.jar) requires Java >= 7.
+* [jmx_prometheus_httpserver-0.18.0_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.18.0/jmx_prometheus_httpserver_java6-0.18.0.jar) is compatible with Java 6.
 
 Both versions are built from the same code and differ only in the versions of the bundled dependencies.
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-0.17.2.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-0.18.0.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -68,7 +68,7 @@ As stated above, it is recommended to run JMX exporter as a Java agent and not a
 
 ## Building
 
-`./mvnw package` to build.
+`./mvnw clean package` to build.
 
 ## Configuration
 The configuration is in YAML. An example with all possible options:
@@ -144,26 +144,32 @@ No escaping or other changes are made to these values, with the exception of if 
 The default help includes this string, except for the value.
 
 ### Default format
+
 The default format will transform beans in a way that should produce sane metrics in most cases. It is
 ```
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
 ```
 If a given part isn't set, it'll be excluded.
 
-## Testing
+## Integration Testing
 
-The JMX exporter uses [Testcontainers](https://www.testcontainers.org/) to run tests with different Java versions.
+The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+
 You need to have Docker installed to run these tests.
 
-You can run the tests with:
+Build and run the integration tests:
 
 ```
-./mvnw verify
+./mvnw clean verify
 ```
+
+**Notes**
+
+- To run the integration tests in IntelliJ, you must build the project from the parent (root).
 
 ## Debugging
 
-You can start the jmx's scraper in standalone mode in order to debug what is called 
+You can start the JMX scraper in standalone mode in order to debug what is called 
 
 ```
 git clone https://github.com/prometheus/jmx_exporter.git
