@@ -288,7 +288,7 @@ public class HTTPServerFactory {
                 String certificateAlias =
                         sslYamlMapAccessor
                                 .get("/certificate/alias")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for for /httpServer/ssl/certificate/alias must be a string")))
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must be a string")))
                                 .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must not be blank")))
                                 .orElseThrow(ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required string"));
 
