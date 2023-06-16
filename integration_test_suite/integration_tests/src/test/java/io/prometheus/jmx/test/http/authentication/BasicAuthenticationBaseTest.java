@@ -32,7 +32,7 @@ public class BasicAuthenticationBaseTest extends BaseTest {
     protected final String[] TEST_USERNAMES = new String[] { VALID_USERNAME, "prometheus", "bad", "", null };
     protected final String[] TEST_PASSWORDS = new String[] { VALID_PASSWORD, "Secret", "bad", "", null };
 
-    protected final static PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_PARAMETER_FILTER =
+    protected final static PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER =
             new PBKDF2WithHmacTestArgumentFilter();
 
     private static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {

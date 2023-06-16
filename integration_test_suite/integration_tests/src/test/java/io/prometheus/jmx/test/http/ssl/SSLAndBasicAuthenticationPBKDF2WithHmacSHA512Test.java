@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.http.authentication;
+package io.prometheus.jmx.test.http.ssl;
 
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
+import io.prometheus.jmx.test.http.authentication.BasicAuthenticationBaseTest;
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
@@ -38,7 +39,10 @@ import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricI
 import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthenticationBaseTest implements ContentConsumer {
+public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuthenticationBaseTest implements ContentConsumer {
+
+
+    private static final String BASE_URL = "https://localhost";
 
     /**
      * Method to get the list of TestArguments
@@ -47,7 +51,15 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
      */
     @TestEngine.ArgumentSupplier
     protected static Stream<TestArgument> arguments() {
-        return BasicAuthenticationBaseTest.arguments().filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER);
+        return BasicAuthenticationBaseTest
+                .arguments()
+                .filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER)
+                .filter(testParameter -> !testParameter.dockerImageName().contains("eclipse-temurin:8-alpine"));
+    }
+
+    @TestEngine.Prepare
+    protected void setBaseUrl() {
+        testState.baseUrl(BASE_URL);
     }
 
     @TestEngine.Test

@@ -48,7 +48,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
     @TestEngine.ArgumentSupplier
     protected static Stream<TestArgument> arguments() {
         System.out.println("here");
-        return BasicAuthenticationBaseTest.arguments().filter(PBKDF2WITHHMAC_TEST_PARAMETER_FILTER);
+        return BasicAuthenticationBaseTest.arguments().filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER);
     }
 
     @TestEngine.Test
