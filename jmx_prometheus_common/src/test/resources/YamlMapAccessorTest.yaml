@@ -16,3 +16,8 @@ httpServer:
     keepAlive: 120
 rules:
   - pattern: ".*"
+key:
+  subkey:
+key2:
+  subkey2:
+    foo: bar

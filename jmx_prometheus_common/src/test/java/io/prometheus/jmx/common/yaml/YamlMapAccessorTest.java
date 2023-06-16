@@ -232,6 +232,23 @@ public class YamlMapAccessorTest {
         assertTrue(((Integer) map.get("value")) == 1);
     }
 
+    @Test
+    public void testContainsPath() throws IOException {
+        YamlMapAccessor yamlMapAccessor = createYamlMapAccessor("/YamlMapAccessorTest.yaml");
+
+        assertTrue(yamlMapAccessor.containsPath("/"));
+
+        assertTrue(yamlMapAccessor.containsPath("/key"));
+        assertTrue(yamlMapAccessor.containsPath("/key/subkey"));
+        assertFalse(yamlMapAccessor.get("/key/subkey").isPresent());
+
+        assertTrue(yamlMapAccessor.containsPath("/key2"));
+        assertTrue(yamlMapAccessor.containsPath("/key2/subkey2"));
+        assertTrue(yamlMapAccessor.get("/key2/subkey2").isPresent());
+
+        assertFalse(yamlMapAccessor.containsPath("/key/foo"));
+    }
+
     private static YamlMapAccessor createYamlMapAccessor(String resource) throws IOException {
         try (InputStream inputStream = YamlMapAccessorTest.class.getResourceAsStream(resource)) {
             Map<Object, Object> map = new Yaml().load(inputStream);

@@ -206,10 +206,38 @@ httpServer:
 - PBKDF2WithHmacSHA256 default iterations = `210000`
 - default keyLength = `128` (bits)
 
-## Generation of `passwordHash`
+### Generation of `passwordHash`
 
 - `sha1sum`, `sha256sum`, and `sha512sum` can be used to generate the `passwordHash`
 - `openssl` can be used to generate a PBKDF2WithHmac based algorithm `passwordHash`
+
+---
+
+## HTTPS support (optional)
+
+HTTPS support can be configured using either a JKS or PKCS12 format keystore.
+- Keystore type is dependent on the Java version
+
+### Configuration
+
+1. Add configuration to your exporter YAML file
+
+```yaml
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+```
+
+2. Add your certificate to the application's Java keystore
+
+The exporter YAML file `alias` should match the certificate alias of certificate you want to use for the HTTPS server.
+
+3. Define the application system properties for the Java keystore
+
+```shell
+-Djavax.net.ssl.keyStore=<keystore file> -Djavax.net.ssl.keyStorePassword=<keystore password>
+```
 
 ---
 
