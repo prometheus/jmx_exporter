@@ -17,11 +17,13 @@
 package io.prometheus.jmx.common.http;
 
 import com.sun.net.httpserver.Authenticator;
+import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
+import io.prometheus.jmx.common.http.ssl.SSLContextFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
@@ -104,6 +106,7 @@ public class HTTPServerFactory {
 
         createMapAccessor(exporterYamlFile);
         configureAuthentication(httpServerBuilder);
+        configureSSL(httpServerBuilder);
 
         return httpServerBuilder.build();
     }
@@ -132,13 +135,13 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     private void configureAuthentication(HTTPServer.Builder httpServerBuilder) {
-        YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
-                rootYamlMapAccessor
-                        .get("/httpServer/authentication/basic")
-                        .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
-                        .orElse(null);
+        if (rootYamlMapAccessor.containsPath("/httpServer/authentication")) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
+                    rootYamlMapAccessor
+                            .get("/httpServer/authentication/basic")
+                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic configuration values are required"));
 
-        if (httpServerAuthenticationBasicYamlMapAccessor != null) {
             String username =
                     httpServerAuthenticationBasicYamlMapAccessor
                             .get("/username")
@@ -265,6 +268,37 @@ public class HTTPServerFactory {
                     String.format(
                             "Invalid /httpServer/authentication/basic/algorithm, unsupported algorithm [%s]",
                             algorithm));
+        }
+    }
+
+    /**
+     * Method to configure SSL
+     *
+     * @param httpServerBuilder httpServerBuilder
+     */
+    public void configureSSL(HTTPServer.Builder httpServerBuilder) {
+        if (rootYamlMapAccessor.containsPath("/httpServer/ssl")) {
+            try {
+                String certificateAlias =
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/certificate/alias")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must not be blank")))
+                                .orElseThrow(ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required string"));
+
+                httpServerBuilder.withHttpsConfigurator(
+                        new HttpsConfigurator(SSLContextFactory.createSSLContext(certificateAlias)));
+            } catch (GeneralSecurityException | IOException e) {
+                String message = e.getMessage();
+                if (message != null && !message.trim().isEmpty()) {
+                    message = ", " + message.trim();
+                } else {
+                    message = "";
+                }
+
+                throw new ConfigurationException(
+                        String.format("Exception loading SSL configuration%s", message), e);
+            }
         }
     }
 }

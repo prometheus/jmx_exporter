@@ -1,0 +1,6 @@
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+rules:
+  - pattern: ".*"
