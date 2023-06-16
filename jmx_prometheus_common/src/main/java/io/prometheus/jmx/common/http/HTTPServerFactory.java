@@ -135,13 +135,13 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     private void configureAuthentication(HTTPServer.Builder httpServerBuilder) {
-        YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
-                rootYamlMapAccessor
-                        .get("/httpServer/authentication/basic")
-                        .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
-                        .orElse(null);
+        if (rootYamlMapAccessor.containsPath("/httpServer/authentication")) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
+                    rootYamlMapAccessor
+                            .get("/httpServer/authentication/basic")
+                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic configuration values are required"));
 
-        if (httpServerAuthenticationBasicYamlMapAccessor != null) {
             String username =
                     httpServerAuthenticationBasicYamlMapAccessor
                             .get("/username")
@@ -277,34 +277,28 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     public void configureSSL(HTTPServer.Builder httpServerBuilder) {
-        try {
-            YamlMapAccessor sslYamlMapAccessor =
-                    rootYamlMapAccessor
-                            .get("/httpServer/ssl")
-                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl")))
-                            .orElse(null);
-
-            if (sslYamlMapAccessor != null) {
+        if (rootYamlMapAccessor.containsPath("/httpServer/ssl")) {
+            try {
                 String certificateAlias =
-                        sslYamlMapAccessor
-                                .get("/certificate/alias")
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/certificate/alias")
                                 .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must be a string")))
                                 .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must not be blank")))
                                 .orElseThrow(ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required string"));
 
                 httpServerBuilder.withHttpsConfigurator(
                         new HttpsConfigurator(SSLContextFactory.createSSLContext(certificateAlias)));
-            }
-        } catch (GeneralSecurityException | IOException e) {
-            String message = e.getMessage();
-            if (message != null && !message.trim().isEmpty()) {
-                message = ", " + message.trim();
-            } else {
-                message = "";
-            }
+            } catch (GeneralSecurityException | IOException e) {
+                String message = e.getMessage();
+                if (message != null && !message.trim().isEmpty()) {
+                    message = ", " + message.trim();
+                } else {
+                    message = "";
+                }
 
-            throw new ConfigurationException(
-                    String.format("Exception loading SSL configuration%s", message), e);
+                throw new ConfigurationException(
+                        String.format("Exception loading SSL configuration%s", message), e);
+            }
         }
     }
 }

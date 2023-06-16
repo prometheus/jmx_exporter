@@ -44,6 +44,43 @@ public class YamlMapAccessor {
     }
 
     /**
+     * Method to determine if a path exists
+     *
+     * @param path path
+     * @return true if the path exists (but could be null), false otherwise
+     */
+    public boolean containsPath(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    String.format("path [%s] is invalid", path));
+        }
+
+        path = validatePath(path);
+        if (path.equals("/")) {
+            return true;
+        }
+
+        String[] pathTokens = path.split(Pattern.quote("/"));
+        Map<Object, Object> subMap = map;
+
+        for (int i = 1; i < pathTokens.length; i++) {
+            try {
+                if (subMap.containsKey(pathTokens[i])) {
+                    subMap = (Map<Object, Object>) subMap.get(pathTokens[i]);
+                } else {
+                    return false;
+                }
+            } catch (NullPointerException e) {
+                return false;
+            } catch (ClassCastException e) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Method to get a path Object
      *
      * @param path path
