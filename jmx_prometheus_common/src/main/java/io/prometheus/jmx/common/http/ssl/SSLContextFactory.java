@@ -77,7 +77,7 @@ public class SSLContextFactory {
                 keyStore.deleteEntry(certificateAliasToRemove);
             }
 
-            // Validat the keystore contains the certificate alias that is requested
+            // Validate the keystore contains the certificate alias that is requested
             if (!keyStore.containsAlias(certificateAlias)) {
                 throw new GeneralSecurityException(
                         String.format(
