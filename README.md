@@ -231,7 +231,7 @@ httpServer:
 
 2. Add your certificate to the application's Java keystore
 
-The exporter YAML file `alias` should match the certificate alias of certificate you want to use for the HTTPS server.
+The exporter YAML file `alias` should match the certificate alias of the certificate you want to use for the HTTPS server.
 
 3. Define the application system properties for the Java keystore
 
