@@ -274,12 +274,24 @@ class JmxScraper {
                     for (String idx : rowKeys) {
                         Object obj = composite.get(idx);
                         if (obj != null) {
+
                             // Nested tabulardata will repeat the 'key' label, so
                             // append a suffix to distinguish each.
                             while (l2s.containsKey(idx)) {
-                              idx = idx + "_";
+                                idx = idx + "_";
                             }
-                            l2s.put(idx, obj.toString());
+
+                            if (obj instanceof CompositeData) {
+                                // TabularData key is a composite key
+                                CompositeData compositeKey = (CompositeData) obj;
+                                CompositeType ct = compositeKey.getCompositeType();
+                                for (final String compositeKeyIdx : ct.keySet()) {
+                                    l2s.put(idx + "_" + compositeKeyIdx, compositeKey.get(compositeKeyIdx).toString());
+                                }
+                            } else {
+                                // TabularData key is an Open type key
+                                l2s.put(idx, obj.toString());
+                            }
                         }
                     }
                     for(String valueIdx : valueKeys) {

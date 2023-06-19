@@ -36,6 +36,7 @@ public class JmxCollectorTest {
         CassandraMetrics.registerBean(mbs);
         Hadoop.registerBean(mbs);
         HadoopDataNode.registerBean(mbs);
+        ExistDb.registerBean(mbs);
         BeanWithEnum.registerBean(mbs);
 
         TomcatServlet.registerBean(mbs);
@@ -166,6 +167,13 @@ public class JmxCollectorTest {
     public void nestedTabularDataTest() throws Exception {
       JmxCollector jc = new JmxCollector("---").register(registry);
       assertEquals(338, registry.getSampleValue("Hadoop_DataNodeInfo_DatanodeNetworkCounts", new String[]{"service", "key", "key_"}, new String[]{"DataNode", "1.2.3.4", "networkErrors"}), .001);
+    }
+
+    @Test
+    public void tabularDataCompositeKeyTest() throws Exception {
+        JmxCollector jc = new JmxCollector("---").register(registry);
+        assertEquals(1, registry.getSampleValue("org_exist_management_exist_ProcessReport_RunningQueries_id", new String[]{"key_id", "key_path"}, new String[]{"1", "/db/query1.xq"}), .001);
+        assertEquals(2, registry.getSampleValue("org_exist_management_exist_ProcessReport_RunningQueries_id", new String[]{"key_id", "key_path"}, new String[]{"2", "/db/query2.xq"}), .001);
     }
 
     @Test
