@@ -19,8 +19,13 @@ package io.prometheus.jmx.test.support;
 import io.prometheus.jmx.test.Metric;
 import org.opentest4j.AssertionFailedError;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Class to implement a MetricAssertion
@@ -29,8 +34,7 @@ public class MetricAssertion {
 
     private final Collection<Metric> metrics;
     private String name;
-    private String label;
-    private String labelValue;
+    private List<LabelTuple> labelTuples;
     private Double value;
 
     /**
@@ -40,6 +44,7 @@ public class MetricAssertion {
      */
     public MetricAssertion(Collection<Metric> metrics) {
         this.metrics = metrics;
+        this.labelTuples = new ArrayList<>();
     }
 
     /**
@@ -54,15 +59,14 @@ public class MetricAssertion {
     }
 
     /**
-     * Method to set the metric label and value (only 1 pair is supported)
+     * Method to add a metric label and value
      *
      * @param label label
      * @param value value
      * @return the return value
      */
     public MetricAssertion withLabel(String label, String value) {
-        this.label = label;
-        this.labelValue = value;
+        labelTuples.add(new LabelTuple(label, value));
         return this;
     }
 
@@ -103,13 +107,12 @@ public class MetricAssertion {
                 .stream()
                 .filter(metric -> metric.getName().equals(name))
                 .filter(metric -> {
-                    if (label == null) {
+                    if (labelTuples.size() == 0) {
                         return true;
                     }
-                    for (Map.Entry<String, String> entry : metric.getLabels().entrySet()) {
-                        if (entry.getKey().equals(label) && entry.getValue().equals(labelValue)) {
-                            return true;
-                        }
+                    List<LabelTuple> labelTuples = toLabelTupleList(metric);
+                    if (labelTuples.containsAll(this.labelTuples)) {
+                        return true;
                     }
                     return false;
                 })
@@ -124,13 +127,12 @@ public class MetricAssertion {
                         metric -> { /* DO NOTHING */ },
                         () -> {
                             String message;
-                            if (label != null) {
+                            if (labelTuples.size() > 0) {
                                 message =
                                         String.format(
-                                                "Metric [%s] with label [%s] = [%s] does not exist",
+                                                "Metric [%s] with labels / values %s does not exist",
                                                 name,
-                                                label,
-                                                labelValue);
+                                                toLabelTupleString(labelTuples));
                             } else {
                                 message =
                                         String.format("Metric [%s] does not exist", name);
@@ -151,13 +153,12 @@ public class MetricAssertion {
                 .stream()
                 .filter(metric -> metric.getName().equals(name))
                 .filter(metric -> {
-                    if (label == null) {
+                    if (labelTuples.size() == 0) {
                         return true;
                     }
-                    for (Map.Entry<String, String> entry : metric.getLabels().entrySet()) {
-                        if (entry.getKey().equals(label) && entry.getValue().equals(labelValue)) {
-                            return true;
-                        }
+                    List<LabelTuple> labelTuples = toLabelTupleList(metric);
+                    if (labelTuples.containsAll(this.labelTuples)) {
+                        return true;
                     }
                     return false;
                 })
@@ -170,13 +171,12 @@ public class MetricAssertion {
                 .findFirst()
                 .ifPresent(metric -> {
                     String message;
-                    if (label != null) {
+                    if (labelTuples.size() > 0) {
                         message =
                                 String.format(
-                                        "Metric [%s] with label [%s] = [%s] should not exist",
+                                        "Metric [%s] with labels / values %s should not exist",
                                         name,
-                                        label,
-                                        labelValue);
+                                        toLabelTupleString(labelTuples));
                     } else {
                         message =
                                 String.format("Metric [%s] should not exist", name);
@@ -185,5 +185,59 @@ public class MetricAssertion {
                 });
 
         return this;
+    }
+
+    private static List<LabelTuple> toLabelTupleList(Metric metric) {
+        List<LabelTuple> labelTuples = new ArrayList<>();
+        for (Map.Entry<String, String> entry : metric.getLabels().entrySet()) {
+            labelTuples.add(new LabelTuple(entry.getKey(), entry.getValue()));
+        }
+        return labelTuples;
+    }
+
+    private static String toLabelTupleString(List<LabelTuple> labelTuples) {
+        StringBuilder stringBuilder = new StringBuilder();
+        labelTuples.forEach(labelTuple -> {
+            stringBuilder.append(labelTuple);
+            stringBuilder.append(", ");
+        });
+        return stringBuilder.toString().substring(0, stringBuilder.length() - 2);
+    }
+
+    private static class LabelTuple {
+
+        private final String label;
+        private final String value;
+
+        public LabelTuple(String label, String value) {
+            this.label = label;
+            this.value = value;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + label + "] = [" + value + "]";
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(label, value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            LabelTuple that = (LabelTuple) o;
+            return Objects.equals(label, that.label) && Objects.equals(value, that.value);
+        }
     }
 }
