@@ -5,6 +5,9 @@ amazoncorretto:8
 amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:20
+antublue/openlogic-openjdk:8
+antublue/openlogic-openjdk:11
+antublue/openlogic-openjdk:17
 azul/zulu-openjdk:8
 azul/zulu-openjdk:11
 azul/zulu-openjdk:17
@@ -21,9 +24,6 @@ bitnami/java:1.8
 bitnami/java:11
 bitnami/java:17
 bitnami/java:20
-devopology/openlogic-openjdk:8
-devopology/openlogic-openjdk:11
-devopology/openlogic-openjdk:17
 eclipse-temurin:8
 eclipse-temurin:11
 eclipse-temurin:17
@@ -43,7 +43,7 @@ ibm-semeru-runtimes:open-17-jdk-focal
 ibm-semeru-runtimes:open-19-jdk-focal
 konajdk/konajdk:8
 konajdk/konajdk:11
-devopology/konajdk:17
+antublue/konajdk:17
 mcr.microsoft.com/openjdk/jdk:8-mariner
 mcr.microsoft.com/openjdk/jdk:11-mariner
 mcr.microsoft.com/openjdk/jdk:17-mariner
