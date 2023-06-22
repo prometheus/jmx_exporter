@@ -80,7 +80,7 @@ public class BaseTest {
     }
 
     @TestEngine.BeforeAll
-    public final void beforeAll() {
+    protected final void beforeAll() {
         testState.reset();
 
         Network network = testState.network();
@@ -117,14 +117,14 @@ public class BaseTest {
     }
 
     @TestEngine.AfterAll
-    public final void afterAll() {
+    protected final void afterAll() {
         testState.reset();
     }
 
     @TestEngine.Conclude
     @TestEngine.Order(Integer.MAX_VALUE)
     // Use the maximum int value to force execution after any subclass @TestEngine.Conclude methods
-    public final void conclude() {
+    protected final void conclude() {
         testState.dispose();
         testState = null;
     }
