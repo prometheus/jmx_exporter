@@ -14,6 +14,11 @@ import java.util.regex.Pattern;
 
 public class JavaAgent {
 
+    public static final String CONFIGURATION_REGEX =
+            "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
+                    "(\\d{1,5}):" +              // port
+                    "(.+)";                      // config file
+
     static HTTPServer server;
 
     public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
@@ -56,10 +61,7 @@ public class JavaAgent {
      * @return configuration to use for our application
      */
     public static Config parseConfig(String args, String ifc) {
-        Pattern pattern = Pattern.compile(
-                "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?" + // host name, or ipv4, or ipv6 address in brackets
-                        "(\\d{1,5}):" +              // port
-                        "(.+)");                     // config file
+        Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
 
         Matcher matcher = pattern.matcher(args);
         if (!matcher.matches()) {
