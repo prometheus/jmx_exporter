@@ -53,6 +53,8 @@ public class HTTPServerFactory {
     private static final Set<String> SHA_ALGORITHMS;
     private static final Set<String> PBKDF2_ALGORITHMS;
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
+    private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
+    private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
 
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
 
@@ -279,6 +281,20 @@ public class HTTPServerFactory {
     public void configureSSL(HTTPServer.Builder httpServerBuilder) {
         if (rootYamlMapAccessor.containsPath("/httpServer/ssl")) {
             try {
+                String keyStoreFilename =
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/keyStore/filename")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/filename must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/filename must not be blank")))
+                                .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
+
+                String keyStorePassword =
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/keyStore/password")
+                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/password must be a string")))
+                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/password must not be blank")))
+                                .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
+
                 String certificateAlias =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/certificate/alias")
@@ -287,7 +303,10 @@ public class HTTPServerFactory {
                                 .orElseThrow(ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required string"));
 
                 httpServerBuilder.withHttpsConfigurator(
-                        new HttpsConfigurator(SSLContextFactory.createSSLContext(certificateAlias)));
+                        new HttpsConfigurator(SSLContextFactory.createSSLContext(
+                                keyStoreFilename,
+                                keyStorePassword,
+                                certificateAlias)));
             } catch (GeneralSecurityException | IOException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
