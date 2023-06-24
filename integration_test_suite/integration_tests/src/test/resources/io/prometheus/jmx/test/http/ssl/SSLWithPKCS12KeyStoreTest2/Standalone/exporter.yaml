@@ -1,0 +1,10 @@
+httpServer:
+  ssl:
+    keyStore:
+      filename: localhost.pkcs12
+      password: changeit
+    certificate:
+      alias: localhost
+hostPort: application:9999
+rules:
+  - pattern: ".*"

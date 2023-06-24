@@ -31,8 +31,6 @@ import java.util.Set;
 
 public class SSLContextFactory {
 
-    private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
-    private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
     private static final String[] PROTOCOLS = { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" };
 
     /**
@@ -43,19 +41,20 @@ public class SSLContextFactory {
     }
 
     /**
-     * Method to create an SSLContext using the default Java keystore properties
+     * Method to create an SSLContext
      *
+     * @param keyStoreFilename keyStoreFilename
+     * @param keyStorePassword keyStorePassword
      * @param certificateAlias certificateAlias
      * @return the return value
      * @throws GeneralSecurityException GeneralSecurityException
      * @throws IOException IOException
      */
-    public static SSLContext createSSLContext(String certificateAlias) throws GeneralSecurityException, IOException {
-        String keyStorePath = System.getProperty(JAVAX_NET_SSL_KEY_STORE);
-        String keyStorePassword = System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD);
+    public static SSLContext createSSLContext(String keyStoreFilename, String keyStorePassword, String certificateAlias)
+            throws GeneralSecurityException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-        try (InputStream inputStream = new FileInputStream(keyStorePath)) {
+        try (InputStream inputStream = new FileInputStream(keyStoreFilename)) {
             // Load the keystore
             keyStore.load(inputStream, keyStorePassword.toCharArray());
 
@@ -83,7 +82,7 @@ public class SSLContextFactory {
                         String.format(
                                 "certificate alias [%s] not found in keystore [%s]",
                                 certificateAlias,
-                                keyStorePath));
+                                keyStoreFilename));
             }
 
             // Create and initialize an SSLContext
