@@ -497,8 +497,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
           help = attrDescription + " " + help;
         }
 
-        String attrNameSnakeCase = toSnakeAndLowerCase(attrName);
-
         MatchedRule matchedRule = MatchedRule.unmatched();
 
         for (Rule rule : config.rules) {
@@ -506,7 +504,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           // If caching for the rule is enabled, replace the value with a dummy <cache> to avoid caching different values at different times.
           Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
 
-          String matchName = beanName + (rule.attrNameSnakeCase ? attrNameSnakeCase : attrName) + ": " + matchBeanValue;
+          String attributeName;
+          if (rule.attrNameSnakeCase) {
+              attributeName = toSnakeAndLowerCase(attrName);
+          } else {
+              attributeName = attrName;
+          }
+
+          String matchName = beanName + attributeName + ": " + matchBeanValue;
 
           if (rule.cache) {
             MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
@@ -545,7 +550,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           // If there's no name provided, use default export format.
           if (rule.name == null) {
-            matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, rule.attrNameSnakeCase ? attrNameSnakeCase : attrName, help, value, rule.valueFactor, rule.type);
+            matchedRule = defaultExport(matchName, domain, beanProperties, attrKeys, attributeName, help, value, rule.valueFactor, rule.type);
             addToCache(rule, matchName, matchedRule);
             break;
           }
