@@ -215,10 +215,37 @@ httpServer:
 
 ## HTTPS support (optional)
 
-HTTPS support can be configured using either a JKS or PKCS12 format keystore.
+HTTPS support can be configured using either a JKS or PKCS12 format keystore via two possible methods:
+
+- Exporter YAML configuration
+
+
+- System properties
+
+**Notes**
+
 - Keystore type is dependent on the Java version
 
-### Configuration
+
+- Exporter YAML configuration overrides System properties
+
+### Configuration (using Exporter YAML)
+
+1. Add configuration to your exporter YAML file
+
+```yaml
+httpServer:
+  ssl:
+    keyStore:
+      filename: localhost.jks
+      password: changeit
+    certificate:
+      alias: localhost
+```
+
+2. Create a keystore and add your certificate
+
+### Configuration (using System properties)
 
 1. Add configuration to your exporter YAML file
 
