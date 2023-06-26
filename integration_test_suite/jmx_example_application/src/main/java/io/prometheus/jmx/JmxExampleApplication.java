@@ -37,6 +37,8 @@ public class JmxExampleApplication {
         ObjectName autoIncrementingMBan = new ObjectName("io.prometheus.jmx:type=autoIncrementing");
         server.registerMBean(new AutoIncrementing(), autoIncrementingMBan);
 
+        ExistDb.registerBean(server);
+
         System.out.println(
                 String.format("%s | %s | INFO | %s | %s",
                         SIMPLE_DATE_FORMAT.format(new Date()),
