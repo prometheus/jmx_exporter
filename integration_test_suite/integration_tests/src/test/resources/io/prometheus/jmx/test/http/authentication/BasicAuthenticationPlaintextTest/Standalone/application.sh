@@ -1,7 +1,7 @@
 #!/bin/bash
 
 java \
-  -Xmx512M \
+  -Xmx128M \
   -Dcom.sun.management.jmxremote=true \
   -Dcom.sun.management.jmxremote.authenticate=false \
   -Dcom.sun.management.jmxremote.local.only=false \
