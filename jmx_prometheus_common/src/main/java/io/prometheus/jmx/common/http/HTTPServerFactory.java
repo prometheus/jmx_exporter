@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HTTPServerFactory {
 
     private static final int DEFAULT_MINIMUM_THREADS = 1;
-    private static final int DEFAULT_MAXIMUM_THREADS = 10;
+    private static final int DEFAULT_MAXIMUM_THREADS = Integer.MAX_VALUE;
     private static final int DEFAULT_KEEP_ALIVE_TIME_SECONDS = 120;
 
     private static final String REALM = "/";
