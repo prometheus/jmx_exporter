@@ -42,11 +42,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the standalone exporter
  */
 public class HTTPServerFactory {
+
+    private static final int DEFAULT_MINIMUM_THREADS = 1;
+    private static final int DEFAULT_MAXIMUM_THREADS = 10;
+    private static final int DEFAULT_KEEP_ALIVE_TIME_SECONDS = 120;
 
     private static final String REALM = "/";
     private static final String PLAINTEXT = "plaintext";
@@ -107,6 +118,7 @@ public class HTTPServerFactory {
                         .withDaemonThreads(daemon);
 
         createMapAccessor(exporterYamlFile);
+        configureThreads(httpServerBuilder);
         configureAuthentication(httpServerBuilder);
         configureSSL(httpServerBuilder);
 
@@ -132,7 +144,63 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to configuration authentication
+     * Method to configure the HTTPServer thread pool
+     *
+     * @param httpServerBuilder
+     */
+    private void configureThreads(HTTPServer.Builder httpServerBuilder) {
+        int minimum = DEFAULT_MINIMUM_THREADS;
+        int maximum = DEFAULT_MAXIMUM_THREADS;
+        int keepAliveTime = DEFAULT_KEEP_ALIVE_TIME_SECONDS;
+
+        if (rootYamlMapAccessor.containsPath("/httpServer/threads")) {
+            YamlMapAccessor httpServerThreadsMapAccessor =
+                    rootYamlMapAccessor
+                            .get("/httpServer/threads")
+                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/threads")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads configuration values are required"));
+
+            minimum =
+                    httpServerThreadsMapAccessor
+                            .get("/minimum")
+                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/minimum must be an integer")))
+                            .map(new ValidateIntegerInRange(0, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/minimum must be 0 or greater")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/minimum is a required integer"));
+
+            maximum =
+                    httpServerThreadsMapAccessor
+                            .get("/maximum")
+                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/maximum must be an integer")))
+                            .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/maxPoolSize must be between greater than 0")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/maximum is a required integer"));
+
+            keepAliveTime =
+                    httpServerThreadsMapAccessor
+                            .get("/keepAliveTime")
+                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/keepAliveTime must be an integer")))
+                            .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/keepAliveTime must be greater than 0")))
+                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/keepAliveTime is a required integer"));
+
+            if (maximum < minimum) {
+                throw new ConfigurationException("/httpServer/threads/maximum must be greater than or equal to /httpServer/threads/minimum");
+            }
+        }
+
+        ThreadPoolExecutor threadPoolExecutor =
+                new ThreadPoolExecutor(
+                        minimum,
+                        maximum,
+                        keepAliveTime,
+                        TimeUnit.SECONDS,
+                        new SynchronousQueue<>(true),
+                        NamedDaemonThreadFactory.defaultThreadFactory(true),
+                        new BlockingRejectedExecutionHandler());
+
+        httpServerBuilder.withExecutorService(threadPoolExecutor);
+    }
+
+    /**
+     * Method to configure authentication
      *
      * @param httpServerBuilder httpServerBuilder
      */
@@ -317,6 +385,55 @@ public class HTTPServerFactory {
 
                 throw new ConfigurationException(
                         String.format("Exception loading SSL configuration%s", message), e);
+            }
+        }
+    }
+
+    /**
+     * Class to implement a named thread factory
+     * <p>
+     * Copied from the `prometheus/client_java` `HTTPServer` due to scoping issues / dependencies
+     */
+    private static class NamedDaemonThreadFactory implements ThreadFactory {
+
+        private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);
+
+        private final int poolNumber = POOL_NUMBER.getAndIncrement();
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final ThreadFactory delegate;
+        private final boolean daemon;
+
+        NamedDaemonThreadFactory(ThreadFactory delegate, boolean daemon) {
+            this.delegate = delegate;
+            this.daemon = daemon;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = delegate.newThread(r);
+            t.setName(String.format("prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
+            t.setDaemon(daemon);
+            return t;
+        }
+
+        static ThreadFactory defaultThreadFactory(boolean daemon) {
+            return new NamedDaemonThreadFactory(Executors.defaultThreadFactory(), daemon);
+        }
+    }
+
+    /**
+     * Class to implement a blocking RejectedExecutionHandler
+     */
+    private static class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
+
+        @Override
+        public void rejectedExecution(Runnable runnable, ThreadPoolExecutor threadPoolExecutor) {
+            if (!threadPoolExecutor.isShutdown()) {
+                try {
+                    threadPoolExecutor.getQueue().put(runnable);
+                } catch (InterruptedException e) {
+                    // DO NOTHING
+                }
             }
         }
     }

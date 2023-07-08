@@ -268,6 +268,28 @@ The exporter YAML file `alias` should match the certificate alias of the certifi
 
 ---
 
+## HTTP Thread Pool Configuration (optional)
+
+The exporter thread pool can be configured via the exporter YAML file.
+
+### Configuration
+
+```yaml
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120 # seconds
+```
+
+- `minimum` - minimum number of threads
+- `maximum` - maximum number of threads
+- `keepAliveTime` - thread keep-alive time in seconds
+
+**Notes**
+
+- If the work queue is full, the request will be blocked until space is available in the work queue for the request.
+
 ## Integration Test Suite
 
 The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
