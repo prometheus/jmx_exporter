@@ -1,7 +1,7 @@
 #!/bin/bash
 
 java \
-  -Xmx512M \
+  -Xmx128M \
   -Djavax.net.ssl.keyStore=localhost.pkcs12 \
   -Djavax.net.ssl.keyStorePassword=changeit \
   -javaagent:jmx_prometheus_javaagent.jar=8888:exporter.yaml \
