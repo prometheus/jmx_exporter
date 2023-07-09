@@ -59,7 +59,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
         // https://github.com/adoptium/temurin-build/issues/3002
         return BaseTest
                 .arguments()
-                .filter(testParameter -> !testParameter.dockerImageName().contains("eclipse-temurin:8-alpine"));
+                .filter(testArgument -> !testArgument.dockerImageName().contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
