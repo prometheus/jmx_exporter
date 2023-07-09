@@ -10,7 +10,7 @@ HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
 process metrics (e.g., memory and CPU usage).
 
-**Running the exporter as a Java agent is thus strongly encouraged.**
+**Running the exporter as a Java agent is strongly encouraged.**
 
 ## Running the Java Agent
 
