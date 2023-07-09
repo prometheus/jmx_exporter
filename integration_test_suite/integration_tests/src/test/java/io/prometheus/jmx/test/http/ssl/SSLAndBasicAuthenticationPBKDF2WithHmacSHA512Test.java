@@ -54,7 +54,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
         return BasicAuthenticationBaseTest
                 .arguments()
                 .filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER)
-                .filter(testParameter -> !testParameter.dockerImageName().contains("eclipse-temurin:8-alpine"));
+                .filter(testArgument -> !testArgument.dockerImageName().contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
