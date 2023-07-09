@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
+@SuppressWarnings("unchecked")
 public class JmxCollector extends Collector implements Collector.Describable {
 
     public enum Mode {
