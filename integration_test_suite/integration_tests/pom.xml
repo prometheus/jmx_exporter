@@ -28,7 +28,6 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jmx.core.root>../..</jmx.core.root>
         <antublue.test.engine.version>5.0.0</antublue.test.engine.version>
         <!-- smoke test containers -->
         <docker.image.names/>
@@ -60,36 +59,6 @@
                     <goals>
                         <goal>clean</goal>
                     </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.coderplus.maven.plugins</groupId>
-                <artifactId>copy-rename-maven-plugin</artifactId>
-                <version>1.0.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <fileSets>
-                                <fileSet>
-                                    <sourceFile>${jmx.core.root}/jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/test/resources/common/jmx_prometheus_javaagent.jar</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${jmx.core.root}/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-${project.version}.jar</sourceFile>
-                                    <destinationFile>src/test/resources/common/jmx_prometheus_httpserver.jar</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>../jmx_example_application/target/jmx_example_application.jar</sourceFile>
-                                    <destinationFile>src/test/resources/common/jmx_example_application.jar</destinationFile>
-                                </fileSet>
-                            </fileSets>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
