@@ -8,8 +8,9 @@ This exporter is intended to be run as a Java Agent, exposing a HTTP server
 and serving metrics of the local JVM. It can be also run as a standalone
 HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
-process metrics (e.g., memory and CPU usage). Running the exporter as a Java
-Agent is thus strongly encouraged.
+process metrics (e.g., memory and CPU usage).
+
+**Running the exporter as a Java agent is thus strongly encouraged.**
 
 ## Running the Java Agent
 
