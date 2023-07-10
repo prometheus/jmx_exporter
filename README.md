@@ -73,11 +73,13 @@ Release branch code is considered "locked" - no code changes accepted, but docum
 - Open a pull request targeting `main`, tagging (`@...`) maintainers for review
 - A [Developer Certificate of Origin](DCO.md) (DCO) is required for all contributions
 
-**Documentation changes**
+**Documentation changes for release branches**
 
 - Fork the repository
-- Create a branch for your work
+- Create a branch for your work off of a release branch
 - Make changes on your branch
 - Build and test your changes
-- Open a pull request, tagging (`@...`) maintainers for review
+- Open a pull request targeting the release branch, tagging (`@...`) maintainers for review
 - A [Developer Certificate of Origin](DCO.md) (DCO) is required for all contributions
+
+Only documentation changes will be accepted for a release branch
