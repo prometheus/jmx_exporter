@@ -17,20 +17,33 @@ Use the [Versions Maven Plugin](https://www.mojohaus.org/versions-maven-plugin/i
 
 `release:prepare` does Github tags and commits, while `release:perform` signs the artifacts and uploads them to the staging repositoring on [https://oss.sonatype.org](https://oss.sonatype.org).
 
-Download the artifacts from the staging repository [https://oss.sonatype.org/#stagingRepositories](https://oss.sonatype.org/#stagingRepositories) and verify them manually:
+Download the artifacts from the staging repository [https://oss.sonatype.org/#stagingRepositories](https://oss.sonatype.org/#stagingRepositories)
 
-```sh
-# agent
-/usr/lib/jvm/java-8-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-/usr/lib/jvm/java-11-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-/usr/lib/jvm/java-17-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
+Patch the integration tests resource jars:
 
-# standalone
-java -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-
-/usr/lib/jvm/java-8-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
-/usr/lib/jvm/java-11-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
-/usr/lib/jvm/java-17-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
+```shell
+cp jmx_promtheus_httpserver-<version>.jar ./integration_test_suite/integration_tests/src/test/resources/common/jmx_promtheus_httpserver.jar
+cp jmx_promtheus_javaagent-<version>.jar ./integration_test_suite/integration_tests/src/test/resources/common/jmx_promtheus_javaagent.jar
 ```
 
+Run the integration test suite:
+
+```shell
+cd integration_test_suite
+../mvnw clean verify
+```
+
+**Notes**
+
+- The integration tests resource versions of the jars do not contain the version numbers
+- You **must** be in the `integration_test_suite` directory
+
 If everything looks good, click `Close` to trigger Sonatype's verification, then click `Release`.
+
+Create a release branch:
+
+```shell
+cd <project root>
+git checkout -b release-<release version> tags/<release tag>
+git push --set-upstream origin release-<release version>
+```
