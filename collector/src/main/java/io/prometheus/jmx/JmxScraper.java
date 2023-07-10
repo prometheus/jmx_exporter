@@ -125,55 +125,68 @@ class JmxScraper {
         }
     }
 
-    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mbeanName) {
-        MBeanInfo info;
-        try {
-          info = beanConn.getMBeanInfo(mbeanName);
-        } catch (IOException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
-        } catch (JMException e) {
-          logScrape(mbeanName.toString(), "getMBeanInfo Fail: " + e);
-          return;
-        }
-        MBeanAttributeInfo[] attrInfos = info.getAttributes();
+    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mBeanName) {
+        MBeanInfo mBeanInfo;
 
-        Map<String, MBeanAttributeInfo> name2AttrInfo = new LinkedHashMap<String, MBeanAttributeInfo>();
-        for (int idx = 0; idx < attrInfos.length; ++idx) {
-            MBeanAttributeInfo attr = attrInfos[idx];
-            if (!attr.isReadable()) {
-                logScrape(mbeanName, attr, "not readable");
+        try {
+            mBeanInfo = beanConn.getMBeanInfo(mBeanName);
+        } catch (IOException e) {
+            logScrape(mBeanName.toString(), "getMBeanInfo Fail: " + e);
+            return;
+        } catch (JMException e) {
+            logScrape(mBeanName.toString(), "getMBeanInfo Fail: " + e);
+            return;
+        }
+
+        MBeanAttributeInfo[] mBeanAttributeInfos = mBeanInfo.getAttributes();
+
+        Map<String, MBeanAttributeInfo> name2MBeanAttributeInfo = new LinkedHashMap<>();
+        for (int idx = 0; idx < mBeanAttributeInfos.length; ++idx) {
+            MBeanAttributeInfo mBeanAttributeInfo = mBeanAttributeInfos[idx];
+            if (!mBeanAttributeInfo.isReadable()) {
+                logScrape(mBeanName, mBeanAttributeInfo, "not readable");
                 continue;
             }
-            name2AttrInfo.put(attr.getName(), attr);
+            name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
         }
-        final AttributeList attributes;
+
+        AttributeList attributes;
+
         try {
             // bulk load all attributes
-            attributes = beanConn.getAttributes(mbeanName, name2AttrInfo.keySet().toArray(new String[0]));
+            attributes = beanConn.getAttributes(mBeanName, name2MBeanAttributeInfo.keySet().toArray(new String[0]));
             if (attributes == null) {
-                logScrape(mbeanName.toString(), "getAttributes Fail: attributes are null");
+                logScrape(mBeanName.toString(), "getAttributes Fail: attributes are null");
                 return;
             }
         } catch (Exception e) {
+            logScrape(mBeanName.toString(), "getAttributes Fail: processing one by one: " + e);
+
             // couldn't get them all in one go, try them 1 by 1
-            processAttributesOneByOne(beanConn, mbeanName, name2AttrInfo);
+            processAttributesOneByOne(beanConn, mBeanName, name2MBeanAttributeInfo);
             return;
         }
-        for (Object attributeObj : attributes.asList()) {
-            if (Attribute.class.isInstance(attributeObj)) {
-                Attribute attribute = (Attribute)(attributeObj);
-                MBeanAttributeInfo attr = name2AttrInfo.get(attribute.getName());
-                logScrape(mbeanName, attr, "process");
+
+        for (Object object : attributes) {
+            if (object instanceof Attribute) {
+                Attribute attribute = (Attribute) object;
+                MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attribute.getName());
+                logScrape(mBeanName, mBeanAttributeInfo, "process");
                 processBeanValue(
-                        mbeanName.getDomain(),
-                        jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                        new LinkedList<String>(),
-                        attr.getName(),
-                        attr.getType(),
-                        attr.getDescription(),
+                        mBeanName.getDomain(),
+                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        new LinkedList<>(),
+                        mBeanAttributeInfo.getName(),
+                        mBeanAttributeInfo.getType(),
+                        mBeanAttributeInfo.getDescription(),
                         attribute.getValue()
                 );
+            } else {
+                logScrape(
+                        mBeanName.toString(),
+                            "object ["
+                            + object.getClass().getName()
+                            + "] isn't an instance of javax.management.Attribute, skipping");
             }
         }
     }
