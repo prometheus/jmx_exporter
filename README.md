@@ -1,5 +1,10 @@
+<picture>
+  <img src="https://circleci.com/gh/prometheus/jmx_exporter.svg?style=shield"/>
+</picture>
+
 JMX Exporter
 =====
+
 
 JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
