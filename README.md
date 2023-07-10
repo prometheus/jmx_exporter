@@ -56,11 +56,12 @@ Release branch code is considered "locked" - no code changes accepted, but docum
 
 **General guidance**
 
-- The [main](/) branch contains the latest unreleased code
+- The `main` branch contains the latest unreleased code
+- Release branches `release-<VERSION>` contain code and documentation for a specific release
 - New code / changed code should use 4 spaces for indentation
 - Don't completely reformat code (makes it hard to review a pull request)
 - Expand all Java imports
-- Release branches `release-<VERSION>` contain code and documentation for a specific release
+
 - Tags are used for releases
 
 **Bug fixes / enhancements**
