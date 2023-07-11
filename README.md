@@ -61,7 +61,6 @@ Release branch code is considered "locked" - no code changes accepted, but docum
 - New code / changed code should use 4 spaces for indentation
 - Don't completely reformat code (makes it hard to review a pull request)
 - Expand all Java imports
-
 - Tags are used for releases
 
 **Bug fixes / enhancements**
