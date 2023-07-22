@@ -68,20 +68,20 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
-    private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
+    private final List<ObjectName> includeObjectNames, excludeObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
     private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
-                      List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+                      List<ObjectName> includeObjectNames, List<ObjectName> excludeObjectNames,
                       MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.ssl = ssl;
-        this.whitelistObjectNames = whitelistObjectNames;
-        this.blacklistObjectNames = blacklistObjectNames;
+        this.includeObjectNames = includeObjectNames;
+        this.excludeObjectNames = excludeObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
 
@@ -114,13 +114,13 @@ class JmxScraper {
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectName> mBeanNames = new HashSet<ObjectName>();
-            for (ObjectName name : whitelistObjectNames) {
+            for (ObjectName name : includeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.add(instance.getObjectName());
                 }
             }
 
-            for (ObjectName name : blacklistObjectNames) {
+            for (ObjectName name : excludeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.remove(instance.getObjectName());
                 }

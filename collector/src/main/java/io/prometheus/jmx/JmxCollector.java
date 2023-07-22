@@ -86,8 +86,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
       boolean ssl = false;
       boolean lowercaseOutputName;
       boolean lowercaseOutputLabelNames;
-      List<ObjectName> whitelistObjectNames = new ArrayList<ObjectName>();
-      List<ObjectName> blacklistObjectNames = new ArrayList<ObjectName>();
+      List<ObjectName> includeObjectNames = new ArrayList<>();
+      List<ObjectName> excludeObjectNames = new ArrayList<>();
       List<Rule> rules = new ArrayList<Rule>();
       long lastUpdate = 0L;
 
@@ -210,19 +210,31 @@ public class JmxCollector extends Collector implements Collector.Describable {
           cfg.lowercaseOutputLabelNames = (Boolean)yamlConfig.get("lowercaseOutputLabelNames");
         }
 
-        if (yamlConfig.containsKey("whitelistObjectNames")) {
+        // Default to includeObjectNames, but fall back to whitelistObjectNames for backward compatibility
+        if (yamlConfig.containsKey("includeObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("includeObjectNames");
+          for (Object name : names) {
+            cfg.includeObjectNames.add(new ObjectName((String) name));
+          }
+        } else if (yamlConfig.containsKey("whitelistObjectNames")) {
           List<Object> names = (List<Object>) yamlConfig.get("whitelistObjectNames");
-          for(Object name : names) {
-            cfg.whitelistObjectNames.add(new ObjectName((String)name));
+          for (Object name : names) {
+              cfg.includeObjectNames.add(new ObjectName((String) name));
           }
         } else {
-          cfg.whitelistObjectNames.add(null);
+          cfg.includeObjectNames.add(null);
         }
 
-        if (yamlConfig.containsKey("blacklistObjectNames")) {
+      // Default to excludeObjectNames, but fall back to blacklistObjectNames for backward compatibility
+        if (yamlConfig.containsKey("excludeObjectNames")) {
+          List<Object> names = (List<Object>) yamlConfig.get("excludeObjectNames");
+          for (Object name : names) {
+            cfg.excludeObjectNames.add(new ObjectName((String)name));
+          }
+        } else if (yamlConfig.containsKey("blacklistObjectNames")) {
           List<Object> names = (List<Object>) yamlConfig.get("blacklistObjectNames");
           for (Object name : names) {
-            cfg.blacklistObjectNames.add(new ObjectName((String)name));
+            cfg.excludeObjectNames.add(new ObjectName((String)name));
           }
         }
 
@@ -648,7 +660,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
       Receiver receiver = new Receiver(config, stalenessTracker);
       JmxScraper scraper = new JmxScraper(config.jmxUrl, config.username, config.password, config.ssl,
-              config.whitelistObjectNames, config.blacklistObjectNames, receiver, jmxMBeanPropertyCache);
+              config.includeObjectNames, config.excludeObjectNames, receiver, jmxMBeanPropertyCache);
       long start = System.nanoTime();
       double error = 0;
       if ((config.startDelaySeconds > 0) &&
