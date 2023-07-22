@@ -66,7 +66,7 @@ public class BaseTest {
     }
 
     @TestEngine.Prepare
-    @TestEngine.Order(Integer.MIN_VALUE)
+    @TestEngine.Order(order = Integer.MIN_VALUE)
     // Use the minimum int value to force execution before any subclass @TestEngine.Prepare methods
     protected final void prepare() {
         testState = new TestState();
@@ -122,7 +122,7 @@ public class BaseTest {
     }
 
     @TestEngine.Conclude
-    @TestEngine.Order(Integer.MAX_VALUE)
+    @TestEngine.Order(order = Integer.MAX_VALUE)
     // Use the maximum int value to force execution after any subclass @TestEngine.Conclude methods
     protected final void conclude() {
         testState.dispose();
