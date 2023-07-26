@@ -17,22 +17,21 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
+
 import io.prometheus.jmx.common.util.Precondition;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * Class to implement a username / salted message digest password BasicAuthenticator
- */
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
+/** Class to implement a username / salted message digest password BasicAuthenticator */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
     private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
@@ -73,8 +72,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         Precondition.notNullOrEmpty(passwordHash);
         Precondition.notNullOrEmpty(algorithm);
         Precondition.notNullOrEmpty(salt);
-        Precondition.IsGreaterThanOrEqualTo(1, iterations);
-        Precondition.IsGreaterThanOrEqualTo(1, keyLength);
+        Precondition.isGreaterThanOrEqualTo(iterations, 1);
+        Precondition.isGreaterThanOrEqualTo(keyLength, 1);
 
         SecretKeyFactory.getInstance(algorithm);
 
@@ -89,15 +88,13 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     }
 
     /**
-     * called for each incoming request to verify the
-     * given name and password in the context of this
-     * Authenticator's realm. Any caching of credentials
-     * must be done by the implementation of this method
+     * called for each incoming request to verify the given name and password in the context of this
+     * Authenticator's realm. Any caching of credentials must be done by the implementation of this
+     * method
      *
      * @param username the username from the request
      * @param password the password from the request
-     * @return <code>true</code> if the credentials are valid,
-     * <code>false</code> otherwise.
+     * @return <code>true</code> if the credentials are valid, <code>false</code> otherwise.
      */
     @Override
     public boolean checkCredentials(String username, String password) {
@@ -116,8 +113,11 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             }
         }
 
-        boolean isValid = this.username.equals(username)
-                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, iterations, keyLength, password));
+        boolean isValid =
+                this.username.equals(username)
+                        && this.passwordHash.equals(
+                                generatePasswordHash(
+                                        algorithm, salt, iterations, keyLength, password));
         if (isValid) {
             cacheKeys.add(cacheKey);
         } else {
@@ -143,11 +143,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      * @return the hash
      */
     private static String generatePasswordHash(
-            String algorithm,
-            String salt,
-            int iterations,
-            int keyLength,
-            String password) {
+            String algorithm, String salt, int iterations, int keyLength, String password) {
         try {
             PBEKeySpec pbeKeySpec =
                     new PBEKeySpec(
