@@ -28,8 +28,18 @@ public class Precondition {
      * @param object object
      */
     public static void notNull(Object object) {
+        notNull(object, "object is null");
+    }
+
+    /**
+     * Method to check an Object is not null
+     *
+     * @param object object
+     * @param message message
+     */
+    public static void notNull(Object object, String message) {
         if (object == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(message);
         }
     }
 
@@ -39,20 +49,43 @@ public class Precondition {
      * @param string string
      */
     public static void notNullOrEmpty(String string) {
+        notNullOrEmpty(string, String.format("string [%s] is null or empty", string));
+    }
+
+    /**
+     * Method to check that a String is not null and not empty
+     *
+     * @param string string
+     * @param message message
+     */
+    public static void notNullOrEmpty(String string, String message) {
         if (string == null || string.trim().isEmpty()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(message);
         }
     }
 
     /**
-     * Method to check that an integration is greater than or equal to a value
+     * Method to check that an integer is greater than or equal to a value
      *
-     * @param minimumValue minimumValue
      * @param value value
+     * @param minimumValue minimumValue
      */
-    public static void IsGreaterThanOrEqualTo(int minimumValue, int value) {
+    public static void isGreaterThanOrEqualTo(int value, int minimumValue) {
+        isGreaterThanOrEqualTo(
+                value,
+                minimumValue,
+                String.format("value [%s] is less than minimum value [%s]", value, minimumValue));
+    }
+
+    /**
+     * Method to check that an integer is greater than or equal to a value
+     *
+     * @param value value
+     * @param minimumValue minimumValue
+     */
+    public static void isGreaterThanOrEqualTo(int value, int minimumValue, String message) {
         if (value < minimumValue) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(message);
         }
     }
 }
