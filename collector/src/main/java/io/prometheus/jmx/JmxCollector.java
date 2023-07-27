@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx;
 
+import bsh.EvalError;
+import bsh.Interpreter;
 import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
 import org.yaml.snakeyaml.Yaml;
@@ -556,11 +558,9 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
           Double value = null;
           if (rule.value != null && !rule.value.isEmpty()) {
-            String val = matcher.replaceAll(rule.value);
             try {
-              value = Double.valueOf(val);
-            } catch (NumberFormatException e) {
-              LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
+              value = evaluateValueExpression(matcher, rule.value);
+            } catch (RuntimeException e) {
               return;
             }
           }
@@ -638,6 +638,21 @@ public class JmxCollector extends Collector implements Collector.Describable {
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, matchedRule.help);
       }
 
+    }
+
+    private Double evaluateValueExpression(Matcher matcher, String value) {
+        try {
+            Interpreter interpreter = new Interpreter();
+            List<String> groups = new ArrayList<String>(matcher.groupCount());
+            for(int i=0; i<=matcher.groupCount(); i++) {
+                groups.add(matcher.group(i));
+            }
+            interpreter.set("matches", groups);
+            return Double.valueOf(interpreter.eval(matcher.replaceAll(value)).toString());
+        } catch (EvalError e) {
+            LOGGER.fine(e.toString());
+            throw new RuntimeException(e);
+        }
     }
 
   public List<MetricFamilySamples> collect() {
