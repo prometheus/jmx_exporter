@@ -278,6 +278,8 @@ The exporter YAML file `alias` should match the certificate alias of the certifi
 
 The exporter thread pool can be configured via the exporter YAML file.
 
+By default, a maximum of 10 threads is used.
+
 ### Configuration
 
 ```yaml
