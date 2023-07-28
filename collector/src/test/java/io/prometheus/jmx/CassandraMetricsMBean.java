@@ -12,10 +12,9 @@ public interface CassandraMetricsMBean {
 
 class CassandraMetrics implements CassandraMetricsMBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mbeanName = new ObjectName(
-                "org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mbeanName =
+                new ObjectName("org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks");
         CassandraMetricsMBean mbean = new CassandraMetrics();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -24,4 +23,3 @@ class CassandraMetrics implements CassandraMetricsMBean {
         return 0.2f;
     }
 }
-

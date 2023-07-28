@@ -18,9 +18,7 @@ package io.prometheus.jmx.test.credentials;
 
 import okhttp3.Request;
 
-/**
- * Interface to implement Credentials
- */
+/** Interface to implement Credentials */
 public interface Credentials {
 
     /**

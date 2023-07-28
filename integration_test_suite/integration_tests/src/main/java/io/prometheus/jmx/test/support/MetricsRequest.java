@@ -18,9 +18,7 @@ package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
 
-/**
- * Class to implement a metrics test (no Content-Type)
- */
+/** Class to implement a metrics test (no Content-Type) */
 public class MetricsRequest extends BaseRequest {
 
     /**

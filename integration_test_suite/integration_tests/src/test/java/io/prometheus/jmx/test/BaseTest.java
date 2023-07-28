@@ -17,17 +17,16 @@
 package io.prometheus.jmx.test;
 
 import com.github.dockerjava.api.model.Ulimit;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 
 @TestEngine.BaseClass
 public class BaseTest {
@@ -38,8 +37,7 @@ public class BaseTest {
 
     protected TestState testState;
 
-    @TestEngine.Argument
-    protected TestArgument testArgument;
+    @TestEngine.Argument protected TestArgument testArgument;
 
     /**
      * Method to get the list of TestArguments
@@ -50,17 +48,17 @@ public class BaseTest {
     protected static Stream<TestArgument> arguments() {
         List<TestArgument> testArguments = new ArrayList<>();
 
-        DockerImageNames
-                .names()
-                .forEach(dockerImageName -> {
-                    for (Mode mode : Mode.values()) {
-                        testArguments.add(
-                                TestArgument.of(
-                                        dockerImageName + " / " + mode,
-                                        dockerImageName,
-                                        mode));
-                    }
-                });
+        DockerImageNames.names()
+                .forEach(
+                        dockerImageName -> {
+                            for (Mode mode : Mode.values()) {
+                                testArguments.add(
+                                        TestArgument.of(
+                                                dockerImageName + " / " + mode,
+                                                dockerImageName,
+                                                mode));
+                            }
+                        });
 
         return testArguments.stream();
     }
@@ -89,30 +87,36 @@ public class BaseTest {
         String baseUrl = testState.baseUrl();
 
         switch (testArgument.mode()) {
-            case JavaAgent: {
-                GenericContainer<?> applicationContainer = createJavaAgentApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                testState.applicationContainer(applicationContainer);
+            case JavaAgent:
+                {
+                    GenericContainer<?> applicationContainer =
+                            createJavaAgentApplicationContainer(network, dockerImageName, testName);
+                    applicationContainer.start();
+                    testState.applicationContainer(applicationContainer);
 
-                HttpClient httpClient = createHttpClient(applicationContainer, baseUrl);
-                testState.httpClient(httpClient);
+                    HttpClient httpClient = createHttpClient(applicationContainer, baseUrl);
+                    testState.httpClient(httpClient);
 
-                break;
-            }
-            case Standalone: {
-                GenericContainer<?> applicationContainer = createStandaloneApplicationContainer(network, dockerImageName, testName);
-                applicationContainer.start();
-                testState.applicationContainer(applicationContainer);
+                    break;
+                }
+            case Standalone:
+                {
+                    GenericContainer<?> applicationContainer =
+                            createStandaloneApplicationContainer(
+                                    network, dockerImageName, testName);
+                    applicationContainer.start();
+                    testState.applicationContainer(applicationContainer);
 
-                GenericContainer<?> exporterContainer = createStandaloneExporterContainer(network, dockerImageName, testName);
-                exporterContainer.start();
-                testState.exporterContainer(exporterContainer);
+                    GenericContainer<?> exporterContainer =
+                            createStandaloneExporterContainer(network, dockerImageName, testName);
+                    exporterContainer.start();
+                    testState.exporterContainer(exporterContainer);
 
-                HttpClient httpClient = createHttpClient(exporterContainer, baseUrl);
-                testState.httpClient(httpClient);
+                    HttpClient httpClient = createHttpClient(exporterContainer, baseUrl);
+                    testState.httpClient(httpClient);
 
-                break;
-            }
+                    break;
+                }
         }
     }
 
@@ -139,26 +143,37 @@ public class BaseTest {
      */
     private static GenericContainer<?> createStandaloneApplicationContainer(
             Network network, String dockerImageName, String testName) {
-        return
-                new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                        .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                        .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                        .withCommand("/bin/sh application.sh")
-                        .withExposedPorts(9999)
-                        .withLogConsumer(outputFrame -> {
+        return new GenericContainer<>(dockerImageName)
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
+                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
+                .withClasspathResourceMapping(
+                        testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(MEMORY_BYTES)
+                                        .withMemorySwap(MEMORY_SWAP_BYTES))
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withUlimits(
+                                                new Ulimit[] {
+                                                    new Ulimit("nofile", 65536L, 65536L)
+                                                }))
+                .withCommand("/bin/sh application.sh")
+                .withExposedPorts(9999)
+                .withLogConsumer(
+                        outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
                                 System.out.println(string);
                             }
                         })
-                        .withNetwork(network)
-                        .withNetworkAliases("application")
-                        .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                        .withStartupTimeout(Duration.ofMillis(30000))
-                        .withWorkingDirectory("/temp");
+                .withNetwork(network)
+                .withNetworkAliases("application")
+                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                .withStartupTimeout(Duration.ofMillis(30000))
+                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -171,26 +186,37 @@ public class BaseTest {
      */
     private static GenericContainer<?> createStandaloneExporterContainer(
             Network network, String dockerImageName, String testName) {
-        return
-                new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forListeningPort())
-                        .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                        .withClasspathResourceMapping(testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                        .withCommand("/bin/sh exporter.sh")
-                        .withExposedPorts(8888)
-                        .withLogConsumer(outputFrame -> {
+        return new GenericContainer<>(dockerImageName)
+                .waitingFor(Wait.forListeningPort())
+                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
+                .withClasspathResourceMapping(
+                        testName.replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(MEMORY_BYTES)
+                                        .withMemorySwap(MEMORY_SWAP_BYTES))
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withUlimits(
+                                                new Ulimit[] {
+                                                    new Ulimit("nofile", 65536L, 65536L)
+                                                }))
+                .withCommand("/bin/sh exporter.sh")
+                .withExposedPorts(8888)
+                .withLogConsumer(
+                        outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
                                 System.out.println(string);
                             }
                         })
-                        .withNetwork(network)
-                        .withNetworkAliases("exporter")
-                        .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                        .withStartupTimeout(Duration.ofMillis(30000))
-                        .withWorkingDirectory("/temp");
+                .withNetwork(network)
+                .withNetworkAliases("exporter")
+                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                .withStartupTimeout(Duration.ofMillis(30000))
+                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -203,26 +229,37 @@ public class BaseTest {
      */
     private static GenericContainer<?> createJavaAgentApplicationContainer(
             Network network, String dockerImageName, String testName) {
-        return
-                new GenericContainer<>(dockerImageName)
-                        .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                        .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                        .withClasspathResourceMapping(testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withMemory(MEMORY_BYTES).withMemorySwap(MEMORY_SWAP_BYTES))
-                        .withCreateContainerCmdModifier(c -> c.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", 65536L, 65536L)}))
-                        .withCommand("/bin/sh application.sh")
-                        .withExposedPorts(8888)
-                        .withLogConsumer(outputFrame -> {
+        return new GenericContainer<>(dockerImageName)
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
+                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
+                .withClasspathResourceMapping(
+                        testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(MEMORY_BYTES)
+                                        .withMemorySwap(MEMORY_SWAP_BYTES))
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withUlimits(
+                                                new Ulimit[] {
+                                                    new Ulimit("nofile", 65536L, 65536L)
+                                                }))
+                .withCommand("/bin/sh application.sh")
+                .withExposedPorts(8888)
+                .withLogConsumer(
+                        outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
                                 System.out.println(string);
                             }
                         })
-                        .withNetwork(network)
-                        .withNetworkAliases("application")
-                        .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                        .withStartupTimeout(Duration.ofMillis(30000))
-                        .withWorkingDirectory("/temp");
+                .withNetwork(network)
+                .withNetworkAliases("application")
+                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                .withStartupTimeout(Duration.ofMillis(30000))
+                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -232,7 +269,8 @@ public class BaseTest {
      * @param baseUrl baseUrl
      * @return the return value
      */
-    private static HttpClient createHttpClient(GenericContainer<?> genericContainer, String baseUrl) {
+    private static HttpClient createHttpClient(
+            GenericContainer<?> genericContainer, String baseUrl) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(8888));
     }
 }

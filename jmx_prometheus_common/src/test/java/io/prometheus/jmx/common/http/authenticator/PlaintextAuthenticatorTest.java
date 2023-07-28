@@ -16,10 +16,10 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
+import static org.junit.Assert.assertEquals;
+
 import com.sun.net.httpserver.BasicAuthenticator;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
 
@@ -30,8 +30,10 @@ public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = plainTextAuthenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        plainTextAuthenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }

@@ -16,20 +16,19 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void test_lowerCase() throws Exception {
-        String[] algorithms = new String[] { "SHA-1", "SHA-256", "SHA-512" };
+        String[] algorithms = new String[] {"SHA-1", "SHA-256", "SHA-512"};
 
         for (String algorithm : algorithms) {
             String hash = hash(algorithm, VALID_PASSWORD, SALT).toLowerCase();
@@ -39,8 +38,10 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
             for (String username : TEST_USERNAMES) {
                 for (String password : TEST_PASSWORDS) {
-                    boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                    boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
+                    boolean expectedIsAuthenticated =
+                            VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                    boolean actualIsAuthenticated =
+                            messageDigestAuthenticator.checkCredentials(username, password);
                     assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
                 }
             }
@@ -49,7 +50,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void test_upperCase() throws Exception {
-        String[] algorithms = new String[] { "SHA-1", "SHA-256", "SHA-512" };
+        String[] algorithms = new String[] {"SHA-1", "SHA-256", "SHA-512"};
 
         for (String algorithm : algorithms) {
             String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase();
@@ -59,8 +60,10 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
             for (String username : TEST_USERNAMES) {
                 for (String password : TEST_PASSWORDS) {
-                    boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                    boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
+                    boolean expectedIsAuthenticated =
+                            VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                    boolean actualIsAuthenticated =
+                            messageDigestAuthenticator.checkCredentials(username, password);
                     assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
                 }
             }

@@ -16,14 +16,10 @@
 
 package io.prometheus.jmx.test.support;
 
-/**
- * Class to implement Request Response assertions
- */
+/** Class to implement Request Response assertions */
 public class RequestResponseAssertions {
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private RequestResponseAssertions() {
         // DO NOTHING
     }

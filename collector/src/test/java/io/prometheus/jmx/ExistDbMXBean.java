@@ -15,15 +15,15 @@
  */
 package io.prometheus.jmx;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 public interface ExistDbMXBean {
     Map<QueryKey, RunningQuery> getRunningQueries();
 
-     class QueryKey implements Comparable<QueryKey> {
+    class QueryKey implements Comparable<QueryKey> {
         private final int id;
         private final String path;
 
@@ -102,10 +102,8 @@ public interface ExistDbMXBean {
 
 class ExistDb implements ExistDbMXBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mxbeanName = new ObjectName(
-                "org.exist.management.exist:type=ProcessReport");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mxbeanName = new ObjectName("org.exist.management.exist:type=ProcessReport");
         ExistDb mxbean = new ExistDb();
         mbs.registerMBean(mxbean, mxbeanName);
     }
@@ -113,8 +111,10 @@ class ExistDb implements ExistDbMXBean {
     public Map<QueryKey, RunningQuery> getRunningQueries() {
         final Map<QueryKey, RunningQuery> queries = new TreeMap<QueryKey, RunningQuery>();
 
-        final RunningQuery runningQuery1 = new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
-        final RunningQuery runningQuery2 = new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
+        final RunningQuery runningQuery1 =
+                new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
+        final RunningQuery runningQuery2 =
+                new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
 
         queries.put(new QueryKey(runningQuery1.getId(), runningQuery1.getPath()), runningQuery1);
         queries.put(new QueryKey(runningQuery2.getId(), runningQuery2.getPath()), runningQuery2);

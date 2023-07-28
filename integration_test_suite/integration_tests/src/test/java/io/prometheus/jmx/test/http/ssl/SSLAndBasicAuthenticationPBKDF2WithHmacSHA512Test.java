@@ -16,6 +16,10 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
@@ -30,17 +34,12 @@ import io.prometheus.jmx.test.support.MetricsResponse;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import io.prometheus.jmx.test.support.Response;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
 import java.util.stream.Stream;
+import org.antublue.test.engine.api.TestEngine;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuthenticationBaseTest implements ContentConsumer {
-
+public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuthenticationBaseTest
+        implements ContentConsumer {
 
     private static final String BASE_URL = "https://localhost";
 
@@ -51,10 +50,13 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
      */
     @TestEngine.ArgumentSupplier
     protected static Stream<TestArgument> arguments() {
-        return BasicAuthenticationBaseTest
-                .arguments()
+        return BasicAuthenticationBaseTest.arguments()
                 .filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER)
-                .filter(testArgument -> !testArgument.dockerImageName().contains("eclipse-temurin:8-alpine"));
+                .filter(
+                        testArgument ->
+                                !testArgument
+                                        .dockerImageName()
+                                        .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
@@ -73,8 +75,10 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
                 }
 
                 assertThatResponseForRequest(
-                        new HealthyRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password)))
+                                new HealthyRequest(testState.httpClient())
+                                        .withCredentials(
+                                                new BasicAuthenticationCredentials(
+                                                        username, password)))
                         .isSuperset(expectedHealthyResponse);
             }
         }
@@ -92,7 +96,8 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -116,7 +121,8 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -140,7 +146,8 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -157,7 +164,9 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test extends BasicAuth
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

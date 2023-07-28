@@ -1,13 +1,12 @@
 package io.prometheus.jmx;
 
 public enum State {
-
     RUNNING(1, 2),
     TERMINATED(2, 3);
 
-   private int valueOne;
+    private int valueOne;
 
-   private int valueTwo;
+    private int valueTwo;
 
     private State(int valueOne, int valueTwo) {
         this.valueOne = valueOne;
@@ -22,4 +21,3 @@ public enum State {
         return valueTwo;
     }
 }
-

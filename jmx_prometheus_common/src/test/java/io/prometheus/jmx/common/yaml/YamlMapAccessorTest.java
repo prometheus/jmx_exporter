@@ -16,20 +16,19 @@
 
 package io.prometheus.jmx.common.yaml;
 
-import org.junit.Test;
-import org.yaml.snakeyaml.Yaml;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
+import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("unchecked")
 public class YamlMapAccessorTest {
@@ -74,7 +73,8 @@ public class YamlMapAccessorTest {
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
         assertTrue(optional.get() instanceof String);
-        assertEquals("c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9", optional.get());
+        assertEquals(
+                "c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9", optional.get());
 
         optional = yamlMapAccessor.get("/httpServer/threads");
         assertNotNull(optional);
@@ -176,7 +176,8 @@ public class YamlMapAccessorTest {
         assertEquals(1, ((Integer) optional.get()).intValue());
 
         try {
-            yamlMapAccessor.getOrThrow("/foo/value2", () -> new IllegalArgumentException("path doesn't exist"));
+            yamlMapAccessor.getOrThrow(
+                    "/foo/value2", () -> new IllegalArgumentException("path doesn't exist"));
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals("path doesn't exist", e.getMessage());

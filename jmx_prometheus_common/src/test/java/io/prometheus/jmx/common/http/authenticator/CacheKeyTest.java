@@ -1,10 +1,9 @@
 package io.prometheus.jmx.common.http.authenticator;
 
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class CacheKeyTest {
 

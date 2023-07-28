@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
@@ -30,22 +33,18 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import org.antublue.test.engine.api.TestEngine;
 
 public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsumer {
 
     private static final String BASE_URL = "https://localhost";
 
-    protected final static Predicate<TestArgument> PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER =
+    protected static final Predicate<TestArgument> PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER =
             new PKCS12KeyStoreTestArgumentFilter();
 
     private static class PKCS12KeyStoreTestArgumentFilter implements Predicate<TestArgument> {
@@ -67,8 +66,7 @@ public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsu
          * Evaluates this predicate on the given argument.
          *
          * @param testArgument the input argument
-         * @return {@code true} if the input argument matches the predicate,
-         * otherwise {@code false}
+         * @return {@code true} if the input argument matches the predicate, otherwise {@code false}
          */
         @Override
         public boolean test(TestArgument testArgument) {
@@ -85,9 +83,7 @@ public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsu
     protected static Stream<TestArgument> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return BaseTest
-                .arguments()
-                .filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
+        return BaseTest.arguments().filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
     }
 
     @TestEngine.Prepare
@@ -127,7 +123,9 @@ public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsu
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

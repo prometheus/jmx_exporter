@@ -18,12 +18,11 @@ package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
 
-/**
- * Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics)
- */
+/** Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics) */
 public class OpenMetricsRequest extends BaseRequest {
 
-    private static String CONTENT_TYPE = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+    private static String CONTENT_TYPE =
+            "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
     /**
      * Constructor

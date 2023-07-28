@@ -45,7 +45,9 @@ public class TestArgument implements Argument {
 
     @Override
     public String toString() {
-        return String.format("TestArgument{name=[%s],dockerImageName=[%s],mode=[%s]}", name, dockerImageName, mode);
+        return String.format(
+                "TestArgument{name=[%s],dockerImageName=[%s],mode=[%s]}",
+                name, dockerImageName, mode);
     }
 
     public static TestArgument of(String name, String dockerImageName, Mode mode) {

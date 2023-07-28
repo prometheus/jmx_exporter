@@ -24,9 +24,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MatchedRulesCache is a cache for bean name to configured rule mapping (See JmxCollector.Receiver).
- * The cache also retains unmatched entries (a bean name not matching a rule pattern) to avoid
- * matching against the same pattern in later bean collections.
+ * MatchedRulesCache is a cache for bean name to configured rule mapping (See
+ * JmxCollector.Receiver). The cache also retains unmatched entries (a bean name not matching a rule
+ * pattern) to avoid matching against the same pattern in later bean collections.
  */
 public class MatchedRulesCache {
     private final Map<JmxCollector.Rule, Map<String, MatchedRule>> cachedRules;
@@ -38,7 +38,8 @@ public class MatchedRulesCache {
         }
     }
 
-    public void put(final JmxCollector.Rule rule, final String cacheKey, final MatchedRule matchedRule) {
+    public void put(
+            final JmxCollector.Rule rule, final String cacheKey, final MatchedRule matchedRule) {
         Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(rule);
         cachedRulesForRule.put(cacheKey, matchedRule);
     }
@@ -49,7 +50,8 @@ public class MatchedRulesCache {
 
     // Remove stale rules (in the cache but not collected in the last run of the collector)
     public void evictStaleEntries(final StalenessTracker stalenessTracker) {
-        for (Map.Entry<JmxCollector.Rule, Map<String, MatchedRule>> entry : cachedRules.entrySet()) {
+        for (Map.Entry<JmxCollector.Rule, Map<String, MatchedRule>> entry :
+                cachedRules.entrySet()) {
             JmxCollector.Rule rule = entry.getKey();
             Map<String, MatchedRule> cachedRulesForRule = entry.getValue();
 
@@ -62,7 +64,8 @@ public class MatchedRulesCache {
     }
 
     public static class StalenessTracker {
-        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries = new HashMap<JmxCollector.Rule, Set<String>>();
+        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries =
+                new HashMap<JmxCollector.Rule, Set<String>>();
 
         public void add(final JmxCollector.Rule rule, final String cacheKey) {
             Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
@@ -76,7 +79,8 @@ public class MatchedRulesCache {
 
         public boolean contains(final JmxCollector.Rule rule, final String cacheKey) {
             Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
-            return (lastCachedEntriesForRule != null) && lastCachedEntriesForRule.contains(cacheKey);
+            return (lastCachedEntriesForRule != null)
+                    && lastCachedEntriesForRule.contains(cacheKey);
         }
 
         public long cachedCount() {

@@ -16,17 +16,6 @@
 
 package io.prometheus.jmx.test;
 
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -34,6 +23,16 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class HttpClient {
 
@@ -72,12 +71,13 @@ public class HttpClient {
     public static String basicAuthentication(String username, String password) {
         return String.format(
                 "Basic %s",
-                Base64.getEncoder().encodeToString(
-                        (username + ":" + password).getBytes(StandardCharsets.UTF_8)));
+                Base64.getEncoder()
+                        .encodeToString(
+                                (username + ":" + password).getBytes(StandardCharsets.UTF_8)));
     }
 
     private static OkHttpClient createOkHttpClient() throws Exception {
-        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustAllManager() };
+        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustAllManager()};
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
         SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
@@ -94,25 +94,23 @@ public class HttpClient {
         // Set the thread pool
         okHttpClientBuilder.connectionPool(
                 new ConnectionPool(
-                        Runtime.getRuntime().availableProcessors() + 5,
-                        5L,
-                        TimeUnit.MINUTES));
+                        Runtime.getRuntime().availableProcessors() + 5, 5L, TimeUnit.MINUTES));
 
         return okHttpClientBuilder.build();
     }
 
-    /**
-     * Trust manager that accepts all certificates
-     */
+    /** Trust manager that accepts all certificates */
     static class X509TrustAllManager implements X509TrustManager {
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
             // DO NOTHING
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
             // DO NOTHING
         }
 
@@ -122,9 +120,7 @@ public class HttpClient {
         }
     }
 
-    /**
-     * Hostname verifier that accepts all hostnames
-     */
+    /** Hostname verifier that accepts all hostnames */
     static class TrustHostnameVerifier implements HostnameVerifier {
 
         @Override

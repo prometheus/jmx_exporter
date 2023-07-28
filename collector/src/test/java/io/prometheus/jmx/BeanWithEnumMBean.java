@@ -9,10 +9,8 @@ public interface BeanWithEnumMBean {
 
 class BeanWithEnum implements BeanWithEnumMBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mbeanName = new ObjectName(
-                "org.bean.enum:type=StateMetrics");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mbeanName = new ObjectName("org.bean.enum:type=StateMetrics");
         BeanWithEnum mbean = new BeanWithEnum();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -21,4 +19,3 @@ class BeanWithEnum implements BeanWithEnumMBean {
         return State.RUNNING;
     }
 }
-
