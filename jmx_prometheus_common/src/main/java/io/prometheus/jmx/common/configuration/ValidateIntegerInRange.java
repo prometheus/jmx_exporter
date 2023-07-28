@@ -17,7 +17,6 @@
 package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
-
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -34,7 +33,8 @@ public class ValidateIntegerInRange implements Function<Integer, Integer> {
      * @param maximum maximum
      * @param supplier supplier
      */
-    public ValidateIntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
+    public ValidateIntegerInRange(
+            int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.minimum = minimum;
         this.maximum = maximum;

@@ -17,9 +17,7 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
-
 import io.prometheus.jmx.common.util.Precondition;
-
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
@@ -27,7 +25,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 

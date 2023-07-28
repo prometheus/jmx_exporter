@@ -16,17 +16,15 @@
 
 package io.prometheus.jmx.test.support;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.credentials.Credentials;
 import io.prometheus.jmx.test.util.ThrowableUtils;
 import okhttp3.Headers;
 import okhttp3.ResponseBody;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Base class for all tests
- */
+/** Base class for all tests */
 public abstract class BaseRequest implements Request {
 
     public static final BaseResponse RESULT_401 = new BaseResponse().withCode(401);
@@ -118,7 +116,8 @@ public abstract class BaseRequest implements Request {
                 assertThat(body).isNotNull();
                 String content = body.string();
                 assertThat(content).isNotNull();
-                actualResponse = new BaseResponse().withCode(code).withHeaders(headers).withContent(content);
+                actualResponse =
+                        new BaseResponse().withCode(code).withHeaders(headers).withContent(content);
             }
         } catch (Throwable t) {
             ThrowableUtils.throwUnchecked(t);

@@ -17,13 +17,12 @@
 package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
-
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Class to validate a String is not blank, throwing a RuntimeException
- * from the Supplier if there is a ClassCastException
+ * Class to validate a String is not blank, throwing a RuntimeException from the Supplier if there
+ * is a ClassCastException
  */
 public class ValidatStringIsNotBlank implements Function<String, String> {
 

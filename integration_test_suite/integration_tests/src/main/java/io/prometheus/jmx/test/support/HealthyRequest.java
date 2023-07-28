@@ -18,9 +18,7 @@ package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
 
-/**
- * Class to implement a healthy test
- */
+/** Class to implement a healthy test */
 public class HealthyRequest extends BaseRequest {
 
     /**

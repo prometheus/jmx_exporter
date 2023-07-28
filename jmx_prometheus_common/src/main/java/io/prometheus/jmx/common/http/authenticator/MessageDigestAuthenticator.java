@@ -18,7 +18,6 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
-
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -29,9 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * Class to implement a username / salted message digest password BasicAuthenticator
- */
+/** Class to implement a username / salted message digest password BasicAuthenticator */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
     private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
@@ -54,11 +51,7 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @throws NoSuchAlgorithmException NoSuchAlgorithmException
      */
     public MessageDigestAuthenticator(
-            String realm,
-            String username,
-            String passwordHash,
-            String algorithm,
-            String salt)
+            String realm, String username, String passwordHash, String algorithm, String salt)
             throws GeneralSecurityException {
         super(realm);
 
@@ -78,15 +71,13 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     }
 
     /**
-     * called for each incoming request to verify the
-     * given name and password in the context of this
-     * Authenticator's realm. Any caching of credentials
-     * must be done by the implementation of this method
+     * called for each incoming request to verify the given name and password in the context of this
+     * Authenticator's realm. Any caching of credentials must be done by the implementation of this
+     * method
      *
      * @param username the username from the request
      * @param password the password from the request
-     * @return <code>true</code> if the credentials are valid,
-     * <code>false</code> otherwise.
+     * @return <code>true</code> if the credentials are valid, <code>false</code> otherwise.
      */
     @Override
     public boolean checkCredentials(String username, String password) {
@@ -107,7 +98,8 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
 
         boolean isValid =
                 this.username.equals(username)
-                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, password));
+                        && this.passwordHash.equals(
+                                generatePasswordHash(algorithm, salt, password));
 
         if (isValid) {
             validCacheKeys.add(cacheKey);

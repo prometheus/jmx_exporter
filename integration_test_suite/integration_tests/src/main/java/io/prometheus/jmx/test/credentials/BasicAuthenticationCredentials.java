@@ -16,14 +16,12 @@
 
 package io.prometheus.jmx.test.credentials;
 
+import static io.prometheus.jmx.test.HttpClient.basicAuthentication;
+
 import io.prometheus.jmx.test.HttpHeader;
 import okhttp3.Request;
 
-import static io.prometheus.jmx.test.HttpClient.basicAuthentication;
-
-/**
- * Class to implement Basic authentication credentials
- */
+/** Class to implement Basic authentication credentials */
 public class BasicAuthenticationCredentials implements Credentials {
 
     private final String username;
@@ -47,7 +45,8 @@ public class BasicAuthenticationCredentials implements Credentials {
      */
     public void apply(Request.Builder requestBuilder) {
         if ((username != null) && (password != null)) {
-            requestBuilder.addHeader(HttpHeader.AUTHORIZATION, basicAuthentication(username, password));
+            requestBuilder.addHeader(
+                    HttpHeader.AUTHORIZATION, basicAuthentication(username, password));
         }
     }
 }

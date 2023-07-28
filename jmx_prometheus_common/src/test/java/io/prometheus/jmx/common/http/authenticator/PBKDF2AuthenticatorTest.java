@@ -16,11 +16,11 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 
-public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
+import org.junit.Test;
+
+public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void testPBKDF2WithHmacSHA1() throws Exception {
@@ -29,24 +29,20 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "17:87:CA:B9:14:73:60:36:8B:20:82:87:92:58:43:B8:A3:85:66:BC:C1:6D:C3:31:6C:1D:47:48:C7:F2:E4:1D:96"
-                + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
-                + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
-                + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
+                    + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
+                    + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
+                    + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -59,26 +55,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "17:87:CA:B9:14:73:60:36:8B:20:82:87:92:58:43:B8:A3:85:66:BC:C1:6D:C3:31:6C:1D:47:48:C7:F2:E4:1D:96"
-                        + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
-                        + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
-                        + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
+                    + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
+                    + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
+                    + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
         hash = hash.toLowerCase();
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -91,26 +83,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "17:87:CA:B9:14:73:60:36:8B:20:82:87:92:58:43:B8:A3:85:66:BC:C1:6D:C3:31:6C:1D:47:48:C7:F2:E4:1D:96"
-                        + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
-                        + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
-                        + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
+                    + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
+                    + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
+                    + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
         hash = hash.replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -123,26 +111,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "17:87:CA:B9:14:73:60:36:8B:20:82:87:92:58:43:B8:A3:85:66:BC:C1:6D:C3:31:6C:1D:47:48:C7:F2:E4:1D:96"
-                        + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
-                        + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
-                        + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
+                    + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
+                    + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
+                    + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
         hash = hash.toLowerCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -155,26 +139,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "17:87:CA:B9:14:73:60:36:8B:20:82:87:92:58:43:B8:A3:85:66:BC:C1:6D:C3:31:6C:1D:47:48:C7:F2:E4:1D:96"
-                        + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
-                        + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
-                        + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
+                    + ":00:11:F8:4D:94:63:2F:F2:7A:F0:3B:72:63:16:5D:EF:5C:97:CC:EC:59:CB:18:4A:AA:F5:23:63:0B:6E:3B:65"
+                    + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
+                    + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
         hash = hash.toUpperCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -187,24 +167,20 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9:65:70:D3:53:AB:97:EE:2F:3F:A8:88:AF:43:EA:E6:D7:FB"
-                + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
-                + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
-                + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
+                    + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
+                    + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
+                    + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -217,26 +193,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9:65:70:D3:53:AB:97:EE:2F:3F:A8:88:AF:43:EA:E6:D7:FB"
-                        + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
-                        + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
-                        + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
+                    + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
+                    + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
+                    + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
         hash = hash.toLowerCase();
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -249,26 +221,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9:65:70:D3:53:AB:97:EE:2F:3F:A8:88:AF:43:EA:E6:D7:FB"
-                        + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
-                        + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
-                        + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
+                    + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
+                    + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
+                    + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
         hash = hash.replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -281,26 +249,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9:65:70:D3:53:AB:97:EE:2F:3F:A8:88:AF:43:EA:E6:D7:FB"
-                        + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
-                        + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
-                        + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
+                    + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
+                    + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
+                    + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
         hash = hash.toLowerCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -313,26 +277,22 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
         int keyLength = 128;
         String hash =
                 "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9:65:70:D3:53:AB:97:EE:2F:3F:A8:88:AF:43:EA:E6:D7:FB"
-                        + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
-                        + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
-                        + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
+                    + ":70:14:23:F9:51:29:5C:3A:9F:65:C3:20:EE:09:C9:C6:8A:B7:D3:0A:E1:F3:10:2B:9B:36:3F:1F:B6:1D:52:A7"
+                    + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
+                    + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
         hash = hash.toUpperCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -348,18 +308,14 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -377,18 +333,14 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -406,18 +358,14 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -435,18 +383,14 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }
@@ -464,18 +408,14 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest{
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
-                        "/",
-                        VALID_USERNAME,
-                        hash,
-                        algorithm,
-                        SALT,
-                        iterations,
-                        keyLength);
+                        "/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated = PBKDF2Authenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated =
+                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated =
+                        PBKDF2Authenticator.checkCredentials(username, password);
                 assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
             }
         }

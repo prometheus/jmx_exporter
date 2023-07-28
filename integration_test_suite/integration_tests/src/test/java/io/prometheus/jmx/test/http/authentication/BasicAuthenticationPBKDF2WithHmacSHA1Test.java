@@ -16,6 +16,10 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
@@ -29,16 +33,12 @@ import io.prometheus.jmx.test.support.MetricsResponse;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import io.prometheus.jmx.test.support.Response;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
 import java.util.stream.Stream;
+import org.antublue.test.engine.api.TestEngine;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticationBaseTest implements ContentConsumer {
+public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticationBaseTest
+        implements ContentConsumer {
 
     /**
      * Method to get the list of TestArguments
@@ -61,8 +61,10 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
                 }
 
                 assertThatResponseForRequest(
-                        new HealthyRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password)))
+                                new HealthyRequest(testState.httpClient())
+                                        .withCredentials(
+                                                new BasicAuthenticationCredentials(
+                                                        username, password)))
                         .isSuperset(expectedHealthyResponse);
             }
         }
@@ -80,7 +82,8 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -104,7 +107,8 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -128,7 +132,8 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -145,7 +150,9 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends BasicAuthenticati
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

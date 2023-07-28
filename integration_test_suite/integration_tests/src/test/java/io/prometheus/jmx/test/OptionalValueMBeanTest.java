@@ -16,15 +16,14 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.MetricsRequest;
 import io.prometheus.jmx.test.support.MetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.antublue.test.engine.api.TestEngine;
 
 public class OptionalValueMBeanTest extends BaseTest {
 
@@ -32,14 +31,18 @@ public class OptionalValueMBeanTest extends BaseTest {
     public void testMetrics() {
         assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch((ContentConsumer) content -> {
-                    Collection<Metric> metrics = MetricsParser.parse(content);
-                    metrics
-                            .forEach(metric -> {
-                                if (metric.getName().equals("io_prometheus_jmx_optionalValue_Value")) {
-                                    assertThat(metric.getValue()).isEqualTo(345.0);
-                                }
-                            });
-                });
+                .dispatch(
+                        (ContentConsumer)
+                                content -> {
+                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    metrics.forEach(
+                                            metric -> {
+                                                if (metric.getName()
+                                                        .equals(
+                                                                "io_prometheus_jmx_optionalValue_Value")) {
+                                                    assertThat(metric.getValue()).isEqualTo(345.0);
+                                                }
+                                            });
+                                });
     }
 }

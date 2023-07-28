@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test.http.threads;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
@@ -29,12 +32,8 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import org.antublue.test.engine.api.TestEngine;
 
 public class ThreadsConfigurationTest extends BaseTest implements ContentConsumer {
 
@@ -69,7 +68,10 @@ public class ThreadsConfigurationTest extends BaseTest implements ContentConsume
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
 
-        String buildInfoName = testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+        String buildInfoName =
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

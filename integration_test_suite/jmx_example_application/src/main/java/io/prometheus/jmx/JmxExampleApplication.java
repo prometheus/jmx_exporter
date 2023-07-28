@@ -16,17 +16,17 @@
 
 package io.prometheus.jmx;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 public class JmxExampleApplication {
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
-        new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
+            new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
     public static void main(String[] args) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -43,7 +43,8 @@ public class JmxExampleApplication {
         server.registerMBean(new OptionalValue(), optionalValueMBean);
 
         System.out.println(
-                String.format("%s | %s | INFO | %s | %s",
+                String.format(
+                        "%s | %s | INFO | %s | %s",
                         SIMPLE_DATE_FORMAT.format(new Date()),
                         Thread.currentThread().getName(),
                         JmxExampleApplication.class.getName(),

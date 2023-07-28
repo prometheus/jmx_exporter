@@ -1,30 +1,37 @@
 package io.prometheus.jmx;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class SafeNameTest {
     @Parameterized.Parameters(name = "{index}: testSafeName(expected={0} actual={1}")
     public static Iterable<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                { "test_test", "test-test" }, { "test_test", "test-_test" }, { "test_test", "test-_-test" },
-                { "_", "-_-"}, { "", "" }, { null, null }, { "_", "---" },
-                { "test", "test" },
-                { "_001", "001" },
-                // A very long string
-                { "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_",
-                "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___" },
-                { "test_swedish_chars_", "test_swedish_chars_åäö" },
-                { "test_test", "test@test" },
-                { "test_test", "test;test" },
-                { "test:test", "test:test" },
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"test_test", "test-test"},
+                    {"test_test", "test-_test"},
+                    {"test_test", "test-_-test"},
+                    {"_", "-_-"},
+                    {"", ""},
+                    {null, null},
+                    {"_", "---"},
+                    {"test", "test"},
+                    {"_001", "001"},
+                    // A very long string
+                    {
+                        "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_",
+                        "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___"
+                    },
+                    {"test_swedish_chars_", "test_swedish_chars_åäö"},
+                    {"test_test", "test@test"},
+                    {"test_test", "test;test"},
+                    {"test:test", "test:test"},
+                });
     }
 
     private final String expected;

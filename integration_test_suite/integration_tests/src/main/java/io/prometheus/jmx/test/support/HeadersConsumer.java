@@ -16,13 +16,10 @@
 
 package io.prometheus.jmx.test.support;
 
+import java.util.function.Consumer;
 import okhttp3.Headers;
 
-import java.util.function.Consumer;
-
-/**
- * Interface to accept Headers
- */
+/** Interface to accept Headers */
 public interface HeadersConsumer extends Consumer<Headers> {
 
     void accept(Headers headers);

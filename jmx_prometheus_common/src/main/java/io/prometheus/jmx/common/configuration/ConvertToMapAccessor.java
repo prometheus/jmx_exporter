@@ -18,14 +18,13 @@ package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
-
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Class to convert an Object to a Map, throwing a RuntimeException
- * from the Supplier if there is a ClassCastException
+ * Class to convert an Object to a Map, throwing a RuntimeException from the Supplier if there is a
+ * ClassCastException
  */
 @SuppressWarnings("unchecked")
 public class ConvertToMapAccessor implements Function<Object, YamlMapAccessor> {

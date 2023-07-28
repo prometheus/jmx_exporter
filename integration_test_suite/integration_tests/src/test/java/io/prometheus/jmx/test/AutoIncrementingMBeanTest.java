@@ -16,18 +16,17 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
 import io.prometheus.jmx.test.support.MetricsRequest;
 import io.prometheus.jmx.test.support.MetricsResponse;
+import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
-
-import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutoIncrementingMBeanTest extends BaseTest {
 
@@ -45,40 +44,53 @@ public class AutoIncrementingMBeanTest extends BaseTest {
 
         assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch((ContentConsumer) content -> {
-                    Collection<Metric> metrics = MetricsParser.parse(content);
-                    metrics
-                            .forEach(metric -> {
-                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                                    assertThat(metric.getValue()).isGreaterThanOrEqualTo(1);
-                                    value1.set(metric.getValue());
-                                }
-                            });
-                });
+                .dispatch(
+                        (ContentConsumer)
+                                content -> {
+                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    metrics.forEach(
+                                            metric -> {
+                                                if (metric.getName()
+                                                        .startsWith(
+                                                                "io_prometheus_jmx_autoIncrementing")) {
+                                                    assertThat(metric.getValue())
+                                                            .isGreaterThanOrEqualTo(1);
+                                                    value1.set(metric.getValue());
+                                                }
+                                            });
+                                });
 
         assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch((ContentConsumer) content -> {
-                    Collection<Metric> metrics = MetricsParser.parse(content);
-                    metrics
-                            .forEach(metric -> {
-                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                                    value2.set(metric.getValue());
-                                }
-                            });
-                });
+                .dispatch(
+                        (ContentConsumer)
+                                content -> {
+                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    metrics.forEach(
+                                            metric -> {
+                                                if (metric.getName()
+                                                        .startsWith(
+                                                                "io_prometheus_jmx_autoIncrementing")) {
+                                                    value2.set(metric.getValue());
+                                                }
+                                            });
+                                });
 
         assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
                 .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch((ContentConsumer) content -> {
-                    Collection<Metric> metrics = MetricsParser.parse(content);
-                    metrics
-                            .forEach(metric -> {
-                                if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                                    value3.set(metric.getValue());
-                                }
-                            });
-                });
+                .dispatch(
+                        (ContentConsumer)
+                                content -> {
+                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    metrics.forEach(
+                                            metric -> {
+                                                if (metric.getName()
+                                                        .startsWith(
+                                                                "io_prometheus_jmx_autoIncrementing")) {
+                                                    value3.set(metric.getValue());
+                                                }
+                                            });
+                                });
 
         // Use value1 as a baseline value
         assertThat(value2.get()).isEqualTo(value1.get() + 1);

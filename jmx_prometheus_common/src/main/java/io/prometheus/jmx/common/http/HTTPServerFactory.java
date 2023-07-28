@@ -20,18 +20,16 @@ import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
-import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
-import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
-import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
-import io.prometheus.jmx.common.http.ssl.SSLContextFactory;
-import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
 import io.prometheus.jmx.common.configuration.ValidatStringIsNotBlank;
 import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
-import org.yaml.snakeyaml.Yaml;
-
+import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
+import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
+import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
+import io.prometheus.jmx.common.http.ssl.SSLContextFactory;
+import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -49,6 +47,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the standalone exporter
@@ -88,9 +87,7 @@ public class HTTPServerFactory {
 
     private YamlMapAccessor rootYamlMapAccessor;
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     public HTTPServerFactory() {
         // DO NOTHING
     }
@@ -101,7 +98,7 @@ public class HTTPServerFactory {
      * @param inetSocketAddress inetSocketAddress
      * @param collectorRegistry collectorRegistry
      * @param daemon daemon
-     * @param exporterYamlFile  exporterYamlFile
+     * @param exporterYamlFile exporterYamlFile
      * @return an HTTPServer
      * @throws IOException IOException
      */
@@ -109,7 +106,8 @@ public class HTTPServerFactory {
             InetSocketAddress inetSocketAddress,
             CollectorRegistry collectorRegistry,
             boolean daemon,
-            File exporterYamlFile) throws IOException {
+            File exporterYamlFile)
+            throws IOException {
 
         HTTPServer.Builder httpServerBuilder =
                 new HTTPServer.Builder()
@@ -136,9 +134,7 @@ public class HTTPServerFactory {
             rootYamlMapAccessor = new YamlMapAccessor(yamlMap);
         } catch (Throwable t) {
             throw new ConfigurationException(
-                    String.format(
-                            "Exception loading exporter YAML file [%s]",
-                            exporterYamlFile),
+                    String.format("Exception loading exporter YAML file [%s]", exporterYamlFile),
                     t);
         }
     }
@@ -157,32 +153,84 @@ public class HTTPServerFactory {
             YamlMapAccessor httpServerThreadsMapAccessor =
                     rootYamlMapAccessor
                             .get("/httpServer/threads")
-                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/threads")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads configuration values are required"));
+                            .map(
+                                    new ConvertToMapAccessor(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                            + " /httpServer/threads")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/threads configuration values are"
+                                                    + " required"));
 
             minimum =
                     httpServerThreadsMapAccessor
                             .get("/minimum")
-                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/minimum must be an integer")))
-                            .map(new ValidateIntegerInRange(0, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/minimum must be 0 or greater")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/minimum is a required integer"));
+                            .map(
+                                    new ConvertToInteger(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/minimum must be an"
+                                                        + " integer")))
+                            .map(
+                                    new ValidateIntegerInRange(
+                                            0,
+                                            Integer.MAX_VALUE,
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/minimum must be 0"
+                                                        + " or greater")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/threads/minimum is a required integer"));
 
             maximum =
                     httpServerThreadsMapAccessor
                             .get("/maximum")
-                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/maximum must be an integer")))
-                            .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/maxPoolSize must be between greater than 0")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/maximum is a required integer"));
+                            .map(
+                                    new ConvertToInteger(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/maximum must be an"
+                                                        + " integer")))
+                            .map(
+                                    new ValidateIntegerInRange(
+                                            1,
+                                            Integer.MAX_VALUE,
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/maxPoolSize must be"
+                                                        + " between greater than 0")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/threads/maximum is a required integer"));
 
             keepAliveTime =
                     httpServerThreadsMapAccessor
                             .get("/keepAliveTime")
-                            .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/threads/keepAliveTime must be an integer")))
-                            .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/threads/keepAliveTime must be greater than 0")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/threads/keepAliveTime is a required integer"));
+                            .map(
+                                    new ConvertToInteger(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/keepAliveTime must"
+                                                        + " be an integer")))
+                            .map(
+                                    new ValidateIntegerInRange(
+                                            1,
+                                            Integer.MAX_VALUE,
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/threads/keepAliveTime must"
+                                                        + " be greater than 0")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/threads/keepAliveTime is a required"
+                                                    + " integer"));
 
             if (maximum < minimum) {
-                throw new ConfigurationException("/httpServer/threads/maximum must be greater than or equal to /httpServer/threads/minimum");
+                throw new ConfigurationException(
+                        "/httpServer/threads/maximum must be greater than or equal to"
+                                + " /httpServer/threads/minimum");
             }
         }
 
@@ -209,21 +257,51 @@ public class HTTPServerFactory {
             YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
                     rootYamlMapAccessor
                             .get("/httpServer/authentication/basic")
-                            .map(new ConvertToMapAccessor(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic configuration values are required"));
+                            .map(
+                                    new ConvertToMapAccessor(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/authentication/basic configuration values"
+                                                    + " are required"));
 
             String username =
                     httpServerAuthenticationBasicYamlMapAccessor
                             .get("/username")
-                            .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/username must be a string")))
-                            .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/username must not be blank")))
-                            .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/username is a required string"));
+                            .map(
+                                    new ConvertToString(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/authentication/basic/username"
+                                                        + " must be a string")))
+                            .map(
+                                    new ValidatStringIsNotBlank(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/authentication/basic/username"
+                                                        + " must not be blank")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/authentication/basic/username is a"
+                                                    + " required string"));
 
             String algorithm =
                     httpServerAuthenticationBasicYamlMapAccessor
                             .get("/algorithm")
-                            .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/algorithm must be a string")))
-                            .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/algorithm must not be blank")))
+                            .map(
+                                    new ConvertToString(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/authentication/basic/algorithm"
+                                                        + " must be a string")))
+                            .map(
+                                    new ValidatStringIsNotBlank(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/authentication/basic/algorithm"
+                                                        + " must not be blank")))
                             .orElse(PLAINTEXT);
 
             Authenticator authenticator;
@@ -232,37 +310,68 @@ public class HTTPServerFactory {
                 String password =
                         httpServerAuthenticationBasicYamlMapAccessor
                                 .get("/password")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/password must not be blank")))
-                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/password is a required string"));
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/password"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidatStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/password"
+                                                            + " must not be blank")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic/password is a"
+                                                        + " required string"));
 
                 authenticator = new PlaintextAuthenticator("/", username, password);
-            } else if (SHA_ALGORITHMS.contains(algorithm) || PBKDF2_ALGORITHMS.contains(algorithm)) {
+            } else if (SHA_ALGORITHMS.contains(algorithm)
+                    || PBKDF2_ALGORITHMS.contains(algorithm)) {
                 String hash =
                         httpServerAuthenticationBasicYamlMapAccessor
                                 .get("/passwordHash")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/passwordHash must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/passwordHash must not be blank")))
-                                .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/passwordHash is a required string"));
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/passwordHash"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidatStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/passwordHash"
+                                                            + " must not be blank")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic/passwordHash is a"
+                                                        + " required string"));
 
                 if (SHA_ALGORITHMS.contains(algorithm)) {
-                    authenticator = createMessageDigestAuthenticator(
-                            httpServerAuthenticationBasicYamlMapAccessor,
-                            REALM,
-                            username,
-                            hash,
-                            algorithm);
+                    authenticator =
+                            createMessageDigestAuthenticator(
+                                    httpServerAuthenticationBasicYamlMapAccessor,
+                                    REALM,
+                                    username,
+                                    hash,
+                                    algorithm);
                 } else {
-                    authenticator = createPBKDF2Authenticator(
-                            httpServerAuthenticationBasicYamlMapAccessor,
-                            REALM,
-                            username,
-                            hash,
-                            algorithm);
+                    authenticator =
+                            createPBKDF2Authenticator(
+                                    httpServerAuthenticationBasicYamlMapAccessor,
+                                    REALM,
+                                    username,
+                                    hash,
+                                    algorithm);
                 }
             } else {
                 throw new ConfigurationException(
-                        String.format("Unsupported /httpServer/authentication/basic/algorithm [%s]", algorithm));
+                        String.format(
+                                "Unsupported /httpServer/authentication/basic/algorithm [%s]",
+                                algorithm));
             }
 
             httpServerBuilder.withAuthenticator(authenticator);
@@ -280,20 +389,38 @@ public class HTTPServerFactory {
      * @return a MessageDigestAuthenticator
      */
     private Authenticator createMessageDigestAuthenticator(
-            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor, String realm, String username, String password, String algorithm) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor,
+            String realm,
+            String username,
+            String password,
+            String algorithm) {
         String salt =
                 httpServerAuthenticationBasicYamlMapAccessor
                         .get("/salt")
-                        .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be a string")))
-                        .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must not be blank")))
-                        .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/salt is a required string"));
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/salt must"
+                                                    + " be a string")))
+                        .map(
+                                new ValidatStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/salt must"
+                                                    + " not be blank")))
+                        .orElseThrow(
+                                ConfigurationException.supplier(
+                                        "/httpServer/authentication/basic/salt is a required"
+                                                + " string"));
 
         try {
             return new MessageDigestAuthenticator(realm, username, password, algorithm, salt);
         } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
                     String.format(
-                            "Invalid /httpServer/authentication/basic/algorithm, unsupported algorithm [%s]",
+                            "Invalid /httpServer/authentication/basic/algorithm, unsupported"
+                                    + " algorithm [%s]",
                             algorithm));
         }
     }
@@ -309,34 +436,77 @@ public class HTTPServerFactory {
      * @return a PBKDF2Authenticator
      */
     private Authenticator createPBKDF2Authenticator(
-            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor, String realm, String username, String password, String algorithm) {
+            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor,
+            String realm,
+            String username,
+            String password,
+            String algorithm) {
         String salt =
                 httpServerAuthenticationBasicYamlMapAccessor
                         .get("/salt")
-                        .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be a string")))
-                        .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/salt must be not blank")))
-                        .orElseThrow(ConfigurationException.supplier("/httpServer/authentication/basic/salt is a required string"));
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/salt must"
+                                                    + " be a string")))
+                        .map(
+                                new ValidatStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/salt must"
+                                                    + " be not blank")))
+                        .orElseThrow(
+                                ConfigurationException.supplier(
+                                        "/httpServer/authentication/basic/salt is a required"
+                                                + " string"));
 
         int iterations =
                 httpServerAuthenticationBasicYamlMapAccessor
                         .get("/iterations")
-                        .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/iterations must be an integer")))
-                        .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/iterations must be between greater than 0")))
+                        .map(
+                                new ConvertToInteger(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/iterations"
+                                                    + " must be an integer")))
+                        .map(
+                                new ValidateIntegerInRange(
+                                        1,
+                                        Integer.MAX_VALUE,
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/iterations"
+                                                    + " must be between greater than 0")))
                         .orElse(PBKDF2_ALGORITHM_ITERATIONS.get(algorithm));
 
         int keyLength =
                 httpServerAuthenticationBasicYamlMapAccessor
                         .get("/keyLength")
-                        .map(new ConvertToInteger(ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/keyLength must be an integer")))
-                        .map(new ValidateIntegerInRange(1, Integer.MAX_VALUE, ConfigurationException.supplier("Invalid configuration for /httpServer/authentication/basic/keyLength must be greater than 0")))
+                        .map(
+                                new ConvertToInteger(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/keyLength"
+                                                    + " must be an integer")))
+                        .map(
+                                new ValidateIntegerInRange(
+                                        1,
+                                        Integer.MAX_VALUE,
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /httpServer/authentication/basic/keyLength"
+                                                    + " must be greater than 0")))
                         .orElse(PBKDF2_KEY_LENGTH_BITS);
 
         try {
-            return new PBKDF2Authenticator(realm, username, password, algorithm, salt, iterations, keyLength);
+            return new PBKDF2Authenticator(
+                    realm, username, password, algorithm, salt, iterations, keyLength);
         } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
                     String.format(
-                            "Invalid /httpServer/authentication/basic/algorithm, unsupported algorithm [%s]",
+                            "Invalid /httpServer/authentication/basic/algorithm, unsupported"
+                                    + " algorithm [%s]",
                             algorithm));
         }
     }
@@ -352,29 +522,61 @@ public class HTTPServerFactory {
                 String keyStoreFilename =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/keyStore/filename")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/filename must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/filename must not be blank")))
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/keyStore/filename"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidatStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/keyStore/filename"
+                                                            + " must not be blank")))
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
 
                 String keyStorePassword =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/keyStore/password")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/password must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/keyStore/password must not be blank")))
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/keyStore/password"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidatStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/keyStore/password"
+                                                            + " must not be blank")))
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
                 String certificateAlias =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/certificate/alias")
-                                .map(new ConvertToString(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must be a string")))
-                                .map(new ValidatStringIsNotBlank(ConfigurationException.supplier("Invalid configuration for /httpServer/ssl/certificate/alias must not be blank")))
-                                .orElseThrow(ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required string"));
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/certificate/alias"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidatStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/ssl/certificate/alias"
+                                                            + " must not be blank")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/ssl/certificate/alias is a required"
+                                                        + " string"));
 
                 httpServerBuilder.withHttpsConfigurator(
-                        new HttpsConfigurator(SSLContextFactory.createSSLContext(
-                                keyStoreFilename,
-                                keyStorePassword,
-                                certificateAlias)));
+                        new HttpsConfigurator(
+                                SSLContextFactory.createSSLContext(
+                                        keyStoreFilename, keyStorePassword, certificateAlias)));
             } catch (GeneralSecurityException | IOException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
@@ -391,8 +593,8 @@ public class HTTPServerFactory {
 
     /**
      * Class to implement a named thread factory
-     * <p>
-     * Copied from the `prometheus/client_java` `HTTPServer` due to scoping issues / dependencies
+     *
+     * <p>Copied from the `prometheus/client_java` `HTTPServer` due to scoping issues / dependencies
      */
     private static class NamedDaemonThreadFactory implements ThreadFactory {
 
@@ -411,7 +613,9 @@ public class HTTPServerFactory {
         @Override
         public Thread newThread(Runnable r) {
             Thread t = delegate.newThread(r);
-            t.setName(String.format("prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
+            t.setName(
+                    String.format(
+                            "prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
             t.setDaemon(daemon);
             return t;
         }
@@ -421,9 +625,7 @@ public class HTTPServerFactory {
         }
     }
 
-    /**
-     * Class to implement a blocking RejectedExecutionHandler
-     */
+    /** Class to implement a blocking RejectedExecutionHandler */
     private static class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
 
         @Override

@@ -16,20 +16,15 @@
 
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.Metric;
-
-import java.util.Collection;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Class to implement a metrics assertion
- */
+import io.prometheus.jmx.test.Metric;
+import java.util.Collection;
+
+/** Class to implement a metrics assertion */
 public class MetricsAssertions {
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private MetricsAssertions() {
         // DO NOTHING
     }

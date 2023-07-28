@@ -27,9 +27,7 @@ public class HexString {
 
     private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private HexString() {
         // DO NOTHING
     }
@@ -40,7 +38,7 @@ public class HexString {
      * @param bytes bytes
      * @return the return value
      */
-    public static String toHex(byte [] bytes) {
+    public static String toHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         for (int i = 0, j = 0; i < bytes.length; i++) {
             hexChars[j++] = HEX_ARRAY[(0xF0 & bytes[i]) >>> 4];

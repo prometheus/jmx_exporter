@@ -19,7 +19,6 @@ package io.prometheus.jmx;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
-
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
@@ -53,14 +52,17 @@ public class WebServer {
         new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
 
         try {
-            new HTTPServerFactory().createHTTPServer(socket, CollectorRegistry.defaultRegistry, false, new File(args[1]));
+            new HTTPServerFactory()
+                    .createHTTPServer(
+                            socket, CollectorRegistry.defaultRegistry, false, new File(args[1]));
         } catch (ConfigurationException e) {
             System.err.println("Configuration Exception : " + e.getMessage());
             System.exit(1);
         }
 
         System.out.println(
-                String.format("%s | %s | INFO | %s | %s",
+                String.format(
+                        "%s | %s | INFO | %s | %s",
                         SIMPLE_DATE_FORMAT.format(new Date()),
                         Thread.currentThread().getName(),
                         WebServer.class.getName(),

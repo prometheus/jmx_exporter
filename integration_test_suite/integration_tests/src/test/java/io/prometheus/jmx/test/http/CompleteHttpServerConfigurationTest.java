@@ -16,6 +16,10 @@
 
 package io.prometheus.jmx.test.http;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
@@ -30,23 +34,19 @@ import io.prometheus.jmx.test.support.MetricsResponse;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
 import io.prometheus.jmx.test.support.Response;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-import java.util.function.Function;
 import java.util.stream.Stream;
-
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.antublue.test.engine.api.TestEngine;
 
 public class CompleteHttpServerConfigurationTest extends BaseTest implements ContentConsumer {
 
     private final String BASE_URL = "https://localhost";
     private final String VALID_USERNAME = "Prometheus";
     private final String VALID_PASSWORD = "secret";
-    private final String[] TEST_USERNAMES = new String[] { VALID_USERNAME, "prometheus", "bad", "", null };
-    private final String[] TEST_PASSWORDS = new String[] { VALID_PASSWORD, "Secret", "bad", "", null };
+    private final String[] TEST_USERNAMES =
+            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+    private final String[] TEST_PASSWORDS =
+            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
     /**
      * Method to get the list of TestArguments
@@ -57,9 +57,12 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
     protected static Stream<TestArgument> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
-        return BaseTest
-                .arguments()
-                .filter(testArgument -> !testArgument.dockerImageName().contains("eclipse-temurin:8-alpine"));
+        return BaseTest.arguments()
+                .filter(
+                        testArgument ->
+                                !testArgument
+                                        .dockerImageName()
+                                        .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
@@ -78,8 +81,10 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                 }
 
                 assertThatResponseForRequest(
-                        new HealthyRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password)))
+                                new HealthyRequest(testState.httpClient())
+                                        .withCredentials(
+                                                new BasicAuthenticationCredentials(
+                                                        username, password)))
                         .isSuperset(expectedHealthyResponse);
             }
         }
@@ -97,7 +102,8 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -121,7 +127,8 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -145,7 +152,8 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
 
                 Response actualMetricsResponse =
                         new MetricsRequest(testState.httpClient())
-                                .withCredentials(new BasicAuthenticationCredentials(username, password))
+                                .withCredentials(
+                                        new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
                 assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
@@ -162,7 +170,9 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

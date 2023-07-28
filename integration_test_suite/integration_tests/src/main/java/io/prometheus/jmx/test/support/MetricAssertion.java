@@ -17,19 +17,14 @@
 package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.Metric;
-import org.opentest4j.AssertionFailedError;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Consumer;
+import org.opentest4j.AssertionFailedError;
 
-/**
- * Class to implement a MetricAssertion
- */
+/** Class to implement a MetricAssertion */
 public class MetricAssertion {
 
     private final Collection<Metric> metrics;
@@ -84,7 +79,7 @@ public class MetricAssertion {
     /**
      * Method to test if a Metric exists in the Metric Collection
      *
-     * @param  expected
+     * @param expected
      * @return the return value
      */
     public MetricAssertion exists(boolean expected) {
@@ -103,39 +98,41 @@ public class MetricAssertion {
      * @return the return value
      */
     public MetricAssertion exists() {
-        metrics
-                .stream()
+        metrics.stream()
                 .filter(metric -> metric.getName().equals(name))
-                .filter(metric -> {
-                    if (labelTuples.size() == 0) {
-                        return true;
-                    }
-                    List<LabelTuple> labelTuples = toLabelTupleList(metric);
-                    if (labelTuples.containsAll(this.labelTuples)) {
-                        return true;
-                    }
-                    return false;
-                })
-                .filter(metric -> {
-                    if (value != null) {
-                        return metric.getValue() == value;
-                    }
-                    return true;
-                })
+                .filter(
+                        metric -> {
+                            if (labelTuples.size() == 0) {
+                                return true;
+                            }
+                            List<LabelTuple> labelTuples = toLabelTupleList(metric);
+                            if (labelTuples.containsAll(this.labelTuples)) {
+                                return true;
+                            }
+                            return false;
+                        })
+                .filter(
+                        metric -> {
+                            if (value != null) {
+                                return metric.getValue() == value;
+                            }
+                            return true;
+                        })
                 .findFirst()
                 .ifPresentOrElse(
-                        metric -> { /* DO NOTHING */ },
+                        metric -> {
+                            /* DO NOTHING */
+                        },
                         () -> {
                             String message;
                             if (labelTuples.size() > 0) {
                                 message =
                                         String.format(
-                                                "Metric [%s] with labels / values %s does not exist",
-                                                name,
-                                                toLabelTupleString(labelTuples));
+                                                "Metric [%s] with labels / values %s does not"
+                                                        + " exist",
+                                                name, toLabelTupleString(labelTuples));
                             } else {
-                                message =
-                                        String.format("Metric [%s] does not exist", name);
+                                message = String.format("Metric [%s] does not exist", name);
                             }
                             throw new AssertionFailedError(message);
                         });
@@ -149,40 +146,41 @@ public class MetricAssertion {
      * @return the return value
      */
     public MetricAssertion doesNotExist() {
-        metrics
-                .stream()
+        metrics.stream()
                 .filter(metric -> metric.getName().equals(name))
-                .filter(metric -> {
-                    if (labelTuples.size() == 0) {
-                        return true;
-                    }
-                    List<LabelTuple> labelTuples = toLabelTupleList(metric);
-                    if (labelTuples.containsAll(this.labelTuples)) {
-                        return true;
-                    }
-                    return false;
-                })
-                .filter(metric -> {
-                    if (value != null) {
-                        return metric.getValue() == value;
-                    }
-                    return true;
-                })
+                .filter(
+                        metric -> {
+                            if (labelTuples.size() == 0) {
+                                return true;
+                            }
+                            List<LabelTuple> labelTuples = toLabelTupleList(metric);
+                            if (labelTuples.containsAll(this.labelTuples)) {
+                                return true;
+                            }
+                            return false;
+                        })
+                .filter(
+                        metric -> {
+                            if (value != null) {
+                                return metric.getValue() == value;
+                            }
+                            return true;
+                        })
                 .findFirst()
-                .ifPresent(metric -> {
-                    String message;
-                    if (labelTuples.size() > 0) {
-                        message =
-                                String.format(
-                                        "Metric [%s] with labels / values %s should not exist",
-                                        name,
-                                        toLabelTupleString(labelTuples));
-                    } else {
-                        message =
-                                String.format("Metric [%s] should not exist", name);
-                    }
-                    throw new AssertionFailedError(message);
-                });
+                .ifPresent(
+                        metric -> {
+                            String message;
+                            if (labelTuples.size() > 0) {
+                                message =
+                                        String.format(
+                                                "Metric [%s] with labels / values %s should not"
+                                                        + " exist",
+                                                name, toLabelTupleString(labelTuples));
+                            } else {
+                                message = String.format("Metric [%s] should not exist", name);
+                            }
+                            throw new AssertionFailedError(message);
+                        });
 
         return this;
     }
@@ -197,10 +195,11 @@ public class MetricAssertion {
 
     private static String toLabelTupleString(List<LabelTuple> labelTuples) {
         StringBuilder stringBuilder = new StringBuilder();
-        labelTuples.forEach(labelTuple -> {
-            stringBuilder.append(labelTuple);
-            stringBuilder.append(", ");
-        });
+        labelTuples.forEach(
+                labelTuple -> {
+                    stringBuilder.append(labelTuple);
+                    stringBuilder.append(", ");
+                });
         return stringBuilder.toString().substring(0, stringBuilder.length() - 2);
     }
 

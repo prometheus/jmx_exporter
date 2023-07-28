@@ -1,34 +1,34 @@
 package io.prometheus.jmx;
 
-import org.junit.Test;
-
-import java.util.regex.Pattern;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.regex.Pattern;
+import org.junit.Test;
+
 /**
-
-Check tomcat path
-
-<pre>
-Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none
-</pre>
-
-See <a href="http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html</a> } or
-
-<a href="http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java">http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java</a>
-
-*/
+ * Check tomcat path
+ *
+ * <pre>
+ * Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none
+ * </pre>
+ *
+ * See <a
+ * href="http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html</a>
+ * } or
+ *
+ * <p><a
+ * href="http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java">http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java</a>
+ */
 public class TomcatPatternCheckTest {
 
-    private static final Pattern VALID_TOMCAT_PATH = Pattern
-            .compile("//([-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
-    private static final Pattern VALID_SERVLET_NAME = Pattern
-            .compile("([-a-zA-Z0-9+/$%~_-|!.]*)");
+    private static final Pattern VALID_TOMCAT_PATH =
+            Pattern.compile("//([-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+    private static final Pattern VALID_SERVLET_NAME = Pattern.compile("([-a-zA-Z0-9+/$%~_-|!.]*)");
 
-    private static final Pattern VALID_WEBMODULE = Pattern
-          .compile("^.*j2eeType=Servlet,WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),name=([-a-zA-Z0-9+/$%~_-|!.]*),J2EEApplication=none,J2EEServer=none.*$");
+    private static final Pattern VALID_WEBMODULE =
+            Pattern.compile(
+                    "^.*j2eeType=Servlet,WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),name=([-a-zA-Z0-9+/$%~_-|!.]*),J2EEApplication=none,J2EEServer=none.*$");
 
     public static boolean validateTomcatPath(String identifier) {
         return VALID_TOMCAT_PATH.matcher(identifier).matches();
@@ -68,6 +68,8 @@ public class TomcatPatternCheckTest {
 
     @Test
     public void testWebModule() throws Exception {
-        assertTrue(validateWebModule("Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none"));
+        assertTrue(
+                validateWebModule(
+                        "Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none"));
     }
 }
