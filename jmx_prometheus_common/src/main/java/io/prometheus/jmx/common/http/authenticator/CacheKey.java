@@ -44,7 +44,8 @@ public class CacheKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CacheKey cacheKey = (CacheKey) o;
-        return Objects.equals(username, cacheKey.username) && Objects.equals(password, cacheKey.password);
+        return Objects.equals(username, cacheKey.username)
+                && Objects.equals(password, cacheKey.password);
     }
 
     @Override

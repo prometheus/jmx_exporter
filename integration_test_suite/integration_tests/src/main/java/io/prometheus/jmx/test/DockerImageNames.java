@@ -28,9 +28,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/**
- * Class to get Docker image names
- */
+/** Class to get Docker image names */
 public final class DockerImageNames {
 
     private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
@@ -38,22 +36,17 @@ public final class DockerImageNames {
     private static final String ALL_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.all.txt";
     private static String[] ALL_DOCKER_IMAGE_NAMES;
 
-    private static final String SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.smoke-test.txt";
+    private static final String SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE =
+            "/docker-image-names.smoke-test.txt";
     private static String[] SMOKE_TEST_DOCKER_IMAGE_NAMES;
 
-    /**
-     * Predicate to accept all Docker image names
-     */
+    /** Predicate to accept all Docker image names */
     public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
 
-    /**
-     * Predicate to accept only Docker image names that don't contain ":6"
-     */
+    /** Predicate to accept only Docker image names that don't contain ":6" */
     public static final Predicate<String> OMIT_JAVA_6_VERSIONS = name -> !name.contains(":6");
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private DockerImageNames() {
         // DO NOTHING
     }
@@ -88,7 +81,10 @@ public final class DockerImageNames {
         String[] dockerImageNames;
 
         String dockerImageNameValue =
-                System.getenv(DOCKER_IMAGE_NAMES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
+                System.getenv(
+                        DOCKER_IMAGE_NAMES_CONFIGURATION
+                                .toUpperCase(Locale.ENGLISH)
+                                .replace('.', '_'));
 
         if (dockerImageNameValue != null) {
             dockerImageNameValue = dockerImageNameValue.trim();
@@ -155,7 +151,8 @@ public final class DockerImageNames {
 
             return dockerImageNames.toArray(new String[0]);
         } catch (IOException e) {
-            throw new RuntimeException("Exception reading resource " + ALL_DOCKER_IMAGE_NAMES_RESOURCE, e);
+            throw new RuntimeException(
+                    "Exception reading resource " + ALL_DOCKER_IMAGE_NAMES_RESOURCE, e);
         }
     }
 }

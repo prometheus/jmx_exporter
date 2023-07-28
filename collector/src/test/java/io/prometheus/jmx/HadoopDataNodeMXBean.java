@@ -1,9 +1,9 @@
 package io.prometheus.jmx;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.util.HashMap;
 import java.util.Map;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 public interface HadoopDataNodeMXBean {
     public Map<String, Map<String, Long>> getDatanodeNetworkCounts();
@@ -11,10 +11,8 @@ public interface HadoopDataNodeMXBean {
 
 class HadoopDataNode implements HadoopDataNodeMXBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mbeanName = new ObjectName(
-                "Hadoop:name=DataNodeInfo,service=DataNode");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mbeanName = new ObjectName("Hadoop:name=DataNodeInfo,service=DataNode");
         HadoopDataNode mbean = new HadoopDataNode();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -27,4 +25,3 @@ class HadoopDataNode implements HadoopDataNodeMXBean {
         return outer;
     }
 }
-

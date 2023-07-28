@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
@@ -25,12 +28,8 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import org.antublue.test.engine.api.TestEngine;
 
 public class MinimalTest extends BaseTest implements ContentConsumer {
 
@@ -65,7 +64,10 @@ public class MinimalTest extends BaseTest implements ContentConsumer {
     public void accept(String content) {
         Collection<Metric> metrics = MetricsParser.parse(content);
 
-        String buildInfoName = testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+        String buildInfoName =
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

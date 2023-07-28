@@ -16,40 +16,39 @@
 
 package io.prometheus.jmx;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.assertj.core.api.Assertions.fail;
+import org.junit.jupiter.api.Test;
 
 public class JavaAgentConfigurationRegexTest {
 
     private static final String[] ARGUMENTS = {
-            "12345:/opt/prometheus/config.yaml",
-            "12345:/opt/prometheus/config_file.yaml",
-            "12345:/opt/prometheus/config-file.yaml",
-            "12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-            "12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-            "myhost.domain.com:12345:/opt/prometheus/config.yaml",
-            "myhost.domain.com:12345:/opt/prometheus/config_file.yaml",
-            "myhost.domain.com:12345:/opt/prometheus/config-file.yaml",
-            "myhost.domain.com:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-            "myhost.domain.com:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-            "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config.yaml",
-            "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
-            "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
-            "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-            "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config.yaml",
-            "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
-            "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
-            "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-            "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-            "192.168.1.1:12345:/opt/prometheus/config.yaml",
-            "192.168.1.1:12345:/opt/prometheus/config_file.yaml",
-            "192.168.1.1:12345:/opt/prometheus/config-file.yaml",
-            "192.168.1.1:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-            "192.168.1.1:12345:/opt/prometheus/jmx_exporter/config-file.yaml"
+        "12345:/opt/prometheus/config.yaml",
+        "12345:/opt/prometheus/config_file.yaml",
+        "12345:/opt/prometheus/config-file.yaml",
+        "12345:/opt/prometheus/jmx-exporter/config-file.yaml",
+        "12345:/opt/prometheus/jmx_exporter/config-file.yaml",
+        "myhost.domain.com:12345:/opt/prometheus/config.yaml",
+        "myhost.domain.com:12345:/opt/prometheus/config_file.yaml",
+        "myhost.domain.com:12345:/opt/prometheus/config-file.yaml",
+        "myhost.domain.com:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
+        "myhost.domain.com:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
+        "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config.yaml",
+        "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
+        "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
+        "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
+        "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config.yaml",
+        "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
+        "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
+        "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
+        "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
+        "192.168.1.1:12345:/opt/prometheus/config.yaml",
+        "192.168.1.1:12345:/opt/prometheus/config_file.yaml",
+        "192.168.1.1:12345:/opt/prometheus/config-file.yaml",
+        "192.168.1.1:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
+        "192.168.1.1:12345:/opt/prometheus/jmx_exporter/config-file.yaml"
     };
 
     @Test

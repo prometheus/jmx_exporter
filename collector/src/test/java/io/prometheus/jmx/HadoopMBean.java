@@ -9,10 +9,9 @@ public interface HadoopMBean {
 
 class Hadoop implements HadoopMBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mbeanName = new ObjectName(
-                "hadoop:service=DataNode,name=DataNodeActivity-ams-hdd001-50010");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mbeanName =
+                new ObjectName("hadoop:service=DataNode,name=DataNodeActivity-ams-hdd001-50010");
         Hadoop mbean = new Hadoop();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -21,4 +20,3 @@ class Hadoop implements HadoopMBean {
         return 200;
     }
 }
-

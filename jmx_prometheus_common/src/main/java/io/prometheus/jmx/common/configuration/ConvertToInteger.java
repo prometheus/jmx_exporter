@@ -17,7 +17,6 @@
 package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
-
 import java.util.function.Function;
 import java.util.function.Supplier;
 

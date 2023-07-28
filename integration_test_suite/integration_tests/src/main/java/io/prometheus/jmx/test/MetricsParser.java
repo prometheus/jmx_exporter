@@ -23,28 +23,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Class to implements a Metrics response parser
- */
+/** Class to implements a Metrics response parser */
 public final class MetricsParser {
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private MetricsParser() {
         // DO NOTHING
     }
 
     /**
      * Method to parse a response as a list of Metric objects
-     * <p>
-     * A List is used because Metrics could have the same name, but with different labels
+     *
+     * <p>A List is used because Metrics could have the same name, but with different labels
      *
      * @param content content
      * @return the return value
      * @throws IOException
      */
-    public static Collection<Metric> parse(String content)  {
+    public static Collection<Metric> parse(String content) {
         List<Metric> metricList = new ArrayList<>();
 
         BufferedReader bufferedReader = null;

@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
@@ -30,15 +33,12 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
 import java.util.stream.Stream;
+import org.antublue.test.engine.api.TestEngine;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-
-public class SSLWithJKSKeyStoreMultipleCertificatesTest extends BaseTest implements ContentConsumer {
+public class SSLWithJKSKeyStoreMultipleCertificatesTest extends BaseTest
+        implements ContentConsumer {
 
     private static final String BASE_URL = "https://localhost";
 
@@ -51,9 +51,12 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest extends BaseTest impleme
     protected static Stream<TestArgument> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
-        return BaseTest
-                .arguments()
-                .filter(testArgument -> !testArgument.dockerImageName().contains("eclipse-temurin:8-alpine"));
+        return BaseTest.arguments()
+                .filter(
+                        testArgument ->
+                                !testArgument
+                                        .dockerImageName()
+                                        .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
@@ -93,7 +96,9 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest extends BaseTest impleme
         Collection<Metric> metrics = MetricsParser.parse(content);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent ? "jmx_prometheus_javaagent" : "jmx_prometheus_httpserver";
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
 
         assertThatMetricIn(metrics)
                 .withName("jmx_exporter_build_info")

@@ -16,9 +16,6 @@
 
 package io.prometheus.jmx.common.http.ssl;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,14 +25,15 @@ import java.security.SecureRandom;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 public class SSLContextFactory {
 
-    private static final String[] PROTOCOLS = { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" };
+    private static final String[] PROTOCOLS = {"TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     private SSLContextFactory() {
         // DO NOTHING
     }
@@ -50,7 +48,8 @@ public class SSLContextFactory {
      * @throws GeneralSecurityException GeneralSecurityException
      * @throws IOException IOException
      */
-    public static SSLContext createSSLContext(String keyStoreFilename, String keyStorePassword, String certificateAlias)
+    public static SSLContext createSSLContext(
+            String keyStoreFilename, String keyStorePassword, String certificateAlias)
             throws GeneralSecurityException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
@@ -81,8 +80,7 @@ public class SSLContextFactory {
                 throw new GeneralSecurityException(
                         String.format(
                                 "certificate alias [%s] not found in keystore [%s]",
-                                certificateAlias,
-                                keyStoreFilename));
+                                certificateAlias, keyStoreFilename));
             }
 
             // Create and initialize an SSLContext
@@ -100,7 +98,9 @@ public class SSLContextFactory {
             SSLContext sslContext = createSSLContext();
 
             sslContext.init(
-                    keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());
+                    keyManagerFactory.getKeyManagers(),
+                    trustManagerFactory.getTrustManagers(),
+                    new SecureRandom());
 
             return sslContext;
         }

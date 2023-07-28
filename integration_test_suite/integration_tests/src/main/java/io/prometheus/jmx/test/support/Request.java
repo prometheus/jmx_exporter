@@ -16,9 +16,7 @@
 
 package io.prometheus.jmx.test.support;
 
-/**
- * Interface for all tests
- */
+/** Interface for all tests */
 public interface Request {
 
     /**

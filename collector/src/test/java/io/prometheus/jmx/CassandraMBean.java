@@ -9,10 +9,9 @@ public interface CassandraMBean {
 
 class Cassandra implements CassandraMBean {
 
-    public static void registerBean(MBeanServer mbs)
-            throws javax.management.JMException {
-        ObjectName mbeanName = new ObjectName(
-                "org.apache.cassandra.concurrent:type=CONSISTENCY-MANAGER");
+    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+        ObjectName mbeanName =
+                new ObjectName("org.apache.cassandra.concurrent:type=CONSISTENCY-MANAGER");
         Cassandra mbean = new Cassandra();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -21,4 +20,3 @@ class Cassandra implements CassandraMBean {
         return 100;
     }
 }
-

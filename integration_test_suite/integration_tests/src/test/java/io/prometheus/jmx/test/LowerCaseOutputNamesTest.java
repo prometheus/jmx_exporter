@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
@@ -25,12 +28,8 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.antublue.test.engine.api.TestEngine;
 
 public class LowerCaseOutputNamesTest extends BaseTest implements ContentConsumer {
 
@@ -68,7 +67,7 @@ public class LowerCaseOutputNamesTest extends BaseTest implements ContentConsume
         /*
          * Assert that all metrics have lower case names
          */
-        metricCollection
-                .forEach(metric -> assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase()));
+        metricCollection.forEach(
+                metric -> assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase()));
     }
 }

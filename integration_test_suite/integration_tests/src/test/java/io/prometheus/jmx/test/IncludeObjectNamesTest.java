@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
@@ -25,12 +28,8 @@ import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.OpenMetricsResponse;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.Collection;
-
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.antublue.test.engine.api.TestEngine;
 
 public class IncludeObjectNamesTest extends BaseTest implements ContentConsumer {
 
@@ -76,17 +75,19 @@ public class IncludeObjectNamesTest extends BaseTest implements ContentConsumer 
          *
          * ... because they are registered directly and are not MBeans
          */
-        metrics
-                .stream()
+        metrics.stream()
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_exporter"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_config"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
-                .forEach(metric -> {
-                    String name = metric.getName();
-                    boolean match = name.startsWith("java_lang") || name.startsWith("io_prometheus_jmx");
-                    assertThat(match).isTrue();
-                });
+                .forEach(
+                        metric -> {
+                            String name = metric.getName();
+                            boolean match =
+                                    name.startsWith("java_lang")
+                                            || name.startsWith("io_prometheus_jmx");
+                            assertThat(match).isTrue();
+                        });
     }
 }

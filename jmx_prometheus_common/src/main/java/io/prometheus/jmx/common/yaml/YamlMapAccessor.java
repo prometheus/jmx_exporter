@@ -22,9 +22,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-/**
- * Class to implement a MapAccessor to work with nested Maps / values
- */
+/** Class to implement a MapAccessor to work with nested Maps / values */
 @SuppressWarnings("unchecked")
 public class YamlMapAccessor {
 
@@ -51,8 +49,7 @@ public class YamlMapAccessor {
      */
     public boolean containsPath(String path) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -88,8 +85,7 @@ public class YamlMapAccessor {
      */
     public Optional<Object> get(String path) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -115,16 +111,15 @@ public class YamlMapAccessor {
 
     /**
      * Method to get a path Object or create an Object using the Supplier
-     * <p>
-     * parent paths will be created if required
+     *
+     * <p>parent paths will be created if required
      *
      * @param path path
      * @return an Optional containing the path Object or Optional created by the Supplier
      */
     public Optional<Object> getOrCreate(String path, Supplier<Object> supplier) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -169,15 +164,15 @@ public class YamlMapAccessor {
     }
 
     /**
-     * Method to get a path Object, throwing an RuntimeException created by the Supplier if the path doesn't exist
+     * Method to get a path Object, throwing an RuntimeException created by the Supplier if the path
+     * doesn't exist
      *
      * @param path path
      * @return an Optional containing the path Object
      */
     public Optional<Object> getOrThrow(String path, Supplier<? extends RuntimeException> supplier) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
         }
 
         if (supplier == null) {

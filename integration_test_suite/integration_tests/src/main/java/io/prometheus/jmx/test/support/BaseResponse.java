@@ -16,15 +16,12 @@
 
 package io.prometheus.jmx.test.support;
 
+import java.util.List;
+import java.util.Objects;
 import okhttp3.Headers;
 import org.opentest4j.AssertionFailedError;
 
-import java.util.List;
-import java.util.Objects;
-
-/**
- * Class to implement a Response
- */
+/** Class to implement a Response */
 public class BaseResponse implements Response {
 
     public static final Response RESULT_401 = new BaseResponse().withCode(401);
@@ -37,7 +34,8 @@ public class BaseResponse implements Response {
         HEADERS_MISMATCH_2,
         HEADERS_MISMATCH_3,
         CONTENT_MISMATCH_1,
-        MATCH }
+        MATCH
+    }
 
     private Integer code;
     private Headers headers;
@@ -45,9 +43,7 @@ public class BaseResponse implements Response {
     private String content;
     private Headers.Builder headersBuilder;
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     public BaseResponse() {
         headersBuilder = new Headers.Builder();
     }
@@ -144,14 +140,18 @@ public class BaseResponse implements Response {
     public Response isSuperset(Response response) {
         Status status = checkSuperset(response);
         switch (status) {
-            case MATCH: {
-                break;
-            } default: {
-                throw new AssertionFailedError(
-                        String.format(
-                                "Actual response is not a superset of the expected response, error [%s]",
-                                status));
-            }
+            case MATCH:
+                {
+                    break;
+                }
+            default:
+                {
+                    throw new AssertionFailedError(
+                            String.format(
+                                    "Actual response is not a superset of the expected response,"
+                                            + " error [%s]",
+                                    status));
+                }
         }
         return this;
     }

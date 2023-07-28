@@ -18,21 +18,22 @@ package io.prometheus.jmx.test.http.authentication;
 
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.TestArgument;
-import org.antublue.test.engine.api.TestEngine;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import org.antublue.test.engine.api.TestEngine;
 
 @TestEngine.BaseClass
 public class BasicAuthenticationBaseTest extends BaseTest {
 
     protected final String VALID_USERNAME = "Prometheus";
     protected final String VALID_PASSWORD = "secret";
-    protected final String[] TEST_USERNAMES = new String[] { VALID_USERNAME, "prometheus", "bad", "", null };
-    protected final String[] TEST_PASSWORDS = new String[] { VALID_PASSWORD, "Secret", "bad", "", null };
+    protected final String[] TEST_USERNAMES =
+            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+    protected final String[] TEST_PASSWORDS =
+            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    protected final static PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER =
+    protected static final PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER =
             new PBKDF2WithHmacTestArgumentFilter();
 
     private static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {
@@ -51,8 +52,7 @@ public class BasicAuthenticationBaseTest extends BaseTest {
          * Evaluates this predicate on the given argument.
          *
          * @param testArgument the input argument
-         * @return {@code true} if the input argument matches the predicate,
-         * otherwise {@code false}
+         * @return {@code true} if the input argument matches the predicate, otherwise {@code false}
          */
         @Override
         public boolean test(TestArgument testArgument) {
