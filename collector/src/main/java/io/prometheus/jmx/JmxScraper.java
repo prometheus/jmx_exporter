@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -70,7 +71,6 @@ class JmxScraper {
     private final boolean ssl;
     private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
-    private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
                       List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
@@ -347,16 +347,21 @@ class JmxScraper {
             }
         } else if (value.getClass().isArray()) {
             logScrape(domain, "arrays are unsupported");
-        } else if (optionalValueExtractor.isOptional(value)) {
+        } else if (value instanceof Optional) {
             logScrape(domain + beanProperties + attrName, "java.util.Optional");
-            processBeanValue(
-                    domain,
-                    beanProperties,
-                    attrKeys,
-                    attrName,
-                    attrType,
-                    attrDescription,
-                    optionalValueExtractor.getOptionalValueOrNull(value));
+            Optional optional = (Optional) value;
+            if (optional.isPresent()) {
+                processBeanValue(
+                        domain,
+                        beanProperties,
+                        attrKeys,
+                        attrName,
+                        attrType,
+                        attrDescription,
+                        optional.get());
+            } else {
+                logScrape(domain + beanProperties + attrName, "java.util.Optional is empty");
+            }
         } else if (value.getClass().isEnum()) {
             logScrape(domain + beanProperties + attrName, value.toString());
             processBeanValue(

@@ -39,6 +39,9 @@ public class JmxExampleApplication {
 
         ExistDb.registerBean(server);
 
+        ObjectName optionalValueMBean = new ObjectName("io.prometheus.jmx:type=optionalValue");
+        server.registerMBean(new OptionalValue(), optionalValueMBean);
+
         System.out.println(
                 String.format("%s | %s | INFO | %s | %s",
                         SIMPLE_DATE_FORMAT.format(new Date()),
