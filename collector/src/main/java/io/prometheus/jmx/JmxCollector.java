@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("unchecked")
 public class JmxCollector extends Collector implements Collector.Describable {
@@ -126,11 +127,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private void exitOnConfigError() {
         if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
-            LOGGER.log(Level.SEVERE, "Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
+            LOGGER.log(SEVERE, "Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
             System.exit(-1);
         }
         if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
-            LOGGER.log(Level.SEVERE, "Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
+            LOGGER.log(SEVERE, "Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
             System.exit(-1);
         }
     }
@@ -145,14 +146,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           config.lastUpdate = configFile.lastModified();
           configReloadSuccess.inc();
         } catch (Exception e) {
-          LOGGER.log(Level.SEVERE, "Configuration reload failed: %s: ", e);
+          LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
           configReloadFailure.inc();
         } finally {
           fr.close();
         }
 
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "Configuration reload failed: %s", e);
+        LOGGER.log(SEVERE, "Configuration reload failed: %s", e);
         configReloadFailure.inc();
       }
     }
@@ -675,7 +676,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         error = 1;
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
-        LOGGER.log(Level.SEVERE, "JMX scrape failed: %s", sw);
+        LOGGER.log(SEVERE, "JMX scrape failed: %s", sw);
       }
       config.rulesCache.evictStaleEntries(stalenessTracker);
 
