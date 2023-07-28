@@ -177,6 +177,18 @@ public class JmxCollectorTest {
     }
 
     @Test
+    public void testIncludeObjectNames() throws Exception {
+      JmxCollector jc = new JmxCollector("\n---\nincludeObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
+
+      // Test what should and shouldn't be present.
+      assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
+      assertNotNull(registry.getSampleValue("org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount", new String[]{}, new String[]{}));
+
+      assertNull(registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}));
+      assertNull(registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}));
+    }
+
+    @Test
     public void testWhitelist() throws Exception {
       JmxCollector jc = new JmxCollector("\n---\nwhitelistObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
 
@@ -186,6 +198,18 @@ public class JmxCollectorTest {
 
       assertNull(registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}));
       assertNull(registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}));
+    }
+
+    @Test
+    public void testExcludeObjectNames() throws Exception {
+        JmxCollector jc = new JmxCollector("\n---\nincludeObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nexcludeObjectNames:\n- org.apache.cassandra.concurrent:*".replace('`','"')).register(registry);
+
+        // Test what should and shouldn't be present.
+        assertNotNull(registry.getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[]{}, new String[]{}));
+
+        assertNull(registry.getSampleValue("org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount", new String[]{}, new String[]{}));
+        assertNull(registry.getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[]{"name"}, new String[]{"CompletedTasks"}));
+        assertNull(registry.getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[]{"name"}, new String[]{"DataNodeActivity-ams-hdd001-50010"}));
     }
 
     @Test

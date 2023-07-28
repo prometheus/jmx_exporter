@@ -45,6 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -71,20 +72,19 @@ class JmxScraper {
     private final String username;
     private final String password;
     private final boolean ssl;
-    private final List<ObjectName> whitelistObjectNames, blacklistObjectNames;
+    private final List<ObjectName> includeObjectNames, excludeObjectNames;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
-    private final OptionalValueExtractor optionalValueExtractor = new OptionalValueExtractor();
 
     public JmxScraper(String jmxUrl, String username, String password, boolean ssl,
-                      List<ObjectName> whitelistObjectNames, List<ObjectName> blacklistObjectNames,
+                      List<ObjectName> includeObjectNames, List<ObjectName> excludeObjectNames,
                       MBeanReceiver receiver, JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
         this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.ssl = ssl;
-        this.whitelistObjectNames = whitelistObjectNames;
-        this.blacklistObjectNames = blacklistObjectNames;
+        this.includeObjectNames = includeObjectNames;
+        this.excludeObjectNames = excludeObjectNames;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
 
@@ -117,13 +117,13 @@ class JmxScraper {
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectName> mBeanNames = new HashSet<ObjectName>();
-            for (ObjectName name : whitelistObjectNames) {
+            for (ObjectName name : includeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.add(instance.getObjectName());
                 }
             }
 
-            for (ObjectName name : blacklistObjectNames) {
+            for (ObjectName name : excludeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                     mBeanNames.remove(instance.getObjectName());
                 }
@@ -189,6 +189,20 @@ class JmxScraper {
         for (Object object : attributes) {
             if (object instanceof Attribute) {
                 Attribute attribute = (Attribute) object;
+                String attributeName = attribute.getName();
+                if (mBeanName.toString().equals("java.lang:type=Runtime")
+                        && (attributeName.equalsIgnoreCase("SystemProperties")
+                        || attributeName.equalsIgnoreCase("ClassPath")
+                        || attributeName.equalsIgnoreCase("BootClassPath"))
+                        || attributeName.equalsIgnoreCase("LibraryPath")) {
+                    // Skip attributes for the "java.lang:type=Runtime" MBean because
+                    // getting the values is expensive and the values are ultimately ignored
+                    continue;
+                } else if (mBeanName.toString().equals("jdk.management.jfr:type=FlightRecorder")) {
+                    // Skip the FlightRecorderMXBean
+                    continue;
+                }
+
                 MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attribute.getName());
                 LOGGER.log(FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
@@ -346,16 +360,19 @@ class JmxScraper {
             }
         } else if (value.getClass().isArray()) {
             LOGGER.log(FINE, "%s scrape: arrays are unsupported", domain);
-        } else if (optionalValueExtractor.isOptional(value)) {
+        } else if (value instanceof Optional) {
             LOGGER.log(FINE, "%s%s%s scrape: java.util.Optional", domain, beanProperties, attrName);
-            processBeanValue(
-                    domain,
-                    beanProperties,
-                    attrKeys,
-                    attrName,
-                    attrType,
-                    attrDescription,
-                    optionalValueExtractor.getOptionalValueOrNull(value));
+            Optional optional = (Optional) value;
+            if (optional.isPresent()) {
+                processBeanValue(
+                        domain,
+                        beanProperties,
+                        attrKeys,
+                        attrName,
+                        attrType,
+                        attrDescription,
+                        optional.get());
+            }
         } else if (value.getClass().isEnum()) {
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             processBeanValue(
