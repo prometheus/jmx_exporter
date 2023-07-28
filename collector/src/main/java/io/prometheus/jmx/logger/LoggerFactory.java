@@ -23,8 +23,6 @@ import java.util.Map;
 /** Class to implement a LoggerFactory */
 public class LoggerFactory {
 
-    private static Map<Class<?>, Logger> LOGGER_MAP = Collections.synchronizedMap(new HashMap<>());
-
     /** Constructor */
     private LoggerFactory() {
         // DO NOTHING
@@ -37,6 +35,6 @@ public class LoggerFactory {
      * @return a Logger
      */
     public static Logger getLogger(Class<?> clazz) {
-        return LOGGER_MAP.computeIfAbsent(clazz, c -> new Logger(c));
+        return new Logger(clazz);
     }
 }

@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
+import static java.util.logging.Level.FINE;
 
 @SuppressWarnings("unchecked")
 public class JmxCollector extends Collector implements Collector.Describable {
@@ -160,7 +161,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       if (configFile != null) {
           long mtime = configFile.lastModified();
           if (mtime > config.lastUpdate) {
-              LOGGER.log(Level.FINE, "Configuration file changed, reloading...");
+              LOGGER.log(FINE, "Configuration file changed, reloading...");
               reloadConfig();
           }
       }
@@ -426,13 +427,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         SampleKey sampleKey = SampleKey.of(sample);
         boolean exists = sampleKeys.contains(sampleKey);
         if (exists) {
-          if (LOGGER.isLoggable(Level.FINE)) {
+          if (LOGGER.isLoggable(FINE)) {
             String labels = "{";
             for (int i = 0; i < sample.labelNames.size(); i++) {
               labels += sample.labelNames.get(i) + "=" + sample.labelValues.get(i) + ",";
             }
             labels += "}";
-            LOGGER.log(Level.FINE, "Metric %s%s was created multiple times. Keeping the first occurrence. Dropping the others.", sample.name, labels);
+            LOGGER.log(FINE, "Metric %s%s was created multiple times. Keeping the first occurrence. Dropping the others.", sample.name, labels);
           }
         } else {
             mfs.samples.add(sample);
@@ -561,7 +562,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             try {
               value = Double.valueOf(val);
             } catch (NumberFormatException e) {
-              LOGGER.log(Level.FINE, "Unable to parse configured value '%s' to number for bean: %s%s: %s", val, beanName, attrName, beanValue);
+              LOGGER.log(FINE, "Unable to parse configured value '%s' to number for bean: %s%s: %s", val, beanName, attrName, beanValue);
               return;
             }
           }
@@ -630,12 +631,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
         } else if (beanValue instanceof Boolean) {
           value = (Boolean) beanValue ? 1 : 0;
         } else {
-          LOGGER.log(Level.FINE, "Ignoring unsupported bean: %s%s: %s ", beanName, attrName, beanValue);
+          LOGGER.log(FINE, "Ignoring unsupported bean: %s%s: %s ", beanName, attrName, beanValue);
           return;
         }
 
         // Add to samples.
-        LOGGER.log(Level.FINE, "add metric sample: %s %s %s %s", matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue());
+        LOGGER.log(FINE, "add metric sample: %s %s %s %s", matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue());
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, matchedRule.help);
       }
 

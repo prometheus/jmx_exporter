@@ -21,6 +21,8 @@ import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.logging.Level.FINE;
+
 public class OptionalValueExtractor {
 
     private static final Logger LOGGER = Logger.getLogger(OptionalValueExtractor.class.getName());
@@ -34,10 +36,10 @@ public class OptionalValueExtractor {
         try {
             optionalClass = Class.forName(OPTIONAL_CLASS_NAME);
         } catch (ClassNotFoundException e) {
-            LOGGER.log(Level.FINE, "{0}: class not found (not running on Java 8+)", OPTIONAL_CLASS_NAME); // that's okay
+            LOGGER.log(FINE, "{0}: class not found (not running on Java 8+)", OPTIONAL_CLASS_NAME); // that's okay
         }
         if (optionalClass != null) {
-            LOGGER.log(Level.FINE, "{0} will be supported", OPTIONAL_CLASS_NAME);
+            LOGGER.log(FINE, "{0} will be supported", OPTIONAL_CLASS_NAME);
         }
         return optionalClass;
     }
@@ -63,11 +65,11 @@ public class OptionalValueExtractor {
         try {
             return OR_ELSE_METHOD.invoke(o, (Object) null);
         } catch (IllegalAccessException e) {
-            LOGGER.log(Level.FINE, "IllegalAccessException calling orElse(null) on {0}", o);
+            LOGGER.log(FINE, "IllegalAccessException calling orElse(null) on {0}", o);
         } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.FINE, "IllegalArgumentException calling orElse(null) on {0}", o);
+            LOGGER.log(FINE, "IllegalArgumentException calling orElse(null) on {0}", o);
         } catch (InvocationTargetException e) {
-            LOGGER.log(Level.FINE, "InvocationTargetException calling orElse(null) on {0}", o);
+            LOGGER.log(FINE, "InvocationTargetException calling orElse(null) on {0}", o);
         }
         return null;
     }

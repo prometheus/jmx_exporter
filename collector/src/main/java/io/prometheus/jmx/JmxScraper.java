@@ -49,6 +49,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
+import static java.util.logging.Level.FINE;
+
 class JmxScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
@@ -133,7 +135,7 @@ class JmxScraper {
             for (ObjectName objectName : mBeanNames) {
                 long start = System.nanoTime();
                 scrapeBean(beanConn, objectName);
-                LOGGER.log(Level.FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
+                LOGGER.log(FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
             }
         } finally {
           if (jmxc != null) {
@@ -148,10 +150,10 @@ class JmxScraper {
         try {
             mBeanInfo = beanConn.getMBeanInfo(mBeanName);
         } catch (IOException e) {
-            LOGGER.log(Level.FINE, "%s getMBeanInfo Fail: %s", mBeanName, e);
+            LOGGER.log(FINE, "%s getMBeanInfo Fail: %s", mBeanName, e);
             return;
         } catch (JMException e) {
-            LOGGER.log(Level.FINE, "%s getMBeanInfo Fail: %s", mBeanName, e.getMessage());
+            LOGGER.log(FINE, "%s getMBeanInfo Fail: %s", mBeanName, e.getMessage());
             return;
         }
 
@@ -161,7 +163,7 @@ class JmxScraper {
         for (int idx = 0; idx < mBeanAttributeInfos.length; ++idx) {
             MBeanAttributeInfo mBeanAttributeInfo = mBeanAttributeInfos[idx];
             if (!mBeanAttributeInfo.isReadable()) {
-                LOGGER.log(Level.FINE, "%s_%s not readable", mBeanName, mBeanAttributeInfo.getName());
+                LOGGER.log(FINE, "%s_%s not readable", mBeanName, mBeanAttributeInfo.getName());
                 continue;
             }
             name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
@@ -173,11 +175,11 @@ class JmxScraper {
             // bulk load all attributes
             attributes = beanConn.getAttributes(mBeanName, name2MBeanAttributeInfo.keySet().toArray(new String[0]));
             if (attributes == null) {
-                LOGGER.log(Level.FINE, "%s getMBeanInfo Fail: attributes are null", mBeanName);
+                LOGGER.log(FINE, "%s getMBeanInfo Fail: attributes are null", mBeanName);
                 return;
             }
         } catch (Exception e) {
-            LOGGER.log(Level.FINE, "%s getAttributes Fail: processing one by one: %s", mBeanName, e.getMessage());
+            LOGGER.log(FINE, "%s getAttributes Fail: processing one by one: %s", mBeanName, e.getMessage());
 
             // couldn't get them all in one go, try them 1 by 1
             processAttributesOneByOne(beanConn, mBeanName, name2MBeanAttributeInfo);
@@ -188,7 +190,7 @@ class JmxScraper {
             if (object instanceof Attribute) {
                 Attribute attribute = (Attribute) object;
                 MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attribute.getName());
-                LOGGER.log(Level.FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
+                LOGGER.log(FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
                         mBeanName.getDomain(),
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
@@ -199,7 +201,7 @@ class JmxScraper {
                         attribute.getValue()
                 );
             } else {
-                LOGGER.log(Level.FINE, "%s object [%s] isn't an instance javax.management.Attribute, skipping", mBeanName, object.getClass().getName());
+                LOGGER.log(FINE, "%s object [%s] isn't an instance javax.management.Attribute, skipping", mBeanName, object.getClass().getName());
             }
         }
     }
@@ -210,11 +212,11 @@ class JmxScraper {
             try {
                 value = beanConn.getAttribute(mbeanName, attr.getName());
             } catch(Exception e) {
-                LOGGER.log(Level.FINE, "%s_%s Fail: %s", mbeanName, attr.getName(), e.getMessage());
+                LOGGER.log(FINE, "%s_%s Fail: %s", mbeanName, attr.getName(), e.getMessage());
                 continue;
             }
 
-            LOGGER.log(Level.FINE, "%s_%s process", mbeanName, attr.getName());
+            LOGGER.log(FINE, "%s_%s process", mbeanName, attr.getName());
             processBeanValue(
                 mbeanName.getDomain(),
                 jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
@@ -242,13 +244,13 @@ class JmxScraper {
             String attrDescription,
             Object value) {
         if (value == null) {
-            LOGGER.log(Level.FINE, "%s%s%s scrape: null", domain, beanProperties, attrName);
+            LOGGER.log(FINE, "%s%s%s scrape: null", domain, beanProperties, attrName);
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof java.util.Date) {
             if (value instanceof java.util.Date) {
                 attrType = "java.lang.Double";
                 value = ((java.util.Date) value).getTime() / 1000.0;
             }
-            LOGGER.log(Level.FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
+            LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             this.receiver.recordBean(
                     domain,
                     beanProperties,
@@ -258,7 +260,7 @@ class JmxScraper {
                     attrDescription,
                     value);
         } else if (value instanceof CompositeData) {
-            LOGGER.log(Level.FINE, "%s%s%s scrape: compositedata", domain, beanProperties, attrName);
+            LOGGER.log(FINE, "%s%s%s scrape: compositedata", domain, beanProperties, attrName);
             CompositeData composite = (CompositeData) value;
             CompositeType type = composite.getCompositeType();
             attrKeys = new LinkedList<String>(attrKeys);
@@ -281,7 +283,7 @@ class JmxScraper {
             // meant to be used according to the docs. I've only seen them
             // used as 'key' 'value' pairs even when 'value' is itself a
             // CompositeData of multiple values.
-            LOGGER.log(Level.FINE, "%s%s%s scrape: tabulardata", domain, beanProperties, attrName);
+            LOGGER.log(FINE, "%s%s%s scrape: tabulardata", domain, beanProperties, attrName);
             TabularData tds = (TabularData) value;
             TabularType tt = tds.getTabularType();
 
@@ -339,13 +341,13 @@ class JmxScraper {
                             composite.get(valueIdx));
                     }
                 } else {
-                    LOGGER.log(Level.FINE, "%s scrape: not a correct tabulardata format", domain);
+                    LOGGER.log(FINE, "%s scrape: not a correct tabulardata format", domain);
                 }
             }
         } else if (value.getClass().isArray()) {
-            LOGGER.log(Level.FINE, "%s scrape: arrays are unsupported", domain);
+            LOGGER.log(FINE, "%s scrape: arrays are unsupported", domain);
         } else if (optionalValueExtractor.isOptional(value)) {
-            LOGGER.log(Level.FINE, "%s%s%s scrape: java.util.Optional", domain, beanProperties, attrName);
+            LOGGER.log(FINE, "%s%s%s scrape: java.util.Optional", domain, beanProperties, attrName);
             processBeanValue(
                     domain,
                     beanProperties,
@@ -355,7 +357,7 @@ class JmxScraper {
                     attrDescription,
                     optionalValueExtractor.getOptionalValueOrNull(value));
         } else if (value.getClass().isEnum()) {
-            LOGGER.log(Level.FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
+            LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             processBeanValue(
                     domain,
                     beanProperties,
@@ -365,7 +367,7 @@ class JmxScraper {
                     attrDescription,
                     value.toString());
         } else {
-            LOGGER.log(Level.FINE, "%s%s scrape: %s not exported", domain, beanProperties, attrType);
+            LOGGER.log(FINE, "%s%s scrape: %s not exported", domain, beanProperties, attrType);
         }
     }
 
