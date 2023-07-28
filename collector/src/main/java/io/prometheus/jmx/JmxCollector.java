@@ -18,6 +18,8 @@ package io.prometheus.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.Counter;
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.management.MalformedObjectNameException;
@@ -39,14 +41,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
+import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("unchecked")
 public class JmxCollector extends Collector implements Collector.Describable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JmxCollector.class);
 
     public enum Mode {
       AGENT,
@@ -62,8 +67,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
     static final Counter configReloadFailure = Counter.build()
       .name("jmx_config_reload_failure_total")
       .help("Number of times configuration have failed to be reloaded.").register();
-
-    private static final Logger LOGGER = Logger.getLogger(JmxCollector.class.getName());
 
     static class Rule {
       Pattern pattern;
@@ -124,11 +127,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private void exitOnConfigError() {
         if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
-            LOGGER.severe("Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
+            LOGGER.log(SEVERE, "Configuration error: When running jmx_exporter as a Java agent, you must not configure 'jmxUrl' or 'hostPort' because you don't want to monitor a remote JVM.");
             System.exit(-1);
         }
         if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
-            LOGGER.severe("Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
+            LOGGER.log(SEVERE, "Configuration error: When running jmx_exporter in standalone mode (using jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or 'hostPort'.");
             System.exit(-1);
         }
     }
@@ -143,14 +146,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
           config.lastUpdate = configFile.lastModified();
           configReloadSuccess.inc();
         } catch (Exception e) {
-          LOGGER.severe("Configuration reload failed: " + e.toString());
+          LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
           configReloadFailure.inc();
         } finally {
           fr.close();
         }
 
       } catch (IOException e) {
-        LOGGER.severe("Configuration reload failed: " + e.toString());
+        LOGGER.log(SEVERE, "Configuration reload failed: %s", e);
         configReloadFailure.inc();
       }
     }
@@ -159,7 +162,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
       if (configFile != null) {
           long mtime = configFile.lastModified();
           if (mtime > config.lastUpdate) {
-              LOGGER.fine("Configuration file changed, reloading...");
+              LOGGER.log(FINE, "Configuration file changed, reloading...");
               reloadConfig();
           }
       }
@@ -437,13 +440,13 @@ public class JmxCollector extends Collector implements Collector.Describable {
         SampleKey sampleKey = SampleKey.of(sample);
         boolean exists = sampleKeys.contains(sampleKey);
         if (exists) {
-          if (LOGGER.isLoggable(Level.FINE)) {
+          if (LOGGER.isLoggable(FINE)) {
             String labels = "{";
             for (int i = 0; i < sample.labelNames.size(); i++) {
               labels += sample.labelNames.get(i) + "=" + sample.labelValues.get(i) + ",";
             }
             labels += "}";
-            LOGGER.fine("Metric " + sample.name + labels + " was created multiple times. Keeping the first occurrence. Dropping the others.");
+            LOGGER.log(FINE, "Metric %s%s was created multiple times. Keeping the first occurrence. Dropping the others.", sample.name, labels);
           }
         } else {
             mfs.samples.add(sample);
@@ -572,7 +575,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             try {
               value = Double.valueOf(val);
             } catch (NumberFormatException e) {
-              LOGGER.fine("Unable to parse configured value '" + val + "' to number for bean: " + beanName + attrName + ": " + beanValue);
+              LOGGER.log(FINE, "Unable to parse configured value '%s' to number for bean: %s%s: %s", val, beanName, attrName, beanValue);
               return;
             }
           }
@@ -641,12 +644,12 @@ public class JmxCollector extends Collector implements Collector.Describable {
         } else if (beanValue instanceof Boolean) {
           value = (Boolean) beanValue ? 1 : 0;
         } else {
-          LOGGER.fine("Ignoring unsupported bean: " + beanName + attrName + ": " + beanValue);
+          LOGGER.log(FINE, "Ignoring unsupported bean: %s%s: %s ", beanName, attrName, beanValue);
           return;
         }
 
         // Add to samples.
-        LOGGER.fine("add metric sample: " + matchedRule.name + " " + matchedRule.labelNames + " " + matchedRule.labelValues + " " + value.doubleValue());
+        LOGGER.log(FINE, "add metric sample: %s %s %s %s", matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue());
         addSample(new MetricFamilySamples.Sample(matchedRule.name, matchedRule.labelNames, matchedRule.labelValues, value.doubleValue()), matchedRule.type, matchedRule.help);
       }
 
@@ -673,7 +676,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         error = 1;
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
-        LOGGER.severe("JMX scrape failed: " + sw.toString());
+        LOGGER.log(SEVERE, "JMX scrape failed: %s", sw);
       }
       config.rulesCache.evictStaleEntries(stalenessTracker);
 
