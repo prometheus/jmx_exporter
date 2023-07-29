@@ -47,9 +47,6 @@ check_exit_code "Failed to change to project root directory"
 tools/copyright-check.sh
 check_exit_code "Copyright check failed"
 
-# Apply Google Java format
-#tools/apply-google-java-format.sh
-
 # Verify the code builds
 ./mvnw -P release clean verify
 check_exit_code "Maven build failed"
