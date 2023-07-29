@@ -17,6 +17,7 @@ fi
 
 VERSION="${1}"
 DESTINATION_DIRECTORY="${2}"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
 
 # Check for any uncommitted changes
@@ -51,12 +52,12 @@ check_exit_code "Copyright check failed"
 ./mvnw clean verify
 check_exit_code "Maven build failed"
 
-# Delete any previous build branch
+# Delete a previous build branch
 git branch -D "build-${VERSION}" > /dev/null 2>&1
 
 # Checkout a build branch
 git checkout -b "build-${VERSION}"
-check_exit_code "Git checkout [${VERSION}] failed"
+check_exit_code "Git checkout branch [${VERSION}] failed"
 
 # Update the build versions
 mvn versions:set -DnewVersion="${VERSION}" -DprocessAllModules
@@ -80,8 +81,8 @@ git reset --hard HEAD
 check_exit_code "Git reset hard failed"
 
 # Checkout the main branch
-git checkout main
-check_exit_code "Git checkout [main] failed"
+git checkout "${CURRENT_BRANCH}"
+check_exit_code "Git checkout branch [${CURRENT_BRANCH}] failed"
 
 # Delete the build branch
 git branch -D "build-${VERSION}"
