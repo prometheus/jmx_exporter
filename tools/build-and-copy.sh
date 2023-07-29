@@ -19,18 +19,6 @@ VERSION="${1}"
 DESTINATION_DIRECTORY="${2}"
 PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
 
-# Check for uncommitted changes
-git diff --quiet HEAD
-if [ ! $? -eq 0 ];
-then
-  echo "------------------------------------------------------------------------"
-  echo "UNCOMMITTED CHANGES"
-  echo "------------------------------------------------------------------------"
-  echo ""
-  git status
-  exit 1
-fi
-
 # Check for any uncommitted changes
 git diff --quiet HEAD
 if [ ! $? -eq 0 ];
@@ -74,14 +62,6 @@ check_exit_code "Git checkout [${VERSION}] failed"
 mvn versions:set -DnewVersion="${VERSION}" -DprocessAllModules
 check_exit_code "Maven update versions [${VERSION}] failed"
 rm -Rf $(find . -name "*versionsBackup")
-
-# Add changed files
-git add -u
-check_exit_code "Git add failed"
-
-# Commit the changed files
-git commit -m "${VERSION}"
-check_exit_code "Git commit failed"
 
 # Verify the code builds
 ./mvnw clean verify
