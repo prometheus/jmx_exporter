@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 @SuppressWarnings("unchecked")
 public class ConvertToMapAccessor implements Function<Object, YamlMapAccessor> {
 
-    private Supplier<? extends RuntimeException> supplier;
+    private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor

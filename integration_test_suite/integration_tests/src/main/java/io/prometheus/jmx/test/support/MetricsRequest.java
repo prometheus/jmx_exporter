@@ -24,7 +24,7 @@ public class MetricsRequest extends BaseRequest {
     /**
      * Constructor
      *
-     * @param httpClient
+     * @param httpClient httpClient
      */
     public MetricsRequest(HttpClient httpClient) {
         super(httpClient);

@@ -37,7 +37,7 @@ public abstract class BaseRequest implements Request {
     /**
      * Constructor
      *
-     * @param httpClient
+     * @param httpClient httpClient
      */
     public BaseRequest(HttpClient httpClient) {
         this.httpClient = httpClient;
@@ -47,8 +47,8 @@ public abstract class BaseRequest implements Request {
     /**
      * Method to set the path
      *
-     * @param path
-     * @return
+     * @param path path
+     * @return this
      */
     public BaseRequest withPath(String path) {
         this.path = path;
@@ -58,8 +58,8 @@ public abstract class BaseRequest implements Request {
     /**
      * Method to add Headers
      *
-     * @param headers
-     * @return
+     * @param headers headers
+     * @return this
      */
     public BaseRequest withHeaders(Headers headers) {
         if (headers != null) {
@@ -71,8 +71,8 @@ public abstract class BaseRequest implements Request {
     /**
      * Method to set the Content-Type
      *
-     * @param contentType
-     * @return
+     * @param contentType contentType
+     * @return this
      */
     public BaseRequest withContentType(String contentType) {
         if (contentType != null) {
@@ -84,8 +84,8 @@ public abstract class BaseRequest implements Request {
     /**
      * Method to set the Credentials
      *
-     * @param credentials
-     * @return
+     * @param credentials credentials
+     * @return this
      */
     public BaseRequest withCredentials(Credentials credentials) {
         this.credentials = credentials;

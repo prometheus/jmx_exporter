@@ -41,7 +41,7 @@ public class BaseResponse implements Response {
     private Headers headers;
     private boolean hasContent;
     private String content;
-    private Headers.Builder headersBuilder;
+    private final Headers.Builder headersBuilder;
 
     /** Constructor */
     public BaseResponse() {
@@ -51,8 +51,8 @@ public class BaseResponse implements Response {
     /**
      * Method to set the response code
      *
-     * @param code
-     * @return
+     * @param code code
+     * @return this
      */
     public BaseResponse withCode(int code) {
         this.code = code;
@@ -62,8 +62,8 @@ public class BaseResponse implements Response {
     /**
      * Method to set the response Headers
      *
-     * @param headers
-     * @return
+     * @param headers headers
+     * @return this
      */
     public BaseResponse withHeaders(Headers headers) {
         if (headers != null) {
@@ -75,8 +75,8 @@ public class BaseResponse implements Response {
     /**
      * Method to set the response Content-Type
      *
-     * @param contentType
-     * @return
+     * @param contentType contentType
+     * @return this
      */
     public BaseResponse withContentType(String contentType) {
         if (contentType != null) {
@@ -88,8 +88,8 @@ public class BaseResponse implements Response {
     /**
      * Method to set the response content
      *
-     * @param content
-     * @return
+     * @param content content
+     * @return this
      */
     public BaseResponse withContent(String content) {
         this.hasContent = true;
@@ -100,7 +100,7 @@ public class BaseResponse implements Response {
     /**
      * Method to get the response code
      *
-     * @return
+     * @return the response code
      */
     @Override
     public int code() {
@@ -110,7 +110,7 @@ public class BaseResponse implements Response {
     /**
      * Method to get the response Headers
      *
-     * @return
+     * @return the Headers
      */
     @Override
     public Headers headers() {
@@ -123,7 +123,7 @@ public class BaseResponse implements Response {
     /**
      * Method to get the response content
      *
-     * @return
+     * @return the response content
      */
     @Override
     public String content() {
@@ -133,25 +133,18 @@ public class BaseResponse implements Response {
     /**
      * Method to check if this Response is a superset of another Response
      *
-     * @param response
-     * @return
+     * @param response response
+     * @return this
      */
     @Override
     public Response isSuperset(Response response) {
         Status status = checkSuperset(response);
-        switch (status) {
-            case MATCH:
-                {
-                    break;
-                }
-            default:
-                {
-                    throw new AssertionFailedError(
-                            String.format(
-                                    "Actual response is not a superset of the expected response,"
-                                            + " error [%s]",
-                                    status));
-                }
+        if (status != Status.MATCH) {
+            throw new AssertionFailedError(
+                    String.format(
+                            "Actual response is not a superset of the expected response,"
+                                    + " error [%s]",
+                            status));
         }
         return this;
     }
@@ -159,8 +152,8 @@ public class BaseResponse implements Response {
     /**
      * Method to dispatch the response code to a CodeConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     @Override
     public Response dispatch(CodeConsumer consumer) {
@@ -171,8 +164,8 @@ public class BaseResponse implements Response {
     /**
      * Method to dispatch the response Headers to a HeadersConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     @Override
     public Response dispatch(HeadersConsumer consumer) {
@@ -183,8 +176,8 @@ public class BaseResponse implements Response {
     /**
      * Method to dispatch the response content to a ContentConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     @Override
     public Response dispatch(ContentConsumer consumer) {
@@ -245,7 +238,7 @@ public class BaseResponse implements Response {
             return Status.HEADERS_MISMATCH_1;
         } else if (this.headers == null && that.headers != null) {
             return Status.HEADERS_MISMATCH_2;
-        } else if (this.headers != null && that.headers != null) {
+        } else if (this.headers != null) {
             Headers thatHeaders = that.headers;
             for (String name : thatHeaders.names()) {
                 List<String> values = this.headers.values(name);
