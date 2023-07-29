@@ -24,6 +24,7 @@ fi
 
 VERSION="${1}"
 PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # Change to the project root directory
 cd "${PROJECT_ROOT_DIRECTORY}"
@@ -84,9 +85,9 @@ check_exit_code "Git tag [${VERSION}] failed"
 git push origin "${VERSION}"
 check_exit_code "Git tag [${VERSION}] push failed"
 
-# Checkout the main branch
-git checkout main
-check_exit_code "Git checkout [main] failed"
+# Checkout the current branch
+git checkout "${CURRENT_BRANCH}"
+check_exit_code "Git checkout branch [${CURRENT_BRANCH}] failed"
 
 echo "------------------------------------------------------------------------"
 echo "SUCCESS"

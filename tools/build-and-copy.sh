@@ -17,8 +17,8 @@ fi
 
 VERSION="${1}"
 DESTINATION_DIRECTORY="${2}"
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # Check for any uncommitted changes
 git diff --quiet HEAD
@@ -80,7 +80,7 @@ check_exit_code "Failed to copy jmx_prometheus_javaagent-"${VERSION}".jar to ${D
 git reset --hard HEAD
 check_exit_code "Git reset hard failed"
 
-# Checkout the main branch
+# Checkout the current branch
 git checkout "${CURRENT_BRANCH}"
 check_exit_code "Git checkout branch [${CURRENT_BRANCH}] failed"
 

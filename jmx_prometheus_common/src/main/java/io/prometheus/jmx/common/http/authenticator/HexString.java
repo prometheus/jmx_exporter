@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * This product includes software based on Stackoverflow
- * Code : toHex() method
- * Author : maybeWeCouldStealAVan
- * Reference: https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
- */
-
 package io.prometheus.jmx.common.http.authenticator;
 
 public class HexString {
