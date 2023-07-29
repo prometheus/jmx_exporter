@@ -22,5 +22,10 @@ import okhttp3.Headers;
 /** Interface to accept Headers */
 public interface HeadersConsumer extends Consumer<Headers> {
 
+    /**
+     * Accept the Headers
+     *
+     * @param headers the Headers
+     */
     void accept(Headers headers);
 }

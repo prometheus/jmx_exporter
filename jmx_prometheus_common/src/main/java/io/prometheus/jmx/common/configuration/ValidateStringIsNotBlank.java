@@ -24,16 +24,16 @@ import java.util.function.Supplier;
  * Class to validate a String is not blank, throwing a RuntimeException from the Supplier if there
  * is a ClassCastException
  */
-public class ValidatStringIsNotBlank implements Function<String, String> {
+public class ValidateStringIsNotBlank implements Function<String, String> {
 
-    private Supplier<? extends RuntimeException> supplier;
+    private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor
      *
      * @param supplier supplier
      */
-    public ValidatStringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
+    public ValidateStringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }

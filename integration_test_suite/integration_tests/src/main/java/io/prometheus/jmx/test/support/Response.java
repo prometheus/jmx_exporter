@@ -18,58 +18,59 @@ package io.prometheus.jmx.test.support;
 
 import okhttp3.Headers;
 
+/** Interface for a Response */
 public interface Response {
 
     /**
      * Method to get the response code
      *
-     * @return
+     * @return the response code
      */
     int code();
 
     /**
      * Method to get the response Headers
      *
-     * @return
+     * @return the response Headers
      */
     Headers headers();
 
     /**
      * Method to get the response content
      *
-     * @return
+     * @return the response content
      */
     String content();
 
     /**
      * Method to compare whether this Response is equals to another Object
      *
-     * @param response
-     * @return
+     * @param response response
+     * @return this
      */
     Response isSuperset(Response response);
 
     /**
      * Method to dispatch the response code to a CodeConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     Response dispatch(CodeConsumer consumer);
 
     /**
      * Method to dispatch the response Headers to a HeadersConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     Response dispatch(HeadersConsumer consumer);
 
     /**
      * Method to dispatch the response content to a ContentConsumer
      *
-     * @param consumer
-     * @return
+     * @param consumer consumer
+     * @return this
      */
     Response dispatch(ContentConsumer consumer);
 }

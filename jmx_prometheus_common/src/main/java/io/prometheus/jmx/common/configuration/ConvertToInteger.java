@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 public class ConvertToInteger implements Function<Object, Integer> {
 
-    private Supplier<? extends RuntimeException> supplier;
+    private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor

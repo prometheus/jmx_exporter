@@ -19,5 +19,5 @@ package io.prometheus.jmx.test;
 /** Enum of the two operational modes */
 public enum Mode {
     JavaAgent,
-    Standalone;
+    Standalone
 }

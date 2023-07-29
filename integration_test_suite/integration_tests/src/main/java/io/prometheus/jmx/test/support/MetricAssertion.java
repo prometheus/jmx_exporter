@@ -29,7 +29,7 @@ public class MetricAssertion {
 
     private final Collection<Metric> metrics;
     private String name;
-    private List<LabelTuple> labelTuples;
+    private final List<LabelTuple> labelTuples;
     private Double value;
 
     /**
@@ -58,7 +58,7 @@ public class MetricAssertion {
      *
      * @param label label
      * @param value value
-     * @return the return value
+     * @return this
      */
     public MetricAssertion withLabel(String label, String value) {
         labelTuples.add(new LabelTuple(label, value));
@@ -69,7 +69,7 @@ public class MetricAssertion {
      * Method to set the metric value
      *
      * @param value value
-     * @return the return value
+     * @return this
      */
     public MetricAssertion withValue(double value) {
         this.value = value;
@@ -79,8 +79,8 @@ public class MetricAssertion {
     /**
      * Method to test if a Metric exists in the Metric Collection
      *
-     * @param expected
-     * @return the return value
+     * @param expected expected
+     * @return this
      */
     public MetricAssertion exists(boolean expected) {
         if (expected) {
@@ -95,7 +95,7 @@ public class MetricAssertion {
     /**
      * Method to test if a Metric exists in the Metric Collection
      *
-     * @return the return value
+     * @return this
      */
     public MetricAssertion exists() {
         metrics.stream()
@@ -106,10 +106,7 @@ public class MetricAssertion {
                                 return true;
                             }
                             List<LabelTuple> labelTuples = toLabelTupleList(metric);
-                            if (labelTuples.containsAll(this.labelTuples)) {
-                                return true;
-                            }
-                            return false;
+                            return labelTuples.containsAll(this.labelTuples);
                         })
                 .filter(
                         metric -> {
@@ -143,7 +140,7 @@ public class MetricAssertion {
     /**
      * Method to test if a Metric does not exist in the Metric Collection
      *
-     * @return the return value
+     * @return this
      */
     public MetricAssertion doesNotExist() {
         metrics.stream()
@@ -154,10 +151,7 @@ public class MetricAssertion {
                                 return true;
                             }
                             List<LabelTuple> labelTuples = toLabelTupleList(metric);
-                            if (labelTuples.containsAll(this.labelTuples)) {
-                                return true;
-                            }
-                            return false;
+                            return labelTuples.containsAll(this.labelTuples);
                         })
                 .filter(
                         metric -> {
@@ -200,7 +194,7 @@ public class MetricAssertion {
                     stringBuilder.append(labelTuple);
                     stringBuilder.append(", ");
                 });
-        return stringBuilder.toString().substring(0, stringBuilder.length() - 2);
+        return stringBuilder.substring(0, stringBuilder.length() - 2);
     }
 
     private static class LabelTuple {

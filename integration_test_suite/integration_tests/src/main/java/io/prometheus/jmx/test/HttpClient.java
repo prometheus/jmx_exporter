@@ -18,7 +18,6 @@ package io.prometheus.jmx.test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Base64;
@@ -38,7 +37,7 @@ public class HttpClient {
 
     private static OkHttpClient OK_HTTP_CLIENT;
 
-    private String baseUrl;
+    private final String baseUrl;
 
     public HttpClient(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -103,14 +102,12 @@ public class HttpClient {
     static class X509TrustAllManager implements X509TrustManager {
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
             // DO NOTHING
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
             // DO NOTHING
         }
 

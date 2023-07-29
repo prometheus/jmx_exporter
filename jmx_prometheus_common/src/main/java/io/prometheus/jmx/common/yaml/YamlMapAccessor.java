@@ -67,9 +67,7 @@ public class YamlMapAccessor {
                 } else {
                     return false;
                 }
-            } catch (NullPointerException e) {
-                return false;
-            } catch (ClassCastException e) {
+            } catch (NullPointerException | ClassCastException e) {
                 return false;
             }
         }
@@ -99,10 +97,8 @@ public class YamlMapAccessor {
         for (int i = 1; i < pathTokens.length; i++) {
             try {
                 object = resolve(pathTokens[i], object);
-            } catch (NullPointerException e) {
-                return Optional.ofNullable(null);
-            } catch (ClassCastException e) {
-                return Optional.ofNullable(null);
+            } catch (NullPointerException | ClassCastException e) {
+                return Optional.empty();
             }
         }
 
@@ -144,19 +140,19 @@ public class YamlMapAccessor {
                         ((Map<String, Object>) previous).put(pathTokens[i], object);
                         return Optional.of(object);
                     } else {
-                        current = new LinkedHashMap<String, Object>();
+                        current = new LinkedHashMap<>();
                         ((Map<String, Object>) previous).put(pathTokens[i], current);
                     }
                 }
                 previous = current;
             } catch (NullPointerException e) {
-                return Optional.ofNullable(null);
+                return Optional.empty();
             } catch (ClassCastException e) {
                 if ((i + 1) == pathTokens.length) {
                     throw new IllegalArgumentException(
                             String.format("path [%s] isn't a Map", flatten(pathTokens, 1, i)));
                 }
-                return Optional.ofNullable(null);
+                return Optional.empty();
             }
         }
 
@@ -190,18 +186,16 @@ public class YamlMapAccessor {
         for (int i = 1; i < pathTokens.length; i++) {
             try {
                 object = resolve(pathTokens[i], object);
-            } catch (NullPointerException e) {
-                throw supplier.get();
-            } catch (ClassCastException e) {
+            } catch (NullPointerException | ClassCastException e) {
                 throw supplier.get();
             }
 
-            if (object == null && i < pathTokens.length) {
+            if (object == null) {
                 throw supplier.get();
             }
         }
 
-        return Optional.ofNullable(object);
+        return Optional.of(object);
     }
 
     /**

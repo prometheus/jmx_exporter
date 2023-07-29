@@ -23,8 +23,8 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
-import io.prometheus.jmx.common.configuration.ValidatStringIsNotBlank;
 import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
+import io.prometheus.jmx.common.configuration.ValidateStringIsNotBlank;
 import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
@@ -142,7 +142,7 @@ public class HTTPServerFactory {
     /**
      * Method to configure the HTTPServer thread pool
      *
-     * @param httpServerBuilder
+     * @param httpServerBuilder httpServerBuilder
      */
     private void configureThreads(HTTPServer.Builder httpServerBuilder) {
         int minimum = DEFAULT_MINIMUM_THREADS;
@@ -277,7 +277,7 @@ public class HTTPServerFactory {
                                                         + " /httpServer/authentication/basic/username"
                                                         + " must be a string")))
                             .map(
-                                    new ValidatStringIsNotBlank(
+                                    new ValidateStringIsNotBlank(
                                             ConfigurationException.supplier(
                                                     "Invalid configuration for"
                                                         + " /httpServer/authentication/basic/username"
@@ -297,7 +297,7 @@ public class HTTPServerFactory {
                                                         + " /httpServer/authentication/basic/algorithm"
                                                         + " must be a string")))
                             .map(
-                                    new ValidatStringIsNotBlank(
+                                    new ValidateStringIsNotBlank(
                                             ConfigurationException.supplier(
                                                     "Invalid configuration for"
                                                         + " /httpServer/authentication/basic/algorithm"
@@ -317,7 +317,7 @@ public class HTTPServerFactory {
                                                             + " /httpServer/authentication/basic/password"
                                                             + " must be a string")))
                                 .map(
-                                        new ValidatStringIsNotBlank(
+                                        new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
                                                             + " /httpServer/authentication/basic/password"
@@ -340,7 +340,7 @@ public class HTTPServerFactory {
                                                             + " /httpServer/authentication/basic/passwordHash"
                                                             + " must be a string")))
                                 .map(
-                                        new ValidatStringIsNotBlank(
+                                        new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
                                                             + " /httpServer/authentication/basic/passwordHash"
@@ -404,7 +404,7 @@ public class HTTPServerFactory {
                                                     + " /httpServer/authentication/basic/salt must"
                                                     + " be a string")))
                         .map(
-                                new ValidatStringIsNotBlank(
+                                new ValidateStringIsNotBlank(
                                         ConfigurationException.supplier(
                                                 "Invalid configuration for"
                                                     + " /httpServer/authentication/basic/salt must"
@@ -451,7 +451,7 @@ public class HTTPServerFactory {
                                                     + " /httpServer/authentication/basic/salt must"
                                                     + " be a string")))
                         .map(
-                                new ValidatStringIsNotBlank(
+                                new ValidateStringIsNotBlank(
                                         ConfigurationException.supplier(
                                                 "Invalid configuration for"
                                                     + " /httpServer/authentication/basic/salt must"
@@ -529,7 +529,7 @@ public class HTTPServerFactory {
                                                             + " /httpServer/ssl/keyStore/filename"
                                                             + " must be a string")))
                                 .map(
-                                        new ValidatStringIsNotBlank(
+                                        new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
                                                             + " /httpServer/ssl/keyStore/filename"
@@ -546,7 +546,7 @@ public class HTTPServerFactory {
                                                             + " /httpServer/ssl/keyStore/password"
                                                             + " must be a string")))
                                 .map(
-                                        new ValidatStringIsNotBlank(
+                                        new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
                                                             + " /httpServer/ssl/keyStore/password"
@@ -563,7 +563,7 @@ public class HTTPServerFactory {
                                                             + " /httpServer/ssl/certificate/alias"
                                                             + " must be a string")))
                                 .map(
-                                        new ValidatStringIsNotBlank(
+                                        new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
                                                             + " /httpServer/ssl/certificate/alias"

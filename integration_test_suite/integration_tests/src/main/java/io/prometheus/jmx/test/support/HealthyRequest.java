@@ -24,7 +24,7 @@ public class HealthyRequest extends BaseRequest {
     /**
      * Constructor
      *
-     * @param httpClient
+     * @param httpClient httpClient
      */
     public HealthyRequest(HttpClient httpClient) {
         super(httpClient);

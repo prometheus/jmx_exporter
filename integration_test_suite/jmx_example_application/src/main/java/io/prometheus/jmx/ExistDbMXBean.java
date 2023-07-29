@@ -17,10 +17,9 @@ package io.prometheus.jmx;
 
 import java.util.Map;
 import java.util.TreeMap;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 public interface ExistDbMXBean {
+
     Map<QueryKey, RunningQuery> getRunningQueries();
 
     class QueryKey implements Comparable<QueryKey> {
@@ -102,14 +101,8 @@ public interface ExistDbMXBean {
 
 class ExistDb implements ExistDbMXBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
-        ObjectName mxbeanName = new ObjectName("org.exist.management.exist:type=ProcessReport");
-        ExistDb mxbean = new ExistDb();
-        mbs.registerMBean(mxbean, mxbeanName);
-    }
-
     public Map<QueryKey, RunningQuery> getRunningQueries() {
-        final Map<QueryKey, RunningQuery> queries = new TreeMap<QueryKey, RunningQuery>();
+        final Map<QueryKey, RunningQuery> queries = new TreeMap<>();
 
         final RunningQuery runningQuery1 =
                 new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());

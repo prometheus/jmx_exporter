@@ -16,9 +16,10 @@
 
 package io.prometheus.jmx.common.http.ssl;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -53,7 +54,7 @@ public class SSLContextFactory {
             throws GeneralSecurityException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-        try (InputStream inputStream = new FileInputStream(keyStoreFilename)) {
+        try (InputStream inputStream = Files.newInputStream(Paths.get(keyStoreFilename))) {
             // Load the keystore
             keyStore.load(inputStream, keyStorePassword.toCharArray());
 
@@ -115,14 +116,14 @@ public class SSLContextFactory {
     private static SSLContext createSSLContext() throws GeneralSecurityException {
         // Loop through potential protocols since there doesn't appear
         // to be a way to get the most secure supported protocol
-        for (int i = 0; i < PROTOCOLS.length; i++) {
+        for (String protocol : PROTOCOLS) {
             try {
-                return SSLContext.getInstance(PROTOCOLS[i]);
+                return SSLContext.getInstance(protocol);
             } catch (Throwable t) {
                 // DO NOTHING
             }
         }
 
-        throw new GeneralSecurityException(String.format("No supported TLS protocols found"));
+        throw new GeneralSecurityException("No supported TLS protocols found");
     }
 }

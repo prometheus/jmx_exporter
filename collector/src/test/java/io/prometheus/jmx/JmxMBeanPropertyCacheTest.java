@@ -144,7 +144,7 @@ public class JmxMBeanPropertyCacheTest {
         testCache.getKeyPropertyList(mBean1);
         testCache.getKeyPropertyList(mBean2);
         testCache.getKeyPropertyList(mBean3);
-        Set<ObjectName> keepSet = new HashSet<ObjectName>();
+        Set<ObjectName> keepSet = new HashSet<>();
         keepSet.add(mBean2);
         keepSet.add(mBean3);
         testCache.onlyKeepMBeans(keepSet);
@@ -156,15 +156,15 @@ public class JmxMBeanPropertyCacheTest {
     @Test
     public void testRemoveEmptyIdempotent() throws Throwable {
         JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
-        testCache.onlyKeepMBeans(Collections.<ObjectName>emptySet());
-        testCache.onlyKeepMBeans(Collections.<ObjectName>emptySet());
+        testCache.onlyKeepMBeans(Collections.emptySet());
+        testCache.onlyKeepMBeans(Collections.emptySet());
         assertEquals(testCache.getKeyPropertiesPerBean().size(), 0);
     }
 
     private void assertSameElementsAndOrder(LinkedHashMap<?, ?> actual, Object... expected) {
         assert expected.length % 2 == 0;
         List<Map.Entry<?, ?>> actualList = new ArrayList<Map.Entry<?, ?>>(actual.entrySet());
-        List<Map.Entry<?, ?>> expectedList = new ArrayList<Map.Entry<?, ?>>();
+        List<Map.Entry<?, ?>> expectedList = new ArrayList<>();
         for (int i = 0; i < expected.length / 2; i++) {
             expectedList.add(
                     new AbstractMap.SimpleImmutableEntry<Object, Object>(

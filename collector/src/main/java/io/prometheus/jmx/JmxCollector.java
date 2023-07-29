@@ -93,7 +93,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         boolean lowercaseOutputLabelNames;
         List<ObjectName> includeObjectNames = new ArrayList<>();
         List<ObjectName> excludeObjectNames = new ArrayList<>();
-        List<Rule> rules = new ArrayList<Rule>();
+        List<Rule> rules = new ArrayList<>();
         long lastUpdate = 0L;
 
         MatchedRulesCache rulesCache;
@@ -112,18 +112,18 @@ public class JmxCollector extends Collector implements Collector.Describable {
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
         this.mode = mode;
-        config = loadConfig((Map<String, Object>) new Yaml().load(new FileReader(in)));
+        config = loadConfig(new Yaml().load(new FileReader(in)));
         config.lastUpdate = configFile.lastModified();
         exitOnConfigError();
     }
 
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>) new Yaml().load(yamlConfig));
+        config = loadConfig(new Yaml().load(yamlConfig));
         mode = null;
     }
 
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        config = loadConfig((Map<String, Object>) new Yaml().load(inputStream));
+        config = loadConfig(new Yaml().load(inputStream));
         mode = null;
     }
 
@@ -151,7 +151,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             FileReader fr = new FileReader(configFile);
 
             try {
-                Map<String, Object> newYamlConfig = (Map<String, Object>) new Yaml().load(fr);
+                Map<String, Object> newYamlConfig = new Yaml().load(fr);
                 config = loadConfig(newYamlConfig);
                 config.lastUpdate = configFile.lastModified();
                 configReloadSuccess.inc();
@@ -184,7 +184,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         Config cfg = new Config();
 
         if (yamlConfig == null) { // Yaml config empty, set config to empty map.
-            yamlConfig = new HashMap<String, Object>();
+            yamlConfig = new HashMap<>();
         }
 
         if (yamlConfig.containsKey("startDelaySeconds")) {
@@ -200,10 +200,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 throw new IllegalArgumentException(
                         "At most one of hostPort and jmxUrl must be provided");
             }
-            cfg.jmxUrl =
-                    "service:jmx:rmi:///jndi/rmi://"
-                            + (String) yamlConfig.get("hostPort")
-                            + "/jmxrmi";
+            cfg.jmxUrl = "service:jmx:rmi:///jndi/rmi://" + yamlConfig.get("hostPort") + "/jmxrmi";
         } else if (yamlConfig.containsKey("jmxUrl")) {
             cfg.jmxUrl = (String) yamlConfig.get("jmxUrl");
         }
@@ -266,8 +263,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 Rule rule = new Rule();
                 cfg.rules.add(rule);
                 if (yamlRule.containsKey("pattern")) {
-                    rule.pattern =
-                            Pattern.compile("^.*(?:" + (String) yamlRule.get("pattern") + ").*$");
+                    rule.pattern = Pattern.compile("^.*(?:" + yamlRule.get("pattern") + ").*$");
                 }
                 if (yamlRule.containsKey("name")) {
                     rule.name = (String) yamlRule.get("name");
@@ -301,11 +297,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
                     rule.help = (String) yamlRule.get("help");
                 }
                 if (yamlRule.containsKey("labels")) {
-                    TreeMap labels = new TreeMap((Map<String, Object>) yamlRule.get("labels"));
-                    rule.labelNames = new ArrayList<String>();
-                    rule.labelValues = new ArrayList<String>();
-                    for (Map.Entry<String, Object> entry :
-                            (Set<Map.Entry<String, Object>>) labels.entrySet()) {
+                    TreeMap<String, Object> labels =
+                            new TreeMap<>((Map<String, Object>) yamlRule.get("labels"));
+                    rule.labelNames = new ArrayList<>();
+                    rule.labelValues = new ArrayList<>();
+                    for (Map.Entry<String, Object> entry : labels.entrySet()) {
                         rule.labelNames.add(entry.getKey());
                         rule.labelValues.add((String) entry.getValue());
                     }
@@ -355,7 +351,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
      * Change invalid chars to underscore, and merge underscores.
      *
      * @param name Input string
-     * @return
+     * @return the safe string
      */
     static String safeName(String name) {
         if (name == null) {
@@ -435,9 +431,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
     static class Receiver implements JmxScraper.MBeanReceiver {
-        Map<String, MetricFamilySamples> metricFamilySamplesMap =
-                new HashMap<String, MetricFamilySamples>();
-        Set<SampleKey> sampleKeys = new HashSet<SampleKey>();
+        Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
+        Set<SampleKey> sampleKeys = new HashSet<>();
 
         Config config;
         MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -459,12 +454,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
             if (mfs == null) {
                 // JmxScraper.MBeanReceiver is only called from one thread,
                 // so there's no race here.
-                mfs =
-                        new MetricFamilySamples(
-                                sample.name,
-                                type,
-                                help,
-                                new ArrayList<MetricFamilySamples.Sample>());
+                mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<>());
                 metricFamilySamplesMap.put(sample.name, mfs);
             }
             SampleKey sampleKey = SampleKey.of(sample);
@@ -527,8 +517,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 fullname = fullname.toLowerCase();
             }
 
-            List<String> labelNames = new ArrayList<String>();
-            List<String> labelValues = new ArrayList<String>();
+            List<String> labelNames = new ArrayList<>();
+            List<String> labelValues = new ArrayList<>();
             if (beanProperties.size() > 1) {
                 Iterator<Map.Entry<String, String>> iter = beanProperties.entrySet().iterator();
                 // Skip the first one, it's been used in the name.
@@ -668,8 +658,8 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 }
 
                 // Set the labels.
-                ArrayList<String> labelNames = new ArrayList<String>();
-                ArrayList<String> labelValues = new ArrayList<String>();
+                ArrayList<String> labelNames = new ArrayList<>();
+                ArrayList<String> labelValues = new ArrayList<>();
                 if (rule.labelNames != null) {
                     for (int i = 0; i < rule.labelNames.size(); i++) {
                         final String unsafeLabelName = rule.labelNames.get(i);
@@ -784,14 +774,14 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
         config.rulesCache.evictStaleEntries(stalenessTracker);
 
-        List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>();
-        mfsList.addAll(receiver.metricFamilySamplesMap.values());
-        List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
+        List<MetricFamilySamples> mfsList =
+                new ArrayList<>(receiver.metricFamilySamplesMap.values());
+        List<MetricFamilySamples.Sample> samples = new ArrayList<>();
         samples.add(
                 new MetricFamilySamples.Sample(
                         "jmx_scrape_duration_seconds",
-                        new ArrayList<String>(),
-                        new ArrayList<String>(),
+                        new ArrayList<>(),
+                        new ArrayList<>(),
                         (System.nanoTime() - start) / 1.0E9));
         mfsList.add(
                 new MetricFamilySamples(
@@ -800,25 +790,22 @@ public class JmxCollector extends Collector implements Collector.Describable {
                         "Time this JMX scrape took, in seconds.",
                         samples));
 
-        samples = new ArrayList<MetricFamilySamples.Sample>();
+        samples = new ArrayList<>();
         samples.add(
                 new MetricFamilySamples.Sample(
-                        "jmx_scrape_error",
-                        new ArrayList<String>(),
-                        new ArrayList<String>(),
-                        error));
+                        "jmx_scrape_error", new ArrayList<>(), new ArrayList<>(), error));
         mfsList.add(
                 new MetricFamilySamples(
                         "jmx_scrape_error",
                         Type.GAUGE,
                         "Non-zero if this scrape failed.",
                         samples));
-        samples = new ArrayList<MetricFamilySamples.Sample>();
+        samples = new ArrayList<>();
         samples.add(
                 new MetricFamilySamples.Sample(
                         "jmx_scrape_cached_beans",
-                        new ArrayList<String>(),
-                        new ArrayList<String>(),
+                        new ArrayList<>(),
+                        new ArrayList<>(),
                         stalenessTracker.cachedCount()));
         mfsList.add(
                 new MetricFamilySamples(
@@ -830,25 +817,25 @@ public class JmxCollector extends Collector implements Collector.Describable {
     }
 
     public List<MetricFamilySamples> describe() {
-        List<MetricFamilySamples> sampleFamilies = new ArrayList<MetricFamilySamples>();
+        List<MetricFamilySamples> sampleFamilies = new ArrayList<>();
         sampleFamilies.add(
                 new MetricFamilySamples(
                         "jmx_scrape_duration_seconds",
                         Type.GAUGE,
                         "Time this JMX scrape took, in seconds.",
-                        new ArrayList<MetricFamilySamples.Sample>()));
+                        new ArrayList<>()));
         sampleFamilies.add(
                 new MetricFamilySamples(
                         "jmx_scrape_error",
                         Type.GAUGE,
                         "Non-zero if this scrape failed.",
-                        new ArrayList<MetricFamilySamples.Sample>()));
+                        new ArrayList<>()));
         sampleFamilies.add(
                 new MetricFamilySamples(
                         "jmx_scrape_cached_beans",
                         Type.GAUGE,
                         "Number of beans with their matching rule cached",
-                        new ArrayList<MetricFamilySamples.Sample>()));
+                        new ArrayList<>()));
         return sampleFamilies;
     }
 

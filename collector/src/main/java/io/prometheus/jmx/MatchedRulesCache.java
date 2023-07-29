@@ -32,9 +32,9 @@ public class MatchedRulesCache {
     private final Map<JmxCollector.Rule, Map<String, MatchedRule>> cachedRules;
 
     public MatchedRulesCache(Collection<JmxCollector.Rule> rules) {
-        this.cachedRules = new HashMap<JmxCollector.Rule, Map<String, MatchedRule>>(rules.size());
+        this.cachedRules = new HashMap<>(rules.size());
         for (JmxCollector.Rule rule : rules) {
-            this.cachedRules.put(rule, new ConcurrentHashMap<String, MatchedRule>());
+            this.cachedRules.put(rule, new ConcurrentHashMap<>());
         }
     }
 
@@ -64,16 +64,11 @@ public class MatchedRulesCache {
     }
 
     public static class StalenessTracker {
-        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries =
-                new HashMap<JmxCollector.Rule, Set<String>>();
+        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries = new HashMap<>();
 
         public void add(final JmxCollector.Rule rule, final String cacheKey) {
-            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
-            if (lastCachedEntriesForRule == null) {
-                lastCachedEntriesForRule = new HashSet<String>();
-                lastCachedEntries.put(rule, lastCachedEntriesForRule);
-            }
-
+            Set<String> lastCachedEntriesForRule =
+                    lastCachedEntries.computeIfAbsent(rule, k -> new HashSet<>());
             lastCachedEntriesForRule.add(cacheKey);
         }
 
