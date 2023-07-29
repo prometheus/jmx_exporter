@@ -21,5 +21,10 @@ import java.util.function.Consumer;
 /** Interface to accept content */
 public interface ContentConsumer extends Consumer<String> {
 
+    /**
+     * Accept the response content
+     *
+     * @param content the response content
+     */
     void accept(String content);
 }

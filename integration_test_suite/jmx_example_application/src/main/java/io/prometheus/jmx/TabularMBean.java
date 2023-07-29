@@ -28,7 +28,6 @@ import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
@@ -66,7 +65,9 @@ public class TabularMBean implements DynamicMBean {
         String[] columnDescriptions = {
             "filesystem", "mounted on", "size", "used", "available", "use %"
         };
+
         OpenType<?>[] columnTypes = {STRING, STRING, BIGINTEGER, BIGINTEGER, BIGINTEGER, DOUBLE};
+
         CompositeType rowType =
                 new CompositeType(
                         "Disk Usage Row",
@@ -81,6 +82,7 @@ public class TabularMBean implements DynamicMBean {
                         "Tabular Type for File System Disk Space Usage Tables",
                         rowType,
                         new String[] {"source"});
+
         MBeanAttributeInfo server1info =
                 new OpenMBeanAttributeInfoSupport(
                         "Server 1 Disk Usage Table",
@@ -89,6 +91,7 @@ public class TabularMBean implements DynamicMBean {
                         true,
                         false,
                         false);
+
         MBeanAttributeInfo server2info =
                 new OpenMBeanAttributeInfoSupport(
                         "Server 2 Disk Usage Table",
@@ -107,10 +110,12 @@ public class TabularMBean implements DynamicMBean {
                         null,
                         null);
 
-        data = new HashMap<String, TabularDataSupport>();
+        data = new HashMap<>();
+
         data.put(
                 "Server 1 Disk Usage Table",
                 generateServer1Data(tabularType, rowType, columnNames));
+
         data.put(
                 "Server 2 Disk Usage Table",
                 generateServer2Data(tabularType, rowType, columnNames));
@@ -120,11 +125,14 @@ public class TabularMBean implements DynamicMBean {
             TabularType tabularType, CompositeType rowType, String[] columnNames)
             throws OpenDataException {
         TabularDataSupport tableData = new TabularDataSupport(tabularType);
+
         tableData.put(
                 new CompositeDataSupport(
                         rowType, columnNames, rowData("/dev/sda1", "/home", 7, 6)));
+
         tableData.put(
                 new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 14, 8)));
+
         return tableData;
     }
 
@@ -132,11 +140,14 @@ public class TabularMBean implements DynamicMBean {
             TabularType tabularType, CompositeType rowType, String[] columnNames)
             throws OpenDataException {
         TabularDataSupport tableData = new TabularDataSupport(tabularType);
+
         tableData.put(
                 new CompositeDataSupport(
                         rowType, columnNames, rowData("/dev/sda1", "/home", 24, 13)));
+
         tableData.put(
                 new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 100, 80)));
+
         return tableData;
     }
 
@@ -162,6 +173,7 @@ public class TabularMBean implements DynamicMBean {
         if (data.containsKey(attribute)) {
             return data.get(attribute);
         }
+
         throw new AttributeNotFoundException(
                 "MBean attribute " + attribute + " not exposed for " + getClass().getName());
     }
@@ -182,7 +194,7 @@ public class TabularMBean implements DynamicMBean {
     }
 
     @Override
-    public void setAttribute(Attribute attribute) throws MBeanException {
+    public void setAttribute(Attribute attribute) {
         throw new UnsupportedOperationException("not implemented");
     }
 

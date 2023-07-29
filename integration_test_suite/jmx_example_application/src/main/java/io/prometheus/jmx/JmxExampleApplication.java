@@ -29,18 +29,19 @@ public class JmxExampleApplication {
             new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
     public static void main(String[] args) throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
         ObjectName tabularMBean = new ObjectName("io.prometheus.jmx:type=tabularData");
-        server.registerMBean(new TabularMBean(), tabularMBean);
+        mBeanServer.registerMBean(new TabularMBean(), tabularMBean);
 
         ObjectName autoIncrementingMBan = new ObjectName("io.prometheus.jmx:type=autoIncrementing");
-        server.registerMBean(new AutoIncrementing(), autoIncrementingMBan);
+        mBeanServer.registerMBean(new AutoIncrementing(), autoIncrementingMBan);
 
-        ExistDb.registerBean(server);
+        ObjectName existDbMXBean = new ObjectName("org.exist.management.exist:type=ProcessReport");
+        mBeanServer.registerMBean(new ExistDb(), existDbMXBean);
 
         ObjectName optionalValueMBean = new ObjectName("io.prometheus.jmx:type=optionalValue");
-        server.registerMBean(new OptionalValue(), optionalValueMBean);
+        mBeanServer.registerMBean(new OptionalValue(), optionalValueMBean);
 
         System.out.println(
                 String.format(

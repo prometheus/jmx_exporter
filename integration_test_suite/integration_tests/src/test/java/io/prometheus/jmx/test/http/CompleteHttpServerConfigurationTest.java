@@ -106,7 +106,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
 
                 if (actualMetricsResponse.code() == 200) {
                     actualMetricsResponse.dispatch(this);
@@ -131,7 +131,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
 
                 if (actualMetricsResponse.code() == 200) {
                     actualMetricsResponse.dispatch(this);
@@ -156,7 +156,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
 
                 if (actualMetricsResponse.code() == 200) {
                     actualMetricsResponse.dispatch(this);

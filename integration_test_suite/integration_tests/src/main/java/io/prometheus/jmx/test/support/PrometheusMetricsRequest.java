@@ -18,7 +18,7 @@ package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
 
-/** Class to implement an Prometheus metrics test (Content-Type for Prometheus metrics) */
+/** Class to implement a Prometheus metrics test (Content-Type for Prometheus metrics) */
 public class PrometheusMetricsRequest extends BaseRequest {
 
     private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
@@ -29,7 +29,7 @@ public class PrometheusMetricsRequest extends BaseRequest {
     /**
      * Constructor
      *
-     * @param httpClient
+     * @param httpClient httpClient
      */
     public PrometheusMetricsRequest(HttpClient httpClient) {
         super(httpClient);

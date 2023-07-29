@@ -49,7 +49,7 @@ public class SSLWithPKCS12KeyStoreTest extends BaseTest implements ContentConsum
 
     private static class PKCS12KeyStoreTestArgumentFilter implements Predicate<TestArgument> {
 
-        private Set<String> filteredDockerImages;
+        private final Set<String> filteredDockerImages;
 
         public PKCS12KeyStoreTestArgumentFilter() {
             filteredDockerImages = new HashSet<>();

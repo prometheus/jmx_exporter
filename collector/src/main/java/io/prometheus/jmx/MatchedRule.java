@@ -25,6 +25,7 @@ import java.util.List;
  * same beans to the same list of regular expressions.
  */
 public class MatchedRule {
+
     final String name;
     final String matchName;
     final Type type;
@@ -67,7 +68,7 @@ public class MatchedRule {
     }
 
     /**
-     * A unmatched MatchedRule, used when no rule matching a JMX bean has been found in the
+     * An unmatched MatchedRule, used when no rule matching a JMX bean has been found in the
      * configuration. Cached unmatched rules are still a cache hit, that will not produce any
      * metric/value.
      *

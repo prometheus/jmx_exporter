@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 public class ConvertToString implements Function<Object, String> {
 
-    private Supplier<? extends RuntimeException> supplier;
+    private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor

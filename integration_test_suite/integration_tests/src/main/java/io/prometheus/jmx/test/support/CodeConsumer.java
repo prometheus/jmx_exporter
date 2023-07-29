@@ -21,5 +21,10 @@ import java.util.function.Consumer;
 /** Interface to accept a code */
 public interface CodeConsumer extends Consumer<Integer> {
 
+    /**
+     * Accept the status code
+     *
+     * @param code the status code
+     */
     void accept(int code);
 }

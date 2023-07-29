@@ -61,8 +61,7 @@ class JmxMBeanPropertyCache {
     private final Map<ObjectName, LinkedHashMap<String, String>> keyPropertiesPerBean;
 
     public JmxMBeanPropertyCache() {
-        this.keyPropertiesPerBean =
-                new ConcurrentHashMap<ObjectName, LinkedHashMap<String, String>>();
+        this.keyPropertiesPerBean = new ConcurrentHashMap<>();
     }
 
     Map<ObjectName, LinkedHashMap<String, String>> getKeyPropertiesPerBean() {
@@ -72,7 +71,7 @@ class JmxMBeanPropertyCache {
     public LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
         LinkedHashMap<String, String> keyProperties = keyPropertiesPerBean.get(mbeanName);
         if (keyProperties == null) {
-            keyProperties = new LinkedHashMap<String, String>();
+            keyProperties = new LinkedHashMap<>();
             String properties = mbeanName.getKeyPropertyListString();
             Matcher match = PROPERTY_PATTERN.matcher(properties);
             while (match.lookingAt()) {

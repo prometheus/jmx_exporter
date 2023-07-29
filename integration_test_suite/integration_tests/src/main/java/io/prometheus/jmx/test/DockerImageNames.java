@@ -43,9 +43,6 @@ public final class DockerImageNames {
     /** Predicate to accept all Docker image names */
     public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
 
-    /** Predicate to accept only Docker image names that don't contain ":6" */
-    public static final Predicate<String> OMIT_JAVA_6_VERSIONS = name -> !name.contains(":6");
-
     /** Constructor */
     private DockerImageNames() {
         // DO NOTHING
@@ -54,7 +51,7 @@ public final class DockerImageNames {
     /**
      * Method to get Stream of all Docker image names
      *
-     * @return
+     * @return the Stream of Docker image names
      */
     public static Stream<String> names() {
         return names(ALL_JAVA_VERSIONS);
@@ -63,8 +60,8 @@ public final class DockerImageNames {
     /**
      * Method to get Stream of Docker image names filtered by a Predicate
      *
-     * @param predicate
-     * @return
+     * @param predicate predicate
+     * @return the Stream of Docker image names
      */
     public static Stream<String> names(Predicate<String> predicate) {
         Objects.requireNonNull(predicate);
@@ -123,8 +120,8 @@ public final class DockerImageNames {
     /**
      * Method to load the list of Docker image names from a resource
      *
-     * @param resource
-     * @return
+     * @param resource resource
+     * @return the String array of lines
      */
     private static String[] load(String resource) {
         List<String> dockerImageNames = new ArrayList<>();

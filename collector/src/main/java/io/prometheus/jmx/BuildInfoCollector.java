@@ -46,7 +46,7 @@ public class BuildInfoCollector extends Collector {
     public BuildInfoCollector() {
         super();
 
-        metricFamilySamples = new ArrayList<Collector.MetricFamilySamples>();
+        metricFamilySamples = new ArrayList<>();
 
         GaugeMetricFamily artifactInfo =
                 new GaugeMetricFamily(

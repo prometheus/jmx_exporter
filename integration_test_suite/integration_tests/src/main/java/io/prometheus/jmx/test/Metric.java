@@ -25,15 +25,15 @@ import java.util.TreeMap;
 
 public class Metric {
 
-    private String line;
+    private final String line;
     private String name;
-    private Map<String, String> labelValueMap;
-    private double value;
+    private final Map<String, String> labelValueMap;
+    private final double value;
 
     /**
      * Constructor
      *
-     * @param line
+     * @param line line
      */
     public Metric(String line) {
         Precondition.notNull(line, "line is null");
@@ -56,7 +56,7 @@ public class Metric {
     /**
      * Method to get the raw metric line
      *
-     * @return
+     * @return the raw metric line
      */
     public String getLine() {
         return line;
@@ -65,16 +65,16 @@ public class Metric {
     /**
      * Method to get the metric name
      *
-     * @return
+     * @return the metric name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Method to get a map of label / values
+     * Method to get a Map of labels / values
      *
-     * @return
+     * @return a Map of labels / values
      */
     public Map<String, String> getLabels() {
         return labelValueMap;
@@ -83,7 +83,7 @@ public class Metric {
     /**
      * Method to get the metric value
      *
-     * @return
+     * @return the metric value
      */
     public double getValue() {
         return value;

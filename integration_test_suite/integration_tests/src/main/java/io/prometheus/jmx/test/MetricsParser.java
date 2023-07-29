@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,15 +36,12 @@ public final class MetricsParser {
      * <p>A List is used because Metrics could have the same name, but with different labels
      *
      * @param content content
-     * @return the return value
-     * @throws IOException
+     * @return the Collection of Metrics
      */
     public static Collection<Metric> parse(String content) {
         List<Metric> metricList = new ArrayList<>();
 
-        BufferedReader bufferedReader = null;
-        try {
-            bufferedReader = new BufferedReader(new StringReader(content));
+        try (BufferedReader bufferedReader = new BufferedReader(new StringReader(content))) {
             while (true) {
                 String line = bufferedReader.readLine();
                 if (line == null) {
@@ -58,15 +54,8 @@ public final class MetricsParser {
             }
         } catch (Throwable t) {
             throw new MetricsParserException("Exception parsing metrics", t);
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (Throwable t) {
-                    // DO NOTHING
-                }
-            }
         }
+
         return metricList;
     }
 }

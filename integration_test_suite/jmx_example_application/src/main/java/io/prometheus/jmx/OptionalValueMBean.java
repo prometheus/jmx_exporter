@@ -25,14 +25,12 @@ public interface OptionalValueMBean {
 
 class OptionalValue implements OptionalValueMBean {
 
-    private final Integer VALUE = 345;
-
     public OptionalValue() {
         // DO NOTHING
     }
 
     @Override
     public Optional<Integer> getValue() {
-        return Optional.of(VALUE);
+        return Optional.of(345);
     }
 }
