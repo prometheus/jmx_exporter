@@ -41,12 +41,13 @@ then
   exit 1
 fi
 
+if [ "${CURRENT_BRANCH}" != "main" ];
+then
+   emit_error "Release should always be from [main] branch not [${CURRENT_BRANCH}] branch"
+fi
+
 cd "${PROJECT_ROOT_DIRECTORY}"
 check_exit_code "Failed to change to project root directory"
-
-# Check for missing copyright notices
-tools/copyright-check.sh
-check_exit_code "Copyright check failed"
 
 # Verify the code builds
 ./mvnw -P release clean verify

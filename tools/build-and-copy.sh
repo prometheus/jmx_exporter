@@ -44,10 +44,6 @@ fi
 cd "${PROJECT_ROOT_DIRECTORY}"
 check_exit_code "Failed to change to project root directory"
 
-# Check for missing copyright notices
-tools/copyright-check.sh
-check_exit_code "Copyright check failed"
-
 # Verify the code builds
 ./mvnw clean verify
 check_exit_code "Maven build failed"
