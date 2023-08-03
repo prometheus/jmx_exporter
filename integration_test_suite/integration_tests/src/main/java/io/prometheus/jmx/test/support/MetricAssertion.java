@@ -66,6 +66,17 @@ public class MetricAssertion {
     }
 
     /**
+     * Method to a add a metric Label
+     *
+     * @param label label
+     * @return this;
+     */
+    public MetricAssertion withLabel(Label label) {
+        labelTuples.add(new LabelTuple(label.name(), label.value()));
+        return this;
+    }
+
+    /**
      * Method to set the metric value
      *
      * @param value value
