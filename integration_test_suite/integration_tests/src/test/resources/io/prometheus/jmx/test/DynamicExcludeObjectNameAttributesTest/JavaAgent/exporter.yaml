@@ -1,0 +1,4 @@
+excludeObjectNames: ["java.lang:type=ObjectName"]
+excludeObjectNameAttributesDynamic: true
+rules:
+  - pattern: ".*"
