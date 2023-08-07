@@ -17,20 +17,22 @@
 package io.prometheus.jmx;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-/** Class to implement an ObjectNameAttributeFilter */
+/** Class to implement filtering of an MBean's attributes based on the attribute's name */
 @SuppressWarnings("unchecked")
 public class ObjectNameAttributeFilter {
 
+    /** Configuration constant to define a mapping of ObjectNames to attribute names */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES = "excludeObjectNameAttributes";
 
+    /** Configuration constant to enable dynamic support of ObjectName attributes filtering */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES_DYNAMIC =
             EXCLUDE_OBJECT_NAME_ATTRIBUTES + "Dynamic";
 
@@ -40,7 +42,7 @@ public class ObjectNameAttributeFilter {
 
     /** Constructor */
     private ObjectNameAttributeFilter() {
-        excludeObjectNameAttributesMap = Collections.synchronizedMap(new HashMap<>());
+        excludeObjectNameAttributesMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -65,8 +67,8 @@ public class ObjectNameAttributeFilter {
                         excludeObjectNameAttributesMap.computeIfAbsent(
                                 objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
-                for (String attribueName : attributeNames) {
-                    attributeNameSet.add(attribueName);
+                for (String attributeName : attributeNames) {
+                    attributeNameSet.add(attributeName);
                 }
 
                 excludeObjectNameAttributesMap.put(objectName, attributeNameSet);
@@ -81,7 +83,7 @@ public class ObjectNameAttributeFilter {
     }
 
     /**
-     * Method to add an attribute to the filter if dynamic exclusion is enabled
+     * Method to add an attribute name to the filter if dynamic exclusion is enabled
      *
      * @param objectName the ObjectName
      * @param attributeName the attribute name
