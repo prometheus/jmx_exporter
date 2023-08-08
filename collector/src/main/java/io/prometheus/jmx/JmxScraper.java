@@ -71,6 +71,7 @@ class JmxScraper {
     private final String password;
     private final boolean ssl;
     private final List<ObjectName> includeObjectNames, excludeObjectNames;
+    private final ObjectNameAttributeFilter objectNameAttributeFilter;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
     public JmxScraper(
@@ -80,6 +81,7 @@ class JmxScraper {
             boolean ssl,
             List<ObjectName> includeObjectNames,
             List<ObjectName> excludeObjectNames,
+            ObjectNameAttributeFilter objectNameAttributeFilter,
             MBeanReceiver receiver,
             JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
@@ -89,6 +91,7 @@ class JmxScraper {
         this.ssl = ssl;
         this.includeObjectNames = includeObjectNames;
         this.excludeObjectNames = excludeObjectNames;
+        this.objectNameAttributeFilter = objectNameAttributeFilter;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
 
@@ -174,7 +177,16 @@ class JmxScraper {
                 LOGGER.log(FINE, "%s_%s not readable", mBeanName, mBeanAttributeInfo.getName());
                 continue;
             }
+
+            if (objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
+                continue;
+            }
+
             name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+        }
+
+        if (name2MBeanAttributeInfo.isEmpty()) {
+            return;
         }
 
         AttributeList attributes;
@@ -221,6 +233,7 @@ class JmxScraper {
                         name2MBeanAttributeInfo.get(attribute.getName());
                 LOGGER.log(FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
+                        mBeanName,
                         mBeanName.getDomain(),
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         new LinkedList<>(),
@@ -253,6 +266,7 @@ class JmxScraper {
 
             LOGGER.log(FINE, "%s_%s process", mbeanName, attr.getName());
             processBeanValue(
+                    mbeanName,
                     mbeanName.getDomain(),
                     jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
                     new LinkedList<>(),
@@ -269,6 +283,7 @@ class JmxScraper {
      * pass of getting the values/names out in a way it can be processed elsewhere easily.
      */
     private void processBeanValue(
+            ObjectName objectName,
             String domain,
             LinkedHashMap<String, String> beanProperties,
             LinkedList<String> attrKeys,
@@ -299,7 +314,14 @@ class JmxScraper {
                 String typ = type.getType(key).getTypeName();
                 Object valu = composite.get(key);
                 processBeanValue(
-                        domain, beanProperties, attrKeys, key, typ, type.getDescription(), valu);
+                        objectName,
+                        domain,
+                        beanProperties,
+                        attrKeys,
+                        key,
+                        typ,
+                        type.getDescription(),
+                        valu);
             }
         } else if (value instanceof TabularData) {
             // I don't pretend to have a good understanding of TabularData.
@@ -358,6 +380,7 @@ class JmxScraper {
                             name = attrName;
                         }
                         processBeanValue(
+                                objectName,
                                 domain,
                                 l2s,
                                 attrNames,
@@ -377,6 +400,7 @@ class JmxScraper {
             Optional<?> optional = (Optional<?>) value;
             if (optional.isPresent()) {
                 processBeanValue(
+                        objectName,
                         domain,
                         beanProperties,
                         attrKeys,
@@ -388,6 +412,7 @@ class JmxScraper {
         } else if (value.getClass().isEnum()) {
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             processBeanValue(
+                    objectName,
                     domain,
                     beanProperties,
                     attrKeys,
@@ -396,6 +421,7 @@ class JmxScraper {
                     attrDescription,
                     value.toString());
         } else {
+            objectNameAttributeFilter.add(objectName, attrName);
             LOGGER.log(FINE, "%s%s scrape: %s not exported", domain, beanProperties, attrType);
         }
     }
@@ -415,6 +441,8 @@ class JmxScraper {
 
     /** Convenience function to run standalone. */
     public static void main(String[] args) throws Exception {
+        ObjectNameAttributeFilter objectNameAttributeFilter =
+                ObjectNameAttributeFilter.create(new HashMap<>());
         List<ObjectName> objectNames = new LinkedList<>();
         objectNames.add(null);
         if (args.length >= 3) {
@@ -425,6 +453,7 @@ class JmxScraper {
                             (args.length > 3 && "ssl".equalsIgnoreCase(args[3])),
                             objectNames,
                             new LinkedList<>(),
+                            objectNameAttributeFilter,
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -436,6 +465,7 @@ class JmxScraper {
                             false,
                             objectNames,
                             new LinkedList<>(),
+                            objectNameAttributeFilter,
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -447,6 +477,7 @@ class JmxScraper {
                             false,
                             objectNames,
                             new LinkedList<>(),
+                            objectNameAttributeFilter,
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();

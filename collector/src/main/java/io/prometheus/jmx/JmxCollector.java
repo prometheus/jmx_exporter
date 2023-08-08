@@ -93,6 +93,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         boolean lowercaseOutputLabelNames;
         List<ObjectName> includeObjectNames = new ArrayList<>();
         List<ObjectName> excludeObjectNames = new ArrayList<>();
+        ObjectNameAttributeFilter objectNameAttributeFilter;
         List<Rule> rules = new ArrayList<>();
         long lastUpdate = 0L;
 
@@ -323,6 +324,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         }
 
         cfg.rulesCache = new MatchedRulesCache(cfg.rules);
+        cfg.objectNameAttributeFilter = ObjectNameAttributeFilter.create(yamlConfig);
 
         return cfg;
     }
@@ -756,6 +758,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
                         config.ssl,
                         config.includeObjectNames,
                         config.excludeObjectNames,
+                        config.objectNameAttributeFilter,
                         receiver,
                         jmxMBeanPropertyCache);
         long start = System.nanoTime();
