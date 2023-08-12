@@ -1,36 +1,83 @@
 # Maintainer Notes
 
-## Update Dependency Versions
+Shell scripts to build and release are located int the `tools` directory.
 
-Use the [Versions Maven Plugin](https://www.mojohaus.org/versions-maven-plugin/index.html). Rules are configured in `version-rules.xml`.
+## Build a pre-release
+___
 
-```
-./mvnw versions:use-next-releases
-```
+**Pre-release builds are not source controlled (no branch, no tag)**
 
-## Release
+Command
 
-```
-./mvnw release:prepare -DreleaseVersion=0.18.0 -DdevelopmentVersion=0.18.1-SNAPSHOT
-./mvnw release:perform -DreleaseVersion=0.18.0 -DdevelopmentVersion=0.18.1-SNAPSHOT
+```shell
+./tools/build-and-copy.sh <version> <destination directory>
 ```
 
-`release:prepare` does Github tags and commits, while `release:perform` signs the artifacts and uploads them to the staging repositoring on [https://oss.sonatype.org](https://oss.sonatype.org).
+Example
 
-Download the artifacts from the staging repository [https://oss.sonatype.org/#stagingRepositories](https://oss.sonatype.org/#stagingRepositories) and verify them manually:
-
-```sh
-# agent
-/usr/lib/jvm/java-8-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-/usr/lib/jvm/java-11-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-/usr/lib/jvm/java-17-openjdk/bin/java -javaagent:/home/fabian/Downloads/jmx_prometheus_javaagent-0.18.0.jar=12345:./integration_tests/smoke_tests/src/request/resources/config.yml -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-
-# standalone
-java -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar integration_tests/jmx_example_application/target/jmx_example_application.jar
-
-/usr/lib/jvm/java-8-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
-/usr/lib/jvm/java-11-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
-/usr/lib/jvm/java-17-openjdk/bin/java -jar ~/Downloads/jmx_prometheus_httpserver-0.18.0.jar 9000 ./integration_tests/smoke_tests/src/request/resources/config-httpserver.yml
+```shell
+./tools/build-and-copy.sh 0.20.0-ALPHA-1 "/tmp/"
 ```
 
-If everything looks good, click `Close` to trigger Sonatype's verification, then click `Release`.
+The jars will be located in `/tmp`
+
+## Build and stage 
+___
+
+Release builds are source controlled.
+
+- Creates a `release-<version>` branch
+- Creates a `<version>` tag
+- Pushes the branch and tag to GitHub
+- Stages the release to Maven Central
+
+### Step 1
+
+Command
+
+```shell
+./tools/build-and-stage.sh <version>
+```
+
+Example
+
+```shell
+./tools/build-and-stage.sh 0.20.0
+```
+
+### Step 2
+
+Download the staged artifacts from Maven Central and run the integration test suite.
+
+Example
+
+```shell
+/home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar
+/home/dhoard/Downloads/jmx_prometheus_httpserver-0.20.0.jar
+```
+
+Command
+
+```shell
+./tools/patch-and-run-integration-test-suite.sh <javaagent.jar> <httpserver.jar>
+```
+
+Example
+
+```shell
+./tools/patch-and-run-integration-test-suite.sh /home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar /home/dhoard/Downloads/jmx_prometheus_httpserver-0.20.0.jar
+```
+
+### Step 3
+
+If the integration test suite in Step 2 passes, on Maven Central...
+
+- Click `Close` to trigger Sonatype's verification
+- Once closed, click `Release`
+
+
+### Step 4
+
+Verify the files are available via Maven Central (Maven)
+
+Create a GitHub release
