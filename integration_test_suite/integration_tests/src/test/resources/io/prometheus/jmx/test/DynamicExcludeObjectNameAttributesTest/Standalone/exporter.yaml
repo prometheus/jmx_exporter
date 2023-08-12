@@ -1,8 +1,0 @@
-hostPort: application:9999
-excludeObjectNames: ["java.lang:type=ObjectName"]
-excludeObjectNameAttributesDynamic: true
-excludeObjectNameAttributes:
-  "java.lang:type=Runtime":
-    - "ClassPath"
-rules:
-  - pattern: ".*"

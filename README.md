@@ -83,6 +83,7 @@ lowercaseOutputName: false
 lowercaseOutputLabelNames: false
 includeObjectNames: ["org.apache.cassandra.metrics:*"]
 excludeObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+autoExcludeObjectNameAttributes: true
 excludeObjectNameAttributes:
   "java.lang:type=OperatingSystem":
     - "ObjectName"
@@ -112,7 +113,7 @@ lowercaseOutputName | Lowercase the output metric name. Applies to default forma
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
 includeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
 excludeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `includeObjectNames`. Defaults to none.
-excludeObjectNameAttributesDynamic | Whether to use dynamic [ObjectName](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) attribute filtering. Defaults to false. 
+autoExcludeObjectNameAttributes | Whether to use auto add [ObjectName](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) attributes that can't be converted to standard metrics types. Defaults to `true`. 
 excludeObjectNameAttributes | Optional a map of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) with a list of attribute names. 
 rules      | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
 pattern           | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.
