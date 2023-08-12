@@ -217,11 +217,11 @@ class JmxScraper {
                 Attribute attribute = (Attribute) object;
                 String attributeName = attribute.getName();
                 if (mBeanName.toString().equals("java.lang:type=Runtime")
-                                && (attributeName.equalsIgnoreCase("SystemProperties")
-                                        || attributeName.equalsIgnoreCase("ClassPath")
-                                        || attributeName.equalsIgnoreCase("BootClassPath"))
-                        || attributeName.equalsIgnoreCase("LibraryPath")) {
-                    // Skip attributes for the "java.lang:type=Runtime" MBean because
+                        && (attributeName.equalsIgnoreCase("SystemProperties")
+                                || attributeName.equalsIgnoreCase("ClassPath")
+                                || attributeName.equalsIgnoreCase("BootClassPath")
+                                || attributeName.equalsIgnoreCase("LibraryPath"))) {
+                    // Skip this attributes for the "java.lang:type=Runtime" MBean because
                     // getting the values is expensive and the values are ultimately ignored
                     continue;
                 } else if (mBeanName.toString().equals("jdk.management.jfr:type=FlightRecorder")) {

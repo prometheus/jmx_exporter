@@ -16,12 +16,15 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -29,16 +32,18 @@ import javax.management.ObjectName;
 @SuppressWarnings("unchecked")
 public class ObjectNameAttributeFilter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ObjectNameAttributeFilter.class);
+
     /** Configuration constant to define a mapping of ObjectNames to attribute names */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES = "excludeObjectNameAttributes";
 
-    /** Configuration constant to enable dynamic support of ObjectName attributes filtering */
-    public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES_DYNAMIC =
-            EXCLUDE_OBJECT_NAME_ATTRIBUTES + "Dynamic";
+    /** Configuration constant to enable auto ObjectName attributes filtering */
+    public static final String AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES =
+            "autoExcludeObjectNameAttributes";
 
     private final Map<ObjectName, Set<String>> excludeObjectNameAttributesMap;
 
-    private boolean dynamicExclusion;
+    private boolean autoExcludeObjectNameAttributes;
 
     /** Constructor */
     private ObjectNameAttributeFilter() {
@@ -68,6 +73,11 @@ public class ObjectNameAttributeFilter {
                                 objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
                 for (String attributeName : attributeNames) {
+                    LOGGER.log(
+                            Level.FINE,
+                            "excluding object name [%d] attribute name [%s]",
+                            objectName.getCanonicalName(),
+                            attributeName);
                     attributeNameSet.add(attributeName);
                 }
 
@@ -75,9 +85,14 @@ public class ObjectNameAttributeFilter {
             }
         }
 
-        if (yamlConfig.containsKey(EXCLUDE_OBJECT_NAME_ATTRIBUTES_DYNAMIC)) {
-            dynamicExclusion = (Boolean) yamlConfig.get(EXCLUDE_OBJECT_NAME_ATTRIBUTES_DYNAMIC);
+        if (yamlConfig.containsKey(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES)) {
+            autoExcludeObjectNameAttributes =
+                    (Boolean) yamlConfig.get(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES);
+        } else {
+            autoExcludeObjectNameAttributes = true;
         }
+
+        LOGGER.log(Level.FINE, "dynamicExclusion [%b]", autoExcludeObjectNameAttributes);
 
         return this;
     }
@@ -89,10 +104,16 @@ public class ObjectNameAttributeFilter {
      * @param attributeName the attribute name
      */
     public void add(ObjectName objectName, String attributeName) {
-        if (dynamicExclusion) {
+        if (autoExcludeObjectNameAttributes) {
             Set<String> attribteNameSet =
                     excludeObjectNameAttributesMap.computeIfAbsent(
                             objectName, o -> Collections.synchronizedSet(new HashSet<>()));
+
+            LOGGER.log(
+                    Level.FINE,
+                    "auto adding exclusion of object name [%s] attribute name [%s]",
+                    objectName.getCanonicalName(),
+                    attributeName);
 
             attribteNameSet.add(attributeName);
         }

@@ -33,7 +33,8 @@ import java.util.HashSet;
 import java.util.Set;
 import org.antublue.test.engine.api.TestEngine;
 
-public class DynamicExcludeObjectNameAttributesTest extends BaseTest implements ContentConsumer {
+public class DisableAutoExcludeObjectNameAttributesTest extends BaseTest
+        implements ContentConsumer {
 
     @TestEngine.Test
     public void testHealthy() {
