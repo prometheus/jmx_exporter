@@ -87,10 +87,6 @@ check_exit_code "Git tag [${VERSION}] failed"
 git push origin "${VERSION}"
 check_exit_code "Git tag [${VERSION}] push failed"
 
-# Checkout the current branch
-git checkout "${CURRENT_BRANCH}"
-check_exit_code "Git checkout branch [${CURRENT_BRANCH}] failed"
-
 echo "------------------------------------------------------------------------"
 echo "SUCCESS"
 echo "------------------------------------------------------------------------"
