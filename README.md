@@ -114,7 +114,7 @@ lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to 
 includeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
 excludeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `includeObjectNames`. Defaults to none.
 autoExcludeObjectNameAttributes | Whether to auto exclude [ObjectName](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) attributes that can't be converted to standard metrics types. Defaults to `true`. 
-excludeObjectNameAttributes | Optional a map of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) with a list of attribute names. 
+excludeObjectNameAttributes | Optional a map of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) with a list of attribute names to exclude. ObjectNames must be in canonical form. Both ObjectNames and attribute names are matched as a Strings (no regex.)
 rules      | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
 pattern           | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.
 attrNameSnakeCase | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.
