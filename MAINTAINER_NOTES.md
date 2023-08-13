@@ -81,3 +81,14 @@ If the integration test suite in Step 2 passes, on Maven Central...
 Verify the files are available via Maven Central (Maven)
 
 Create a GitHub release
+
+### Step 5
+
+Checkout the `main` branch and increment the version
+
+```shell
+git checkout main
+./tools/change-version.sh 0.20.1-SNAPSHOT
+git add -u
+git commit -m "prepare for next development iteration"
+```
