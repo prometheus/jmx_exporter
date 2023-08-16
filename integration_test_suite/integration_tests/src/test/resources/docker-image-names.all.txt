@@ -1,3 +1,5 @@
+adoptopenjdk/openjdk8-openj9
+adoptopenjdk/openjdk11-openj9
 alibabadragonwell/dragonwell:8
 alibabadragonwell/dragonwell:11
 alibabadragonwell/dragonwell:17
