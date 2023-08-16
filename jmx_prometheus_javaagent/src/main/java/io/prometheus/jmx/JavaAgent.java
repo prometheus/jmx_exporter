@@ -23,6 +23,7 @@ import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,7 +63,10 @@ public class JavaAgent {
                                     CollectorRegistry.defaultRegistry,
                                     true,
                                     new File(config.file));
-        } catch (ConfigurationException e) {
+        } catch (BindException e) {
+            System.err.println("Jmx-exporter listen port bind failed : " + e.getMessage());
+            System.exit(1);
+        }  catch (ConfigurationException e) {
             System.err.println("Configuration Exception : " + e.getMessage());
             System.exit(1);
         } catch (IllegalArgumentException e) {
