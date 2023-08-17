@@ -90,7 +90,8 @@ public class JavaAgent {
         Matcher matcher = pattern.matcher(args);
         if (!matcher.matches()) {
             System.err.println(
-                    "Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> ");
+                    "Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration"
+                            + " file> ");
             throw new ConfigurationException("Malformed arguments - " + args);
         }
 
