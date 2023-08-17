@@ -62,14 +62,15 @@ public class JavaAgent {
                                     CollectorRegistry.defaultRegistry,
                                     true,
                                     new File(config.file));
-        } catch (ConfigurationException e) {
-            System.err.println("Configuration Exception : " + e.getMessage());
-            System.exit(1);
-        } catch (IllegalArgumentException e) {
-            System.err.println(
-                    "Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration"
-                            + " file> "
-                            + e.getMessage());
+        } catch (Throwable t) {
+            synchronized (System.err) {
+                System.err.println("Failed to start Prometheus JMX Exporter");
+                System.err.println();
+                t.printStackTrace();
+                System.err.println();
+                System.err.println("Prometheus JMX Exporter exiting");
+                System.err.flush();
+            }
             System.exit(1);
         }
     }
@@ -88,7 +89,9 @@ public class JavaAgent {
 
         Matcher matcher = pattern.matcher(args);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Malformed arguments - " + args);
+            System.err.println(
+                    "Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration file> ");
+            throw new ConfigurationException("Malformed arguments - " + args);
         }
 
         String givenHost = matcher.group(1);
