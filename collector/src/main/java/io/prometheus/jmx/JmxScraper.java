@@ -175,10 +175,11 @@ class JmxScraper {
         for (MBeanAttributeInfo mBeanAttributeInfo : mBeanAttributeInfos) {
             if (!mBeanAttributeInfo.isReadable()) {
                 LOGGER.log(FINE, "%s_%s not readable", mBeanName, mBeanAttributeInfo.getName());
+                objectNameAttributeFilter.add(mBeanName, mBeanAttributeInfo.getName());
                 continue;
             }
 
-            if (objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
+            if (objectNameAttributeFilter.shouldExclude(mBeanName, mBeanAttributeInfo.getName())) {
                 continue;
             }
 
@@ -395,6 +396,7 @@ class JmxScraper {
             }
         } else if (value.getClass().isArray()) {
             LOGGER.log(FINE, "%s scrape: arrays are unsupported", domain);
+            objectNameAttributeFilter.add(objectName, attrName);
         } else if (value instanceof Optional) {
             LOGGER.log(FINE, "%s%s%s scrape: java.util.Optional", domain, beanProperties, attrName);
             Optional<?> optional = (Optional<?>) value;

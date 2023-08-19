@@ -126,7 +126,7 @@ public class ObjectNameAttributeFilter {
      * @param attributeName the attribute name
      * @return true if it should be excluded, false otherwise
      */
-    public boolean exclude(ObjectName objectName, String attributeName) {
+    public boolean shouldExclude(ObjectName objectName, String attributeName) {
         boolean result = false;
 
         if (excludeObjectNameAttributesMap.size() > 0) {
