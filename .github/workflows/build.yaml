@@ -27,3 +27,4 @@ jobs:
         tag_name: dev
         target: ${{ matrix.docker }}
         repository: us-docker.pkg.dev
+        dockerfile: "./build/Dockerfile"
