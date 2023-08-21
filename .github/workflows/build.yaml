@@ -12,19 +12,18 @@ jobs:
   build:
     strategy:
       matrix:
-        docker: ['ubi','scratch']
+        docker: ['scratch','ubi']
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     name: ${{ matrix.docker }}
     steps:
     - name: build
-      uses: sysdiglabs/exporter-builder@v0.6
+      uses: sysdiglabs/exporter-builder@v1.1
       with:
         exporter: promcat-jmx-exporter
-        artifactory_token: ${{ secrets.ARTI_TOKEN }}
-        artifactory_username: david.lorite@sysdig.com
+        artifactory_token: ${{ secrets.GAR_DEV_RW_JSON_KEY }}
+        artifactory_username: _json_key
         sysdig_secure_token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         tag_name: dev
         target: ${{ matrix.docker }}
-        repository: artifactory.internal.sysdig.com
-        dockerfile: "./build/Dockerfile"
+        repository: us-docker.pkg.dev
