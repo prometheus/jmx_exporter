@@ -1,11 +1,9 @@
-name: Push
+name: Push Dry run
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  workflow_run:
-    workflows: [Release]
-    types: [completed]
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -23,7 +21,7 @@ jobs:
         job_name: "promcat/job/exporters/job/integrations-jmx-exporter"
         job_params: |
           {
-            "DRY_RUN": "false",
+            "DRY_RUN": "true",
             "SCRATCH": "true",
             "EXPORTER": "promcat-jmx-exporter"
           }
