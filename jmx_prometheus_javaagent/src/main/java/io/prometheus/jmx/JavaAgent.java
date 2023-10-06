@@ -21,6 +21,8 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
@@ -51,8 +53,8 @@ public class JavaAgent {
         try {
             Config config = parseConfig(agentArgument, host);
 
-            new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
+            PrometheusRegistry.defaultRegistry.register(new BuildInfoCollector());
+            PrometheusRegistry.defaultRegistry.register(new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT));
             DefaultExports.initialize();
 
             server =
