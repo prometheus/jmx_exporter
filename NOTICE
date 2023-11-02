@@ -3,3 +3,8 @@ Copyright 2012-2015 The Prometheus Authors
 
 This product includes software developed at
 SoundCloud Ltd. (http://soundcloud.com/).
+
+This product includes software based on Stackoverflow
+Code : toHex() method
+Author : maybeWeCouldStealAVan
+Reference: https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java

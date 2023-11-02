@@ -1,0 +1,9 @@
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: 02:56:48:21:BA:EF:62:CC:92:79:90:C4:E6:45:F0:48:2E:C4:8D:60:12:E5:DC:32:CA:A9:21:5F:EB:AC:80:07:3B:13:8E:EA:BF:17:5A:EA:FD:C5:2E:15:96:45:1E:12:57:8D:D6:95:EC:B1:90:FC:54:BB:48:57:A8:D9:BB:E5:C3:11:B3:DD:F4:09:DB:15:8C:A9:4D:53:6B:7D:DD:02:41:B1:86:0F:A3:4F:B6:71:2F:9A:ED:90:77:47:7F:D7:33:B1:5A:B6:A9:1B:7F:BD:43:C7:22:51:3B:04:86:89:54:42:79:D4:4F:24:BE:47:06:47:CC:48:E3:AF:EE:45
+      algorithm: PBKDF2WithHmacSHA256
+      salt: 98LeBWIjca
+rules:
+  - pattern: ".*"
