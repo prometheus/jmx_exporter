@@ -1,0 +1,23 @@
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9
+      algorithm: PBKDF2WithHmacSHA256
+      salt: PvrLg8tJphqTM8286VfH2w==
+      iterations: 1000
+      keyLength: 256
+  ssl:
+    certificate:
+      alias: localhost
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAlive: 120
+rules:
+  - pattern: ".*"
+key:
+  subkey:
+key2:
+  subkey2:
+    foo: bar

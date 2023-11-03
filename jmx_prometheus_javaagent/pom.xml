@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>parent</artifactId>
-        <version>0.17.3-SNAPSHOT</version>
+        <version>0.20.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>jmx_prometheus_javaagent</artifactId>
@@ -31,8 +31,29 @@
     <dependencies>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
-            <artifactId>jmx_prometheus_javaagent_common</artifactId>
+            <artifactId>collector</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_hotspot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus.jmx</groupId>
+            <artifactId>jmx_prometheus_common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.24.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -73,7 +94,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <!-- Every artifact on Maven central needs a javadoc JAR. -->
                 <!-- As this module does not have its own Java sources, we include the javadoc from the dependency. -->
@@ -90,6 +110,27 @@
                             <dependencySourceIncludes>
                                 <dependencySourceInclude>${project.groupId}:*</dependencySourceInclude>
                             </dependencySourceIncludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.coderplus.maven.plugins</groupId>
+                <artifactId>copy-rename-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <sourceFile>${project.build.directory}/${project.build.finalName}.jar</sourceFile>
+                                    <destinationFile>../integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_javaagent.jar</destinationFile>
+                                </fileSet>
+                            </fileSets>
                         </configuration>
                     </execution>
                 </executions>

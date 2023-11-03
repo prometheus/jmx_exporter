@@ -35,13 +35,7 @@ rules:
   name: kafka_$1_$2_$3_total
   type: COUNTER
 
-- pattern: kafka.server<type=(.+), client-id=(.+)><>([a-z-]+)
-  name: kafka_server_quota_$3
-  type: GAUGE
-  labels:
-    resource: "$1"
-    clientId: "$2"
-
+# Quota specific rules
 - pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
   name: kafka_server_quota_$4
   type: GAUGE
@@ -49,6 +43,18 @@ rules:
     resource: "$1"
     user: "$2"
     clientId: "$3"
+- pattern: kafka.server<type=(.+), client-id=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
+  type: GAUGE
+  labels:
+    resource: "$1"
+    clientId: "$2"
+- pattern: kafka.server<type=(.+), user=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
+  type: GAUGE
+  labels:
+    resource: "$1"
+    user: "$2"
 
 # Generic gauges with 0-2 key/value pairs
 - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value

@@ -1,27 +1,30 @@
+<picture>
+  <img src="https://circleci.com/gh/prometheus/jmx_exporter.svg?style=shield"/>
+</picture>
+
 JMX Exporter
 =====
 
-JMX to Prometheus exporter: a collector that can configurably scrape and
+
+JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
 
 This exporter is intended to be run as a Java Agent, exposing a HTTP server
 and serving metrics of the local JVM. It can be also run as a standalone
 HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
-process metrics (e.g., memory and CPU usage). Running the exporter as a Java
-Agent is thus strongly encouraged.
+process metrics (e.g., memory and CPU usage).
+
+**Running the exporter as a Java agent is strongly encouraged.**
 
 ## Running the Java Agent
 
-The Java agent is available in two versions with identical functionality:
-* [jmx_prometheus_javaagent-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.2/jmx_prometheus_javaagent-0.17.2.jar) requires Java >= 7.
-* [jmx_prometheus_javaagent-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent_java6/0.17.2/jmx_prometheus_javaagent_java6-0.17.2.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_javaagent-0.19.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.19.0/jmx_prometheus_javaagent-0.19.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
+
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.17.2.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.19.0.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -38,16 +41,12 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-The HTTP server is available in two versions with identical functionality:
-* [jmx_prometheus_httpserver-0.17.2.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.17.2/jmx_prometheus_httpserver-0.17.2.jar) requires Java >= 7.
-* [jmx_prometheus_httpserver-0.17.2_java6.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver_java6/0.17.2/jmx_prometheus_httpserver_java6-0.17.2.jar) is compatible with Java 6.
-
-Both versions are built from the same code and differ only in the versions of the bundled dependencies.
+- [jmx_prometheus_httpserver-0.19.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.19.0/jmx_prometheus_httpserver-0.19.0.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-0.17.2.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-0.19.0.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -68,7 +67,7 @@ As stated above, it is recommended to run JMX exporter as a Java agent and not a
 
 ## Building
 
-`./mvnw package` to build.
+`./mvnw clean package` to build.
 
 ## Configuration
 The configuration is in YAML. An example with all possible options:
@@ -82,8 +81,15 @@ jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi
 ssl: false
 lowercaseOutputName: false
 lowercaseOutputLabelNames: false
-whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
-blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+includeObjectNames: ["org.apache.cassandra.metrics:*"]
+excludeObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+autoExcludeObjectNameAttributes: true
+excludeObjectNameAttributes:
+  "java.lang:type=OperatingSystem":
+    - "ObjectName"
+  "java.lang:type=Runtime":
+    - "ClassPath"
+    - "SystemProperties"
 rules:
   - pattern: 'org.apache.cassandra.metrics<type=(\w+), name=(\w+)><>Value: (\d+)'
     name: cassandra_$1_$2
@@ -105,8 +111,10 @@ jmxUrl     | A full JMX URL to connect to. Should not be specified if hostPort i
 ssl        | Whether JMX connection should be done over SSL. To configure certificates you have to set following system properties:<br/>`-Djavax.net.ssl.keyStore=/home/user/.keystore`<br/>`-Djavax.net.ssl.keyStorePassword=changeit`<br/>`-Djavax.net.ssl.trustStore=/home/user/.truststore`<br/>`-Djavax.net.ssl.trustStorePassword=changeit`
 lowercaseOutputName | Lowercase the output metric name. Applies to default format and `name`. Defaults to false.
 lowercaseOutputLabelNames | Lowercase the output metric label names. Applies to default format and `labels`. Defaults to false.
-whitelistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
-blacklistObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `whitelistObjectNames`. Defaults to none.
+includeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to query. Defaults to all mBeans.
+excludeObjectNames | A list of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) to not query. Takes precedence over `includeObjectNames`. Defaults to none.
+autoExcludeObjectNameAttributes | Whether to auto exclude [ObjectName](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) attributes that can't be converted to standard metrics types. Defaults to `true`. 
+excludeObjectNameAttributes | A Map of [ObjectNames](http://docs.oracle.com/javase/6/docs/api/javax/management/ObjectName.html) with a list of attribute names to exclude. ObjectNames must be in canonical form. Both ObjectNames and attribute names are matched as a Strings (no regex.) Optional.
 rules      | A list of rules to apply in order, processing stops at the first matching rule. Attributes that aren't matched aren't collected. If not specified, defaults to collecting everything in the default format.
 pattern           | Regex pattern to match against each bean attribute. The pattern is not anchored. Capture groups can be used in other options. Defaults to matching everything.
 attrNameSnakeCase | Converts the attribute name to snake case. This is seen in the names matched by the pattern and the default format. For example, anAttrName to an\_attr\_name. Defaults to false.
@@ -126,6 +134,10 @@ Note that the scraper always processes all mBeans, even if they're not exported.
 
 Example configurations for javaagents can be found at  https://github.com/prometheus/jmx_exporter/tree/master/example_configs
 
+**NOTE**
+
+Both `whitelistObjectNames` and `blacklistObjectNames` are still supported for backward compatibility, but should be considered deprecated.
+
 ### Pattern input
 The format of the input matches against the pattern is
 ```
@@ -144,26 +156,184 @@ No escaping or other changes are made to these values, with the exception of if 
 The default help includes this string, except for the value.
 
 ### Default format
+
 The default format will transform beans in a way that should produce sane metrics in most cases. It is
 ```
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
 ```
 If a given part isn't set, it'll be excluded.
 
-## Testing
+## HTTP Authentication (optional)
 
-The JMX exporter uses [Testcontainers](https://www.testcontainers.org/) to run tests with different Java versions.
-You need to have Docker installed to run these tests.
+HTTP BASIC authentication supports using the following configuration algorithms:
 
-You can run the tests with:
+- plaintext - plaintext password
+- SHA-1 - SHA-1(`<salt>:<password>`)
+- SHA-256 - SHA-256(`<salt>:<password>`) 
+- SHA-512 - SHA-512(`<salt>:<password>`)
+- PBKDF2WithHmacSHA1
+- PBKDF2WithHmacSHA256
+- PBKDF2WithHmacSHA512
+
+---
+
+Plaintext example:
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+```
+
+---
+
+SHA-256 example using a salted password SHA-256(`<salt>:<password>`) with a password of `secret`
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: 2bf7ed4906ac065bde39f7508d6102a6cdd7153a929ea883ff6cd04442772c99
+      algorithm: SHA-256
+      salt: U9i%=N+m]#i9yvUV:bA/3n4X9JdPXf=n
+```
+
+---
+
+PBKDF2WithHmacSHA256 example with a password of `secret`
+
+```yaml
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      passwordHash: A1:0E:4E:62:F7:1E:0B:59:0A:32:EA:CC:7C:65:37:1F:6D:A6:F1:F1:ED:3F:73:ED:C9:65:19:37:21:5B:6D:4E:9D:C6:61:DF:B5:BF:BB:16:B8:9A:50:14:57:CE:3D:14:67:73:A3:71:1B:87:3B:C4:B1:0E:DC:2D:0B:10:65:D6:F5:B6:DA:07:DD:EE:DA:AC:9C:60:CD:B4:59:0C:C9:CB:A7:3D:7E:30:3E:43:83:E9:E4:13:34:A1:F1:87:5C:24:46:8E:13:90:A6:66:E1:A6:F3:0B:5A:E7:14:8A:98:6A:81:2B:B6:F8:EF:95:D4:82:7E:FB:5E:2D:D3:24:FE:96
+      algorithm: PBKDF2WithHmacSHA256
+      salt: U9i%=N+m]#i9yvUV:bA/3n4X9JdPXf=n
+```
+
+- iterations = `600000` (default value for PBKDF2WithHmacSHA256 )
+- keyLength = `128` bits (default value)
+
+**Notes**
+
+- PBKDF2WithHmacSHA1 default iterations = `1300000`
+- PBKDF2WithHmacSHA256 default iterations = `600000`
+- PBKDF2WithHmacSHA256 default iterations = `210000`
+- default keyLength = `128` (bits)
+
+### Generation of `passwordHash`
+
+- `sha1sum`, `sha256sum`, and `sha512sum` can be used to generate the `passwordHash`
+- `openssl` can be used to generate a PBKDF2WithHmac based algorithm `passwordHash`
+
+---
+
+## HTTPS support (optional)
+
+HTTPS support can be configured using either a JKS or PKCS12 format keystore via two possible methods:
+
+- Exporter YAML configuration
+
+
+- System properties
+
+**Notes**
+
+- Keystore type is dependent on the Java version
+
+
+- Exporter YAML configuration overrides System properties
+
+### Configuration (using Exporter YAML)
+
+1. Add configuration to your exporter YAML file
+
+```yaml
+httpServer:
+  ssl:
+    keyStore:
+      filename: localhost.jks
+      password: changeit
+    certificate:
+      alias: localhost
+```
+
+2. Create a keystore and add your certificate
+
+### Configuration (using System properties)
+
+1. Add configuration to your exporter YAML file
+
+```yaml
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+```
+
+2. Add your certificate to the application's Java keystore
+
+The exporter YAML file `alias` should match the certificate alias of the certificate you want to use for the HTTPS server.
+
+3. Define the application system properties for the Java keystore
+
+```shell
+-Djavax.net.ssl.keyStore=<keystore file> -Djavax.net.ssl.keyStorePassword=<keystore password>
+```
+
+---
+
+## HTTP Thread Pool Configuration (optional)
+
+The exporter thread pool can be configured via the exporter YAML file.
+
+By default, a maximum of 10 threads is used.
+
+### Configuration
+
+```yaml
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120 # seconds
+```
+
+- `minimum` - minimum number of threads
+- `maximum` - maximum number of threads
+- `keepAliveTime` - thread keep-alive time in seconds
+
+**Notes**
+
+- If the work queue is full, the request will be blocked until space is available in the work queue for the request.
+
+## Integration Test Suite
+
+The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+
+You need to have Docker installed to run the integration test suite.
+
+Build and run the integration test suite:
 
 ```
-./mvnw verify
+./mvnw clean verify
 ```
+
+**Notes**
+
+- To run the integration tests in IntelliJ, you must build first the project from the parent (root) using Maven
+  - The Maven build copies the core artifacts as resources to the `integration_tests` project 
+
+
+- Additional information can be found in the [Integration Test Suite](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/README.md) readme.
 
 ## Debugging
 
-You can start the jmx's scraper in standalone mode in order to debug what is called 
+You can start the JMX scraper in standalone mode in order to debug what is called 
 
 ```
 git clone https://github.com/prometheus/jmx_exporter.git
@@ -185,7 +355,6 @@ io.prometheus.jmx.shaded.io.prometheus.jmx.level=ALL
 Add the following flag to your Java invocation:
 
 `-Djava.util.logging.config.file=/path/to/logging.properties`
-
 
 ## Installing
 

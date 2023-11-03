@@ -1,0 +1,7 @@
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+hostPort: application:9999
+rules:
+  - pattern: ".*"
