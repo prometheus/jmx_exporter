@@ -151,6 +151,22 @@ public class MetricAssertion {
     /**
      * Method to test if a Metric does not exist in the Metric Collection
      *
+     * @param expected expected
+     * @return this
+     */
+    public MetricAssertion doesNotExist(boolean expected) {
+        if (expected) {
+            doesNotExist();
+        } else {
+            exists();
+        }
+
+        return this;
+    }
+
+    /**
+     * Method to test if a Metric does not exist in the Metric Collection
+     *
      * @return this
      */
     public MetricAssertion doesNotExist() {

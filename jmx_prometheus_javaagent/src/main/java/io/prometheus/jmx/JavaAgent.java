@@ -16,14 +16,14 @@
 
 package io.prometheus.jmx;
 
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.HTTPServer;
-import io.prometheus.client.hotspot.DefaultExports;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
+import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +36,9 @@ public class JavaAgent {
                     + // port
                     "(.+)"; // config file
 
-    static HTTPServer server;
+    private static final String DEFAULT_HOST = "0.0.0.0";
+
+    private static HTTPServer httpServer;
 
     public static void agentmain(String agentArgument, Instrumentation instrumentation)
             throws Exception {
@@ -45,22 +47,22 @@ public class JavaAgent {
 
     public static void premain(String agentArgument, Instrumentation instrumentation)
             throws Exception {
-        // Bind to all interfaces by default (this includes IPv6).
-        String host = "0.0.0.0";
-
         try {
-            Config config = parseConfig(agentArgument, host);
+            Config config = parseConfig(agentArgument);
 
-            new BuildInfoCollector().register();
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT).register();
-            DefaultExports.initialize();
+            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
+            JvmMetrics.builder().register(PrometheusRegistry.defaultRegistry);
+            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT)
+                    .register(PrometheusRegistry.defaultRegistry);
 
-            server =
+            String host = config.host != null ? config.host : DEFAULT_HOST;
+
+            httpServer =
                     new HTTPServerFactory()
                             .createHTTPServer(
-                                    config.socket,
-                                    CollectorRegistry.defaultRegistry,
-                                    true,
+                                    InetAddress.getByName(host),
+                                    config.port,
+                                    PrometheusRegistry.defaultRegistry,
                                     new File(config.file));
         } catch (Throwable t) {
             synchronized (System.err) {
@@ -81,10 +83,9 @@ public class JavaAgent {
      * <CONFIG>} portion.
      *
      * @param args provided agent args
-     * @param ifc default bind interface
      * @return configuration to use for our application
      */
-    public static Config parseConfig(String args, String ifc) {
+    private static Config parseConfig(String args) {
         Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
 
         Matcher matcher = pattern.matcher(args);
@@ -101,28 +102,19 @@ public class JavaAgent {
 
         int port = Integer.parseInt(givenPort);
 
-        InetSocketAddress socket;
-        if (givenHost != null && !givenHost.isEmpty()) {
-            socket = new InetSocketAddress(givenHost, port);
-        } else {
-            socket = new InetSocketAddress(ifc, port);
-            givenHost = ifc;
-        }
-
-        return new Config(givenHost, port, givenConfigFile, socket);
+        return new Config(givenHost, port, givenConfigFile);
     }
 
-    static class Config {
+    private static class Config {
+
         String host;
         int port;
         String file;
-        InetSocketAddress socket;
 
-        Config(String host, int port, String file, InetSocketAddress socket) {
+        Config(String host, int port, String file) {
             this.host = host;
             this.port = port;
             this.file = file;
-            this.socket = socket;
         }
     }
 }

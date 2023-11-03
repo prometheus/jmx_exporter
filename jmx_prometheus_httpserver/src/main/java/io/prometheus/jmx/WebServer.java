@@ -16,11 +16,12 @@
 
 package io.prometheus.jmx;
 
-import io.prometheus.client.CollectorRegistry;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
+import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -36,36 +37,51 @@ public class WebServer {
             System.exit(1);
         }
 
-        InetSocketAddress socket;
+        String host = "0.0.0.0";
+        int port;
         int colonIndex = args[0].lastIndexOf(':');
 
         if (colonIndex < 0) {
-            int port = Integer.parseInt(args[0]);
-            socket = new InetSocketAddress(port);
+            port = Integer.parseInt(args[0]);
         } else {
-            int port = Integer.parseInt(args[0].substring(colonIndex + 1));
-            String host = args[0].substring(0, colonIndex);
-            socket = new InetSocketAddress(host, port);
+            port = Integer.parseInt(args[0].substring(colonIndex + 1));
+            host = args[0].substring(0, colonIndex);
         }
 
-        new BuildInfoCollector().register();
-        new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE).register();
+        new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
+        new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE)
+                .register(PrometheusRegistry.defaultRegistry);
+
+        HTTPServer httpServer = null;
 
         try {
-            new HTTPServerFactory()
-                    .createHTTPServer(
-                            socket, CollectorRegistry.defaultRegistry, false, new File(args[1]));
+            httpServer =
+                    new HTTPServerFactory()
+                            .createHTTPServer(
+                                    InetAddress.getByName(host),
+                                    port,
+                                    PrometheusRegistry.defaultRegistry,
+                                    new File(args[1]));
+
+            System.out.println(
+                    String.format(
+                            "%s | %s | INFO | %s | %s",
+                            SIMPLE_DATE_FORMAT.format(new Date()),
+                            Thread.currentThread().getName(),
+                            WebServer.class.getName(),
+                            "Running"));
+
+            Thread.currentThread().join();
         } catch (ConfigurationException e) {
             System.err.println("Configuration Exception : " + e.getMessage());
             System.exit(1);
+        } catch (Throwable t) {
+            System.err.println("Exception starting");
+            t.printStackTrace();
+        } finally {
+            if (httpServer != null) {
+                httpServer.close();
+            }
         }
-
-        System.out.println(
-                String.format(
-                        "%s | %s | INFO | %s | %s",
-                        SIMPLE_DATE_FORMAT.format(new Date()),
-                        Thread.currentThread().getName(),
-                        WebServer.class.getName(),
-                        "Running"));
     }
 }

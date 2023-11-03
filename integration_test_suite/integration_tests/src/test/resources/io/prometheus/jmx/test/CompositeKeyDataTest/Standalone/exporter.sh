@@ -1,5 +1,5 @@
 #!/bin/bash
 
 java \
-  -Xmx128M \
+  -Xmx512M \
   -jar jmx_prometheus_httpserver.jar 8888 exporter.yaml

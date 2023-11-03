@@ -18,8 +18,6 @@ package io.prometheus.jmx.common.http;
 
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
@@ -30,11 +28,14 @@ import io.prometheus.jmx.common.http.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
 import io.prometheus.jmx.common.http.ssl.SSLContextFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.exporter.httpserver.MetricsHandler;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -95,32 +96,32 @@ public class HTTPServerFactory {
     /**
      * Method to create an HTTPServer using the supplied arguments
      *
-     * @param inetSocketAddress inetSocketAddress
-     * @param collectorRegistry collectorRegistry
-     * @param daemon daemon
+     * @param inetAddress inetAddress
+     * @param prometheusRegistry prometheusRegistry
      * @param exporterYamlFile exporterYamlFile
      * @return an HTTPServer
      * @throws IOException IOException
      */
     public HTTPServer createHTTPServer(
-            InetSocketAddress inetSocketAddress,
-            CollectorRegistry collectorRegistry,
-            boolean daemon,
+            InetAddress inetAddress,
+            int port,
+            PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
 
         HTTPServer.Builder httpServerBuilder =
-                new HTTPServer.Builder()
-                        .withInetSocketAddress(inetSocketAddress)
-                        .withRegistry(collectorRegistry)
-                        .withDaemonThreads(daemon);
+                HTTPServer.builder()
+                        .inetAddress(inetAddress)
+                        .port(port)
+                        .registry(prometheusRegistry)
+                        .defaultHandler(new MetricsHandler());
 
         createMapAccessor(exporterYamlFile);
         configureThreads(httpServerBuilder);
         configureAuthentication(httpServerBuilder);
         configureSSL(httpServerBuilder);
 
-        return httpServerBuilder.build();
+        return httpServerBuilder.buildAndStart();
     }
 
     /**
@@ -244,7 +245,7 @@ public class HTTPServerFactory {
                         NamedDaemonThreadFactory.defaultThreadFactory(true),
                         new BlockingRejectedExecutionHandler());
 
-        httpServerBuilder.withExecutorService(threadPoolExecutor);
+        httpServerBuilder.executorService(threadPoolExecutor);
     }
 
     /**
@@ -374,7 +375,7 @@ public class HTTPServerFactory {
                                 algorithm));
             }
 
-            httpServerBuilder.withAuthenticator(authenticator);
+            httpServerBuilder.authenticator(authenticator);
         }
     }
 
@@ -573,7 +574,7 @@ public class HTTPServerFactory {
                                                 "/httpServer/ssl/certificate/alias is a required"
                                                         + " string"));
 
-                httpServerBuilder.withHttpsConfigurator(
+                httpServerBuilder.httpsConfigurator(
                         new HttpsConfigurator(
                                 SSLContextFactory.createSSLContext(
                                         keyStoreFilename, keyStorePassword, certificateAlias)));

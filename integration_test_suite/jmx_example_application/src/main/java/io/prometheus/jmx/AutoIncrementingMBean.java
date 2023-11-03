@@ -28,7 +28,7 @@ class AutoIncrementing implements AutoIncrementingMBean {
     private final AtomicInteger atomicInteger;
 
     public AutoIncrementing() {
-        atomicInteger = new AtomicInteger(1);
+        atomicInteger = new AtomicInteger(0);
     }
 
     @Override

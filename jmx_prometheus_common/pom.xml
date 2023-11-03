@@ -34,7 +34,15 @@
     <dependencies>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_httpserver</artifactId>
+            <artifactId>prometheus-metrics-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
         </dependency>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>

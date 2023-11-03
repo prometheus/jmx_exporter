@@ -24,7 +24,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <prometheus.simpleclient.version>0.16.0</prometheus.simpleclient.version>
+        <prometheus.metrics.version>1.0.0</prometheus.metrics.version>
     </properties>
 
     <scm>
@@ -68,18 +68,23 @@
         <dependencies>
             <dependency>
                 <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient</artifactId>
-                <version>${prometheus.simpleclient.version}</version>
+                <artifactId>prometheus-metrics-core</artifactId>
+                <version>${prometheus.metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient_hotspot</artifactId>
-                <version>${prometheus.simpleclient.version}</version>
+                <artifactId>prometheus-metrics-model</artifactId>
+                <version>${prometheus.metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient_httpserver</artifactId>
-                <version>${prometheus.simpleclient.version}</version>
+                <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
+                <version>${prometheus.metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+                <version>${prometheus.metrics.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

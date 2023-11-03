@@ -252,6 +252,13 @@ public class BaseResponse implements Response {
         }
 
         if (that.content != null && !Objects.equals(this.content, that.content)) {
+            synchronized (System.out) {
+                System.out.println("expected...");
+                System.out.println(that.content);
+                System.out.println("actual...");
+                System.out.println(this.content);
+            }
+
             return Status.CONTENT_MISMATCH_1;
         }
 

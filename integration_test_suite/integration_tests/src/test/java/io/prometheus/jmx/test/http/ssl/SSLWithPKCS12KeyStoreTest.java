@@ -137,6 +137,10 @@ public class SSLWithPKCS12KeyStoreTest extends BaseTest implements ContentConsum
                 .exists();
 
         assertThatMetricIn(metrics)
+                .withName("jvm_threads_current")
+                .exists(testArgument.mode() == Mode.JavaAgent ? true : false);
+
+        assertThatMetricIn(metrics)
                 .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .withLabel("source", "/dev/sda1")
                 .withValue(7.516192768E9)
@@ -147,9 +151,5 @@ public class SSLWithPKCS12KeyStoreTest extends BaseTest implements ContentConsum
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8)
                 .exists();
-
-        assertThatMetricIn(metrics)
-                .withName("jvm_threads_state")
-                .exists(testArgument.mode() == Mode.JavaAgent);
     }
 }

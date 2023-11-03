@@ -27,6 +27,7 @@ import io.prometheus.jmx.test.TestArgument;
 import io.prometheus.jmx.test.support.ContentConsumer;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.HealthyResponse;
+import io.prometheus.jmx.test.support.Label;
 import io.prometheus.jmx.test.support.MetricsRequest;
 import io.prometheus.jmx.test.support.MetricsResponse;
 import io.prometheus.jmx.test.support.OpenMetricsRequest;
@@ -105,8 +106,13 @@ public class SSLWithJKSKeyStoreTest extends BaseTest implements ContentConsumer 
                 .exists();
 
         assertThatMetricIn(metrics)
-                .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
-                .exists();
+                .withName("jvm_memory_used_bytes")
+                .withLabel(Label.of("area", "nonheap"))
+                .exists(testArgument.mode() == Mode.JavaAgent ? true : false);
+
+        assertThatMetricIn(metrics)
+                .withName("jvm_threads_current")
+                .exists(testArgument.mode() == Mode.JavaAgent ? true : false);
 
         assertThatMetricIn(metrics)
                 .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
@@ -119,9 +125,5 @@ public class SSLWithJKSKeyStoreTest extends BaseTest implements ContentConsumer 
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8)
                 .exists();
-
-        assertThatMetricIn(metrics)
-                .withName("jvm_threads_state")
-                .exists(testArgument.mode() == Mode.JavaAgent);
     }
 }

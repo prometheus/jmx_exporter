@@ -18,7 +18,7 @@ package io.prometheus.jmx.test.support;
 
 public class HealthyResponse extends BaseResponse {
 
-    private static final String CONTENT = "Exporter is Healthy.";
+    private static final String CONTENT = "Exporter is healthy.\n";
 
     public static final Response RESULT_200 = new BaseResponse().withCode(200).withContent(CONTENT);
 }

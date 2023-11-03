@@ -21,10 +21,8 @@ import io.prometheus.jmx.test.TestArgument;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
-import org.antublue.test.engine.api.TestEngine;
 
-@TestEngine.BaseClass
-public class BasicAuthenticationBaseTest extends BaseTest {
+public abstract class BasicAuthenticationBaseTest extends BaseTest {
 
     protected final String VALID_USERNAME = "Prometheus";
     protected final String VALID_PASSWORD = "secret";
