@@ -5,6 +5,12 @@ name: Build
 on:
   push:
     branches: [ build ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch you want to build'
+        required: true
+        default: 'build'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
