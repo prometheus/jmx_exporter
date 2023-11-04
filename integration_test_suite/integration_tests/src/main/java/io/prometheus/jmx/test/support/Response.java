@@ -1,76 +1,49 @@
-/*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.prometheus.jmx.test.support;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import okhttp3.Headers;
+import okhttp3.ResponseBody;
 
-/** Interface for a Response */
-public interface Response {
+public class Response {
 
-    /**
-     * Method to get the response code
-     *
-     * @return the response code
-     */
-    int code();
+    public static final int OK = 200;
+    public static final int UNAUTHORIZED = 401;
 
-    /**
-     * Method to get the response Headers
-     *
-     * @return the response Headers
-     */
-    Headers headers();
+    private final int code;
+    private final Headers headers;
+    private final byte[] body;
 
-    /**
-     * Method to get the response content
-     *
-     * @return the response content
-     */
-    String content();
+    public Response(okhttp3.Response response) throws IOException {
+        this.code = response.code();
+        this.headers = response.headers();
 
-    /**
-     * Method to compare whether this Response is equals to another Object
-     *
-     * @param response response
-     * @return this
-     */
-    Response isSuperset(Response response);
+        ResponseBody responseBody = response.body();
+        if (responseBody != null) {
+            this.body = responseBody.bytes();
+        } else {
+            this.body = null;
+        }
+    }
 
-    /**
-     * Method to dispatch the response code to a CodeConsumer
-     *
-     * @param consumer consumer
-     * @return this
-     */
-    Response dispatch(CodeConsumer consumer);
+    public int code() {
+        return code;
+    }
 
-    /**
-     * Method to dispatch the response Headers to a HeadersConsumer
-     *
-     * @param consumer consumer
-     * @return this
-     */
-    Response dispatch(HeadersConsumer consumer);
+    public Headers headers() {
+        return headers;
+    }
 
-    /**
-     * Method to dispatch the response content to a ContentConsumer
-     *
-     * @param consumer consumer
-     * @return this
-     */
-    Response dispatch(ContentConsumer consumer);
+    public byte[] body() {
+        return body;
+    }
+
+    public String string() {
+        if (body != null) {
+            return new String(body, StandardCharsets.UTF_8);
+        } else {
+            return null;
+        }
+    }
 }

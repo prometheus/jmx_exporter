@@ -17,23 +17,23 @@
 package io.prometheus.jmx.test.http.ssl;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
+import io.prometheus.jmx.test.support.legacy.ContentConsumer;
+import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
 import io.prometheus.jmx.test.support.Label;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
+import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.OpenMetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.PrometheusMetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -95,28 +95,28 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest extends BaseTest
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+        assertThatResponseForRequest(new HealthyRequestLegacy(testState.httpClient()))
+                .isSuperset(HealthyResponseLegacy.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequest(testState.httpClient()))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new OpenMetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(OpenMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequest(testState.httpClient()))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new PrometheusMetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(PrometheusMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 

@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-/** Interface for all tests */
-public interface Request {
+import java.util.function.Consumer;
 
-    public static final String ACCEPT = "Accept";
+/** Interface to accept content */
+public interface ContentConsumer extends Consumer<String> {
 
-    ResponseCallback execute();
+    /**
+     * Accept the response content
+     *
+     * @param content the response content
+     */
+    void accept(String content);
 }

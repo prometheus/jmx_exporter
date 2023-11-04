@@ -16,12 +16,12 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
+import io.prometheus.jmx.test.support.legacy.ContentConsumer;
+import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
 import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 
@@ -29,8 +29,8 @@ public class OptionalValueMBeanTest extends BaseTest {
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {

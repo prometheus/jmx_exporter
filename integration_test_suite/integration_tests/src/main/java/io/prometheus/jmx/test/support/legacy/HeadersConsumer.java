@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-/** Interface for all tests */
-public interface Request {
+import java.util.function.Consumer;
+import okhttp3.Headers;
 
-    public static final String ACCEPT = "Accept";
+/** Interface to accept Headers */
+public interface HeadersConsumer extends Consumer<Headers> {
 
-    ResponseCallback execute();
+    /**
+     * Accept the Headers
+     *
+     * @param headers the Headers
+     */
+    void accept(Headers headers);
 }

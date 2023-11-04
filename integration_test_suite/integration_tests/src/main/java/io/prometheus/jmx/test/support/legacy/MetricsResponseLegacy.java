@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-/** Interface for all tests */
-public interface Request {
+import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 
-    public static final String ACCEPT = "Accept";
+public class MetricsResponseLegacy extends BaseResponseLegacy {
 
-    ResponseCallback execute();
+    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+
+    public static final BaseResponseLegacy RESULT_200 =
+            new BaseResponseLegacy().withCode(200).withContentType(CONTENT_TYPE);
 }

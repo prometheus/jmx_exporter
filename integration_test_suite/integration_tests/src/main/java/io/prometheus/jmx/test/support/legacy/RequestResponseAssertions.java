@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-import java.util.function.Consumer;
-import okhttp3.Headers;
+/** Class to implement Request Response assertions */
+public class RequestResponseAssertions {
 
-/** Interface to accept Headers */
-public interface HeadersConsumer extends Consumer<Headers> {
+    /** Constructor */
+    private RequestResponseAssertions() {
+        // DO NOTHING
+    }
 
     /**
-     * Accept the Headers
+     * Method to execute a Request and return the Response
      *
-     * @param headers the Headers
+     * @param request request
+     * @return the TestResult
      */
-    void accept(Headers headers);
+    public static Response assertThatResponseForRequest(Request request) {
+        return request.execute();
+    }
 }

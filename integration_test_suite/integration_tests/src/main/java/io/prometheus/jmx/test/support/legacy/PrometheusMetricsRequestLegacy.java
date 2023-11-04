@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
 import io.prometheus.jmx.test.HttpClient;
+import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 
 /** Class to implement a Prometheus metrics test (Content-Type for Prometheus metrics) */
-public class PrometheusMetricsRequest extends BaseRequest {
+public class PrometheusMetricsRequestLegacy extends BaseRequestLegacy {
 
     private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+
+    public static final BaseResponseLegacy RESULT_200 =
+            new BaseResponseLegacy().withCode(200).withContentType(CONTENT_TYPE);
 
     /**
      * Constructor
      *
      * @param httpClient httpClient
      */
-    public PrometheusMetricsRequest(HttpClient httpClient) {
+    public PrometheusMetricsRequestLegacy(HttpClient httpClient) {
         super(httpClient);
         withPath("/metrics").withContentType(CONTENT_TYPE);
     }

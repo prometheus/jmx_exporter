@@ -17,22 +17,22 @@
 package io.prometheus.jmx.test.http.authentication;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.Metric;
 import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
+import io.prometheus.jmx.test.support.legacy.ContentConsumer;
+import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
 import io.prometheus.jmx.test.support.Label;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import io.prometheus.jmx.test.support.Response;
+import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.Response;
 import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 
@@ -43,14 +43,14 @@ public class BasicAuthenticationPlaintextTest extends BasicAuthenticationBaseTes
     public void testHealthy() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedHealthyResponse = HealthyResponse.RESULT_401;
+                Response expectedHealthyResponse = HealthyResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedHealthyResponse = HealthyResponse.RESULT_200;
+                    expectedHealthyResponse = HealthyResponseLegacy.RESULT_200;
                 }
 
                 assertThatResponseForRequest(
-                                new HealthyRequest(testState.httpClient())
+                                new HealthyRequestLegacy(testState.httpClient())
                                         .withCredentials(
                                                 new BasicAuthenticationCredentials(
                                                         username, password)))
@@ -63,14 +63,14 @@ public class BasicAuthenticationPlaintextTest extends BasicAuthenticationBaseTes
     public void testMetrics() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = MetricsResponse.RESULT_401;
+                Response expectedMetricsResponse = MetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = MetricsResponse.RESULT_200;
+                    expectedMetricsResponse = MetricsResponseLegacy.RESULT_200;
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
+                        new MetricsRequestLegacy(testState.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -88,14 +88,14 @@ public class BasicAuthenticationPlaintextTest extends BasicAuthenticationBaseTes
     public void testMetricsOpenMetricsFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = OpenMetricsResponse.RESULT_401;
+                Response expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = OpenMetricsResponse.RESULT_200;
+                    expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_200;
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
+                        new MetricsRequestLegacy(testState.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -113,14 +113,14 @@ public class BasicAuthenticationPlaintextTest extends BasicAuthenticationBaseTes
     public void testMetricsPrometheusFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = PrometheusMetricsResponse.RESULT_401;
+                Response expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = PrometheusMetricsResponse.RESULT_200;
+                    expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_200;
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
+                        new MetricsRequestLegacy(testState.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();

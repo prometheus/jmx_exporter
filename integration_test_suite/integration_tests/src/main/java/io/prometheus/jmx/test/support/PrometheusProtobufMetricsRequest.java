@@ -16,9 +16,22 @@
 
 package io.prometheus.jmx.test.support;
 
-public class HealthyResponse extends BaseResponse {
+import io.prometheus.jmx.test.HttpClient;
 
-    private static final String CONTENT = "Exporter is healthy.\n";
+/** Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics) */
+public class PrometheusProtobufMetricsRequest extends BaseRequest {
 
-    public static final Response RESULT_200 = new BaseResponse().withCode(200).withContent(CONTENT);
+    private static final String ACCEPT_VALUE =
+            "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
+                    + " encoding=delimited";
+
+    /**
+     * Constructor
+     *
+     * @param httpClient httpClient
+     */
+    public PrometheusProtobufMetricsRequest(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/metrics").withHeader(ACCEPT, ACCEPT_VALUE);
+    }
 }

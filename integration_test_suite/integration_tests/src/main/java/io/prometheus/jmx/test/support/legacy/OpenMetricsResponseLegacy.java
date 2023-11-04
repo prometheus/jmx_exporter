@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-/** Class to implement Request Response assertions */
-public class RequestResponseAssertions {
+import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 
-    /** Constructor */
-    private RequestResponseAssertions() {
-        // DO NOTHING
-    }
+public class OpenMetricsResponseLegacy extends BaseResponseLegacy {
 
-    /**
-     * Method to execute a Request and return the Response
-     *
-     * @param request request
-     * @return the TestResult
-     */
-    public static Response assertThatResponseForRequest(Request request) {
-        return request.execute();
-    }
+    private static final String CONTENT_TYPE =
+            "application/openmetrics-text; version=1.0.0; charset=utf-8";
+
+    public static final BaseResponseLegacy RESULT_200 =
+            new BaseResponseLegacy().withCode(200).withContentType(CONTENT_TYPE);
 }

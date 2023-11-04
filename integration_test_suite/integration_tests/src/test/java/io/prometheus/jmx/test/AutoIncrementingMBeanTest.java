@@ -16,14 +16,14 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
+import io.prometheus.jmx.test.support.legacy.ContentConsumer;
+import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
 import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
@@ -33,8 +33,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+        assertThatResponseForRequest(new HealthyRequestLegacy(testState.httpClient()))
+                .isSuperset(HealthyResponseLegacy.RESULT_200);
     }
 
     @TestEngine.Test
@@ -43,8 +43,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
         AtomicDouble value2 = new AtomicDouble();
         AtomicDouble value3 = new AtomicDouble();
 
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
@@ -61,8 +61,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                                             });
                                 });
 
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
@@ -77,8 +77,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                                             });
                                 });
 
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {

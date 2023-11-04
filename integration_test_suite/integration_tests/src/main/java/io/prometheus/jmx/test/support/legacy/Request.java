@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
 /** Interface for all tests */
 public interface Request {
 
-    public static final String ACCEPT = "Accept";
-
-    ResponseCallback execute();
+    /**
+     * Method to execute a Request
+     *
+     * @return the Response
+     */
+    Response execute();
 }

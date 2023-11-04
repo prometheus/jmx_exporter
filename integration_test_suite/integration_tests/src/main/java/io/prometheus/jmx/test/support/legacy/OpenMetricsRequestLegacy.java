@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-import java.util.function.Consumer;
+import io.prometheus.jmx.test.HttpClient;
+import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
 
-/** Interface to accept a code */
-public interface CodeConsumer extends Consumer<Integer> {
+/** Class to implement an OpenMetrics metrics test (Content-Type for OpenMetrics) */
+public class OpenMetricsRequestLegacy extends BaseRequestLegacy {
+
+    private static final String CONTENT_TYPE =
+            "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
     /**
-     * Accept the status code
+     * Constructor
      *
-     * @param code the status code
+     * @param httpClient httpClient
      */
-    void accept(int code);
+    public OpenMetricsRequestLegacy(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/metrics").withContentType(CONTENT_TYPE);
+    }
 }

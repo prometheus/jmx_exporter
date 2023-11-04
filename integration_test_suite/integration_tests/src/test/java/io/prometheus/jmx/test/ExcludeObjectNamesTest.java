@@ -18,16 +18,16 @@ package io.prometheus.jmx.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import io.prometheus.jmx.test.support.RequestResponseAssertions;
+import io.prometheus.jmx.test.support.legacy.ContentConsumer;
+import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.OpenMetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.PrometheusMetricsRequestLegacy;
+import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
+import io.prometheus.jmx.test.support.legacy.RequestResponseAssertions;
 import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 
@@ -36,31 +36,31 @@ public class ExcludeObjectNamesTest extends BaseTest implements ContentConsumer 
     @TestEngine.Test
     public void testHealthy() {
         RequestResponseAssertions.assertThatResponseForRequest(
-                        new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+                        new HealthyRequestLegacy(testState.httpClient()))
+                .isSuperset(HealthyResponseLegacy.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() {
         RequestResponseAssertions.assertThatResponseForRequest(
-                        new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
+                        new MetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
         RequestResponseAssertions.assertThatResponseForRequest(
-                        new OpenMetricsRequest(testState.httpClient()))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
+                        new OpenMetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(OpenMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
         RequestResponseAssertions.assertThatResponseForRequest(
-                        new PrometheusMetricsRequest(testState.httpClient()))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
+                        new PrometheusMetricsRequestLegacy(testState.httpClient()))
+                .isSuperset(PrometheusMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 

@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-public class OpenMetricsResponse extends BaseResponse {
+import java.util.function.Consumer;
 
-    private static final String CONTENT_TYPE =
-            "application/openmetrics-text; version=1.0.0; charset=utf-8";
+/** Interface to accept a code */
+public interface CodeConsumer extends Consumer<Integer> {
 
-    public static final BaseResponse RESULT_200 =
-            new BaseResponse().withCode(200).withContentType(CONTENT_TYPE);
+    /**
+     * Accept the status code
+     *
+     * @param code the status code
+     */
+    void accept(int code);
 }

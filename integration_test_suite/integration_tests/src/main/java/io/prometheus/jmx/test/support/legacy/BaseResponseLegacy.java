@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
 import java.util.List;
 import java.util.Objects;
+
 import okhttp3.Headers;
 import org.opentest4j.AssertionFailedError;
 
 /** Class to implement a Response */
-public class BaseResponse implements Response {
+public class BaseResponseLegacy implements Response {
 
-    public static final Response RESULT_401 = new BaseResponse().withCode(401);
+    public static final Response RESULT_401 = new BaseResponseLegacy().withCode(401);
 
     private enum Status {
         OBJECT_NULL,
@@ -44,7 +45,7 @@ public class BaseResponse implements Response {
     private final Headers.Builder headersBuilder;
 
     /** Constructor */
-    public BaseResponse() {
+    public BaseResponseLegacy() {
         headersBuilder = new Headers.Builder();
     }
 
@@ -54,7 +55,7 @@ public class BaseResponse implements Response {
      * @param code code
      * @return this
      */
-    public BaseResponse withCode(int code) {
+    public BaseResponseLegacy withCode(int code) {
         this.code = code;
         return this;
     }
@@ -65,7 +66,7 @@ public class BaseResponse implements Response {
      * @param headers headers
      * @return this
      */
-    public BaseResponse withHeaders(Headers headers) {
+    public BaseResponseLegacy withHeaders(Headers headers) {
         if (headers != null) {
             headersBuilder.addAll(headers);
         }
@@ -78,7 +79,7 @@ public class BaseResponse implements Response {
      * @param contentType contentType
      * @return this
      */
-    public BaseResponse withContentType(String contentType) {
+    public BaseResponseLegacy withContentType(String contentType) {
         if (contentType != null) {
             headersBuilder.add("Content-Type", contentType);
         }
@@ -91,7 +92,7 @@ public class BaseResponse implements Response {
      * @param content content
      * @return this
      */
-    public BaseResponse withContent(String content) {
+    public BaseResponseLegacy withContent(String content) {
         this.hasContent = true;
         this.content = content;
         return this;
@@ -195,7 +196,7 @@ public class BaseResponse implements Response {
             return false;
         }
 
-        BaseResponse that = (BaseResponse) o;
+        BaseResponseLegacy that = (BaseResponseLegacy) o;
 
         return hasContent == that.hasContent
                 && Objects.equals(code, that.code)
@@ -228,7 +229,7 @@ public class BaseResponse implements Response {
             return Status.OBJECT_CLASS_MISMATCH;
         }
 
-        BaseResponse that = (BaseResponse) o;
+        BaseResponseLegacy that = (BaseResponseLegacy) o;
 
         if (!Objects.equals(this.code, that.code)) {
             return Status.STATUS_CODE_MISMATCH;

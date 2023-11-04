@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-/** Interface for all tests */
-public interface Request {
+import io.prometheus.jmx.test.HttpClient;
+import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
 
-    public static final String ACCEPT = "Accept";
+/** Class to implement a metrics test (no Content-Type) */
+public class MetricsRequestLegacy extends BaseRequestLegacy {
 
-    ResponseCallback execute();
+    /**
+     * Constructor
+     *
+     * @param httpClient httpClient
+     */
+    public MetricsRequestLegacy(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/metrics");
+    }
 }

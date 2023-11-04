@@ -16,10 +16,14 @@
 
 package io.prometheus.jmx.test.support;
 
-public class MetricsResponse extends BaseResponse {
+import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 
-    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+public class ProtobufMetricsResponseLegacy extends BaseResponseLegacy {
 
-    public static final BaseResponse RESULT_200 =
-            new BaseResponse().withCode(200).withContentType(CONTENT_TYPE);
+    private static final String CONTENT_TYPE =
+            "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
+                    + " encoding=delimited";
+
+    public static final BaseResponseLegacy RESULT_200 =
+            new BaseResponseLegacy().withCode(200).withContentType(CONTENT_TYPE);
 }

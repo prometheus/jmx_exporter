@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-import java.util.function.Consumer;
+import io.prometheus.jmx.test.HttpClient;
+import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
 
-/** Interface to accept content */
-public interface ContentConsumer extends Consumer<String> {
+/** Class to implement a healthy test */
+public class HealthyRequestLegacy extends BaseRequestLegacy {
 
     /**
-     * Accept the response content
+     * Constructor
      *
-     * @param content the response content
+     * @param httpClient httpClient
      */
-    void accept(String content);
+    public HealthyRequestLegacy(HttpClient httpClient) {
+        super(httpClient);
+        withPath("/-/healthy");
+    }
 }

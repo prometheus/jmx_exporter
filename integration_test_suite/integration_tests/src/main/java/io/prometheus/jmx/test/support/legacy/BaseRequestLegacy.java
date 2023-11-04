@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.credentials.Credentials;
-import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 import io.prometheus.jmx.test.util.ThrowableUtils;
 import okhttp3.Headers;
+import okhttp3.ResponseBody;
 
 /** Base class for all tests */
-public abstract class BaseRequest implements Request {
+public abstract class BaseRequestLegacy implements Request {
 
     public static final BaseResponseLegacy RESULT_401 = new BaseResponseLegacy().withCode(401);
 
@@ -39,7 +39,7 @@ public abstract class BaseRequest implements Request {
      *
      * @param httpClient httpClient
      */
-    public BaseRequest(HttpClient httpClient) {
+    public BaseRequestLegacy(HttpClient httpClient) {
         this.httpClient = httpClient;
         this.headersBuilder = new Headers.Builder();
     }
@@ -50,7 +50,7 @@ public abstract class BaseRequest implements Request {
      * @param path path
      * @return this
      */
-    public BaseRequest withPath(String path) {
+    public BaseRequestLegacy withPath(String path) {
         this.path = path;
         return this;
     }
@@ -61,15 +61,10 @@ public abstract class BaseRequest implements Request {
      * @param headers headers
      * @return this
      */
-    public BaseRequest withHeaders(Headers headers) {
+    public BaseRequestLegacy withHeaders(Headers headers) {
         if (headers != null) {
             headersBuilder.addAll(headers);
         }
-        return this;
-    }
-
-    public BaseRequest withHeader(String name, String value) {
-        headersBuilder.add(name, value);
         return this;
     }
 
@@ -79,7 +74,7 @@ public abstract class BaseRequest implements Request {
      * @param contentType contentType
      * @return this
      */
-    public BaseRequest withContentType(String contentType) {
+    public BaseRequestLegacy withContentType(String contentType) {
         if (contentType != null) {
             headersBuilder.add("Content-Type", contentType);
         }
@@ -92,17 +87,22 @@ public abstract class BaseRequest implements Request {
      * @param credentials credentials
      * @return this
      */
-    public BaseRequest withCredentials(Credentials credentials) {
+    public BaseRequestLegacy withCredentials(Credentials credentials) {
         this.credentials = credentials;
         return this;
     }
 
+    /**
+     * Method to execute the test
+     *
+     * @return the TestResult
+     */
     @Override
-    public ResponseCallback execute() {
+    public Response execute() {
+        Response actualResponse = null;
+
         try {
             okhttp3.Request.Builder requestBuilder = httpClient.createRequest(path);
-
-            requestBuilder.headers(headersBuilder.build());
 
             if (credentials != null) {
                 credentials.apply(requestBuilder);
@@ -110,12 +110,19 @@ public abstract class BaseRequest implements Request {
 
             try (okhttp3.Response response = httpClient.execute(requestBuilder)) {
                 assertThat(response).isNotNull();
-                return new ResponseCallback(new Response(response));
+                int code = response.code();
+                Headers headers = response.headers();
+                ResponseBody body = response.body();
+                assertThat(body).isNotNull();
+                String content = body.string();
+                assertThat(content).isNotNull();
+                actualResponse =
+                        new BaseResponseLegacy().withCode(code).withHeaders(headers).withContent(content);
             }
         } catch (Throwable t) {
             ThrowableUtils.throwUnchecked(t);
         }
 
-        return null;
+        return actualResponse;
     }
 }

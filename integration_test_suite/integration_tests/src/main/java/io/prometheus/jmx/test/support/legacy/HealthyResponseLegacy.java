@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.legacy;
 
-public class PrometheusMetricsResponse extends BaseResponse {
+public class HealthyResponseLegacy extends BaseResponseLegacy {
 
-    private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+    private static final String CONTENT = "Exporter is healthy.\n";
 
-    public static final BaseResponse RESULT_200 =
-            new BaseResponse().withCode(200).withContentType(CONTENT_TYPE);
+    public static final Response RESULT_200 = new BaseResponseLegacy().withCode(200).withContent(CONTENT);
 }
