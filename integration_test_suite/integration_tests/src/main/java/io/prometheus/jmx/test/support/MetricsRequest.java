@@ -28,6 +28,6 @@ public class MetricsRequest extends BaseRequest {
      */
     public MetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/");
+        withPath("/metrics");
     }
 }

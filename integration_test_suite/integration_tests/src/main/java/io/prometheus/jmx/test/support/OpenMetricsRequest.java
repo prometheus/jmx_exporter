@@ -31,6 +31,6 @@ public class OpenMetricsRequest extends BaseRequest {
      */
     public OpenMetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
+        withPath("/metrics").withContentType(CONTENT_TYPE);
     }
 }

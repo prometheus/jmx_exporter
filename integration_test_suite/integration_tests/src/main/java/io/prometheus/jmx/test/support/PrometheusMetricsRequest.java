@@ -33,6 +33,6 @@ public class PrometheusMetricsRequest extends BaseRequest {
      */
     public PrometheusMetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/").withContentType(CONTENT_TYPE);
+        withPath("/metrics").withContentType(CONTENT_TYPE);
     }
 }

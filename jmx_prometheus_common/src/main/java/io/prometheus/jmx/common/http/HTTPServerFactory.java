@@ -29,7 +29,6 @@ import io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator;
 import io.prometheus.jmx.common.http.ssl.SSLContextFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
-import io.prometheus.metrics.exporter.httpserver.MetricsHandler;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.FileReader;
@@ -113,8 +112,7 @@ public class HTTPServerFactory {
                 HTTPServer.builder()
                         .inetAddress(inetAddress)
                         .port(port)
-                        .registry(prometheusRegistry)
-                        .defaultHandler(new MetricsHandler());
+                        .registry(prometheusRegistry);
 
         createMapAccessor(exporterYamlFile);
         configureThreads(httpServerBuilder);
