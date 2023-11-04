@@ -17,8 +17,6 @@
 package io.prometheus.jmx.test.support.legacy;
 
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 
 /** Class to implement a Prometheus metrics test (Content-Type for Prometheus metrics) */
 public class PrometheusMetricsRequestLegacy extends BaseRequestLegacy {

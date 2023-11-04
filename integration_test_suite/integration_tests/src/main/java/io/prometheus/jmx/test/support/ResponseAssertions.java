@@ -1,10 +1,8 @@
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.support.Response;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ResponseAssertions {
 

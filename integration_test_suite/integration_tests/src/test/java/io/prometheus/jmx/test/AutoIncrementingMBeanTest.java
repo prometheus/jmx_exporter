@@ -19,9 +19,9 @@ package io.prometheus.jmx.test;
 import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.support.HealthyRequest;
+import io.prometheus.jmx.test.support.ResponseAssertions;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
 import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
 import java.util.Collection;
@@ -33,8 +33,9 @@ public class AutoIncrementingMBeanTest extends BaseTest {
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequestLegacy(testState.httpClient()))
-                .isSuperset(HealthyResponseLegacy.RESULT_200);
+        new HealthyRequest(testState.httpClient())
+                .execute()
+                .accept(ResponseAssertions::assertHealthyResponse);
     }
 
     @TestEngine.Test
@@ -43,12 +44,14 @@ public class AutoIncrementingMBeanTest extends BaseTest {
         AtomicDouble value2 = new AtomicDouble();
         AtomicDouble value3 = new AtomicDouble();
 
+        // TODO refactor
         assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
                 .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    Collection<Metric> metrics =
+                                            TextResponseMetricsParser.parse(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()
@@ -66,7 +69,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    Collection<Metric> metrics =
+                                            TextResponseMetricsParser.parse(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()
@@ -82,7 +86,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics = MetricsParser.parse(content);
+                                    Collection<Metric> metrics =
+                                            TextResponseMetricsParser.parse(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()

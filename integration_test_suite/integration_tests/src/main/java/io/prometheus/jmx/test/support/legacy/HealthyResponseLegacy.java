@@ -20,5 +20,6 @@ public class HealthyResponseLegacy extends BaseResponseLegacy {
 
     private static final String CONTENT = "Exporter is healthy.\n";
 
-    public static final Response RESULT_200 = new BaseResponseLegacy().withCode(200).withContent(CONTENT);
+    public static final Response RESULT_200 =
+            new BaseResponseLegacy().withCode(200).withContent(CONTENT);
 }

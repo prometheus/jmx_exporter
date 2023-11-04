@@ -29,22 +29,11 @@ import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.Response;
 import io.prometheus.jmx.test.support.ResponseAssertions;
-import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.RequestResponseAssertions;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-
 import org.antublue.test.engine.api.TestEngine;
 
 public class DisableAutoExcludeObjectNameAttributesTest extends BaseTest
@@ -59,30 +48,22 @@ public class DisableAutoExcludeObjectNameAttributesTest extends BaseTest
 
     @TestEngine.Test
     public void testMetrics() {
-        new MetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new MetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new OpenMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new OpenMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new PrometheusMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new PrometheusProtobufMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusProtobufMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @Override
@@ -92,7 +73,8 @@ public class DisableAutoExcludeObjectNameAttributesTest extends BaseTest
         assertThat(response.headers().get(Header.CONTENT_TYPE)).isNotNull();
         assertThat(response.body()).isNotNull();
 
-        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE)).contains(ContentType.PROTOBUF)) {
+        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
+                .contains(ContentType.PROTOBUF)) {
             assertProtobufResponse(response);
         } else {
             assertTextResponse(response);
@@ -105,7 +87,7 @@ public class DisableAutoExcludeObjectNameAttributesTest extends BaseTest
      * @param response response
      */
     private void assertTextResponse(Response response) {
-        Collection<Metric> metrics = MetricsParser.parse(response.string());
+        Collection<Metric> metrics = TextResponseMetricsParser.parse(response);
 
         Set<String> excludeAttributeNameSet = new HashSet<>();
         excludeAttributeNameSet.add("_ClassPath");

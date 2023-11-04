@@ -16,8 +16,6 @@
 
 package io.prometheus.jmx.test.support.legacy;
 
-import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
-
 public class MetricsResponseLegacy extends BaseResponseLegacy {
 
     private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";

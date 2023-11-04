@@ -2,7 +2,6 @@ package io.prometheus.jmx.test.support;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
 import okhttp3.Headers;
 import okhttp3.ResponseBody;
 

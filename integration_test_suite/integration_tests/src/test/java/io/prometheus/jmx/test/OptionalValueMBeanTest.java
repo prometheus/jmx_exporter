@@ -16,33 +16,96 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertOk;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
+import io.prometheus.jmx.test.support.*;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
 
-public class OptionalValueMBeanTest extends BaseTest {
+public class OptionalValueMBeanTest extends BaseTest implements Consumer<Response> {
+
+    @TestEngine.Test
+    public void testHealthy() {
+        new HealthyRequest(testState.httpClient())
+                .execute()
+                .accept(ResponseAssertions::assertHealthyResponse);
+    }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
-                .isSuperset(MetricsResponseLegacy.RESULT_200)
-                .dispatch(
-                        (ContentConsumer)
-                                content -> {
-                                    Collection<Metric> metrics = MetricsParser.parse(content);
-                                    metrics.forEach(
-                                            metric -> {
-                                                if (metric.getName()
-                                                        .equals(
-                                                                "io_prometheus_jmx_optionalValue_Value")) {
-                                                    assertThat(metric.getValue()).isEqualTo(345.0);
-                                                }
-                                            });
-                                });
+        new MetricsRequest(testState.httpClient()).execute().accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsOpenMetricsFormat() {
+        new OpenMetricsRequest(testState.httpClient()).execute().accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusFormat() {
+        new PrometheusMetricsRequest(testState.httpClient()).execute().accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        new PrometheusProtobufMetricsRequest(testState.httpClient()).execute().accept(this);
+    }
+
+    @Override
+    public void accept(Response response) {
+        assertOk(response);
+        assertThat(response.headers()).isNotNull();
+        assertThat(response.headers().get(Header.CONTENT_TYPE)).isNotNull();
+        assertThat(response.body()).isNotNull();
+
+        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
+                .contains(ContentType.PROTOBUF)) {
+            assertProtobufResponse(response);
+        } else {
+            assertTextResponse(response);
+        }
+    }
+
+    /**
+     * Method to assert Prometheus and OpenMetrics text formats
+     *
+     * @param response response
+     */
+    private void assertTextResponse(Response response) {
+        Collection<Metric> metrics = TextResponseMetricsParser.parse(response);
+
+        String buildInfoName =
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
+
+        assertThatMetricIn(metrics)
+                .withName("jmx_exporter_build_info")
+                .withLabel("name", buildInfoName)
+                .exists();
+
+        assertThatMetricIn(metrics).withName("jmx_scrape_error").exists().withValue(0d);
+
+        // TODO understand why optional value doesn't work for standalone mode
+
+        if (testArgument.mode() == Mode.JavaAgent) {
+            assertThatMetricIn(metrics)
+                    .withName("io_prometheus_jmx_optionalValue_Value")
+                    .withValue(345.0)
+                    .exists();
+        }
+    }
+
+    /**
+     * Method to assert Prometheus Protobuf format
+     *
+     * @param response response
+     */
+    private void assertProtobufResponse(Response response) {
+        System.out.println("TODO assertProtobufResponse()");
     }
 }

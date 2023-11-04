@@ -117,7 +117,10 @@ public abstract class BaseRequestLegacy implements Request {
                 String content = body.string();
                 assertThat(content).isNotNull();
                 actualResponse =
-                        new BaseResponseLegacy().withCode(code).withHeaders(headers).withContent(content);
+                        new BaseResponseLegacy()
+                                .withCode(code)
+                                .withHeaders(headers)
+                                .withContent(content);
             }
         } catch (Throwable t) {
             ThrowableUtils.throwUnchecked(t);

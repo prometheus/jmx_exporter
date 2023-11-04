@@ -16,17 +16,18 @@
 
 package io.prometheus.jmx.test;
 
+import io.prometheus.jmx.test.support.Response;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/** Class to implements a Metrics response parser */
-public final class MetricsParser {
+/** Class to implements a text response metrics parser */
+public final class TextResponseMetricsParser {
 
     /** Constructor */
-    private MetricsParser() {
+    private TextResponseMetricsParser() {
         // DO NOTHING
     }
 
@@ -35,11 +36,23 @@ public final class MetricsParser {
      *
      * <p>A List is used because Metrics could have the same name, but with different labels
      *
+     * @param response response
+     * @return a Collection of Metrics
+     */
+    public static Collection<Metric> parse(Response response) {
+        return parse(response.string());
+    }
+
+    /**
+     * Method to parse a response as a list of Metric objects
+     *
+     * <p>A List is used because Metrics could have the same name, but with different labels
+     *
      * @param content content
-     * @return the Collection of Metrics
+     * @return a Collection of Metrics
      */
     public static Collection<Metric> parse(String content) {
-        List<Metric> metricList = new ArrayList<>();
+        List<Metric> metrics = new ArrayList<>();
 
         try (BufferedReader bufferedReader = new BufferedReader(new StringReader(content))) {
             while (true) {
@@ -49,13 +62,13 @@ public final class MetricsParser {
                 }
                 line = line.trim();
                 if (!line.isEmpty() && !line.startsWith("#")) {
-                    metricList.add(new Metric(line));
+                    metrics.add(new Metric(line));
                 }
             }
         } catch (Throwable t) {
             throw new MetricsParserException("Exception parsing metrics", t);
         }
 
-        return metricList;
+        return metrics;
     }
 }

@@ -18,7 +18,6 @@ package io.prometheus.jmx.test.support.legacy;
 
 import java.util.List;
 import java.util.Objects;
-
 import okhttp3.Headers;
 import org.opentest4j.AssertionFailedError;
 

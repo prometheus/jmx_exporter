@@ -16,24 +16,23 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.ResponseAssertions.assertOk;
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertOk;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ContentType;
+import io.prometheus.jmx.test.support.Header;
 import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.Label;
 import io.prometheus.jmx.test.support.MetricsRequest;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.function.Consumer;
-
-import io.prometheus.jmx.test.support.Header;
 import io.prometheus.jmx.test.support.OpenMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.Response;
 import io.prometheus.jmx.test.support.ResponseAssertions;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
 
 public class MinimalTest extends BaseTest implements Consumer<Response> {
@@ -47,30 +46,22 @@ public class MinimalTest extends BaseTest implements Consumer<Response> {
 
     @TestEngine.Test
     public void testMetrics() {
-        new MetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new MetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new OpenMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new OpenMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new PrometheusMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new PrometheusProtobufMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusProtobufMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @Override
@@ -80,7 +71,8 @@ public class MinimalTest extends BaseTest implements Consumer<Response> {
         assertThat(response.headers().get(Header.CONTENT_TYPE)).isNotNull();
         assertThat(response.body()).isNotNull();
 
-        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE)).contains(ContentType.PROTOBUF)) {
+        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
+                .contains(ContentType.PROTOBUF)) {
             assertProtobufResponse(response);
         } else {
             assertTextResponse(response);
@@ -93,7 +85,7 @@ public class MinimalTest extends BaseTest implements Consumer<Response> {
      * @param response response
      */
     private void assertTextResponse(Response response) {
-        Collection<Metric> metrics = MetricsParser.parse(response.string());
+        Collection<Metric> metrics = TextResponseMetricsParser.parse(response);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent

@@ -18,7 +18,6 @@ package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
 import static io.prometheus.jmx.test.support.ResponseAssertions.assertOk;
-import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ContentType;
@@ -30,19 +29,9 @@ import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.PrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.Response;
 import io.prometheus.jmx.test.support.ResponseAssertions;
-import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
-
 import org.antublue.test.engine.api.TestEngine;
 
 public class CompositeKeyDataTest extends BaseTest implements Consumer<Response> {
@@ -56,30 +45,22 @@ public class CompositeKeyDataTest extends BaseTest implements Consumer<Response>
 
     @TestEngine.Test
     public void testMetrics() {
-        new MetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new MetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new OpenMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new OpenMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new PrometheusMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new PrometheusProtobufMetricsRequest(testState.httpClient())
-                .execute()
-                .accept(this);
+        new PrometheusProtobufMetricsRequest(testState.httpClient()).execute().accept(this);
     }
 
     @Override
@@ -89,7 +70,8 @@ public class CompositeKeyDataTest extends BaseTest implements Consumer<Response>
         assertThat(response.headers().get(Header.CONTENT_TYPE)).isNotNull();
         assertThat(response.body()).isNotNull();
 
-        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE)).contains(ContentType.PROTOBUF)) {
+        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
+                .contains(ContentType.PROTOBUF)) {
             assertProtobufResponse(response);
         } else {
             assertTextResponse(response);
@@ -102,7 +84,7 @@ public class CompositeKeyDataTest extends BaseTest implements Consumer<Response>
      * @param response response
      */
     private void assertTextResponse(Response response) {
-        Collection<Metric> metrics = MetricsParser.parse(response.string());
+        Collection<Metric> metrics = TextResponseMetricsParser.parse(response);
 
         assertThatMetricIn(metrics)
                 .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")

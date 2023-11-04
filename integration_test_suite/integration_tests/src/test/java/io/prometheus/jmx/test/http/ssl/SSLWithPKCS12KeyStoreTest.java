@@ -21,9 +21,9 @@ import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.as
 
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
-import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
+import io.prometheus.jmx.test.TextResponseMetricsParser;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
 import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
 import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
@@ -120,7 +120,7 @@ public class SSLWithPKCS12KeyStoreTest extends BaseTest implements ContentConsum
 
     @Override
     public void accept(String content) {
-        Collection<Metric> metrics = MetricsParser.parse(content);
+        Collection<Metric> metrics = TextResponseMetricsParser.parse(content);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent

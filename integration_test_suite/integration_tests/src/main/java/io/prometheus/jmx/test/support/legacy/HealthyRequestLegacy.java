@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.legacy;
 
 import io.prometheus.jmx.test.HttpClient;
-import io.prometheus.jmx.test.support.legacy.BaseRequestLegacy;
 
 /** Class to implement a healthy test */
 public class HealthyRequestLegacy extends BaseRequestLegacy {
