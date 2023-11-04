@@ -18,6 +18,15 @@ public class ResponseAssertions {
         assertThat(response.code()).isEqualTo(401);
     }
 
+    public static void assertHasHeaders(Response response) {
+        assertThat(response.headers()).isNotNull();
+    }
+
+    public static void assertHasHeader(Response response, String name) {
+        assertThat(response.headers()).isNotNull();
+        assertThat(response.headers().get(name)).isNotNull();
+    }
+
     public static void assertHasBody(Response response) {
         assertThat(response.body()).isNotNull();
         assertThat(response.body().length).isGreaterThan(0);

@@ -21,8 +21,8 @@ import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.as
 
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
+import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
-import io.prometheus.jmx.test.TextResponseMetricsParser;
 import io.prometheus.jmx.test.support.Label;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
 import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
@@ -40,34 +40,34 @@ public class ThreadsConfigurationTest extends BaseTest implements ContentConsume
 
     @TestEngine.Test
     public void testHealthy() throws InterruptedException {
-        assertThatResponseForRequest(new HealthyRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new HealthyRequestLegacy(testContext.httpClient()))
                 .isSuperset(HealthyResponseLegacy.RESULT_200);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new OpenMetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(OpenMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new PrometheusMetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(PrometheusMetricsResponseLegacy.RESULT_200)
                 .dispatch(this);
     }
 
     @Override
     public void accept(String content) {
-        Collection<Metric> metrics = TextResponseMetricsParser.parse(content);
+        Collection<Metric> metrics = MetricsParser.parseString(content);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent

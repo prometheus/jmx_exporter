@@ -24,6 +24,12 @@ public class OpenMetricsRequest extends BaseRequest {
     private static final String CONTENT_TYPE =
             "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
+    /** Constructor */
+    public OpenMetricsRequest() {
+        super();
+        path("/metrics").contentType(CONTENT_TYPE);
+    }
+
     /**
      * Constructor
      *
@@ -31,6 +37,6 @@ public class OpenMetricsRequest extends BaseRequest {
      */
     public OpenMetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/metrics").withContentType(CONTENT_TYPE);
+        path("/metrics").contentType(CONTENT_TYPE);
     }
 }

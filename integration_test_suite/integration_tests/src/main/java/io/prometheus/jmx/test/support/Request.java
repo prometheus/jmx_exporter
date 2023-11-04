@@ -16,10 +16,12 @@
 
 package io.prometheus.jmx.test.support;
 
+import io.prometheus.jmx.test.HttpClient;
+
 /** Interface for all tests */
 public interface Request {
 
-    public static final String ACCEPT = "Accept";
+    Response exchange();
 
-    ResponseCallback execute();
+    Response exchange(HttpClient httpClient);
 }

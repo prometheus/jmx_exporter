@@ -2,6 +2,7 @@ package io.prometheus.jmx.test.support;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 import okhttp3.Headers;
 import okhttp3.ResponseBody;
 
@@ -44,5 +45,9 @@ public class Response {
         } else {
             return null;
         }
+    }
+
+    public void accept(Consumer<Response> consumer) {
+        consumer.accept(this);
     }
 }

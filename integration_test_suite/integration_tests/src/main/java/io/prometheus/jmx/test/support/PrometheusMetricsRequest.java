@@ -23,6 +23,12 @@ public class PrometheusMetricsRequest extends BaseRequest {
 
     private static final String CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
 
+    /** Constructor */
+    public PrometheusMetricsRequest() {
+        super();
+        path("/metrics").contentType(CONTENT_TYPE);
+    }
+
     /**
      * Constructor
      *
@@ -30,6 +36,6 @@ public class PrometheusMetricsRequest extends BaseRequest {
      */
     public PrometheusMetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/metrics").withContentType(CONTENT_TYPE);
+        path("/metrics").contentType(CONTENT_TYPE);
     }
 }

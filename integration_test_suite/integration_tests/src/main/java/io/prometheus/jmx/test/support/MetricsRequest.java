@@ -21,6 +21,11 @@ import io.prometheus.jmx.test.HttpClient;
 /** Class to implement a metrics test (no Content-Type) */
 public class MetricsRequest extends BaseRequest {
 
+    public MetricsRequest() {
+        super();
+        path("/metrics");
+    }
+
     /**
      * Constructor
      *
@@ -28,6 +33,6 @@ public class MetricsRequest extends BaseRequest {
      */
     public MetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/metrics");
+        path("/metrics");
     }
 }

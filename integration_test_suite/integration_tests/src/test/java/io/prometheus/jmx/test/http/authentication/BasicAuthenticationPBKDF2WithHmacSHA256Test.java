@@ -21,9 +21,9 @@ import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.as
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.Metric;
+import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
-import io.prometheus.jmx.test.TextResponseMetricsParser;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.Label;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
@@ -62,7 +62,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
                 }
 
                 assertThatResponseForRequest(
-                                new HealthyRequestLegacy(testState.httpClient())
+                                new HealthyRequestLegacy(testContext.httpClient())
                                         .withCredentials(
                                                 new BasicAuthenticationCredentials(
                                                         username, password)))
@@ -82,7 +82,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -107,7 +107,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -132,7 +132,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -148,7 +148,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
 
     @Override
     public void accept(String content) {
-        Collection<Metric> metrics = TextResponseMetricsParser.parse(content);
+        Collection<Metric> metrics = MetricsParser.parseString(content);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent

@@ -25,6 +25,12 @@ public class PrometheusProtobufMetricsRequest extends BaseRequest {
             "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
                     + " encoding=delimited";
 
+    /** Constructor */
+    public PrometheusProtobufMetricsRequest() {
+        super();
+        path("/metrics").header(Header.ACCEPT, ACCEPT_VALUE);
+    }
+
     /**
      * Constructor
      *
@@ -32,6 +38,6 @@ public class PrometheusProtobufMetricsRequest extends BaseRequest {
      */
     public PrometheusProtobufMetricsRequest(HttpClient httpClient) {
         super(httpClient);
-        withPath("/metrics").withHeader(ACCEPT, ACCEPT_VALUE);
+        path("/metrics").header(Header.ACCEPT, ACCEPT_VALUE);
     }
 }

@@ -22,9 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.BaseTest;
 import io.prometheus.jmx.test.Metric;
+import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
-import io.prometheus.jmx.test.TextResponseMetricsParser;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.Label;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
@@ -68,7 +68,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
 
     @TestEngine.Prepare
     protected void setBaseUrl() {
-        testState.baseUrl(BASE_URL);
+        testContext.baseUrl(BASE_URL);
     }
 
     @TestEngine.Test
@@ -82,7 +82,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                 }
 
                 assertThatResponseForRequest(
-                                new HealthyRequestLegacy(testState.httpClient())
+                                new HealthyRequestLegacy(testContext.httpClient())
                                         .withCredentials(
                                                 new BasicAuthenticationCredentials(
                                                         username, password)))
@@ -102,7 +102,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -127,7 +127,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -152,7 +152,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
                 }
 
                 Response actualMetricsResponse =
-                        new MetricsRequestLegacy(testState.httpClient())
+                        new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
@@ -168,7 +168,7 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
 
     @Override
     public void accept(String content) {
-        Collection<Metric> metrics = TextResponseMetricsParser.parse(content);
+        Collection<Metric> metrics = MetricsParser.parseString(content);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent

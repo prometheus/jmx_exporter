@@ -20,7 +20,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
 /** Class to a TestState */
-public class TestState {
+public class TestContext {
 
     private Network network;
     private GenericContainer<?> applicationContainer;
@@ -29,7 +29,7 @@ public class TestState {
     private HttpClient httpClient;
 
     /** Constructor */
-    public TestState() {
+    public TestContext() {
         // DO NOTHING
     }
 
@@ -39,7 +39,7 @@ public class TestState {
      * @param network network
      * @return this
      */
-    public TestState network(Network network) {
+    public TestContext network(Network network) {
         this.network = network;
         return this;
     }
@@ -59,7 +59,7 @@ public class TestState {
      * @param applicationContainer application container
      * @return this
      */
-    public TestState applicationContainer(GenericContainer<?> applicationContainer) {
+    public TestContext applicationContainer(GenericContainer<?> applicationContainer) {
         this.applicationContainer = applicationContainer;
         return this;
     }
@@ -79,7 +79,7 @@ public class TestState {
      * @param exporterContainer exporter container
      * @return this
      */
-    public TestState exporterContainer(GenericContainer<?> exporterContainer) {
+    public TestContext exporterContainer(GenericContainer<?> exporterContainer) {
         this.exporterContainer = exporterContainer;
         return this;
     }
@@ -99,7 +99,7 @@ public class TestState {
      * @param baseUrl baseURL
      * @return this
      */
-    public TestState baseUrl(String baseUrl) {
+    public TestContext baseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
         return this;
     }
@@ -119,7 +119,7 @@ public class TestState {
      * @param httpClient httpClient
      * @return this
      */
-    public TestState httpClient(HttpClient httpClient) {
+    public TestContext httpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
         return this;
     }

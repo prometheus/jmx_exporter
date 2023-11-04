@@ -33,8 +33,8 @@ public class AutoIncrementingMBeanTest extends BaseTest {
 
     @TestEngine.Test
     public void testHealthy() {
-        new HealthyRequest(testState.httpClient())
-                .execute()
+        new HealthyRequest()
+                .exchange(testContext.httpClient())
                 .accept(ResponseAssertions::assertHealthyResponse);
     }
 
@@ -45,13 +45,12 @@ public class AutoIncrementingMBeanTest extends BaseTest {
         AtomicDouble value3 = new AtomicDouble();
 
         // TODO refactor
-        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics =
-                                            TextResponseMetricsParser.parse(content);
+                                    Collection<Metric> metrics = MetricsParser.parseString(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()
@@ -64,13 +63,12 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                                             });
                                 });
 
-        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics =
-                                            TextResponseMetricsParser.parse(content);
+                                    Collection<Metric> metrics = MetricsParser.parseString(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()
@@ -81,13 +79,12 @@ public class AutoIncrementingMBeanTest extends BaseTest {
                                             });
                                 });
 
-        assertThatResponseForRequest(new MetricsRequestLegacy(testState.httpClient()))
+        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
                 .isSuperset(MetricsResponseLegacy.RESULT_200)
                 .dispatch(
                         (ContentConsumer)
                                 content -> {
-                                    Collection<Metric> metrics =
-                                            TextResponseMetricsParser.parse(content);
+                                    Collection<Metric> metrics = MetricsParser.parseString(content);
                                     metrics.forEach(
                                             metric -> {
                                                 if (metric.getName()

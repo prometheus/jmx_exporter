@@ -17,8 +17,10 @@
 package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertHasBody;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertHasHeader;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertHasHeaders;
 import static io.prometheus.jmx.test.support.ResponseAssertions.assertOk;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ContentType;
 import io.prometheus.jmx.test.support.Header;
@@ -38,53 +40,45 @@ public class CompositeKeyDataTest extends BaseTest implements Consumer<Response>
 
     @TestEngine.Test
     public void testHealthy() {
-        new HealthyRequest(testState.httpClient())
-                .execute()
+        new HealthyRequest()
+                .exchange(testContext.httpClient())
                 .accept(ResponseAssertions::assertHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        new MetricsRequest(testState.httpClient()).execute().accept(this);
+        new MetricsRequest().exchange(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new OpenMetricsRequest(testState.httpClient()).execute().accept(this);
+        new OpenMetricsRequest().exchange(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new PrometheusMetricsRequest(testState.httpClient()).execute().accept(this);
+        new PrometheusMetricsRequest().exchange(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new PrometheusProtobufMetricsRequest(testState.httpClient()).execute().accept(this);
+        new PrometheusProtobufMetricsRequest().exchange(testContext.httpClient()).accept(this);
     }
 
     @Override
     public void accept(Response response) {
         assertOk(response);
-        assertThat(response.headers()).isNotNull();
-        assertThat(response.headers().get(Header.CONTENT_TYPE)).isNotNull();
-        assertThat(response.body()).isNotNull();
+        assertHasHeaders(response);
+        assertHasHeader(response, Header.CONTENT_TYPE);
+        assertHasBody(response);
+
+        Collection<Metric> metrics = MetricsParser.parse(response);
 
         if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
                 .contains(ContentType.PROTOBUF)) {
-            assertProtobufResponse(response);
-        } else {
-            assertTextResponse(response);
+            System.out.println("TODO Protobuf support");
+            return;
         }
-    }
-
-    /**
-     * Method to assert Prometheus and OpenMetrics text formats
-     *
-     * @param response response
-     */
-    private void assertTextResponse(Response response) {
-        Collection<Metric> metrics = TextResponseMetricsParser.parse(response);
 
         assertThatMetricIn(metrics)
                 .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
@@ -97,14 +91,5 @@ public class CompositeKeyDataTest extends BaseTest implements Consumer<Response>
                 .withLabel("key_id", "2")
                 .withLabel("key_path", "/db/query2.xq")
                 .exists();
-    }
-
-    /**
-     * Method to assert Prometheus Protobuf format
-     *
-     * @param response response
-     */
-    private void assertProtobufResponse(Response response) {
-        System.out.println("TODO assertProtobufResponse()");
     }
 }

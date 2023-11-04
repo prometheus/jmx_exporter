@@ -35,7 +35,7 @@ public class BaseTest {
     private static final long MEMORY_BYTES = 1073741824; // 1GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
 
-    protected TestState testState;
+    protected TestContext testContext;
 
     @TestEngine.Argument protected TestArgument testArgument;
 
@@ -65,24 +65,24 @@ public class BaseTest {
 
     @TestEngine.Prepare
     protected final void prepare() {
-        testState = new TestState();
+        testContext = new TestContext();
 
         // Get the Network and get the id to force the network creation
         Network network = Network.newNetwork();
         network.getId();
 
-        testState.network(network);
-        testState.baseUrl(BASE_URL);
+        testContext.network(network);
+        testContext.baseUrl(BASE_URL);
     }
 
     @TestEngine.BeforeAll
     protected final void beforeAll() {
-        testState.reset();
+        testContext.reset();
 
-        Network network = testState.network();
+        Network network = testContext.network();
         String dockerImageName = testArgument.dockerImageName();
         String testName = this.getClass().getName();
-        String baseUrl = testState.baseUrl();
+        String baseUrl = testContext.baseUrl();
 
         switch (testArgument.mode()) {
             case JavaAgent:
@@ -90,10 +90,10 @@ public class BaseTest {
                     GenericContainer<?> applicationContainer =
                             createJavaAgentApplicationContainer(network, dockerImageName, testName);
                     applicationContainer.start();
-                    testState.applicationContainer(applicationContainer);
+                    testContext.applicationContainer(applicationContainer);
 
                     HttpClient httpClient = createHttpClient(applicationContainer, baseUrl);
-                    testState.httpClient(httpClient);
+                    testContext.httpClient(httpClient);
 
                     break;
                 }
@@ -103,15 +103,15 @@ public class BaseTest {
                             createStandaloneApplicationContainer(
                                     network, dockerImageName, testName);
                     applicationContainer.start();
-                    testState.applicationContainer(applicationContainer);
+                    testContext.applicationContainer(applicationContainer);
 
                     GenericContainer<?> exporterContainer =
                             createStandaloneExporterContainer(network, dockerImageName, testName);
                     exporterContainer.start();
-                    testState.exporterContainer(exporterContainer);
+                    testContext.exporterContainer(exporterContainer);
 
                     HttpClient httpClient = createHttpClient(exporterContainer, baseUrl);
-                    testState.httpClient(httpClient);
+                    testContext.httpClient(httpClient);
 
                     break;
                 }
@@ -120,13 +120,13 @@ public class BaseTest {
 
     @TestEngine.AfterAll
     protected final void afterAll() {
-        testState.reset();
+        testContext.reset();
     }
 
     @TestEngine.Conclude
     protected final void conclude() {
-        testState.dispose();
-        testState = null;
+        testContext.dispose();
+        testContext = null;
     }
 
     /**

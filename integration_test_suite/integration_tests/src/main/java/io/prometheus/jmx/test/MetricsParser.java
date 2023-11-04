@@ -16,18 +16,22 @@
 
 package io.prometheus.jmx.test;
 
+import io.prometheus.jmx.test.support.ContentType;
+import io.prometheus.jmx.test.support.Header;
 import io.prometheus.jmx.test.support.Response;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /** Class to implements a text response metrics parser */
-public final class TextResponseMetricsParser {
+public final class MetricsParser {
 
     /** Constructor */
-    private TextResponseMetricsParser() {
+    private MetricsParser() {
         // DO NOTHING
     }
 
@@ -40,7 +44,12 @@ public final class TextResponseMetricsParser {
      * @return a Collection of Metrics
      */
     public static Collection<Metric> parse(Response response) {
-        return parse(response.string());
+        if (Objects.requireNonNull(response.headers().get(Header.CONTENT_TYPE))
+                .contains(ContentType.PROTOBUF)) {
+            return parseProtobuf(response);
+        } else {
+            return parseString(response.string());
+        }
     }
 
     /**
@@ -51,7 +60,7 @@ public final class TextResponseMetricsParser {
      * @param content content
      * @return a Collection of Metrics
      */
-    public static Collection<Metric> parse(String content) {
+    public static Collection<Metric> parseString(String content) {
         List<Metric> metrics = new ArrayList<>();
 
         try (BufferedReader bufferedReader = new BufferedReader(new StringReader(content))) {
@@ -70,5 +79,9 @@ public final class TextResponseMetricsParser {
         }
 
         return metrics;
+    }
+
+    public static Collection<Metric> parseProtobuf(Response response) {
+        return Collections.emptyList();
     }
 }
