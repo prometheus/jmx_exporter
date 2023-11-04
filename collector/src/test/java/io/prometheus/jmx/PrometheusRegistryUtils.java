@@ -1,76 +1,113 @@
+/*
+ * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.prometheus.jmx;
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
-import io.prometheus.metrics.model.snapshots.Label;
 import io.prometheus.metrics.model.snapshots.Labels;
-import io.prometheus.metrics.model.snapshots.MetricSnapshot;
-import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @SuppressWarnings("unchecked")
 public class PrometheusRegistryUtils {
 
     private final PrometheusRegistry prometheusRegistry;
 
+    /**
+     * Constructor
+     *
+     * @param prometheusRegistry prometheusRegistry
+     */
     public PrometheusRegistryUtils(PrometheusRegistry prometheusRegistry) {
         this.prometheusRegistry = prometheusRegistry;
     }
 
+    /**
+     * Method to get a specific value from the PrometheusRegistry
+     *
+     * @param name name
+     * @param labelNames labelNames
+     * @param labelValues labelValues
+     * @return the metric value, or null if it doesn't exist
+     */
     public Double getSampleValue(String name, String[] labelNames, String[] labelValues) {
         return getSampleValue(name, Labels.of(labelNames, labelValues));
     }
 
+    /**
+     * Method to get a specific value from the PrometheusRegistry
+     *
+     * @param name name
+     * @param labels labels
+     * @return the metric value, or null if it doesn't exist
+     */
     public Double getSampleValue(String name, Labels labels) {
-        Set<Label> labelSet = new LinkedHashSet<>();
+        List<Double> values = new ArrayList<>();
 
-        if (labels != null) {
-            labelSet = labels.stream().collect(Collectors.toCollection(LinkedHashSet::new));
+        // scrape(Predicate predicate) looks as Prometheus names, but the JmxCollector doesn't
+        // return them to prevent a double scraping scenario
+        prometheusRegistry
+                .scrape()
+                //        scrape(s -> s.equals(name)).stream()
+                .stream()
+                .filter(metricSnapshot -> metricSnapshot.getMetadata().getName().equals(name))
+                .forEach(
+                        metricSnapshot ->
+                                metricSnapshot.getDataPoints().stream()
+                                        .filter(
+                                                (Predicate<DataPointSnapshot>)
+                                                        dataPointSnapshot ->
+                                                                dataPointSnapshot
+                                                                                .getLabels()
+                                                                                .compareTo(labels)
+                                                                        == 0)
+                                        .findFirst()
+                                        .ifPresent(
+                                                (Consumer<DataPointSnapshot>)
+                                                        dataPointSnapshot -> {
+                                                            values.add(
+                                                                    getDataPointSnapshotValue(
+                                                                            dataPointSnapshot));
+                                                        }));
+
+        if (!values.isEmpty()) {
+            return values.get(0);
+        } else {
+            return null;
         }
+    }
 
-        MetricSnapshots metricSnapshots = prometheusRegistry.scrape(); // s -> s.equals(name));
+    private static Double getDataPointSnapshotValue(DataPointSnapshot dataPointSnapshot) {
+        Double value = null;
 
-        List<MetricSnapshot> metricSnapshotList =
-                metricSnapshots.stream().collect(Collectors.toList());
-
-        for (MetricSnapshot metricSnapshot : metricSnapshotList) {
-            // System.out.println("name [" + metricSnapshot.getMetadata().getName() + "]");
-            if (name.equals(metricSnapshot.getMetadata().getName())) {
-                // TODO
-                // System.out.println("name            [" + metricSnapshot.getMetadata().getName() +
-                // "]");
-                // System.out.println("prometheus name [" +
-                // metricSnapshot.getMetadata().getPrometheusName() + "]");
-
-                List<? extends DataPointSnapshot> dataPointSnapshots =
-                        metricSnapshot.getDataPoints();
-
-                for (DataPointSnapshot dataPointSnapshot : dataPointSnapshots) {
-                    Labels dataPointSnapshotLabels = dataPointSnapshot.getLabels();
-                    if (dataPointSnapshotLabels.compareTo(labels) == 0) {
-                        if (dataPointSnapshot instanceof GaugeSnapshot.GaugeDataPointSnapshot) {
-                            return ((GaugeSnapshot.GaugeDataPointSnapshot) dataPointSnapshot)
-                                    .getValue();
-                        } else if (dataPointSnapshot
-                                instanceof CounterSnapshot.CounterDataPointSnapshot) {
-                            return ((CounterSnapshot.CounterDataPointSnapshot) dataPointSnapshot)
-                                    .getValue();
-                        } else if (dataPointSnapshot
-                                instanceof UnknownSnapshot.UnknownDataPointSnapshot) {
-                            return ((UnknownSnapshot.UnknownDataPointSnapshot) dataPointSnapshot)
-                                    .getValue();
-                        }
-                    }
-                }
-            }
+        if (dataPointSnapshot instanceof GaugeSnapshot.GaugeDataPointSnapshot) {
+            value = ((GaugeSnapshot.GaugeDataPointSnapshot) dataPointSnapshot).getValue();
+        } else if (dataPointSnapshot instanceof CounterSnapshot.CounterDataPointSnapshot) {
+            value = ((CounterSnapshot.CounterDataPointSnapshot) dataPointSnapshot).getValue();
+        } else if (dataPointSnapshot instanceof UnknownSnapshot.UnknownDataPointSnapshot) {
+            value = ((UnknownSnapshot.UnknownDataPointSnapshot) dataPointSnapshot).getValue();
         }
+        // TODO add other DataPoint types
 
-        return null;
+        return value;
     }
 }

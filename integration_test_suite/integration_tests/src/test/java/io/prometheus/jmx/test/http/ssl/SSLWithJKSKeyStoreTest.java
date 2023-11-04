@@ -105,6 +105,8 @@ public class SSLWithJKSKeyStoreTest extends BaseTest implements ContentConsumer 
                 .withLabel("name", buildInfoName)
                 .exists();
 
+        assertThatMetricIn(metrics).withName("jmx_scrape_error").exists().withValue(0d);
+
         assertThatMetricIn(metrics)
                 .withName("jvm_memory_used_bytes")
                 .withLabel(Label.of("area", "nonheap"))

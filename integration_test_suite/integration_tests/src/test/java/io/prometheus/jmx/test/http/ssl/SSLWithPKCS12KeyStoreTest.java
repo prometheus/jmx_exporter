@@ -132,6 +132,8 @@ public class SSLWithPKCS12KeyStoreTest extends BaseTest implements ContentConsum
                 .withLabel("name", buildInfoName)
                 .exists();
 
+        assertThatMetricIn(metrics).withName("jmx_scrape_error").exists().withValue(0d);
+
         assertThatMetricIn(metrics)
                 .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
                 .exists();

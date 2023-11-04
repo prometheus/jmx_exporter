@@ -23,6 +23,7 @@ import static java.util.logging.Level.SEVERE;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Gauge;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
@@ -30,6 +31,7 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.PrometheusNaming;
+import io.prometheus.metrics.model.snapshots.Unit;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.io.File;
 import java.io.FileReader;
@@ -64,18 +66,6 @@ public class JmxCollector implements MultiCollector {
 
     private final Mode mode;
 
-    static final Counter configReloadSuccess =
-            Counter.builder()
-                    .name("jmx_config_reload_success_total")
-                    .help("Number of times configuration have successfully been reloaded.")
-                    .register();
-
-    static final Counter configReloadFailure =
-            Counter.builder()
-                    .name("jmx_config_reload_failure_total")
-                    .help("Number of times configuration have failed to be reloaded.")
-                    .register();
-
     static class Rule {
         Pattern pattern;
         String name;
@@ -106,9 +96,16 @@ public class JmxCollector implements MultiCollector {
         MatchedRulesCache rulesCache;
     }
 
+    private PrometheusRegistry prometheusRegistry;
     private Config config;
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
+
+    private Counter configReloadSuccess;
+    private Counter configReloadFailure;
+    private Gauge jmxScrapeDurationSeconds;
+    private Gauge jmxScrapeError;
+    private Gauge jmxScrapeCachedBeans;
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
@@ -139,7 +136,41 @@ public class JmxCollector implements MultiCollector {
     }
 
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
+        this.prometheusRegistry = prometheusRegistry;
+
+        configReloadSuccess =
+                Counter.builder()
+                        .name("jmx_config_reload_success_total")
+                        .help("Number of times configuration have successfully been reloaded.")
+                        .register(prometheusRegistry);
+
+        configReloadFailure =
+                Counter.builder()
+                        .name("jmx_config_reload_failure_total")
+                        .help("Number of times configuration have failed to be reloaded.")
+                        .register(prometheusRegistry);
+
+        jmxScrapeDurationSeconds =
+                Gauge.builder()
+                        .name("jmx_scrape_duration_seconds")
+                        .help("Time this JMX scrape took, in seconds.")
+                        .unit(Unit.SECONDS)
+                        .register(prometheusRegistry);
+
+        jmxScrapeError =
+                Gauge.builder()
+                        .name("jmx_scrape_error")
+                        .help("Non-zero if this scrape failed.")
+                        .register(prometheusRegistry);
+
+        jmxScrapeCachedBeans =
+                Gauge.builder()
+                        .name("jmx_scrape_cached_beans")
+                        .help("Number of beans with their matching rule cached")
+                        .register(prometheusRegistry);
+
         prometheusRegistry.register(this);
+
         return this;
     }
 
@@ -790,6 +821,7 @@ public class JmxCollector implements MultiCollector {
         }
     }
 
+    @Override
     public MetricSnapshots collect() {
         // Take a reference to the current config and collect with this one
         // (to avoid race conditions in case another thread reloads the config in the meantime)
@@ -830,47 +862,9 @@ public class JmxCollector implements MultiCollector {
 
         config.rulesCache.evictStaleEntries(stalenessTracker);
 
-        /*
-        List<MetricFamilySamples> mfsList =
-                new ArrayList<>(receiver.metricFamilySamplesMap.values());
-        List<MetricFamilySamples.Sample> samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_duration_seconds",
-                        new ArrayList<>(),
-                        new ArrayList<>(),
-                        (System.nanoTime() - start) / 1.0E9));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_duration_seconds",
-                        Type.GAUGE,
-                        "Time this JMX scrape took, in seconds.",
-                        samples));
-
-        samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_error", new ArrayList<>(), new ArrayList<>(), error));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_error",
-                        Type.GAUGE,
-                        "Non-zero if this scrape failed.",
-                        samples));
-        samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_cached_beans",
-                        new ArrayList<>(),
-                        new ArrayList<>(),
-                        stalenessTracker.cachedCount()));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_cached_beans",
-                        Type.GAUGE,
-                        "Number of beans with their matching rule cached",
-                        samples));
-         */
+        jmxScrapeDurationSeconds.set((System.nanoTime() - start) / 1.0E9);
+        jmxScrapeError.set(error);
+        jmxScrapeCachedBeans.set(stalenessTracker.cachedCount());
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
 
@@ -890,8 +884,10 @@ public class JmxCollector implements MultiCollector {
     }
 
     @Override
+    // TODO remove once bug is fixed in client_java
     public List<String> getPrometheusNames() {
         // return Collections.emptyList();
+
         return collect().stream()
                 .map(snapshot -> snapshot.getMetadata().getPrometheusName())
                 .collect(Collectors.toList());
