@@ -33,7 +33,7 @@ import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
 import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.Response;
+import io.prometheus.jmx.test.support.legacy.ResponseLegacy;
 import java.util.Collection;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
@@ -55,10 +55,10 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
     public void testHealthy() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedHealthyResponse = HealthyResponseLegacy.RESULT_401;
+                ResponseLegacy expectedHealthyResponseLegacy = HealthyResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedHealthyResponse = HealthyResponseLegacy.RESULT_200;
+                    expectedHealthyResponseLegacy = HealthyResponseLegacy.RESULT_200;
                 }
 
                 assertThatResponseForRequest(
@@ -66,7 +66,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
                                         .withCredentials(
                                                 new BasicAuthenticationCredentials(
                                                         username, password)))
-                        .isSuperset(expectedHealthyResponse);
+                        .isSuperset(expectedHealthyResponseLegacy);
             }
         }
     }
@@ -75,22 +75,22 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
     public void testMetrics() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = MetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy = MetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = MetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = MetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy));
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }
@@ -100,22 +100,22 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
     public void testMetricsOpenMetricsFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy = OpenMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = OpenMetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy));
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }
@@ -125,22 +125,23 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends BasicAuthentica
     public void testMetricsPrometheusFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy =
+                        PrometheusMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = PrometheusMetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy));
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }

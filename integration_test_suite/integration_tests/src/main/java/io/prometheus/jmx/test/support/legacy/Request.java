@@ -24,5 +24,5 @@ public interface Request {
      *
      * @return the Response
      */
-    Response execute();
+    ResponseLegacy execute();
 }

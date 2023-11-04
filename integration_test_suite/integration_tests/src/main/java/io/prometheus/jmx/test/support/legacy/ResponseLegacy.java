@@ -19,7 +19,7 @@ package io.prometheus.jmx.test.support.legacy;
 import okhttp3.Headers;
 
 /** Interface for a Response */
-public interface Response {
+public interface ResponseLegacy {
 
     /**
      * Method to get the response code
@@ -45,10 +45,10 @@ public interface Response {
     /**
      * Method to compare whether this Response is equals to another Object
      *
-     * @param response response
+     * @param responseLegacy response
      * @return this
      */
-    Response isSuperset(Response response);
+    ResponseLegacy isSuperset(ResponseLegacy responseLegacy);
 
     /**
      * Method to dispatch the response code to a CodeConsumer
@@ -56,7 +56,7 @@ public interface Response {
      * @param consumer consumer
      * @return this
      */
-    Response dispatch(CodeConsumer consumer);
+    ResponseLegacy dispatch(CodeConsumer consumer);
 
     /**
      * Method to dispatch the response Headers to a HeadersConsumer
@@ -64,7 +64,7 @@ public interface Response {
      * @param consumer consumer
      * @return this
      */
-    Response dispatch(HeadersConsumer consumer);
+    ResponseLegacy dispatch(HeadersConsumer consumer);
 
     /**
      * Method to dispatch the response content to a ContentConsumer
@@ -72,5 +72,5 @@ public interface Response {
      * @param consumer consumer
      * @return this
      */
-    Response dispatch(ContentConsumer consumer);
+    ResponseLegacy dispatch(ContentConsumer consumer);
 }

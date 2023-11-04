@@ -18,13 +18,10 @@ package io.prometheus.jmx.test.support;
 
 import io.prometheus.jmx.test.HttpClient;
 import io.prometheus.jmx.test.credentials.Credentials;
-import io.prometheus.jmx.test.support.legacy.BaseResponseLegacy;
 import okhttp3.Headers;
 
 /** Base class for all tests */
 public abstract class BaseRequest implements Request {
-
-    public static final BaseResponseLegacy RESULT_401 = new BaseResponseLegacy().withCode(401);
 
     protected HttpClient httpClient;
     protected Headers.Builder headersBuilder;

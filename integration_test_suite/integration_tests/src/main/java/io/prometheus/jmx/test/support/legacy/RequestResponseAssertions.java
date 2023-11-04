@@ -30,7 +30,7 @@ public class RequestResponseAssertions {
      * @param request request
      * @return the TestResult
      */
-    public static Response assertThatResponseForRequest(Request request) {
+    public static ResponseLegacy assertThatResponseForRequest(Request request) {
         return request.execute();
     }
 }

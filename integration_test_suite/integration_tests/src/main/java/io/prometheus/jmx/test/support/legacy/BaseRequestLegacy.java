@@ -98,8 +98,8 @@ public abstract class BaseRequestLegacy implements Request {
      * @return the TestResult
      */
     @Override
-    public Response execute() {
-        Response actualResponse = null;
+    public ResponseLegacy execute() {
+        ResponseLegacy actualResponseLegacy = null;
 
         try {
             okhttp3.Request.Builder requestBuilder = httpClient.createRequest(path);
@@ -116,7 +116,7 @@ public abstract class BaseRequestLegacy implements Request {
                 assertThat(body).isNotNull();
                 String content = body.string();
                 assertThat(content).isNotNull();
-                actualResponse =
+                actualResponseLegacy =
                         new BaseResponseLegacy()
                                 .withCode(code)
                                 .withHeaders(headers)
@@ -126,6 +126,6 @@ public abstract class BaseRequestLegacy implements Request {
             ThrowableUtils.throwUnchecked(t);
         }
 
-        return actualResponse;
+        return actualResponseLegacy;
     }
 }

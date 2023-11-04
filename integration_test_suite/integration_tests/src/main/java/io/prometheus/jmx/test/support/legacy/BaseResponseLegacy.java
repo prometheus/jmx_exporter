@@ -22,9 +22,9 @@ import okhttp3.Headers;
 import org.opentest4j.AssertionFailedError;
 
 /** Class to implement a Response */
-public class BaseResponseLegacy implements Response {
+public class BaseResponseLegacy implements ResponseLegacy {
 
-    public static final Response RESULT_401 = new BaseResponseLegacy().withCode(401);
+    public static final ResponseLegacy RESULT_401 = new BaseResponseLegacy().withCode(401);
 
     private enum Status {
         OBJECT_NULL,
@@ -133,12 +133,12 @@ public class BaseResponseLegacy implements Response {
     /**
      * Method to check if this Response is a superset of another Response
      *
-     * @param response response
+     * @param responseLegacy response
      * @return this
      */
     @Override
-    public Response isSuperset(Response response) {
-        Status status = checkSuperset(response);
+    public ResponseLegacy isSuperset(ResponseLegacy responseLegacy) {
+        Status status = checkSuperset(responseLegacy);
         if (status != Status.MATCH) {
             throw new AssertionFailedError(
                     String.format(
@@ -156,7 +156,7 @@ public class BaseResponseLegacy implements Response {
      * @return this
      */
     @Override
-    public Response dispatch(CodeConsumer consumer) {
+    public ResponseLegacy dispatch(CodeConsumer consumer) {
         consumer.accept(code);
         return this;
     }
@@ -168,7 +168,7 @@ public class BaseResponseLegacy implements Response {
      * @return this
      */
     @Override
-    public Response dispatch(HeadersConsumer consumer) {
+    public ResponseLegacy dispatch(HeadersConsumer consumer) {
         consumer.accept(headers);
         return this;
     }
@@ -180,7 +180,7 @@ public class BaseResponseLegacy implements Response {
      * @return this
      */
     @Override
-    public Response dispatch(ContentConsumer consumer) {
+    public ResponseLegacy dispatch(ContentConsumer consumer) {
         consumer.accept(content);
         return this;
     }

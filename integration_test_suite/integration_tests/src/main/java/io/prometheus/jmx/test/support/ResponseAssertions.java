@@ -10,6 +10,10 @@ public class ResponseAssertions {
         // DO NOTHING
     }
 
+    public static void assertCode(Response response, int code) {
+        assertThat(response.code()).isEqualTo(code);
+    }
+
     public static void assertOk(Response response) {
         assertThat(response.code()).isEqualTo(200);
     }

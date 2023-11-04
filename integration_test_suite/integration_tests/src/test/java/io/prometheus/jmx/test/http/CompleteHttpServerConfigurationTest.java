@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test.http;
 
 import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.ResponseAssertions.assertCode;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.BaseTest;
@@ -26,26 +26,31 @@ import io.prometheus.jmx.test.MetricsParser;
 import io.prometheus.jmx.test.Mode;
 import io.prometheus.jmx.test.TestArgument;
 import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
+import io.prometheus.jmx.test.support.HealthyRequest;
 import io.prometheus.jmx.test.support.Label;
+import io.prometheus.jmx.test.support.Response;
 import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
 import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
 import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.Response;
+import io.prometheus.jmx.test.support.legacy.ResponseLegacy;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
 public class CompleteHttpServerConfigurationTest extends BaseTest implements ContentConsumer {
 
     private final String BASE_URL = "https://localhost";
+
     private final String VALID_USERNAME = "Prometheus";
+
     private final String VALID_PASSWORD = "secret";
+
     private final String[] TEST_USERNAMES =
             new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
@@ -75,18 +80,16 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
     public void testHealthy() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedHealthyResponse = HealthyResponseLegacy.RESULT_401;
+                final AtomicInteger code = new AtomicInteger(Response.UNAUTHORIZED);
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedHealthyResponse = HealthyResponseLegacy.RESULT_200;
+                    code.set(Response.OK);
                 }
 
-                assertThatResponseForRequest(
-                                new HealthyRequestLegacy(testContext.httpClient())
-                                        .withCredentials(
-                                                new BasicAuthenticationCredentials(
-                                                        username, password)))
-                        .isSuperset(expectedHealthyResponse);
+                new HealthyRequest()
+                        .credentials(new BasicAuthenticationCredentials(username, password))
+                        .exchange(testContext.httpClient())
+                        .accept(response -> assertCode(response, code.get()));
             }
         }
     }
@@ -95,22 +98,23 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
     public void testMetrics() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = MetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy = MetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = MetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = MetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy))
+                        .isNotNull();
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }
@@ -120,22 +124,23 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
     public void testMetricsOpenMetricsFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy = OpenMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = OpenMetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = OpenMetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy))
+                        .isNotNull();
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }
@@ -145,22 +150,24 @@ public class CompleteHttpServerConfigurationTest extends BaseTest implements Con
     public void testMetricsPrometheusFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_401;
+                ResponseLegacy expectedMetricsResponseLegacy =
+                        PrometheusMetricsResponseLegacy.RESULT_401;
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = PrometheusMetricsResponseLegacy.RESULT_200;
+                    expectedMetricsResponseLegacy = PrometheusMetricsResponseLegacy.RESULT_200;
                 }
 
-                Response actualMetricsResponse =
+                ResponseLegacy actualMetricsResponseLegacy =
                         new MetricsRequestLegacy(testContext.httpClient())
                                 .withCredentials(
                                         new BasicAuthenticationCredentials(username, password))
                                 .execute();
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse)).isNotNull();
+                assertThat(actualMetricsResponseLegacy.isSuperset(expectedMetricsResponseLegacy))
+                        .isNotNull();
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (actualMetricsResponseLegacy.code() == 200) {
+                    actualMetricsResponseLegacy.dispatch(this);
                 }
             }
         }
