@@ -26,13 +26,13 @@ import org.opentest4j.AssertionFailedError;
 
 public class ProtobufGaugeMetricAssertion {
 
-    private final Collection<Metrics.MetricFamily> metrics;
+    private final Collection<Metrics.MetricFamily> metricFamilies;
     private String name;
     private final TreeMap<String, String> labels;
     private Double value;
 
-    public ProtobufGaugeMetricAssertion(Collection<Metrics.MetricFamily> metrics) {
-        this.metrics = metrics;
+    public ProtobufGaugeMetricAssertion(Collection<Metrics.MetricFamily> metricFamilies) {
+        this.metricFamilies = metricFamilies;
         this.labels = new TreeMap<>();
     }
 
@@ -53,7 +53,7 @@ public class ProtobufGaugeMetricAssertion {
 
     public void isPresent() {
         List<Metrics.Metric> collection =
-                this.metrics.stream()
+                this.metricFamilies.stream()
                         .filter(metrics -> metrics.getType() == Metrics.MetricType.GAUGE)
                         .filter(metrics -> name.equals(metrics.getName()))
                         .flatMap(new ProtobufMetricLabelsFilter(labels))

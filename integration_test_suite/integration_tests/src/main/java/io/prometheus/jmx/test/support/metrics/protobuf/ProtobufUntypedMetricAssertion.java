@@ -26,13 +26,13 @@ import org.opentest4j.AssertionFailedError;
 
 public class ProtobufUntypedMetricAssertion {
 
-    private final Collection<Metrics.MetricFamily> metrics;
+    private final Collection<Metrics.MetricFamily> metricFamilies;
     private String name;
     private final TreeMap<String, String> labels;
     private Double value;
 
-    public ProtobufUntypedMetricAssertion(Collection<Metrics.MetricFamily> metrics) {
-        this.metrics = metrics;
+    public ProtobufUntypedMetricAssertion(Collection<Metrics.MetricFamily> metricFamilies) {
+        this.metricFamilies = metricFamilies;
         this.labels = new TreeMap<>();
     }
 
@@ -53,7 +53,7 @@ public class ProtobufUntypedMetricAssertion {
 
     public void isPresent() {
         List<Metrics.Metric> collection =
-                metrics.stream()
+                metricFamilies.stream()
                         .filter(metrics -> metrics.getType() == Metrics.MetricType.UNTYPED)
                         .filter(metrics -> name.equals(metrics.getName()))
                         .flatMap(new ProtobufMetricLabelsFilter(labels))
