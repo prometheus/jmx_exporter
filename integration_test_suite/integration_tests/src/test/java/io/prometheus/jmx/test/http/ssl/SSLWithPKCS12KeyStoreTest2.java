@@ -16,32 +16,37 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 
-import io.prometheus.jmx.test.BaseTest;
-import io.prometheus.jmx.test.Metric;
-import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.Mode;
-import io.prometheus.jmx.test.TestArgument;
-import io.prometheus.jmx.test.support.Label;
-import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.HealthyRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.HealthyResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.OpenMetricsResponseLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.PrometheusMetricsResponseLegacy;
+import io.prometheus.jmx.test.AbstractTest;
+import io.prometheus.jmx.test.support.Mode;
+import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
+import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufCounterMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufGaugeMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
+import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufUntypedMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.text.TextCounterMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.text.TextGaugeMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.text.TextMetric;
+import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
+import io.prometheus.jmx.test.support.metrics.text.TextUntypedMetricAssertion;
+import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
-public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsumer {
+public class SSLWithPKCS12KeyStoreTest2 extends AbstractTest implements Consumer<HttpResponse> {
 
     private static final String BASE_URL = "https://localhost";
 
@@ -84,7 +89,7 @@ public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsu
     protected static Stream<TestArgument> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return BaseTest.arguments().filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
+        return AbstractTest.arguments().filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
     }
 
     @TestEngine.Prepare
@@ -94,66 +99,151 @@ public class SSLWithPKCS12KeyStoreTest2 extends BaseTest implements ContentConsu
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequestLegacy(testContext.httpClient()))
-                .isSuperset(HealthyResponseLegacy.RESULT_200);
+        new HttpHealthyRequest()
+                .send(testContext.httpClient())
+                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(MetricsResponseLegacy.RESULT_200)
-                .dispatch(this);
+        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(OpenMetricsResponseLegacy.RESULT_200)
-                .dispatch(this);
+        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(PrometheusMetricsResponseLegacy.RESULT_200)
-                .dispatch(this);
+        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @Override
-    public void accept(String content) {
-        Collection<Metric> metrics = MetricsParser.parseString(content);
+    public void accept(HttpResponse httpResponse) {
+        assertHttpMetricsResponse(httpResponse);
+
+        if (isProtoBufFormat(httpResponse)) {
+            assertProtobufFormatResponse(httpResponse);
+        } else {
+            assertTextFormatResponse(httpResponse);
+        }
+    }
+
+    private void assertTextFormatResponse(HttpResponse httpResponse) {
+        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        assertThatMetricIn(metrics)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .exists();
+        new TextGaugeMetricAssertion(metrics)
+                .name("jmx_exporter_build_info")
+                .label("name", buildInfoName)
+                .value(1d)
+                .isPresent();
 
-        assertThatMetricIn(metrics).withName("jmx_scrape_error").exists().withValue(0d);
+        new TextGaugeMetricAssertion(metrics).name("jmx_scrape_error").value(0d).isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("jvm_memory_used_bytes")
-                .withLabel(Label.of("area", "nonheap"))
-                .exists(testArgument.mode() == Mode.JavaAgent ? true : false);
+        new TextCounterMetricAssertion(metrics)
+                .name("jmx_config_reload_success_total")
+                .value(0d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("jvm_threads_current")
-                .exists(testArgument.mode() == Mode.JavaAgent ? true : false);
+        new TextGaugeMetricAssertion(metrics)
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9)
-                .exists();
+        new TextGaugeMetricAssertion(metrics)
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8)
-                .exists();
+        new TextGaugeMetricAssertion(metrics)
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new TextGaugeMetricAssertion(metrics)
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new TextUntypedMetricAssertion(metrics)
+                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .label("source", "/dev/sda1")
+                .value(7.516192768E9d)
+                .isPresent();
+
+        new TextUntypedMetricAssertion(metrics)
+                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .label("source", "/dev/sda2")
+                .value(0.8d)
+                .isPresent();
+    }
+
+    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
+        Collection<Metrics.MetricFamily> metricsFamilies =
+                ProtobufMetricsParser.parse(httpResponse);
+
+        String buildInfoName =
+                testArgument.mode() == Mode.JavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_httpserver";
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jmx_exporter_build_info")
+                .label("name", buildInfoName)
+                .value(1d)
+                .isPresent();
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jmx_scrape_error")
+                .value(0d)
+                .isPresent();
+
+        new ProtobufCounterMetricAssertion(metricsFamilies)
+                .name("jmx_config_reload_success_total")
+                .value(0d)
+                .isPresent();
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new ProtobufGaugeMetricAssertion(metricsFamilies)
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new ProtobufUntypedMetricAssertion(metricsFamilies)
+                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .label("source", "/dev/sda1")
+                .value(7.516192768E9d)
+                .isPresent();
+
+        new ProtobufUntypedMetricAssertion(metricsFamilies)
+                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .label("source", "/dev/sda2")
+                .value(0.8d)
+                .isPresent();
     }
 }

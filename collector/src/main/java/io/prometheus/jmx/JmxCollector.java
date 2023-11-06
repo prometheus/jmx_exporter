@@ -795,6 +795,7 @@ public class JmxCollector implements MultiCollector {
                         break;
                     }
                 case "UNKNOWN":
+                case "UNTYPED":
                 default:
                     {
                         UnknownSnapshot.Builder unknownBuilder =

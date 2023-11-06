@@ -16,87 +16,55 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.legacy.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.ResponseAssertions;
-import io.prometheus.jmx.test.support.legacy.ContentConsumer;
-import io.prometheus.jmx.test.support.legacy.MetricsRequestLegacy;
-import io.prometheus.jmx.test.support.legacy.MetricsResponseLegacy;
-import java.util.Collection;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import org.antublue.test.engine.api.TestEngine;
-import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
-@TestEngine.Disabled
-public class AutoIncrementingMBeanTest extends BaseTest {
+public class AutoIncrementingMBeanTest extends AbstractTest {
 
     @TestEngine.Test
     public void testHealthy() {
-        new HealthyRequest()
-                .exchange(testContext.httpClient())
-                .accept(ResponseAssertions::assertHealthyResponse);
+        new HttpHealthyRequest()
+                .send(testContext.httpClient())
+                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
+    // TODO fix
+    /*
     @TestEngine.Test
     public void testMetrics() {
-        AtomicDouble value1 = new AtomicDouble();
-        AtomicDouble value2 = new AtomicDouble();
-        AtomicDouble value3 = new AtomicDouble();
+        double value1 = collect();
+        double value2 = collect();
+        double value3 = collect();
 
-        // TODO refactor
-        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(MetricsResponseLegacy.RESULT_200)
-                .dispatch(
-                        (ContentConsumer)
-                                content -> {
-                                    Collection<Metric> metrics = MetricsParser.parseString(content);
-                                    metrics.forEach(
-                                            metric -> {
-                                                if (metric.getName()
-                                                        .startsWith(
-                                                                "io_prometheus_jmx_autoIncrementing")) {
-                                                    assertThat(metric.getValue())
-                                                            .isGreaterThanOrEqualTo(1);
-                                                    value1.set(metric.getValue());
-                                                }
-                                            });
-                                });
+        assertThat(value1).isGreaterThan(0);
 
-        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(MetricsResponseLegacy.RESULT_200)
-                .dispatch(
-                        (ContentConsumer)
-                                content -> {
-                                    Collection<Metric> metrics = MetricsParser.parseString(content);
-                                    metrics.forEach(
-                                            metric -> {
-                                                if (metric.getName()
-                                                        .startsWith(
-                                                                "io_prometheus_jmx_autoIncrementing")) {
-                                                    value2.set(metric.getValue());
-                                                }
-                                            });
-                                });
+        assertThat(value2).isGreaterThan(value1);
+        assertThat(value2).isEqualTo(value1 + 1);
 
-        assertThatResponseForRequest(new MetricsRequestLegacy(testContext.httpClient()))
-                .isSuperset(MetricsResponseLegacy.RESULT_200)
-                .dispatch(
-                        (ContentConsumer)
-                                content -> {
-                                    Collection<Metric> metrics = MetricsParser.parseString(content);
-                                    metrics.forEach(
-                                            metric -> {
-                                                if (metric.getName()
-                                                        .startsWith(
-                                                                "io_prometheus_jmx_autoIncrementing")) {
-                                                    value3.set(metric.getValue());
-                                                }
-                                            });
-                                });
-
-        // Use value1 as a baseline value
-        assertThat(value2.get()).isEqualTo(value1.get() + 1);
-        assertThat(value3.get()).isEqualTo(value2.get() + 1);
+        assertThat(value3).isGreaterThan(value2);
+        assertThat(value3).isEqualTo(value2 + 1);
     }
+
+    private double collect() {
+        final AtomicDouble value = new AtomicDouble();
+
+        HttpResponse httpResponse =
+                new HttpPrometheusMetricsRequest().send(testContext.httpClient());
+
+        assertHttpMetricsResponse(httpResponse);
+
+        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+
+        metrics.forEach(
+                metric -> {
+                    if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
+                        assertThat(metric.getValue()).isGreaterThanOrEqualTo(1);
+                        value.set(metric.getValue());
+                    }
+                });
+
+        return value.doubleValue();
+    }
+    */
 }
