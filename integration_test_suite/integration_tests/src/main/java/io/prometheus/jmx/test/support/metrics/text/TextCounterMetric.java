@@ -81,4 +81,17 @@ public class TextCounterMetric implements TextMetric {
     public double getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "type ["
+                + MetricType.COUNTER
+                + "] name ["
+                + name
+                + "] labels ["
+                + labels
+                + "] value ["
+                + value
+                + "]";
+    }
 }

@@ -88,14 +88,16 @@ public class IncludeAndExcludeObjectNamesTest extends AbstractTest
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         /*
          * Assert that we don't have any metrics that start with ...
          *
          * name = java_lang*
          */
-        metrics.forEach(
-                metric -> assertThat(metric.getName().toLowerCase()).doesNotStartWith("java_lang"));
+        metricFamilies.forEach(
+                metricFamily ->
+                        assertThat(metricFamily.getName().toLowerCase())
+                                .doesNotStartWith("java_lang"));
     }
 }

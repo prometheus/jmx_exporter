@@ -132,59 +132,84 @@ public class MinimalTest extends AbstractTest implements Consumer<HttpResponse> 
                 .label("source", "/dev/sda2")
                 .value(0.8d)
                 .isPresent();
+
+        new TextCounterMetricAssertion(metrics)
+                .name("service_time_seconds_total")
+                .value(.2d)
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new TextGaugeMetricAssertion(metrics)
+                .name("temperature_celsius")
+                .label("location", "Berlin")
+                .value(22.3)
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jmx_exporter_build_info")
                 .label("name", buildInfoName)
                 .value(1d)
                 .isPresent();
 
-        new ProtobufGaugeMetricAssertion(metrics).name("jmx_scrape_error").value(0d).isPresent();
+        new ProtobufGaugeMetricAssertion(metricFamilies)
+                .name("jmx_scrape_error")
+                .value(0d)
+                .isPresent();
 
-        new ProtobufCounterMetricAssertion(metrics)
+        new ProtobufCounterMetricAssertion(metricFamilies)
                 .name("jmx_config_reload_success_total")
                 .value(0d)
                 .isPresent();
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new ProtobufUntypedMetricAssertion(metrics)
+        new ProtobufUntypedMetricAssertion(metricFamilies)
                 .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .label("source", "/dev/sda1")
                 .value(7.516192768E9d)
                 .isPresent();
 
-        new ProtobufUntypedMetricAssertion(metrics)
+        new ProtobufUntypedMetricAssertion(metricFamilies)
                 .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .label("source", "/dev/sda2")
                 .value(0.8d)
                 .isPresent();
+
+        new ProtobufCounterMetricAssertion(metricFamilies)
+                .name("service_time_seconds_total")
+                .value(.2d)
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new ProtobufGaugeMetricAssertion(metricFamilies)
+                .name("temperature_celsius")
+                .label("location", "Berlin")
+                .value(22.3)
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
     }
 }

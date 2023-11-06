@@ -103,7 +103,7 @@ public class ExcludeObjectNameAttributesTest extends AbstractTest
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         Set<String> excludeAttributeNameSet = new HashSet<>();
         excludeAttributeNameSet.add("_ClassPath");
@@ -114,9 +114,9 @@ public class ExcludeObjectNameAttributesTest extends AbstractTest
          *
          * name = java_lang*
          */
-        metrics.forEach(
-                metric -> {
-                    String name = metric.getName();
+        metricFamilies.forEach(
+                metricFamily -> {
+                    String name = metricFamily.getName();
                     if (name.contains("java_lang")) {
                         for (String attributeName : excludeAttributeNameSet) {
                             if (name.contains(attributeName)) {

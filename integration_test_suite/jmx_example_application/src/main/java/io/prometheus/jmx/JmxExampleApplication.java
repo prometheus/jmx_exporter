@@ -16,6 +16,9 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Gauge;
+import io.prometheus.metrics.model.snapshots.Unit;
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,6 +45,25 @@ public class JmxExampleApplication {
 
         ObjectName optionalValueMBean = new ObjectName("io.prometheus.jmx:type=optionalValue");
         mBeanServer.registerMBean(new OptionalValue(), optionalValueMBean);
+
+        Counter serviceTimeSeconds =
+                Counter.builder()
+                        .name("service_time_seconds_total")
+                        .help("total time spent serving requests")
+                        .unit(Unit.SECONDS)
+                        .register();
+
+        serviceTimeSeconds.inc(Unit.millisToSeconds(200));
+
+        Gauge temperature =
+                Gauge.builder()
+                        .name("temperature_celsius")
+                        .help("current temperature")
+                        .labelNames("location")
+                        .unit(Unit.CELSIUS)
+                        .register();
+
+        temperature.labelValues("Berlin").set(22.3);
 
         System.out.println(
                 String.format(

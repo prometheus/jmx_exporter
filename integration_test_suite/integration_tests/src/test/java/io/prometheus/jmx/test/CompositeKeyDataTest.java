@@ -92,15 +92,15 @@ public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpR
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
-        new ProtobufUntypedMetricAssertion(metrics)
+        new ProtobufUntypedMetricAssertion(metricFamilies)
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
                 .label("key_id", "1")
                 .label("key_path", "/db/query1.xq")
                 .isPresent();
 
-        new ProtobufUntypedMetricAssertion(metrics)
+        new ProtobufUntypedMetricAssertion(metricFamilies)
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
                 .label("key_id", "2")
                 .label("key_path", "/db/query2.xq")

@@ -90,18 +90,20 @@ public class LowerCaseOutputAndLabelNamesTest extends AbstractTest
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         /*
          * Assert that all metrics have lower case names and lower case label names
          */
-        metrics.forEach(
-                metric -> {
-                    assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase());
-                    metric.getMetricList()
+        metricFamilies.forEach(
+                metricFamily -> {
+                    assertThat(metricFamily.getName())
+                            .isEqualTo(metricFamily.getName().toLowerCase());
+                    metricFamily
+                            .getMetricList()
                             .forEach(
-                                    metric2 ->
-                                            metric2.getLabelList()
+                                    metric ->
+                                            metric.getLabelList()
                                                     .forEach(
                                                             labelPair -> {
                                                                 assertThat(labelPair.getName())

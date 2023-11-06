@@ -94,6 +94,12 @@ public class IncludeObjectNamesTest extends AbstractTest implements Consumer<Htt
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
+                .filter(
+                        metric ->
+                                !metric.getName()
+                                        .toLowerCase()
+                                        .startsWith("service_time_seconds_total"))
+                .filter(metric -> !metric.getName().toLowerCase().startsWith("temperature_celsius"))
                 .forEach(
                         metric -> {
                             String name = metric.getName();
@@ -105,7 +111,7 @@ public class IncludeObjectNamesTest extends AbstractTest implements Consumer<Htt
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         /*
          * We have to filter metrics that start with ...
@@ -118,12 +124,32 @@ public class IncludeObjectNamesTest extends AbstractTest implements Consumer<Htt
          *
          * ... because they are registered directly and are not MBeans
          */
-        metrics.stream()
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_exporter"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_config"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
+        metricFamilies.stream()
+                .filter(
+                        metricFamily ->
+                                !metricFamily.getName().toLowerCase().startsWith("jmx_exporter"))
+                .filter(
+                        metricFamily ->
+                                !metricFamily.getName().toLowerCase().startsWith("jmx_config"))
+                .filter(
+                        metricFamily ->
+                                !metricFamily.getName().toLowerCase().startsWith("jmx_scrape"))
+                .filter(metricFamily -> !metricFamily.getName().toLowerCase().startsWith("jvm_"))
+                .filter(
+                        metricFamily ->
+                                !metricFamily.getName().toLowerCase().startsWith("process_"))
+                .filter(
+                        metricFamily ->
+                                !metricFamily
+                                        .getName()
+                                        .toLowerCase()
+                                        .startsWith("service_time_seconds_total"))
+                .filter(
+                        metricFamily ->
+                                !metricFamily
+                                        .getName()
+                                        .toLowerCase()
+                                        .startsWith("temperature_celsius"))
                 .forEach(
                         metric -> {
                             String name = metric.getName();

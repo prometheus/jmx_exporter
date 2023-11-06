@@ -80,4 +80,17 @@ public class TextGaugeMetric implements TextMetric {
     public double getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "type ["
+                + MetricType.GAUGE
+                + "] name ["
+                + name
+                + "] labels ["
+                + labels
+                + "] value ["
+                + value
+                + "]";
+    }
 }

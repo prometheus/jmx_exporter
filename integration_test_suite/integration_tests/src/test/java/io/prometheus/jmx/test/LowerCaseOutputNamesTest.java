@@ -85,12 +85,14 @@ public class LowerCaseOutputNamesTest extends AbstractTest implements Consumer<H
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         /*
          * Assert that all metrics have lower case names
          */
-        metrics.forEach(
-                metric -> assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase()));
+        metricFamilies.forEach(
+                metricFamily ->
+                        assertThat(metricFamily.getName())
+                                .isEqualTo(metricFamily.getName().toLowerCase()));
     }
 }

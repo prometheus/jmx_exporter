@@ -105,27 +105,30 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metrics = ProtobufMetricsParser.parse(httpResponse);
+        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        new ProtobufGaugeMetricAssertion(metrics)
+        new ProtobufGaugeMetricAssertion(metricFamilies)
                 .name("jmx_exporter_build_info")
                 .label("name", buildInfoName)
                 .value(1d)
                 .isPresent();
 
-        new ProtobufGaugeMetricAssertion(metrics).name("jmx_scrape_error").value(0d).isPresent();
+        new ProtobufGaugeMetricAssertion(metricFamilies)
+                .name("jmx_scrape_error")
+                .value(0d)
+                .isPresent();
 
-        new ProtobufCounterMetricAssertion(metrics)
+        new ProtobufCounterMetricAssertion(metricFamilies)
                 .name("jmx_config_reload_success_total")
                 .value(0d)
                 .isPresent();
 
-        new ProtobufCounterMetricAssertion(metrics)
+        new ProtobufCounterMetricAssertion(metricFamilies)
                 .name("io_prometheus_jmx_optionalValue_Value")
                 .value(345d);
     }

@@ -81,4 +81,17 @@ public class TextUntypedMetric implements TextMetric {
     public double getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "type ["
+                + MetricType.UNTYPED
+                + "] name ["
+                + name
+                + "] labels ["
+                + labels
+                + "] value ["
+                + value
+                + "]";
+    }
 }
