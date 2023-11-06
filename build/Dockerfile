@@ -4,6 +4,19 @@ WORKDIR /opt/jmx_exporter
 COPY . .
 RUN mvn package -DskipTests
 
+FROM anapsix/alpine-java:9 as scratch
+
+RUN apk update && apk upgrade && apk --update add curl && rm -rf /tmp/* /var/cache/apk/*
+
+ENV VERSION 0.20.1
+ENV JAR jmx_prometheus_httpserver-$VERSION.jar
+COPY --from=javabuilder /opt/jmx_exporter/jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-$VERSION-SNAPSHOT.jar /opt/jmx_exporter/$JAR
+COPY build/start.sh /opt/jmx_exporter
+COPY build/config.yml /opt/jmx_exporter
+RUN chmod +x /opt/jmx_exporter/start.sh
+
+CMD ["/opt/jmx_exporter/start.sh"]
+
 FROM quay.io/sysdig/sysdig-mini-ubi:1.5.8 as ubi
 
 RUN microdnf --assumeyes --disableplugin=subscription-manager --nodocs update && \
