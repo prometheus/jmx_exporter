@@ -37,7 +37,7 @@ public class TextUntypedMetricAssertion {
     public void isPresent() {
         List<TextUntypedMetric> metrics =
                 this.metrics.stream()
-                        .filter(metric -> TextCounterMetric.MetricType.UNTYPED == metric.getType())
+                        .filter(metric -> metric.getType() == TextCounterMetric.MetricType.UNTYPED)
                         .filter(metric -> name.equals(metric.getName()))
                         .filter(new TextMetricLabelsFilter(labels))
                         .map(textMetric -> (TextUntypedMetric) textMetric)
@@ -48,7 +48,7 @@ public class TextUntypedMetricAssertion {
             throw new AssertionFailedError(
                     String.format(
                             "Metric type [%s] name [%s] labels [%s] value [%f] is not present",
-                            TextMetric.MetricType.COUNTER, name, labels, value));
+                            TextMetric.MetricType.UNTYPED, name, labels, value));
         }
     }
 

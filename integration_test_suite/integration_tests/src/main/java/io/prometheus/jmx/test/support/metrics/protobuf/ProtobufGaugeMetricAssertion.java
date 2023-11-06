@@ -54,7 +54,7 @@ public class ProtobufGaugeMetricAssertion {
     public void isPresent() {
         List<Metrics.Metric> collection =
                 this.metrics.stream()
-                        .filter(metrics -> Metrics.MetricType.GAUGE == metrics.getType())
+                        .filter(metrics -> metrics.getType() == Metrics.MetricType.GAUGE)
                         .filter(metrics -> name.equals(metrics.getName()))
                         .flatMap(new ProtobufMetricLabelsFilter(labels))
                         .filter(metric -> value == null || metric.getGauge().getValue() == value)

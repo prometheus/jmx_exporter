@@ -53,7 +53,7 @@ public class TextCounterMetricAssertion {
     public void isPresent() {
         List<TextCounterMetric> metrics =
                 this.metrics.stream()
-                        .filter(metric -> TextCounterMetric.MetricType.COUNTER == metric.getType())
+                        .filter(metric -> metric.getType() == TextCounterMetric.MetricType.COUNTER )
                         .filter(metric -> name.equals(metric.getName()))
                         .filter(new TextMetricLabelsFilter(labels))
                         .map(textMetric -> (TextCounterMetric) textMetric)

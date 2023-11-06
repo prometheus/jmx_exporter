@@ -79,7 +79,7 @@ public class ProtobufCounterMetricAssertion {
     public void isPresent() {
         List<Metrics.Metric> collection =
                 metrics.stream()
-                        .filter(metrics -> Metrics.MetricType.COUNTER == metrics.getType())
+                        .filter(metrics -> metrics.getType() == Metrics.MetricType.COUNTER)
                         .filter(metrics -> name.equals(metrics.getName()))
                         .flatMap(new ProtobufMetricLabelsFilter(labels))
                         .filter(metric -> value == null || metric.getCounter().getValue() == value)

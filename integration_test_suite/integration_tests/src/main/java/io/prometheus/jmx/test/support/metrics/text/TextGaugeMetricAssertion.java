@@ -53,7 +53,7 @@ public class TextGaugeMetricAssertion {
     public void isPresent() {
         List<TextGaugeMetric> metrics =
                 this.metrics.stream()
-                        .filter(metric -> TextCounterMetric.MetricType.GAUGE == metric.getType())
+                        .filter(metric -> metric.getType() == TextCounterMetric.MetricType.GAUGE)
                         .filter(metric -> name.equals(metric.getName()))
                         .filter(new TextMetricLabelsFilter(labels))
                         .map(textMetric -> (TextGaugeMetric) textMetric)
@@ -64,7 +64,7 @@ public class TextGaugeMetricAssertion {
             throw new AssertionFailedError(
                     String.format(
                             "Metric type [%s] name [%s] labels [%s] value [%f] is not present",
-                            TextMetric.MetricType.COUNTER, name, labels, value));
+                            TextMetric.MetricType.GAUGE, name, labels, value));
         }
     }
 

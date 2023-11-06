@@ -54,7 +54,7 @@ public class ProtobufUntypedMetricAssertion {
     public void isPresent() {
         List<Metrics.Metric> collection =
                 metrics.stream()
-                        .filter(metrics -> Metrics.MetricType.UNTYPED == metrics.getType())
+                        .filter(metrics -> metrics.getType() == Metrics.MetricType.UNTYPED )
                         .filter(metrics -> name.equals(metrics.getName()))
                         .flatMap(new ProtobufMetricLabelsFilter(labels))
                         .filter(metric -> value == null || metric.getUntyped().getValue() == value)
