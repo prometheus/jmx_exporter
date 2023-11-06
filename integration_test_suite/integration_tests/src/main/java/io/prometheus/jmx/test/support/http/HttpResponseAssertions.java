@@ -2,8 +2,6 @@ package io.prometheus.jmx.test.support.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.charset.StandardCharsets;
-
 public class HttpResponseAssertions {
 
     private HttpResponseAssertions() {
@@ -25,17 +23,15 @@ public class HttpResponseAssertions {
 
     public static void assertHttpResponseHasBody(HttpResponse httpResponse) {
         assertThat(httpResponse.body()).isNotNull();
-        assertThat(httpResponse.body().length).isGreaterThan(0);
+        assertThat(httpResponse.body().bytes().length).isGreaterThan(0);
     }
 
     public static void assertHttpHealthyResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
         assertThat(httpResponse.code()).isEqualTo(200);
         assertThat(httpResponse.body()).isNotNull();
-        assertThat(httpResponse.body().length).isGreaterThan(0);
-
-        String body = new String(httpResponse.body(), StandardCharsets.UTF_8);
-        assertThat(body).isEqualTo("Exporter is healthy.\n");
+        assertThat(httpResponse.body().string().length()).isGreaterThan(0);
+        assertThat(httpResponse.body().string()).isEqualTo("Exporter is healthy.\n");
     }
 
     public static void assertHttpMetricsResponse(HttpResponse httpResponse) {

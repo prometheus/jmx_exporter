@@ -32,7 +32,7 @@ public class TextMetricsParser {
     }
 
     /**
-     * Method to parse a collection of TextMetrics
+     * Method to parse an HttpResponse that contains text format metrics
      *
      * @param httpResponse httpResponse
      * @return a Collection of TextMetrics
@@ -42,7 +42,7 @@ public class TextMetricsParser {
             throws TextMetricsParserException {
         Collection<TextMetric> metrics = new ArrayList<>();
 
-        try (LineReader lineReader = new LineReader(httpResponse.string())) {
+        try (LineReader lineReader = new LineReader(httpResponse.body().string())) {
             String typeLine;
             String helpLine;
 
@@ -59,7 +59,7 @@ public class TextMetricsParser {
                     if (metricLine == null) {
                         break;
                     }
-                    metrics.add(parse(typeLine, helpLine, metricLine));
+                    metrics.add(parseMetric(typeLine, helpLine, metricLine));
                 }
             }
 
@@ -91,7 +91,7 @@ public class TextMetricsParser {
         return line;
     }
 
-    private static TextMetric parse(String typeLine, String helpLine, String metricLine) {
+    private static TextMetric parseMetric(String typeLine, String helpLine, String metricLine) {
         String help = helpLine.substring("# HELP".length());
         String name;
         TreeMap<String, String> labels = new TreeMap<>();

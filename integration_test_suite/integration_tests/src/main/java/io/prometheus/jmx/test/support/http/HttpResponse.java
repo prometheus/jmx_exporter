@@ -1,7 +1,6 @@
 package io.prometheus.jmx.test.support.http;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import okhttp3.Headers;
 import okhttp3.ResponseBody;
@@ -13,7 +12,7 @@ public class HttpResponse {
 
     private final int code;
     private final Headers headers;
-    private final byte[] body;
+    private final HttpResponseBody body;
 
     public HttpResponse(okhttp3.Response response) throws IOException {
         this.code = response.code();
@@ -21,9 +20,9 @@ public class HttpResponse {
 
         ResponseBody responseBody = response.body();
         if (responseBody != null) {
-            this.body = responseBody.bytes();
+            body = new HttpResponseBody(responseBody.bytes());
         } else {
-            this.body = null;
+            body = null;
         }
     }
 
@@ -35,16 +34,8 @@ public class HttpResponse {
         return headers;
     }
 
-    public byte[] body() {
+    public HttpResponseBody body() {
         return body;
-    }
-
-    public String string() {
-        if (body != null) {
-            return new String(body, StandardCharsets.UTF_8);
-        } else {
-            return null;
-        }
     }
 
     public HttpResponse accept(Consumer<HttpResponse> consumer) {

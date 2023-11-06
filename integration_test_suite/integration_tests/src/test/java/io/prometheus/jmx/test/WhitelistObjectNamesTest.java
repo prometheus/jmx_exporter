@@ -94,12 +94,6 @@ public class WhitelistObjectNamesTest extends AbstractTest implements Consumer<H
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
                 .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
-                .filter(
-                        metric ->
-                                !metric.getName()
-                                        .toLowerCase()
-                                        .startsWith("service_time_seconds_total"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("temperature_celsius"))
                 .forEach(
                         metric -> {
                             String name = metric.getName();
@@ -138,18 +132,6 @@ public class WhitelistObjectNamesTest extends AbstractTest implements Consumer<H
                 .filter(
                         metricFamily ->
                                 !metricFamily.getName().toLowerCase().startsWith("process_"))
-                .filter(
-                        metricFamily ->
-                                !metricFamily
-                                        .getName()
-                                        .toLowerCase()
-                                        .startsWith("service_time_seconds_total"))
-                .filter(
-                        metricFamily ->
-                                !metricFamily
-                                        .getName()
-                                        .toLowerCase()
-                                        .startsWith("temperature_celsius"))
                 .forEach(
                         metricFamily -> {
                             String name = metricFamily.getName();

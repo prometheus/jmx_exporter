@@ -32,7 +32,7 @@ public class ProtobufMetricsParser {
     }
 
     /**
-     * Method to parse a Collection of Metrics.MetricFamily (Protobuf) metrics
+     * Method to parse an HttpResponse that contains Protobuf format metrics
      *
      * @param httpResponse httpResponse
      * @return a Collection of Metrics.MetricFamily
@@ -42,7 +42,7 @@ public class ProtobufMetricsParser {
             throws ProtobufMetricsParserException {
         List<Metrics.MetricFamily> metricFamilies = new ArrayList<>();
 
-        try (InputStream inputStream = new ByteArrayInputStream(httpResponse.body())) {
+        try (InputStream inputStream = new ByteArrayInputStream(httpResponse.body().bytes())) {
             while (true) {
                 Metrics.MetricFamily metricFamily =
                         Metrics.MetricFamily.parseDelimitedFrom(inputStream);

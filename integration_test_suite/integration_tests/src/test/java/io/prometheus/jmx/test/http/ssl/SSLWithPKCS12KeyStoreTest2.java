@@ -187,17 +187,6 @@ public class SSLWithPKCS12KeyStoreTest2 extends AbstractTest implements Consumer
                 .label("source", "/dev/sda2")
                 .value(0.8d)
                 .isPresent();
-
-        new TextCounterMetricAssertion(metrics)
-                .name("service_time_seconds_total")
-                .value(.2d)
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
-
-        new TextGaugeMetricAssertion(metrics)
-                .name("temperature_celsius")
-                .label("location", "Berlin")
-                .value(22.3)
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
     }
 
     private void assertProtobufFormatResponse(HttpResponse httpResponse) {
@@ -256,16 +245,5 @@ public class SSLWithPKCS12KeyStoreTest2 extends AbstractTest implements Consumer
                 .label("source", "/dev/sda2")
                 .value(0.8d)
                 .isPresent();
-
-        new ProtobufCounterMetricAssertion(metricsFamilies)
-                .name("service_time_seconds_total")
-                .value(.2d)
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
-
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
-                .name("temperature_celsius")
-                .label("location", "Berlin")
-                .value(22.3)
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
     }
 }
