@@ -3,7 +3,7 @@
 
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>integration_test_suite</artifactId>
-    <version>0.20.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Prometheus JMX Exporter - Integration Test Suite</name>
     <description>
         See https://github.com/prometheus/jmx_exporter/blob/master/README.md
