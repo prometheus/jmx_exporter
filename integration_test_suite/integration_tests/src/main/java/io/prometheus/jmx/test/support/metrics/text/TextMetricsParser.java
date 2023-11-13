@@ -40,9 +40,20 @@ public class TextMetricsParser {
      */
     public static Collection<TextMetric> parse(HttpResponse httpResponse)
             throws TextMetricsParserException {
+        return parse(httpResponse.body().string());
+    }
+
+    /**
+     * Method to parse a String that contains text format metrics
+     *
+     * @param string string
+     * @return a Collection of TextMetrics
+     * @throws TextMetricsParserException TextMetricsParserException
+     */
+    public static Collection<TextMetric> parse(String string) throws TextMetricsParserException {
         Collection<TextMetric> metrics = new ArrayList<>();
 
-        try (LineReader lineReader = new LineReader(httpResponse.body().string())) {
+        try (LineReader lineReader = new LineReader(string)) {
             String typeLine;
             String helpLine;
 

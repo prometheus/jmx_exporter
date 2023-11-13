@@ -16,9 +16,19 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
+import io.prometheus.jmx.test.support.metrics.text.TextMetric;
+import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
+import io.prometheus.jmx.test.support.metrics.text.TextUntypedMetric;
+import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
+import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
 public class AutoIncrementingMBeanTest extends AbstractTest {
 
@@ -29,15 +39,11 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
-    // TODO fix
-    /*
     @TestEngine.Test
     public void testMetrics() {
         double value1 = collect();
         double value2 = collect();
         double value3 = collect();
-
-        assertThat(value1).isGreaterThan(0);
 
         assertThat(value2).isGreaterThan(value1);
         assertThat(value2).isEqualTo(value1 + 1);
@@ -59,12 +65,10 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
         metrics.forEach(
                 metric -> {
                     if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                        assertThat(metric.getValue()).isGreaterThanOrEqualTo(1);
-                        value.set(metric.getValue());
+                        value.set(((TextUntypedMetric) metric).getValue());
                     }
                 });
 
         return value.doubleValue();
     }
-    */
 }

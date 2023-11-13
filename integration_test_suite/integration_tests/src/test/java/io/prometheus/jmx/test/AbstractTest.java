@@ -37,7 +37,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-@TestEngine.BaseClass
 public abstract class AbstractTest {
 
     private static final String BASE_URL = "http://localhost";
