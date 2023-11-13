@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.metrics.text.util;
+package io.prometheus.jmx.test.support.metrics.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

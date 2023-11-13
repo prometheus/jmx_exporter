@@ -26,10 +26,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
@@ -67,15 +65,7 @@ public class WhitelistObjectNamesTest extends AbstractTest implements Consumer<H
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
-
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         /*
          * We have to filter metrics that start with ...
@@ -89,52 +79,14 @@ public class WhitelistObjectNamesTest extends AbstractTest implements Consumer<H
          * ... because they are registered directly and are not MBeans
          */
         metrics.stream()
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_exporter"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_config"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jmx_scrape"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("jvm_"))
-                .filter(metric -> !metric.getName().toLowerCase().startsWith("process_"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_exporter"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_config"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_scrape"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jvm_"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("process_"))
                 .forEach(
                         metric -> {
-                            String name = metric.getName();
-                            boolean match =
-                                    name.startsWith("java_lang")
-                                            || name.startsWith("io_prometheus_jmx");
-                            assertThat(match).isTrue();
-                        });
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
-
-        /*
-         * We have to filter metrics that start with ...
-         *
-         * jmx_exporter
-         * jmx_config
-         * jmx_scrape
-         * jvm_
-         * process_
-         *
-         * ... because they are registered directly and are not MBeans
-         */
-        metricFamilies.stream()
-                .filter(
-                        metricFamily ->
-                                !metricFamily.getName().toLowerCase().startsWith("jmx_exporter"))
-                .filter(
-                        metricFamily ->
-                                !metricFamily.getName().toLowerCase().startsWith("jmx_config"))
-                .filter(
-                        metricFamily ->
-                                !metricFamily.getName().toLowerCase().startsWith("jmx_scrape"))
-                .filter(metricFamily -> !metricFamily.getName().toLowerCase().startsWith("jvm_"))
-                .filter(
-                        metricFamily ->
-                                !metricFamily.getName().toLowerCase().startsWith("process_"))
-                .forEach(
-                        metricFamily -> {
-                            String name = metricFamily.getName();
+                            String name = metric.name();
                             boolean match =
                                     name.startsWith("java_lang")
                                             || name.startsWith("io_prometheus_jmx");

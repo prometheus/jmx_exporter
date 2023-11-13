@@ -14,23 +14,38 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.metrics.text.util;
+package io.prometheus.jmx.test.support.metrics;
 
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import java.util.TreeMap;
-import java.util.function.Predicate;
+import java.util.Map;
 
-public class TextMetricLabelsFilter implements Predicate<TextMetric> {
+/** Interface implemented by all metrics */
+public interface Metric {
 
-    private final TreeMap<String, String> labels;
+    /**
+     * Method to get the Metric type
+     *
+     * @return the Metric type
+     */
+    String type();
 
-    public TextMetricLabelsFilter(TreeMap<String, String> labels) {
-        this.labels = labels;
-    }
+    /**
+     * Method to get the Metric help
+     *
+     * @return the Metric help
+     */
+    String help();
 
-    @Override
-    public boolean test(TextMetric metric) {
-        TreeMap<String, String> labels = metric.getLabels();
-        return labels.entrySet().containsAll(this.labels.entrySet());
-    }
+    /**
+     * Method to get the Metric name
+     *
+     * @return the Metric name
+     */
+    String name();
+
+    /**
+     * Metric to get the Metric labels
+     *
+     * @return the Metric labels
+     */
+    Map<String, String> labels();
 }

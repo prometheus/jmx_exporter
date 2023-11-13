@@ -14,43 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.metrics.text;
+package io.prometheus.jmx.test.support.metrics;
 
-import java.util.TreeMap;
-
-public interface TextMetric {
-
-    enum MetricType {
-        COUNTER,
-        GAUGE,
-        UNTYPED
-    }
+/** Interface implemented by all metrics that have a double value */
+public interface DoubleValueMetric extends Metric {
 
     /**
-     * Method to get the metric type
+     * Method to get the Metric value
      *
-     * @return the metric type
+     * @return the Metric value
      */
-    MetricType getType();
-
-    /**
-     * Method to get the metric name
-     *
-     * @return the metric name
-     */
-    String getName();
-
-    /**
-     * Method to get the metric help
-     *
-     * @return the metric help
-     */
-    String getHelp();
-
-    /**
-     * Method to get the metric labels
-     *
-     * @return the metric labels
-     */
-    TreeMap<String, String> getLabels();
+    double value();
 }

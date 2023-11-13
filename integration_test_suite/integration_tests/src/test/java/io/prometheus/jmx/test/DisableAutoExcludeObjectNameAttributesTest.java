@@ -26,10 +26,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -70,15 +68,7 @@ public class DisableAutoExcludeObjectNameAttributesTest extends AbstractTest
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
-
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         Set<String> excludeAttributeNameSet = new HashSet<>();
         excludeAttributeNameSet.add("_ClassPath");
@@ -91,33 +81,8 @@ public class DisableAutoExcludeObjectNameAttributesTest extends AbstractTest
          */
         metrics.forEach(
                 metric -> {
-                    String name = metric.getName();
-                    if (name.contains("java_lang")) {
-                        for (String attributeName : excludeAttributeNameSet) {
-                            if (name.contains(attributeName)) {
-                                fail("metric found");
-                            }
-                        }
-                    }
-                });
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
-
-        Set<String> excludeAttributeNameSet = new HashSet<>();
-        excludeAttributeNameSet.add("_ClassPath");
-        excludeAttributeNameSet.add("_SystemProperties");
-
-        /*
-         * Assert that we don't have any metrics that start with ...
-         *
-         * name = java_lang*
-         */
-        metricFamilies.forEach(
-                metricFamily -> {
-                    String name = metricFamily.getName();
-                    if (name.contains("java_lang")) {
+                    String name = metric.name();
+                    if (metric.name().contains("java_lang")) {
                         for (String attributeName : excludeAttributeNameSet) {
                             if (name.contains(attributeName)) {
                                 fail("metric found");

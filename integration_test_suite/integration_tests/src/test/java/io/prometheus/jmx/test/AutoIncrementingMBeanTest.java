@@ -23,9 +23,9 @@ import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextUntypedMetric;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetric;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
@@ -60,12 +60,12 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
 
         assertHttpMetricsResponse(httpResponse);
 
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         metrics.forEach(
                 metric -> {
-                    if (metric.getName().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                        value.set(((TextUntypedMetric) metric).getValue());
+                    if (metric.name().startsWith("io_prometheus_jmx_autoIncrementing")) {
+                        value.set(((DoubleValueMetric) metric).value());
                     }
                 });
 

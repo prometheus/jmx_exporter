@@ -28,16 +28,9 @@ import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufCounterMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufGaugeMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufUntypedMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.text.TextCounterMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.text.TextGaugeMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextUntypedMetricAssertion;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -176,119 +169,65 @@ public class BasicAuthenticationSHA512Test extends AbstractBasicAuthenticationTe
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
-
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        new TextGaugeMetricAssertion(metrics)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jmx_exporter_build_info")
                 .label("name", buildInfoName)
                 .value(1d)
                 .isPresent();
 
-        new TextGaugeMetricAssertion(metrics).name("jmx_scrape_error").value(0d).isPresent();
-
-        new TextCounterMetricAssertion(metrics)
-                .name("jmx_config_reload_success_total")
-                .value(0d)
-                .isPresent();
-
-        new TextGaugeMetricAssertion(metrics)
-                .name("jvm_memory_used_bytes")
-                .label("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
-
-        new TextGaugeMetricAssertion(metrics)
-                .name("jvm_memory_used_bytes")
-                .label("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
-
-        new TextGaugeMetricAssertion(metrics)
-                .name("jvm_memory_used_bytes")
-                .label("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
-
-        new TextGaugeMetricAssertion(metrics)
-                .name("jvm_memory_used_bytes")
-                .label("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
-
-        new TextUntypedMetricAssertion(metrics)
-                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .label("source", "/dev/sda1")
-                .value(7.516192768E9d)
-                .isPresent();
-
-        new TextUntypedMetricAssertion(metrics)
-                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .label("source", "/dev/sda2")
-                .value(0.8d)
-                .isPresent();
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricsFamilies =
-                ProtobufMetricsParser.parse(httpResponse);
-
-        String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
-                        ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
-
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
-                .name("jmx_exporter_build_info")
-                .label("name", buildInfoName)
-                .value(1d)
-                .isPresent();
-
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jmx_scrape_error")
                 .value(0d)
                 .isPresent();
 
-        new ProtobufCounterMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("COUNTER")
                 .name("jmx_config_reload_success_total")
                 .value(0d)
                 .isPresent();
 
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new ProtobufGaugeMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new ProtobufUntypedMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .label("source", "/dev/sda1")
                 .value(7.516192768E9d)
                 .isPresent();
 
-        new ProtobufUntypedMetricAssertion(metricsFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .label("source", "/dev/sda2")
                 .value(0.8d)

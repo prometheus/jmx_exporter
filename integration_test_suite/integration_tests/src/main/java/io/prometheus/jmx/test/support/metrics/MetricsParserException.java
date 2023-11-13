@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.metrics.text;
+package io.prometheus.jmx.test.support.metrics;
 
-public class TextMetricsParserException extends RuntimeException {
+public class MetricsParserException extends RuntimeException {
 
     /**
      * Constructor
      *
-     * @param message
-     * @param throwable
+     * @param message message
+     * @param throwable throwable
      */
-    public TextMetricsParserException(String message, Throwable throwable) {
+    public MetricsParserException(String message, Throwable throwable) {
         super(message, throwable);
     }
 }

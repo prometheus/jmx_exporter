@@ -26,10 +26,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
@@ -67,15 +65,7 @@ public class ExcludeObjectNamesTest extends AbstractTest implements Consumer<Htt
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
-
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         /*
          * Assert that we don't have any metrics that start with ...
@@ -83,20 +73,6 @@ public class ExcludeObjectNamesTest extends AbstractTest implements Consumer<Htt
          * name = java_lang*
          */
         metrics.forEach(
-                metric -> assertThat(metric.getName().toLowerCase()).doesNotStartWith("java_lang"));
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
-
-        /*
-         * Assert that we don't have any metrics that start with ...
-         *
-         * name = java_lang*
-         */
-        metricFamilies.forEach(
-                metricFamily ->
-                        assertThat(metricFamily.getName().toLowerCase())
-                                .doesNotStartWith("java_lang"));
+                metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
     }
 }

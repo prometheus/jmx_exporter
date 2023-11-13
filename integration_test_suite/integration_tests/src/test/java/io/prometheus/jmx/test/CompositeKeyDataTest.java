@@ -25,12 +25,9 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufUntypedMetricAssertion;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextUntypedMetricAssertion;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
@@ -68,39 +65,17 @@ public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpR
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
-
-        new TextUntypedMetricAssertion(metrics)
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
                 .label("key_id", "1")
                 .label("key_path", "/db/query1.xq")
                 .isPresent();
 
-        new TextUntypedMetricAssertion(metrics)
-                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "2")
-                .label("key_path", "/db/query2.xq")
-                .isPresent();
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
-
-        new ProtobufUntypedMetricAssertion(metricFamilies)
-                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "1")
-                .label("key_path", "/db/query1.xq")
-                .isPresent();
-
-        new ProtobufUntypedMetricAssertion(metricFamilies)
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
                 .label("key_id", "2")
                 .label("key_path", "/db/query2.xq")

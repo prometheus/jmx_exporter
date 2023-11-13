@@ -26,10 +26,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.protobuf.ProtobufMetricsParser;
-import io.prometheus.jmx.test.support.metrics.text.TextMetric;
-import io.prometheus.jmx.test.support.metrics.text.TextMetricsParser;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
@@ -68,55 +66,16 @@ public class LowerCaseOutputAndLabelNamesTest extends AbstractTest
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        if (isProtoBufFormat(httpResponse)) {
-            assertProtobufFormatResponse(httpResponse);
-        } else {
-            assertTextFormatResponse(httpResponse);
-        }
-    }
-
-    private void assertTextFormatResponse(HttpResponse httpResponse) {
-        Collection<TextMetric> metrics = TextMetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         /*
          * Assert that all metrics have lower case names and lower case label names
          */
         metrics.forEach(
                 metric -> {
-                    assertThat(metric.getName()).isEqualTo(metric.getName().toLowerCase());
-                    metric.getLabels()
+                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase());
+                    metric.labels()
                             .forEach((key, value) -> assertThat(key).isEqualTo(key.toLowerCase()));
-                });
-    }
-
-    private void assertProtobufFormatResponse(HttpResponse httpResponse) {
-        Collection<Metrics.MetricFamily> metricFamilies = ProtobufMetricsParser.parse(httpResponse);
-
-        /*
-         * Assert that all metrics have lower case names and lower case label names
-         */
-        metricFamilies.forEach(
-                metricFamily -> {
-                    assertThat(metricFamily.getName())
-                            .isEqualTo(metricFamily.getName().toLowerCase());
-                    metricFamily
-                            .getMetricList()
-                            .forEach(
-                                    metric ->
-                                            metric.getLabelList()
-                                                    .forEach(
-                                                            labelPair -> {
-                                                                assertThat(labelPair.getName())
-                                                                        .isEqualTo(
-                                                                                labelPair
-                                                                                        .getName()
-                                                                                        .toLowerCase());
-                                                                assertThat(labelPair.getName())
-                                                                        .isEqualTo(
-                                                                                labelPair
-                                                                                        .getName()
-                                                                                        .toLowerCase());
-                                                            }));
                 });
     }
 }
