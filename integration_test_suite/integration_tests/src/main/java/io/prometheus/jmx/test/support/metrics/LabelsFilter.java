@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 
-/** Class to filter to test of a Metric contains a subset of labels */
+/** Class to filter to test if a Metric contains a subset of labels */
 public class LabelsFilter implements Predicate<Metric> {
 
     private final TreeMap<String, String> labels;

@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-public class ConcreteDoubleValueMetric implements DoubleValueMetric {
+/** Class to implement a concrete DoubleValueMetric */
+public class DoubleValueMetricImpl implements DoubleValueMetric {
 
     private final String type;
     private final String name;
@@ -29,7 +30,16 @@ public class ConcreteDoubleValueMetric implements DoubleValueMetric {
     private final TreeMap<String, String> labels;
     private final double value;
 
-    public ConcreteDoubleValueMetric(
+    /**
+     * Constructor
+     *
+     * @param type type
+     * @param help help
+     * @param name name
+     * @param labels labels
+     * @param value value
+     */
+    public DoubleValueMetricImpl(
             String type, String help, String name, TreeMap<String, String> labels, double value) {
         this.type = type;
         this.help = help;
@@ -67,7 +77,7 @@ public class ConcreteDoubleValueMetric implements DoubleValueMetric {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ConcreteDoubleValueMetric that = (ConcreteDoubleValueMetric) o;
+        DoubleValueMetricImpl that = (DoubleValueMetricImpl) o;
         return Double.compare(value, that.value) == 0
                 && Objects.equals(type, that.type)
                 && Objects.equals(help, that.help)

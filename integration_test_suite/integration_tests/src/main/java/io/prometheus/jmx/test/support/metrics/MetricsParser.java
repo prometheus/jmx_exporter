@@ -19,14 +19,17 @@ package io.prometheus.jmx.test.support.metrics;
 import io.prometheus.jmx.test.support.http.HttpContentType;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.metrics.impl.ConcreteDoubleValueMetric;
-import io.prometheus.jmx.test.support.metrics.util.LineReader;
+import io.prometheus.jmx.test.support.metrics.impl.DoubleValueMetricImpl;
 import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_21_7.Metrics;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -48,13 +51,13 @@ public class MetricsParser {
     public static Collection<Metric> parse(HttpResponse httpResponse) {
         if (Objects.requireNonNull(httpResponse.headers().get(HttpHeader.CONTENT_TYPE))
                 .contains(HttpContentType.PROTOBUF)) {
-            return parseProtobuf(httpResponse);
+            return parseProtobufMetrics(httpResponse);
         } else {
-            return parseText(httpResponse);
+            return parseTextMetrics(httpResponse);
         }
     }
 
-    private static Collection<Metric> parseProtobuf(HttpResponse httpResponse) {
+    private static Collection<Metric> parseProtobufMetrics(HttpResponse httpResponse) {
         Collection<Metric> collection = new ArrayList<>();
 
         try (InputStream inputStream = new ByteArrayInputStream(httpResponse.body().bytes())) {
@@ -75,15 +78,15 @@ public class MetricsParser {
                             {
                                 Metrics.Counter counter = metric.getCounter();
 
-                                ConcreteDoubleValueMetric concreteDoubleValueMetric =
-                                        new ConcreteDoubleValueMetric(
+                                DoubleValueMetricImpl doubleValueMetricImpl =
+                                        new DoubleValueMetricImpl(
                                                 "COUNTER",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
                                                 counter.getValue());
 
-                                collection.add(concreteDoubleValueMetric);
+                                collection.add(doubleValueMetricImpl);
 
                                 break;
                             }
@@ -91,15 +94,15 @@ public class MetricsParser {
                             {
                                 Metrics.Gauge gauge = metric.getGauge();
 
-                                ConcreteDoubleValueMetric concreteDoubleValueMetric =
-                                        new ConcreteDoubleValueMetric(
+                                DoubleValueMetricImpl doubleValueMetricImpl =
+                                        new DoubleValueMetricImpl(
                                                 "GAUGE",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
                                                 gauge.getValue());
 
-                                collection.add(concreteDoubleValueMetric);
+                                collection.add(doubleValueMetricImpl);
 
                                 break;
                             }
@@ -107,15 +110,15 @@ public class MetricsParser {
                             {
                                 Metrics.Untyped untyped = metric.getUntyped();
 
-                                ConcreteDoubleValueMetric concreteDoubleValueMetric =
-                                        new ConcreteDoubleValueMetric(
+                                DoubleValueMetricImpl doubleValueMetricImpl =
+                                        new DoubleValueMetricImpl(
                                                 "UNTYPED",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
                                                 untyped.getValue());
 
-                                collection.add(concreteDoubleValueMetric);
+                                collection.add(doubleValueMetricImpl);
 
                                 break;
                             }
@@ -133,10 +136,11 @@ public class MetricsParser {
         }
     }
 
-    private static Collection<Metric> parseText(HttpResponse httpResponse) {
+    private static Collection<Metric> parseTextMetrics(HttpResponse httpResponse) {
         Collection<Metric> metrics = new ArrayList<>();
 
-        try (LineReader lineReader = new LineReader(httpResponse.body().string())) {
+        try (LineReader lineReader =
+                new LineReader(new StringReader(httpResponse.body().string()))) {
             String typeLine;
             String helpLine;
 
@@ -203,11 +207,11 @@ public class MetricsParser {
         double value = Double.parseDouble(metricLine.substring(metricLine.lastIndexOf(" ")));
 
         if (typeLine.equalsIgnoreCase("COUNTER")) {
-            return new ConcreteDoubleValueMetric("COUNTER", help, name, labels, value);
+            return new DoubleValueMetricImpl("COUNTER", help, name, labels, value);
         } else if (typeLine.equalsIgnoreCase("GAUGE")) {
-            return new ConcreteDoubleValueMetric("GAUGE", help, name, labels, value);
+            return new DoubleValueMetricImpl("GAUGE", help, name, labels, value);
         } else {
-            return new ConcreteDoubleValueMetric("UNTYPED", help, name, labels, value);
+            return new DoubleValueMetricImpl("UNTYPED", help, name, labels, value);
         }
     }
 
@@ -260,5 +264,64 @@ public class MetricsParser {
         }
 
         return labels;
+    }
+
+    /** Class to read a Reader line by line */
+    private static class LineReader implements AutoCloseable {
+
+        private final LinkedList<String> lineBuffer;
+        private BufferedReader bufferedReader;
+
+        /**
+         * Constructor
+         *
+         * @param reader reader
+         */
+        public LineReader(Reader reader) {
+            if (reader instanceof BufferedReader) {
+                this.bufferedReader = (BufferedReader) reader;
+            } else {
+                this.bufferedReader = new BufferedReader(reader);
+            }
+            this.lineBuffer = new LinkedList<>();
+        }
+
+        /**
+         * Method to read a line from the reader
+         *
+         * @return a line or null of no more lines are available
+         * @throws IOException IOException
+         */
+        public String readLine() throws IOException {
+            if (!lineBuffer.isEmpty()) {
+                return lineBuffer.removeLast();
+            } else {
+                return bufferedReader.readLine();
+            }
+        }
+
+        /**
+         * Method to unread (push) a line back to the reader
+         *
+         * @param line line
+         */
+        public void unreadLine(String line) {
+            lineBuffer.add(line);
+        }
+
+        @Override
+        public void close() {
+            lineBuffer.clear();
+
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (Throwable t) {
+                    // DO NOTHING
+                }
+
+                bufferedReader = null;
+            }
+        }
     }
 }
