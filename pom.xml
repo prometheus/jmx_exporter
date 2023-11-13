@@ -24,7 +24,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <prometheus.metrics.version>1.0.0</prometheus.metrics.version>
+        <prometheus.metrics.version>1.1.0</prometheus.metrics.version>
     </properties>
 
     <scm>
@@ -129,7 +129,7 @@
                 <!-- Plugins with groupId org.apache.maven.plugins that are not part of default bindings. -->
                 <plugin>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.5.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
@@ -184,7 +184,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.38.0</version>
+                    <version>2.40.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
