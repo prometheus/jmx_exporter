@@ -27,7 +27,7 @@ import org.opentest4j.AssertionFailedError;
 /** Class to assert a DoubleValueMetric */
 public class DoubleValueMetricAssertion {
 
-    private static Set<String> VALID_TYPES = new HashSet<>();
+    private static final Set<String> VALID_TYPES = new HashSet<>();
 
     static {
         VALID_TYPES.add("COUNTER");
@@ -48,6 +48,9 @@ public class DoubleValueMetricAssertion {
      * @param metrics metrics
      */
     public DoubleValueMetricAssertion(Collection<Metric> metrics) {
+        if (metrics == null) {
+            throw new IllegalArgumentException("Collection<Metrics> is null");
+        }
         this.metrics = metrics;
     }
 
@@ -58,12 +61,10 @@ public class DoubleValueMetricAssertion {
      * @return this DoubleValueMetricAssertion
      */
     public DoubleValueMetricAssertion type(String type) {
-        if (type != null && !VALID_TYPES.contains(type)) {
-            throw new IllegalArgumentException(String.format("Type [%s] is invalid", type));
+        if (type == null || !VALID_TYPES.contains(type)) {
+            throw new IllegalArgumentException(String.format("Type [%s] is null or invalid", type));
         }
-
         this.type = type;
-
         return this;
     }
 
@@ -97,6 +98,10 @@ public class DoubleValueMetricAssertion {
      * @return this DoubleValueMetricAssertion
      */
     public DoubleValueMetricAssertion label(String name, String value) {
+        if (name == null || value == null) {
+            throw new IllegalArgumentException(
+                    String.format("Label name [%s] or value [%s] is null", name, value));
+        }
         if (labels == null) {
             labels = new TreeMap<>();
         }
@@ -117,24 +122,7 @@ public class DoubleValueMetricAssertion {
 
     /** Method to assert the Metric is present */
     public void isPresent() {
-        List<Metric> metrics =
-                this.metrics.stream()
-                        .filter(metric -> metric instanceof DoubleValueMetric)
-                        .filter(metric -> metric.type().equals(type))
-                        .filter(metric -> name == null || metric.name().equals(name))
-                        .filter(metric -> help == null || metric.help().equals(help))
-                        .filter(metric -> labels == null || new LabelsFilter(labels).test(metric))
-                        .map(metric -> (DoubleValueMetric) metric)
-                        .filter(metric -> value == null || metric.value() == value)
-                        .collect(Collectors.toList());
-
-        if (metrics.size() != 1) {
-            throw new AssertionFailedError(
-                    String.format(
-                            "Metric type [%s] name [%s] labels [%s] value [%f] help [%s] is not"
-                                    + " present",
-                            type, name, labels, value, help));
-        }
+        isPresent(true);
     }
 
     /**
@@ -143,21 +131,32 @@ public class DoubleValueMetricAssertion {
      * @param isPresent isPresent
      */
     public void isPresent(boolean isPresent) {
-        boolean found = false;
+        List<Metric> metrics =
+                this.metrics.stream()
+                        .filter(metric -> metric instanceof DoubleValueMetric)
+                        .filter(metric -> type == null || metric.type().equals(type))
+                        .filter(metric -> name == null || metric.name().equals(name))
+                        .filter(metric -> help == null || metric.help().equals(help))
+                        .filter(
+                                metric ->
+                                        labels == null
+                                                || new LabelsSubsetFilter(labels).test(metric))
+                        .map(metric -> (DoubleValueMetric) metric)
+                        .filter(metric -> value == null || metric.value() == value)
+                        .collect(Collectors.toList());
 
-        try {
-            isPresent();
-            found = true;
-        } catch (AssertionFailedError e) {
-            // Expected
-        }
-
-        if (found != isPresent) {
+        if (isPresent && metrics.size() != 1) {
             throw new AssertionFailedError(
                     String.format(
-                            "Metric type [%s] name [%s] labels [%s] value [%f] help [%s] is"
-                                    + " present",
-                            type, name, labels, value, help));
+                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
+                                    + " present or matches multiple metrics",
+                            type, help, name, labels, value));
+        } else if (!isPresent && !metrics.isEmpty()) {
+            throw new AssertionFailedError(
+                    String.format(
+                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
+                                    + " present or matches multiple metrics",
+                            type, help, name, labels, value));
         }
     }
 
