@@ -213,7 +213,8 @@ class JmxScraper {
         }
 
         for (Object object : attributes) {
-            // The contents of an AttributeList should all be Attribute instances, but we'll verify that.
+            // The contents of an AttributeList should all be Attribute instances, but we'll verify
+            // that.
             if (object instanceof Attribute) {
                 Attribute attribute = (Attribute) object;
                 String attributeName = attribute.getName();
