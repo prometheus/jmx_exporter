@@ -63,12 +63,7 @@ public class PrometheusRegistryUtils {
     public Double getSampleValue(String name, Labels labels) {
         List<Double> values = new ArrayList<>();
 
-        // scrape(Predicate predicate) looks as Prometheus names, but the JmxCollector doesn't
-        // return them to prevent a double scraping scenario
-        prometheusRegistry
-                .scrape()
-                //        scrape(s -> s.equals(name)).stream()
-                .stream()
+        prometheusRegistry.scrape(s -> s.equals(name)).stream()
                 .filter(metricSnapshot -> metricSnapshot.getMetadata().getName().equals(name))
                 .forEach(
                         metricSnapshot ->
