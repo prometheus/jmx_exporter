@@ -263,7 +263,7 @@
                 <configuration>
                     <java>
                         <googleJavaFormat>
-                            <version>1.17.0</version>
+                            <version>1.18.1</version>
                             <style>AOSP</style>
                             <reflowLongStrings>true</reflowLongStrings>
                         </googleJavaFormat>
