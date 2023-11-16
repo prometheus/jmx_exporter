@@ -19,7 +19,7 @@ class HadoopDataNode implements HadoopDataNodeMXBean {
 
     public Map<String, Map<String, Long>> getDatanodeNetworkCounts() {
         Map<String, Long> inner = new HashMap<>();
-        inner.put("networkErrors", new Long(338));
+        inner.put("networkErrors", 338L);
         Map<String, Map<String, Long>> outer = new HashMap<>();
         outer.put("1.2.3.4", inner);
         return outer;
