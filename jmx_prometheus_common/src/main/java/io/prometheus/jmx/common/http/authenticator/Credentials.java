@@ -18,9 +18,7 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import java.util.Objects;
 
-/**
- * Class to implement credentials
- */
+/** Class to implement credentials */
 public class Credentials {
 
     private final String username;
@@ -39,16 +37,16 @@ public class Credentials {
 
     @Override
     public String toString() {
-        return String.format("CacheKey{username=[%s],password=[%s]}", username, password);
+        return String.format("Credentials{username=[%s],password=[%s]}", username, password);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Credentials cacheKey = (Credentials) o;
-        return Objects.equals(username, cacheKey.username)
-                && Objects.equals(password, cacheKey.password);
+        Credentials Credentials = (Credentials) o;
+        return Objects.equals(username, Credentials.username)
+                && Objects.equals(password, Credentials.password);
     }
 
     @Override
