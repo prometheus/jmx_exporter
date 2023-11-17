@@ -36,10 +36,21 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
  */
 public class BuildInfoMetrics {
 
+    /**
+     * Method to register BuildInfoMetrics
+     *
+     * @return this BuildInfoMetrics
+     */
     public BuildInfoMetrics register() {
         return register(PrometheusRegistry.defaultRegistry);
     }
 
+    /**
+     * Method to register BuildInfoMetrics
+     *
+     * @param prometheusRegistry prometheusRegistry
+     * @return this BuildInfoMetrics
+     */
     public BuildInfoMetrics register(PrometheusRegistry prometheusRegistry) {
         Info info =
                 Info.builder()

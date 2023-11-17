@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/** Class to get a sample value from a PrometheusRegistery */
 @SuppressWarnings("unchecked")
 public class PrometheusRegistryUtils {
 

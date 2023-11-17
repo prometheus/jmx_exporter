@@ -18,7 +18,10 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import java.util.Objects;
 
-public class CacheKey {
+/**
+ * Class to implement credentials
+ */
+public class Credentials {
 
     private final String username;
     private final String password;
@@ -29,7 +32,7 @@ public class CacheKey {
      * @param username username
      * @param password password
      */
-    public CacheKey(String username, String password) {
+    public Credentials(String username, String password) {
         this.username = username;
         this.password = password;
     }
@@ -43,7 +46,7 @@ public class CacheKey {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CacheKey cacheKey = (CacheKey) o;
+        Credentials cacheKey = (Credentials) o;
         return Objects.equals(username, cacheKey.username)
                 && Objects.equals(password, cacheKey.password);
     }
