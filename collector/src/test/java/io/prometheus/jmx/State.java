@@ -8,7 +8,7 @@ public enum State {
 
     private int valueTwo;
 
-    private State(int valueOne, int valueTwo) {
+    State(int valueOne, int valueTwo) {
         this.valueOne = valueOne;
         this.valueTwo = valueTwo;
     }
