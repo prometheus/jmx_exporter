@@ -21,17 +21,17 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-public class CredentialsTest {
+public class CredentialTest {
 
     @Test
     public void testEquals() {
         String username = "Prometheus";
         String password = "secret";
 
-        Credentials credentials1 = new Credentials(username, password);
-        Credentials credentials2 = new Credentials(username, password);
+        Credential credential1 = new Credential(username, password);
+        Credential credential2 = new Credential(username, password);
 
-        assertTrue(credentials1.equals(credentials2));
+        assertTrue(credential1.equals(credential2));
     }
 
     @Test
@@ -39,9 +39,9 @@ public class CredentialsTest {
         String username = "Prometheus";
         String password = "secret";
 
-        Credentials credentials1 = new Credentials(username, password);
-        Credentials credentials2 = new Credentials(username, password + "X");
+        Credential credential1 = new Credential(username, password);
+        Credential credential2 = new Credential(username, password + "X");
 
-        assertFalse(credentials1.equals(credentials2));
+        assertFalse(credential1.equals(credential2));
     }
 }

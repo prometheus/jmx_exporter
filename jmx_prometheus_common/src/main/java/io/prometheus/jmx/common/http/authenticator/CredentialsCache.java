@@ -1,0 +1,116 @@
+/*
+ * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.prometheus.jmx.common.http.authenticator;
+
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+
+/** Class to implement a Credentials cache that is size constrained */
+public class CredentialCache {
+
+    private final int maximumCacheSizeBytes;
+    private final LinkedHashMap<Credential, Byte> linkedHashMap;
+    private final LinkedList<Credential> linkedList;
+
+    private int currentCacheSizeBytes;
+
+    /**
+     * Constructor
+     *
+     * @param maximumCacheSizeBytes maximum cache size in bytes
+     */
+    public CredentialCache(int maximumCacheSizeBytes) {
+        this.maximumCacheSizeBytes = maximumCacheSizeBytes;
+        linkedHashMap = new LinkedHashMap<>();
+        linkedList = new LinkedList<>();
+    }
+
+    /**
+     * Method to add a Credential to the cache
+     *
+     * @param credential credential
+     */
+    public synchronized void add(Credential credential) {
+        int credentialSizeBytes = credential.toString().getBytes(StandardCharsets.UTF_8).length;
+
+        // Don't cache the entry since it's bigger than the maximum cache size
+        // Don't invalidate other entries
+        if (credentialSizeBytes > maximumCacheSizeBytes) {
+            return;
+        }
+
+        // Purge old cache entries until we have space or the cache is empty
+        while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes)
+                && (currentCacheSizeBytes > 0)) {
+            Credential c = linkedList.removeLast();
+            linkedHashMap.remove(c);
+            currentCacheSizeBytes -= credentialSizeBytes;
+            if (currentCacheSizeBytes < 0) {
+                currentCacheSizeBytes = 0;
+            }
+        }
+
+        linkedHashMap.put(credential, (byte) 1);
+        linkedList.addFirst(credential);
+        currentCacheSizeBytes += credentialSizeBytes;
+    }
+
+    /**
+     * Method to return whether the cache contains the Credential
+     *
+     * @param credential credentials
+     * @return true if the set contains the Credential, else false
+     */
+    public synchronized boolean contains(Credential credential) {
+        return linkedHashMap.containsKey(credential);
+    }
+
+    /**
+     * Method to remove a Credential from the cache
+     *
+     * @param credential credentials
+     * @return true if the Credentials existed and was removed, else false
+     */
+    public synchronized boolean remove(Credential credential) {
+        if (linkedHashMap.remove(credential) != null) {
+            linkedList.remove(credential);
+            currentCacheSizeBytes -= credential.toString().getBytes(StandardCharsets.UTF_8).length;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Method to get the maximum cache size in bytes
+     *
+     * @return the maximum cache size in bytes
+     */
+    public int getMaximumCacheSizeBytes() {
+        return maximumCacheSizeBytes;
+    }
+
+    /**
+     * Method to get the current cache size in bytes
+     *
+     * @return the current cache size in bytes
+     */
+    public synchronized int getCurrentCacheSizeBytes() {
+        return currentCacheSizeBytes;
+    }
+}

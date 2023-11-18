@@ -19,7 +19,7 @@ package io.prometheus.jmx.common.http.authenticator;
 import java.util.Objects;
 
 /** Class to implement credentials */
-public class Credentials {
+public class Credential {
 
     private final String username;
     private final String password;
@@ -30,23 +30,32 @@ public class Credentials {
      * @param username username
      * @param password password
      */
-    public Credentials(String username, String password) {
+    public Credential(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
+    /**
+     * Method to get the size (username length + password length) of the credentials
+     *
+     * @return the size of the credentials
+     */
+    public int size() {
+        return username.length() + password.length();
+    }
+
     @Override
     public String toString() {
-        return String.format("Credentials{username=[%s],password=[%s]}", username, password);
+        return username + password;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Credentials Credentials = (Credentials) o;
-        return Objects.equals(username, Credentials.username)
-                && Objects.equals(password, Credentials.password);
+        Credential Credential = (Credential) o;
+        return Objects.equals(username, Credential.username)
+                && Objects.equals(password, Credential.password);
     }
 
     @Override
