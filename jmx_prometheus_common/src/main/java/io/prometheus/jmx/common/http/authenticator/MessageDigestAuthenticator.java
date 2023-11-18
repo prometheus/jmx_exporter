@@ -27,14 +27,15 @@ import java.security.NoSuchAlgorithmException;
 /** Class to implement a username / salted message digest password BasicAuthenticator */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
-    private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
+    private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+    private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
 
     private final String username;
     private final String passwordHash;
     private final String algorithm;
     private final String salt;
-    private final LRUSet<Credentials> validCredentials;
-    private final LRUSet<Credentials> invalidCredentials;
+    private final CredentialsCache validCredentialsCache;
+    private final CredentialsCache invalidCredentialsCache;
 
     /**
      * Constructor
@@ -62,8 +63,8 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         this.passwordHash = passwordHash.toLowerCase().replace(":", "");
         this.algorithm = algorithm;
         this.salt = salt;
-        this.validCredentials = new LRUSet<>(10);
-        this.invalidCredentials = new LRUSet<>(10);
+        this.validCredentialsCache = new CredentialsCache(MAXIMUM_VALID_CACHE_SIZE_BYTES);
+        this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
     }
 
     /**
@@ -82,9 +83,9 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         }
 
         Credentials credentials = new Credentials(username, password);
-        if (validCredentials.contains(credentials)) {
+        if (validCredentialsCache.contains(credentials)) {
             return true;
-        } else if (invalidCredentials.contains(credentials)) {
+        } else if (invalidCredentialsCache.contains(credentials)) {
             return false;
         }
 
@@ -94,9 +95,9 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
                                 generatePasswordHash(algorithm, salt, password));
 
         if (isValid) {
-            validCredentials.add(credentials);
+            validCredentialsCache.add(credentials);
         } else {
-            invalidCredentials.add(credentials);
+            invalidCredentialsCache.add(credentials);
         }
 
         return isValid;

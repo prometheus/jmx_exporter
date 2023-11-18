@@ -20,12 +20,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
-/** Class to implement a Credentials cache that is size constrained */
-public class CredentialCache {
+/**
+ * Class to implement a Credentials cache that is size constrained
+ *
+ * <p>A credential that exceeds maximumCacheSizeBytes is not cached The cache will purge old entries
+ * to make size for a cacheable credential
+ */
+public class CredentialsCache {
 
     private final int maximumCacheSizeBytes;
-    private final LinkedHashMap<Credential, Byte> linkedHashMap;
-    private final LinkedList<Credential> linkedList;
+    private final LinkedHashMap<Credentials, Byte> linkedHashMap;
+    private final LinkedList<Credentials> linkedList;
 
     private int currentCacheSizeBytes;
 
@@ -34,19 +39,21 @@ public class CredentialCache {
      *
      * @param maximumCacheSizeBytes maximum cache size in bytes
      */
-    public CredentialCache(int maximumCacheSizeBytes) {
+    public CredentialsCache(int maximumCacheSizeBytes) {
         this.maximumCacheSizeBytes = maximumCacheSizeBytes;
         linkedHashMap = new LinkedHashMap<>();
         linkedList = new LinkedList<>();
     }
 
     /**
-     * Method to add a Credential to the cache
+     * Method to add a Credentials to the cache
      *
-     * @param credential credential
+     * <p>A credential that exceeds maximumCacheSizeBytes is not cached
+     *
+     * @param credentials credential
      */
-    public synchronized void add(Credential credential) {
-        int credentialSizeBytes = credential.toString().getBytes(StandardCharsets.UTF_8).length;
+    public synchronized void add(Credentials credentials) {
+        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
 
         // Don't cache the entry since it's bigger than the maximum cache size
         // Don't invalidate other entries
@@ -57,7 +64,7 @@ public class CredentialCache {
         // Purge old cache entries until we have space or the cache is empty
         while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes)
                 && (currentCacheSizeBytes > 0)) {
-            Credential c = linkedList.removeLast();
+            Credentials c = linkedList.removeLast();
             linkedHashMap.remove(c);
             currentCacheSizeBytes -= credentialSizeBytes;
             if (currentCacheSizeBytes < 0) {
@@ -65,31 +72,31 @@ public class CredentialCache {
             }
         }
 
-        linkedHashMap.put(credential, (byte) 1);
-        linkedList.addFirst(credential);
+        linkedHashMap.put(credentials, (byte) 1);
+        linkedList.addFirst(credentials);
         currentCacheSizeBytes += credentialSizeBytes;
     }
 
     /**
-     * Method to return whether the cache contains the Credential
+     * Method to return whether the cache contains the Credentials
      *
-     * @param credential credentials
+     * @param credentials credentials
      * @return true if the set contains the Credential, else false
      */
-    public synchronized boolean contains(Credential credential) {
-        return linkedHashMap.containsKey(credential);
+    public synchronized boolean contains(Credentials credentials) {
+        return linkedHashMap.containsKey(credentials);
     }
 
     /**
-     * Method to remove a Credential from the cache
+     * Method to remove a Credentials from the cache
      *
-     * @param credential credentials
+     * @param credentials credentials
      * @return true if the Credentials existed and was removed, else false
      */
-    public synchronized boolean remove(Credential credential) {
-        if (linkedHashMap.remove(credential) != null) {
-            linkedList.remove(credential);
-            currentCacheSizeBytes -= credential.toString().getBytes(StandardCharsets.UTF_8).length;
+    public synchronized boolean remove(Credentials credentials) {
+        if (linkedHashMap.remove(credentials) != null) {
+            linkedList.remove(credentials);
+            currentCacheSizeBytes -= credentials.toString().getBytes(StandardCharsets.UTF_8).length;
             return true;
         } else {
             return false;
