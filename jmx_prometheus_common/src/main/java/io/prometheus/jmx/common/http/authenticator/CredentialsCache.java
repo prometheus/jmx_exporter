@@ -23,8 +23,9 @@ import java.util.LinkedList;
 /**
  * Class to implement a Credentials cache that is size constrained
  *
- * <p>A credential that exceeds maximumCacheSizeBytes is not cached The cache will purge old entries
- * to make size for a cacheable credential
+ * <p>The cache will purge old entries to make size for a cacheable credential
+ *
+ * <p>A credential that exceeds maximumCacheSizeBytes is not cached
  */
 public class CredentialsCache {
 
