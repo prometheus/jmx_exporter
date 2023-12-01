@@ -213,6 +213,8 @@ class JmxScraper {
         }
 
         for (Object object : attributes) {
+            // The contents of an AttributeList should all be Attribute instances, but we'll verify
+            // that.
             if (object instanceof Attribute) {
                 Attribute attribute = (Attribute) object;
                 String attributeName = attribute.getName();
@@ -241,6 +243,11 @@ class JmxScraper {
                         mBeanAttributeInfo.getType(),
                         mBeanAttributeInfo.getDescription(),
                         attribute.getValue());
+            } else if (object == null) {
+                LOGGER.log(
+                        FINE,
+                        "%s object is NULL, not an instance javax.management.Attribute, skipping",
+                        mBeanName);
             } else {
                 LOGGER.log(
                         FINE,
