@@ -17,7 +17,7 @@ azul/zulu-openjdk:21
 azul/prime:8
 azul/prime:11
 azul/prime:17
-azul/prime:19
+azul/prime:21
 bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
@@ -64,6 +64,7 @@ openjdk:21
 registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-17-runtime:latest
+registry.access.redhat.com/ubi8/openjdk-21-runtime:latest
 sapmachine:11
 sapmachine:17
 sapmachine:21
