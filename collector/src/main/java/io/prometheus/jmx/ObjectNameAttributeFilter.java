@@ -129,17 +129,9 @@ public class ObjectNameAttributeFilter {
     public boolean exclude(ObjectName objectName, String attributeName) {
         boolean result = false;
 
-        // concrete objectName definition gets precedence
-        if (excludeObjectNameAttributesMap.size() > 0) {
-            Set<String> attributeNameSet = excludeObjectNameAttributesMap.get(objectName);
-            if (attributeNameSet != null) {
-                return attributeNameSet.contains(attributeName);
-            }
-        }
         for (Map.Entry<ObjectName, Set<String>> objectNameSetEntry :
                 excludeObjectNameAttributesMap.entrySet()) {
-            if (objectNameSetEntry.getKey().isPattern()
-                    && objectNameSetEntry.getKey().apply(objectName)) {
+            if (objectNameSetEntry.getKey().apply(objectName)) {
                 // if exclusion found - return
                 // otherwise keep searching as checked object may match multiple patterns
                 // and checked attribute may be defined only under one of them
