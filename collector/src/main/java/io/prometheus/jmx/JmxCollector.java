@@ -30,7 +30,6 @@ import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
-import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 import io.prometheus.metrics.model.snapshots.Unit;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.io.File;
@@ -718,9 +717,7 @@ public class JmxCollector implements MultiCollector {
                                         matchedRule.name,
                                         name ->
                                                 CounterSnapshot.builder()
-                                                        .name(
-                                                                PrometheusNaming.sanitizeMetricName(
-                                                                        finalMatchedRule.name))
+                                                        .name(finalMatchedRule.name)
                                                         .help(finalMatchedRule.help));
 
                         counterBuilder.dataPoint(
@@ -741,9 +738,7 @@ public class JmxCollector implements MultiCollector {
                                         matchedRule.name,
                                         name ->
                                                 GaugeSnapshot.builder()
-                                                        .name(
-                                                                PrometheusNaming.sanitizeMetricName(
-                                                                        finalMatchedRule.name))
+                                                        .name(finalMatchedRule.name)
                                                         .help(finalMatchedRule.help));
                         gaugeBuilder.dataPoint(
                                 GaugeSnapshot.GaugeDataPointSnapshot.builder()
@@ -765,9 +760,7 @@ public class JmxCollector implements MultiCollector {
                                         matchedRule.name,
                                         name ->
                                                 UnknownSnapshot.builder()
-                                                        .name(
-                                                                PrometheusNaming.sanitizeMetricName(
-                                                                        finalMatchedRule.name))
+                                                        .name(finalMatchedRule.name)
                                                         .help(finalMatchedRule.help));
                         unknownBuilder.dataPoint(
                                 UnknownSnapshot.UnknownDataPointSnapshot.builder()
