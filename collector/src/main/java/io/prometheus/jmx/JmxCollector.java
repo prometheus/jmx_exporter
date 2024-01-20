@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
@@ -845,15 +844,5 @@ public class JmxCollector implements MultiCollector {
         }
 
         return result.build();
-    }
-
-    @Override
-    // TODO remove once bug is fixed in client_java
-    public List<String> getPrometheusNames() {
-        // return Collections.emptyList();
-
-        return collect().stream()
-                .map(snapshot -> snapshot.getMetadata().getPrometheusName())
-                .collect(Collectors.toList());
     }
 }
