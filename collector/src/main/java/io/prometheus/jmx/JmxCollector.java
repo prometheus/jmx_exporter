@@ -437,43 +437,6 @@ public class JmxCollector implements MultiCollector {
                 || (input >= '0' && input <= '9'));
     }
 
-    /** A sample is uniquely identified by its name, labelNames and labelValues */
-    private static class SampleKey {
-        private final String name;
-        private final List<String> labelNames;
-        private final List<String> labelValues;
-
-        private SampleKey(String name, List<String> labelNames, List<String> labelValues) {
-            this.name = name;
-            this.labelNames = labelNames;
-            this.labelValues = labelValues;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SampleKey sampleKey = (SampleKey) o;
-
-            if (name != null ? !name.equals(sampleKey.name) : sampleKey.name != null) return false;
-            if (labelValues != null
-                    ? !labelValues.equals(sampleKey.labelValues)
-                    : sampleKey.labelValues != null) return false;
-            return labelNames != null
-                    ? labelNames.equals(sampleKey.labelNames)
-                    : sampleKey.labelNames == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (labelNames != null ? labelNames.hashCode() : 0);
-            result = 31 * result + (labelValues != null ? labelValues.hashCode() : 0);
-            return result;
-        }
-    }
-
     static class Receiver implements JmxScraper.MBeanReceiver {
 
         Map<String, UnknownSnapshot.Builder> unknownMap = new HashMap<>();
