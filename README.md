@@ -19,12 +19,12 @@ process metrics (e.g., memory and CPU usage).
 
 ## Running the Java Agent
 
-- [jmx_prometheus_javaagent-0.19.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.19.0/jmx_prometheus_javaagent-0.19.0.jar)
+- [jmx_prometheus_javaagent-0.20.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.20.0/jmx_prometheus_javaagent-0.20.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.19.0.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-0.20.0.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -41,12 +41,12 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-- [jmx_prometheus_httpserver-0.19.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.19.0/jmx_prometheus_httpserver-0.19.0.jar)
+- [jmx_prometheus_httpserver-0.20.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.20.0/jmx_prometheus_httpserver-0.20.0.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-0.19.0.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-0.20.0.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
