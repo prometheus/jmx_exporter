@@ -19,10 +19,12 @@ package io.prometheus.jmx.common.http;
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.SampleNameFilter;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
+import io.prometheus.jmx.common.configuration.ConvertToStringList;
 import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
 import io.prometheus.jmx.common.configuration.ValidateStringIsNotBlank;
 import io.prometheus.jmx.common.http.authenticator.MessageDigestAuthenticator;
@@ -38,7 +40,9 @@ import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -119,6 +123,7 @@ public class HTTPServerFactory {
         configureThreads(httpServerBuilder);
         configureAuthentication(httpServerBuilder);
         configureSSL(httpServerBuilder);
+        configureSampleNameFilter(httpServerBuilder);
 
         return httpServerBuilder.build();
     }
@@ -588,6 +593,84 @@ public class HTTPServerFactory {
                 throw new ConfigurationException(
                         String.format("Exception loading SSL configuration%s", message), e);
             }
+        }
+    }
+
+    /**
+     * Method to configure sampleNameFilter
+     *
+     * @param httpServerBuilder httpServerBuilder
+     */
+    public void configureSampleNameFilter(HTTPServer.Builder httpServerBuilder) {
+        Optional<List<String>> allowedNames = Optional.empty();
+        Optional<List<String>> excludedNames = Optional.empty();
+        Optional<List<String>> allowedPrefixes = Optional.empty();
+        Optional<List<String>> excludedPrefixes = Optional.empty();
+
+        if (rootYamlMapAccessor.containsPath("/httpServer/sampleNameFilter")) {
+            YamlMapAccessor httpServerSampleNameFilterMapAccessor =
+                    rootYamlMapAccessor
+                            .get("/httpServer/sampleNameFilter")
+                            .map(
+                                    new ConvertToMapAccessor(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                            + " /httpServer/sampleNameFilter")))
+                            .orElseThrow(
+                                    ConfigurationException.supplier(
+                                            "/httpServer/sampleNameFilter configuration values are"
+                                                    + " required"));
+            allowedNames =
+                    httpServerSampleNameFilterMapAccessor
+                            .get("/name-must-be-equal-to")
+                            .map(
+                                    new ConvertToStringList(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/sampleNameFilter/name-must-be-equal-to"
+                                                        + " must be a list of string")));
+
+            excludedNames =
+                    httpServerSampleNameFilterMapAccessor
+                            .get("/name-must-not-be-equal-to")
+                            .map(
+                                    new ConvertToStringList(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/sampleNameFilter/name-must-not-be-equal-to"
+                                                        + " must be a list of string")));
+
+            allowedPrefixes =
+                    httpServerSampleNameFilterMapAccessor
+                            .get("/name-must-start-with")
+                            .map(
+                                    new ConvertToStringList(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/sampleNameFilter/name-must-start-with"
+                                                        + " must be a list of string")));
+
+            excludedPrefixes =
+                    httpServerSampleNameFilterMapAccessor
+                            .get("/name-must-not-start-with")
+                            .map(
+                                    new ConvertToStringList(
+                                            ConfigurationException.supplier(
+                                                    "Invalid configuration for"
+                                                        + " /httpServer/sampleNameFilter/name-must-not-start-with"
+                                                        + " must be a list of string")));
+
+            SampleNameFilter.Builder sampleNameFilterBuilder = new SampleNameFilter.Builder();
+
+            allowedNames.ifPresent(names -> sampleNameFilterBuilder.nameMustBeEqualTo(names));
+            excludedNames.ifPresent(names -> sampleNameFilterBuilder.nameMustNotBeEqualTo(names));
+
+            allowedPrefixes.ifPresent(
+                    prefixes -> sampleNameFilterBuilder.nameMustStartWith(prefixes));
+            excludedPrefixes.ifPresent(
+                    prefixes -> sampleNameFilterBuilder.nameMustNotStartWith(prefixes));
+
+            httpServerBuilder.withSampleNameFilter(sampleNameFilterBuilder.build());
         }
     }
 
