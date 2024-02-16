@@ -16,44 +16,55 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpResponseCode;
 
-import io.prometheus.jmx.test.Metric;
-import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.Mode;
-import io.prometheus.jmx.test.credentials.BasicAuthenticationCredentials;
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import io.prometheus.jmx.test.support.Response;
+import io.prometheus.jmx.test.support.Mode;
+import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
-public class BasicAuthenticationSHA512Test extends BasicAuthenticationBaseTest
-        implements ContentConsumer {
+public class BasicAuthenticationSHA512Test extends AbstractBasicAuthenticationTest
+        implements Consumer<HttpResponse> {
+
+    /**
+     * Method to get the list of TestArguments
+     *
+     * @return the return value
+     */
+    @TestEngine.ArgumentSupplier
+    protected static Stream<TestArgument> arguments() {
+        return AbstractBasicAuthenticationTest.arguments()
+                .filter(PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER);
+    }
 
     @TestEngine.Test
     public void testHealthy() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedHealthyResponse = HealthyResponse.RESULT_401;
+                final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedHealthyResponse = HealthyResponse.RESULT_200;
+                    code.set(HttpResponse.OK);
                 }
 
-                assertThatResponseForRequest(
-                                new HealthyRequest(testState.httpClient())
-                                        .withCredentials(
-                                                new BasicAuthenticationCredentials(
-                                                        username, password)))
-                        .isSuperset(expectedHealthyResponse);
+                new HttpHealthyRequest()
+                        .credentials(new HttpBasicAuthenticationCredentials(username, password))
+                        .send(testContext.httpClient())
+                        .accept(response -> assertHttpResponseCode(response, code.get()));
             }
         }
     }
@@ -62,23 +73,22 @@ public class BasicAuthenticationSHA512Test extends BasicAuthenticationBaseTest
     public void testMetrics() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = MetricsResponse.RESULT_401;
+                final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = MetricsResponse.RESULT_200;
+                    code.set(HttpResponse.OK);
                 }
 
-                Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
-                                .withCredentials(
-                                        new BasicAuthenticationCredentials(username, password))
-                                .execute();
-
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
-
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
-                }
+                new HttpMetricsRequest()
+                        .credentials(new HttpBasicAuthenticationCredentials(username, password))
+                        .send(testContext.httpClient())
+                        .accept(
+                                response -> {
+                                    assertHttpResponseCode(response, code.get());
+                                    if (code.get() == HttpResponse.OK) {
+                                        accept(response);
+                                    }
+                                });
             }
         }
     }
@@ -87,23 +97,22 @@ public class BasicAuthenticationSHA512Test extends BasicAuthenticationBaseTest
     public void testMetricsOpenMetricsFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = OpenMetricsResponse.RESULT_401;
+                final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = OpenMetricsResponse.RESULT_200;
+                    code.set(HttpResponse.OK);
                 }
 
-                Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
-                                .withCredentials(
-                                        new BasicAuthenticationCredentials(username, password))
-                                .execute();
-
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
-
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
-                }
+                new HttpOpenMetricsRequest()
+                        .credentials(new HttpBasicAuthenticationCredentials(username, password))
+                        .send(testContext.httpClient())
+                        .accept(
+                                response -> {
+                                    assertHttpResponseCode(response, code.get());
+                                    if (code.get() == HttpResponse.OK) {
+                                        accept(response);
+                                    }
+                                });
             }
         }
     }
@@ -112,59 +121,116 @@ public class BasicAuthenticationSHA512Test extends BasicAuthenticationBaseTest
     public void testMetricsPrometheusFormat() {
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                Response expectedMetricsResponse = PrometheusMetricsResponse.RESULT_401;
+                final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
 
                 if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedMetricsResponse = PrometheusMetricsResponse.RESULT_200;
+                    code.set(HttpResponse.OK);
                 }
 
-                Response actualMetricsResponse =
-                        new MetricsRequest(testState.httpClient())
-                                .withCredentials(
-                                        new BasicAuthenticationCredentials(username, password))
-                                .execute();
+                new HttpPrometheusMetricsRequest()
+                        .credentials(new HttpBasicAuthenticationCredentials(username, password))
+                        .send(testContext.httpClient())
+                        .accept(
+                                response -> {
+                                    assertHttpResponseCode(response, code.get());
+                                    if (code.get() == HttpResponse.OK) {
+                                        accept(response);
+                                    }
+                                });
+            }
+        }
+    }
 
-                assertThat(actualMetricsResponse.isSuperset(expectedMetricsResponse));
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
 
-                if (actualMetricsResponse.code() == 200) {
-                    actualMetricsResponse.dispatch(this);
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    code.set(HttpResponse.OK);
                 }
+
+                new HttpPrometheusProtobufMetricsRequest()
+                        .credentials(new HttpBasicAuthenticationCredentials(username, password))
+                        .send(testContext.httpClient())
+                        .accept(
+                                response -> {
+                                    assertHttpResponseCode(response, code.get());
+                                    if (code.get() == HttpResponse.OK) {
+                                        accept(response);
+                                    }
+                                });
             }
         }
     }
 
     @Override
-    public void accept(String content) {
-        Collection<Metric> metrics = MetricsParser.parse(content);
+    public void accept(HttpResponse httpResponse) {
+        assertHttpMetricsResponse(httpResponse);
+
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        assertThatMetricIn(metrics)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jmx_exporter_build_info")
+                .label("name", buildInfoName)
+                .value(1d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jmx_scrape_error")
+                .value(0d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("COUNTER")
+                .name("jmx_config_reload_success_total")
+                .value(0d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        assertThatMetricIn(metrics)
-                .withName("jvm_threads_state")
-                .exists(testArgument.mode() == Mode.JavaAgent);
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .label("source", "/dev/sda1")
+                .value(7.516192768E9d)
+                .isPresent();
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .label("source", "/dev/sda2")
+                .value(0.8d)
+                .isPresent();
     }
 }

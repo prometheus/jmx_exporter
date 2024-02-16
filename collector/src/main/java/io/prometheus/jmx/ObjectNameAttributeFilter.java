@@ -72,13 +72,9 @@ public class ObjectNameAttributeFilter {
                         excludeObjectNameAttributesMap.computeIfAbsent(
                                 objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
-                for (String attributeName : attributeNames) {
-                    LOGGER.log(
-                            Level.FINE,
-                            "excluding object name [%d] attribute name [%s]",
-                            objectName.getCanonicalName(),
-                            attributeName);
-                    attributeNameSet.add(attributeName);
+                attributeNameSet.addAll(attributeNames);
+                for (String attribueName : attributeNames) {
+                    attributeNameSet.add(attribueName);
                 }
 
                 excludeObjectNameAttributesMap.put(objectName, attributeNameSet);

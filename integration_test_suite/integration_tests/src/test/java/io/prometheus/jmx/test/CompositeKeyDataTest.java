@@ -16,64 +16,69 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
+import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
 
-public class CompositeKeyDataTest extends BaseTest implements ContentConsumer {
+public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpResponse> {
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+        new HttpHealthyRequest()
+                .send(testContext.httpClient())
+                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequest(testState.httpClient()))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequest(testState.httpClient()))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @Override
-    public void accept(String content) {
-        Collection<Metric> metrics = MetricsParser.parse(content);
+    public void accept(HttpResponse httpResponse) {
+        assertHttpMetricsResponse(httpResponse);
 
-        assertThatMetricIn(metrics)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "1")
-                .withLabel("key_path", "/db/query1.xq")
-                .exists();
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
-        assertThatMetricIn(metrics)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "2")
-                .withLabel("key_path", "/db/query2.xq")
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .label("key_id", "1")
+                .label("key_path", "/db/query1.xq")
+                .isPresent();
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .label("key_id", "2")
+                .label("key_path", "/db/query2.xq")
+                .isPresent();
     }
 }

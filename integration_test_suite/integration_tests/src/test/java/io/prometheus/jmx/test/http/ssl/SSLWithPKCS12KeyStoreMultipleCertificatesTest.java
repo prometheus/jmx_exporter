@@ -16,32 +16,31 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
-import static io.prometheus.jmx.test.support.MetricsAssertions.assertThatMetricIn;
-import static io.prometheus.jmx.test.support.RequestResponseAssertions.assertThatResponseForRequest;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 
-import io.prometheus.jmx.test.BaseTest;
-import io.prometheus.jmx.test.Metric;
-import io.prometheus.jmx.test.MetricsParser;
-import io.prometheus.jmx.test.Mode;
-import io.prometheus.jmx.test.TestArgument;
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
+import io.prometheus.jmx.test.AbstractTest;
+import io.prometheus.jmx.test.support.Mode;
+import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
+import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
-public class SSLWithPKCS12KeyStoreMultipleCertificatesTest extends BaseTest
-        implements ContentConsumer {
+public class SSLWithPKCS12KeyStoreMultipleCertificatesTest extends AbstractTest
+        implements Consumer<HttpResponse> {
 
     private static final String BASE_URL = "https://localhost";
 
@@ -84,73 +83,107 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest extends BaseTest
     protected static Stream<TestArgument> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return BaseTest.arguments().filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
+        return AbstractTest.arguments().filter(PKCS12_KEYSTORE_TEST_ARGUMENT_FILTER);
     }
 
     @TestEngine.Prepare
     protected void setBaseUrl() {
-        testState.baseUrl(BASE_URL);
+        testContext.baseUrl(BASE_URL);
     }
 
     @TestEngine.Test
     public void testHealthy() {
-        assertThatResponseForRequest(new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+        new HttpHealthyRequest()
+                .send(testContext.httpClient())
+                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        assertThatResponseForRequest(new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        assertThatResponseForRequest(new OpenMetricsRequest(testState.httpClient()))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        assertThatResponseForRequest(new PrometheusMetricsRequest(testState.httpClient()))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @Override
-    public void accept(String content) {
-        Collection<Metric> metrics = MetricsParser.parse(content);
+    public void accept(HttpResponse httpResponse) {
+        assertHttpMetricsResponse(httpResponse);
+
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
                 testArgument.mode() == Mode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        assertThatMetricIn(metrics)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jmx_exporter_build_info")
+                .label("name", buildInfoName)
+                .value(1d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("java_lang_Memory_NonHeapMemoryUsage_committed")
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jmx_scrape_error")
+                .value(0d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("COUNTER")
+                .name("jmx_config_reload_success_total")
+                .value(0d)
+                .isPresent();
 
-        assertThatMetricIn(metrics)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8)
-                .exists();
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        assertThatMetricIn(metrics)
-                .withName("jvm_threads_state")
-                .exists(testArgument.mode() == Mode.JavaAgent);
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isPresent(testArgument.mode() == Mode.JavaAgent);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "nonheap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("GAUGE")
+                .name("jvm_memory_used_bytes")
+                .label("area", "heap")
+                .isNotPresent(testArgument.mode() == Mode.Standalone);
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .label("source", "/dev/sda1")
+                .value(7.516192768E9d)
+                .isPresent();
+
+        new DoubleValueMetricAssertion(metrics)
+                .type("UNTYPED")
+                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .label("source", "/dev/sda2")
+                .value(0.8d)
+                .isPresent();
     }
 }

@@ -23,22 +23,19 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 
 /** Class to implement a username / salted message digest password BasicAuthenticator */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
-    private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
+    private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+    private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
 
     private final String username;
     private final String passwordHash;
     private final String algorithm;
     private final String salt;
-    private final Set<CacheKey> validCacheKeys;
-    private final LinkedList<CacheKey> invalidCacheKeys;
+    private final CredentialsCache validCredentialsCache;
+    private final CredentialsCache invalidCredentialsCache;
 
     /**
      * Constructor
@@ -66,8 +63,8 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         this.passwordHash = passwordHash.toLowerCase().replace(":", "");
         this.algorithm = algorithm;
         this.salt = salt;
-        this.validCacheKeys = Collections.synchronizedSet(new HashSet<>());
-        this.invalidCacheKeys = new LinkedList<>();
+        this.validCredentialsCache = new CredentialsCache(MAXIMUM_VALID_CACHE_SIZE_BYTES);
+        this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
     }
 
     /**
@@ -85,15 +82,11 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        CacheKey cacheKey = new CacheKey(username, password);
-        if (validCacheKeys.contains(cacheKey)) {
+        Credentials credentials = new Credentials(username, password);
+        if (validCredentialsCache.contains(credentials)) {
             return true;
-        } else {
-            synchronized (invalidCacheKeys) {
-                if (invalidCacheKeys.contains(cacheKey)) {
-                    return false;
-                }
-            }
+        } else if (invalidCredentialsCache.contains(credentials)) {
+            return false;
         }
 
         boolean isValid =
@@ -102,14 +95,9 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
                                 generatePasswordHash(algorithm, salt, password));
 
         if (isValid) {
-            validCacheKeys.add(cacheKey);
+            validCredentialsCache.add(credentials);
         } else {
-            synchronized (invalidCacheKeys) {
-                invalidCacheKeys.add(cacheKey);
-                if (invalidCacheKeys.size() > MAXIMUM_INVALID_CACHE_KEY_ENTRIES) {
-                    invalidCacheKeys.removeFirst();
-                }
-            }
+            invalidCredentialsCache.add(credentials);
         }
 
         return isValid;

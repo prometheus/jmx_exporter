@@ -21,17 +21,14 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 /** Class to implement a username / salted message digest password BasicAuthenticator */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
-    private static final int MAXIMUM_INVALID_CACHE_KEY_ENTRIES = 16;
+    private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+    private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
 
     private final String username;
     private final String passwordHash;
@@ -39,8 +36,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     private final String salt;
     private final int iterations;
     private final int keyLength;
-    private final Set<CacheKey> cacheKeys;
-    private final LinkedList<CacheKey> invalidCacheKeys;
+    private final CredentialsCache validCredentialsCache;
+    private final CredentialsCache invalidCredentialsCache;
 
     /**
      * Constructor
@@ -80,8 +77,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         this.salt = salt;
         this.iterations = iterations;
         this.keyLength = keyLength;
-        this.cacheKeys = Collections.synchronizedSet(new HashSet<>());
-        this.invalidCacheKeys = new LinkedList<>();
+        this.validCredentialsCache = new CredentialsCache(MAXIMUM_VALID_CACHE_SIZE_BYTES);
+        this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
     }
 
     /**
@@ -99,15 +96,11 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             return false;
         }
 
-        CacheKey cacheKey = new CacheKey(username, password);
-        if (cacheKeys.contains(cacheKey)) {
+        Credentials credentials = new Credentials(username, password);
+        if (validCredentialsCache.contains(credentials)) {
             return true;
-        } else {
-            synchronized (invalidCacheKeys) {
-                if (invalidCacheKeys.contains(cacheKey)) {
-                    return false;
-                }
-            }
+        } else if (invalidCredentialsCache.contains(credentials)) {
+            return false;
         }
 
         boolean isValid =
@@ -116,14 +109,9 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
                                 generatePasswordHash(
                                         algorithm, salt, iterations, keyLength, password));
         if (isValid) {
-            cacheKeys.add(cacheKey);
+            validCredentialsCache.add(credentials);
         } else {
-            synchronized (invalidCacheKeys) {
-                invalidCacheKeys.add(cacheKey);
-                if (invalidCacheKeys.size() > MAXIMUM_INVALID_CACHE_KEY_ENTRIES) {
-                    invalidCacheKeys.removeFirst();
-                }
-            }
+            invalidCredentialsCache.add(credentials);
         }
 
         return isValid;

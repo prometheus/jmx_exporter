@@ -16,59 +16,59 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static org.assertj.core.api.Assertions.fail;
 
-import io.prometheus.jmx.test.support.ContentConsumer;
-import io.prometheus.jmx.test.support.HealthyRequest;
-import io.prometheus.jmx.test.support.HealthyResponse;
-import io.prometheus.jmx.test.support.MetricsRequest;
-import io.prometheus.jmx.test.support.MetricsResponse;
-import io.prometheus.jmx.test.support.OpenMetricsRequest;
-import io.prometheus.jmx.test.support.OpenMetricsResponse;
-import io.prometheus.jmx.test.support.PrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.PrometheusMetricsResponse;
-import io.prometheus.jmx.test.support.RequestResponseAssertions;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.antublue.test.engine.api.TestEngine;
 
-public class ExcludeObjectNameAttributesTest extends BaseTest implements ContentConsumer {
+public class ExcludeObjectNameAttributesTest extends AbstractTest
+        implements Consumer<HttpResponse> {
 
     @TestEngine.Test
     public void testHealthy() {
-        RequestResponseAssertions.assertThatResponseForRequest(
-                        new HealthyRequest(testState.httpClient()))
-                .isSuperset(HealthyResponse.RESULT_200);
+        new HttpHealthyRequest()
+                .send(testContext.httpClient())
+                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        RequestResponseAssertions.assertThatResponseForRequest(
-                        new MetricsRequest(testState.httpClient()))
-                .isSuperset(MetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        RequestResponseAssertions.assertThatResponseForRequest(
-                        new OpenMetricsRequest(testState.httpClient()))
-                .isSuperset(OpenMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        RequestResponseAssertions.assertThatResponseForRequest(
-                        new PrometheusMetricsRequest(testState.httpClient()))
-                .isSuperset(PrometheusMetricsResponse.RESULT_200)
-                .dispatch(this);
+        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+    }
+
+    @TestEngine.Test
+    public void testMetricsPrometheusProtobufFormat() {
+        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
     }
 
     @Override
-    public void accept(String content) {
-        Collection<Metric> metricCollection = MetricsParser.parse(content);
+    public void accept(HttpResponse httpResponse) {
+        assertHttpMetricsResponse(httpResponse);
+
+        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         Set<String> excludeAttributeNameSet = new HashSet<>();
         excludeAttributeNameSet.add("_ClassPath");
@@ -79,9 +79,9 @@ public class ExcludeObjectNameAttributesTest extends BaseTest implements Content
          *
          * name = java_lang*
          */
-        metricCollection.forEach(
+        metrics.forEach(
                 metric -> {
-                    String name = metric.getName();
+                    String name = metric.name();
                     if (name.contains("java_lang")) {
                         for (String attributeName : excludeAttributeNameSet) {
                             if (name.contains(attributeName)) {

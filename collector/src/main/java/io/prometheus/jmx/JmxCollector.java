@@ -20,10 +20,18 @@ import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.SEVERE;
 
-import io.prometheus.client.Collector;
-import io.prometheus.client.Counter;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Gauge;
+import io.prometheus.metrics.model.registry.MultiCollector;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.snapshots.CounterSnapshot;
+import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
+import io.prometheus.metrics.model.snapshots.Labels;
+import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import io.prometheus.metrics.model.snapshots.Unit;
+import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -32,13 +40,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +53,7 @@ import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("unchecked")
-public class JmxCollector extends Collector implements Collector.Describable {
+public class JmxCollector implements MultiCollector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxCollector.class);
 
@@ -58,18 +64,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
 
     private final Mode mode;
 
-    static final Counter configReloadSuccess =
-            Counter.build()
-                    .name("jmx_config_reload_success_total")
-                    .help("Number of times configuration have successfully been reloaded.")
-                    .register();
-
-    static final Counter configReloadFailure =
-            Counter.build()
-                    .name("jmx_config_reload_failure_total")
-                    .help("Number of times configuration have failed to be reloaded.")
-                    .register();
-
     static class Rule {
         Pattern pattern;
         String name;
@@ -78,7 +72,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
         String help;
         boolean attrNameSnakeCase;
         boolean cache = false;
-        Type type = Type.UNKNOWN;
+        String type = "UNKNOWN";
         ArrayList<String> labelNames;
         ArrayList<String> labelValues;
     }
@@ -100,9 +94,16 @@ public class JmxCollector extends Collector implements Collector.Describable {
         MatchedRulesCache rulesCache;
     }
 
+    private PrometheusRegistry prometheusRegistry;
     private Config config;
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
+
+    private Counter configReloadSuccess;
+    private Counter configReloadFailure;
+    private Gauge jmxScrapeDurationSeconds;
+    private Gauge jmxScrapeError;
+    private Gauge jmxScrapeCachedBeans;
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
@@ -126,6 +127,49 @@ public class JmxCollector extends Collector implements Collector.Describable {
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
         config = loadConfig(new Yaml().load(inputStream));
         mode = null;
+    }
+
+    public JmxCollector register() {
+        return register(PrometheusRegistry.defaultRegistry);
+    }
+
+    public JmxCollector register(PrometheusRegistry prometheusRegistry) {
+        this.prometheusRegistry = prometheusRegistry;
+
+        configReloadSuccess =
+                Counter.builder()
+                        .name("jmx_config_reload_success_total")
+                        .help("Number of times configuration have successfully been reloaded.")
+                        .register(prometheusRegistry);
+
+        configReloadFailure =
+                Counter.builder()
+                        .name("jmx_config_reload_failure_total")
+                        .help("Number of times configuration have failed to be reloaded.")
+                        .register(prometheusRegistry);
+
+        jmxScrapeDurationSeconds =
+                Gauge.builder()
+                        .name("jmx_scrape_duration_seconds")
+                        .help("Time this JMX scrape took, in seconds.")
+                        .unit(Unit.SECONDS)
+                        .register(prometheusRegistry);
+
+        jmxScrapeError =
+                Gauge.builder()
+                        .name("jmx_scrape_error")
+                        .help("Non-zero if this scrape failed.")
+                        .register(prometheusRegistry);
+
+        jmxScrapeCachedBeans =
+                Gauge.builder()
+                        .name("jmx_scrape_cached_beans")
+                        .help("Number of beans with their matching rule cached")
+                        .register(prometheusRegistry);
+
+        prometheusRegistry.register(this);
+
+        return this;
     }
 
     private void exitOnConfigError() {
@@ -292,7 +336,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
                     if ("UNTYPED".equals(t)) {
                         t = "UNKNOWN";
                     }
-                    rule.type = Type.valueOf(t);
+                    rule.type = t;
                 }
                 if (yamlRule.containsKey("help")) {
                     rule.help = (String) yamlRule.get("help");
@@ -391,50 +435,11 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 || (input >= '0' && input <= '9'));
     }
 
-    /** A sample is uniquely identified by its name, labelNames and labelValues */
-    private static class SampleKey {
-        private final String name;
-        private final List<String> labelNames;
-        private final List<String> labelValues;
-
-        private SampleKey(String name, List<String> labelNames, List<String> labelValues) {
-            this.name = name;
-            this.labelNames = labelNames;
-            this.labelValues = labelValues;
-        }
-
-        private static SampleKey of(MetricFamilySamples.Sample sample) {
-            return new SampleKey(sample.name, sample.labelNames, sample.labelValues);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SampleKey sampleKey = (SampleKey) o;
-
-            if (name != null ? !name.equals(sampleKey.name) : sampleKey.name != null) return false;
-            if (labelValues != null
-                    ? !labelValues.equals(sampleKey.labelValues)
-                    : sampleKey.labelValues != null) return false;
-            return labelNames != null
-                    ? labelNames.equals(sampleKey.labelNames)
-                    : sampleKey.labelNames == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (labelNames != null ? labelNames.hashCode() : 0);
-            result = 31 * result + (labelValues != null ? labelValues.hashCode() : 0);
-            return result;
-        }
-    }
-
     static class Receiver implements JmxScraper.MBeanReceiver {
-        Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
-        Set<SampleKey> sampleKeys = new HashSet<>();
+
+        Map<String, UnknownSnapshot.Builder> unknownMap = new HashMap<>();
+        Map<String, CounterSnapshot.Builder> countersMap = new HashMap<>();
+        Map<String, GaugeSnapshot.Builder> gaugeMap = new HashMap<>();
 
         Config config;
         MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -449,36 +454,6 @@ public class JmxCollector extends Collector implements Collector.Describable {
         // [] and () are special in regexes, so swtich to <>.
         private String angleBrackets(String s) {
             return "<" + s.substring(1, s.length() - 1) + ">";
-        }
-
-        void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
-            MetricFamilySamples mfs = metricFamilySamplesMap.get(sample.name);
-            if (mfs == null) {
-                // JmxScraper.MBeanReceiver is only called from one thread,
-                // so there's no race here.
-                mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<>());
-                metricFamilySamplesMap.put(sample.name, mfs);
-            }
-            SampleKey sampleKey = SampleKey.of(sample);
-            boolean exists = sampleKeys.contains(sampleKey);
-            if (exists) {
-                if (LOGGER.isLoggable(FINE)) {
-                    String labels = "{";
-                    for (int i = 0; i < sample.labelNames.size(); i++) {
-                        labels += sample.labelNames.get(i) + "=" + sample.labelValues.get(i) + ",";
-                    }
-                    labels += "}";
-                    LOGGER.log(
-                            FINE,
-                            "Metric %s%s was created multiple times. Keeping the first occurrence."
-                                    + " Dropping the others.",
-                            sample.name,
-                            labels);
-                }
-            } else {
-                mfs.samples.add(sample);
-                sampleKeys.add(sampleKey);
-            }
         }
 
         // Add the matched rule to the cached rules and tag it as not stale
@@ -500,7 +475,7 @@ public class JmxCollector extends Collector implements Collector.Describable {
                 String help,
                 Double value,
                 double valueFactor,
-                Type type) {
+                String type) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
             if (beanProperties.size() > 0) {
@@ -731,25 +706,88 @@ public class JmxCollector extends Collector implements Collector.Describable {
                     matchedRule.labelNames,
                     matchedRule.labelValues,
                     value.doubleValue());
-            addSample(
-                    new MetricFamilySamples.Sample(
-                            matchedRule.name,
-                            matchedRule.labelNames,
-                            matchedRule.labelValues,
-                            value.doubleValue()),
-                    matchedRule.type,
-                    matchedRule.help);
+
+            final MatchedRule finalMatchedRule = matchedRule;
+
+            switch (matchedRule.type) {
+                case "COUNTER":
+                    {
+                        CounterSnapshot.Builder counterBuilder =
+                                countersMap.computeIfAbsent(
+                                        matchedRule.name,
+                                        name ->
+                                                CounterSnapshot.builder()
+                                                        .name(finalMatchedRule.name)
+                                                        .help(finalMatchedRule.help));
+
+                        counterBuilder.dataPoint(
+                                CounterSnapshot.CounterDataPointSnapshot.builder()
+                                        .value(value.doubleValue())
+                                        .labels(
+                                                Labels.of(
+                                                        finalMatchedRule.labelNames,
+                                                        finalMatchedRule.labelValues))
+                                        .build());
+
+                        break;
+                    }
+                case "GAUGE":
+                    {
+                        GaugeSnapshot.Builder gaugeBuilder =
+                                gaugeMap.computeIfAbsent(
+                                        matchedRule.name,
+                                        name ->
+                                                GaugeSnapshot.builder()
+                                                        .name(finalMatchedRule.name)
+                                                        .help(finalMatchedRule.help));
+                        gaugeBuilder.dataPoint(
+                                GaugeSnapshot.GaugeDataPointSnapshot.builder()
+                                        .value(value.doubleValue())
+                                        .labels(
+                                                Labels.of(
+                                                        finalMatchedRule.labelNames,
+                                                        finalMatchedRule.labelValues))
+                                        .build());
+
+                        break;
+                    }
+                case "UNKNOWN":
+                case "UNTYPED":
+                default:
+                    {
+                        UnknownSnapshot.Builder unknownBuilder =
+                                unknownMap.computeIfAbsent(
+                                        matchedRule.name,
+                                        name ->
+                                                UnknownSnapshot.builder()
+                                                        .name(finalMatchedRule.name)
+                                                        .help(finalMatchedRule.help));
+                        unknownBuilder.dataPoint(
+                                UnknownSnapshot.UnknownDataPointSnapshot.builder()
+                                        .value(value.doubleValue())
+                                        .labels(
+                                                Labels.of(
+                                                        finalMatchedRule.labelNames,
+                                                        finalMatchedRule.labelValues))
+                                        .build());
+
+                        break;
+                    }
+            }
         }
     }
 
-    public List<MetricFamilySamples> collect() {
+    @Override
+    public MetricSnapshots collect() {
         // Take a reference to the current config and collect with this one
         // (to avoid race conditions in case another thread reloads the config in the meantime)
         Config config = getLatestConfig();
 
         MatchedRulesCache.StalenessTracker stalenessTracker =
                 new MatchedRulesCache.StalenessTracker();
+
         Receiver receiver = new Receiver(config, stalenessTracker);
+
         JmxScraper scraper =
                 new JmxScraper(
                         config.jmxUrl,
@@ -761,8 +799,10 @@ public class JmxCollector extends Collector implements Collector.Describable {
                         config.objectNameAttributeFilter,
                         receiver,
                         jmxMBeanPropertyCache);
+
         long start = System.nanoTime();
         double error = 0;
+
         if ((config.startDelaySeconds > 0)
                 && ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
             throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
@@ -775,83 +815,27 @@ public class JmxCollector extends Collector implements Collector.Describable {
             e.printStackTrace(new PrintWriter(sw));
             LOGGER.log(SEVERE, "JMX scrape failed: %s", sw);
         }
+
         config.rulesCache.evictStaleEntries(stalenessTracker);
 
-        List<MetricFamilySamples> mfsList =
-                new ArrayList<>(receiver.metricFamilySamplesMap.values());
-        List<MetricFamilySamples.Sample> samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_duration_seconds",
-                        new ArrayList<>(),
-                        new ArrayList<>(),
-                        (System.nanoTime() - start) / 1.0E9));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_duration_seconds",
-                        Type.GAUGE,
-                        "Time this JMX scrape took, in seconds.",
-                        samples));
+        jmxScrapeDurationSeconds.set((System.nanoTime() - start) / 1.0E9);
+        jmxScrapeError.set(error);
+        jmxScrapeCachedBeans.set(stalenessTracker.cachedCount());
 
-        samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_error", new ArrayList<>(), new ArrayList<>(), error));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_error",
-                        Type.GAUGE,
-                        "Non-zero if this scrape failed.",
-                        samples));
-        samples = new ArrayList<>();
-        samples.add(
-                new MetricFamilySamples.Sample(
-                        "jmx_scrape_cached_beans",
-                        new ArrayList<>(),
-                        new ArrayList<>(),
-                        stalenessTracker.cachedCount()));
-        mfsList.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_cached_beans",
-                        Type.GAUGE,
-                        "Number of beans with their matching rule cached",
-                        samples));
-        return mfsList;
-    }
+        MetricSnapshots.Builder result = MetricSnapshots.builder();
 
-    public List<MetricFamilySamples> describe() {
-        List<MetricFamilySamples> sampleFamilies = new ArrayList<>();
-        sampleFamilies.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_duration_seconds",
-                        Type.GAUGE,
-                        "Time this JMX scrape took, in seconds.",
-                        new ArrayList<>()));
-        sampleFamilies.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_error",
-                        Type.GAUGE,
-                        "Non-zero if this scrape failed.",
-                        new ArrayList<>()));
-        sampleFamilies.add(
-                new MetricFamilySamples(
-                        "jmx_scrape_cached_beans",
-                        Type.GAUGE,
-                        "Number of beans with their matching rule cached",
-                        new ArrayList<>()));
-        return sampleFamilies;
-    }
-
-    /** Convenience function to run standalone. */
-    public static void main(String[] args) throws Exception {
-        String hostPort = "";
-        if (args.length > 0) {
-            hostPort = args[0];
+        for (CounterSnapshot.Builder counter : receiver.countersMap.values()) {
+            result.metricSnapshot(counter.build());
         }
-        JmxCollector jc =
-                new JmxCollector(("{" + "`hostPort`: `" + hostPort + "`," + "}").replace('`', '"'));
-        for (MetricFamilySamples mfs : jc.collect()) {
-            System.out.println(mfs);
+
+        for (GaugeSnapshot.Builder gauge : receiver.gaugeMap.values()) {
+            result.metricSnapshot(gauge.build());
         }
+
+        for (UnknownSnapshot.Builder unknown : receiver.unknownMap.values()) {
+            result.metricSnapshot(unknown.build());
+        }
+
+        return result.build();
     }
 }

@@ -16,7 +16,6 @@
 
 package io.prometheus.jmx;
 
-import io.prometheus.client.Collector.Type;
 import java.util.List;
 
 /**
@@ -28,7 +27,7 @@ public class MatchedRule {
 
     final String name;
     final String matchName;
-    final Type type;
+    final String type;
     final String help;
     final List<String> labelNames;
     final List<String> labelValues;
@@ -51,7 +50,7 @@ public class MatchedRule {
     public MatchedRule(
             final String name,
             final String matchName,
-            final Type type,
+            final String type,
             final String help,
             final List<String> labelNames,
             final List<String> labelValues,
