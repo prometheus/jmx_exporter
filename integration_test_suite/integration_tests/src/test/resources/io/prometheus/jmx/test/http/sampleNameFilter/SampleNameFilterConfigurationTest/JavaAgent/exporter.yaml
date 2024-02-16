@@ -1,0 +1,6 @@
+httpServer:
+  sampleNameFilter:
+    name-must-not-be-equal-to:
+      - jvm_threads_state
+rules:
+  - pattern: ".*"

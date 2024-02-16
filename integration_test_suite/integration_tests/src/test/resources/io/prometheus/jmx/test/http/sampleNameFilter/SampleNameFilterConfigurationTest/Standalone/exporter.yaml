@@ -1,0 +1,7 @@
+httpServer:
+  sampleNameFilter:
+    name-must-not-be-equal-to:
+      - jvm_threads_state
+hostPort: application:9999
+rules:
+  - pattern: ".*"
