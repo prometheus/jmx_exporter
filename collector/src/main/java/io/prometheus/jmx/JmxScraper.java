@@ -213,6 +213,7 @@ class JmxScraper {
         }
 
         final String mBeanNameString = mBeanName.toString();
+        final String mBeanDomain = mBeanName.getDomain();
 
         for (Object object : attributes) {
             // The contents of an AttributeList should all be Attribute instances, but we'll verify
@@ -238,7 +239,7 @@ class JmxScraper {
                 LOGGER.log(FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
                         mBeanName,
-                        mBeanName.getDomain(),
+                        mBeanDomain,
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         new LinkedList<>(),
                         mBeanAttributeInfo.getName(),
