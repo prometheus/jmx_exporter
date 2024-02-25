@@ -1,0 +1,19 @@
+---
+startDelaySeconds: 0
+ssl: false
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+includeObjectNames: ["java.lang:type=Threading"]
+autoExcludeObjectNameAttributes: true
+excludeObjectNameAttributes:
+  "java.lang:type=OperatingSystem":
+    - "ObjectName"
+  "java.lang:type=Runtime":
+    - "ClassPath"
+    - "SystemProperties"
+rules:
+  - pattern: 'java\.lang<type=Threading><(.*)>ThreadCount: (.*)'
+    name: java_lang_Threading_ThreadCount
+    value: '$2'
+    help: 'ThreadCount (java.lang<type=Threading><>ThreadCount)'
+    type: UNTYPED
