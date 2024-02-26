@@ -4,7 +4,7 @@
 
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>parent</artifactId>
-    <version>0.20.0</version>
+    <version>0.20.0-jdk17-SNAPSHOT</version>
 
     <name>Prometheus JMX Exporter</name>
     <description>
@@ -55,13 +55,15 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>snapshots</id>
+            <name>meltwater-snapshots</name>
+            <url>https://meltwater.jfrog.io/artifactory/snapshots-local</url>
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
+
     </distributionManagement>
 
     <dependencyManagement>
@@ -232,7 +234,7 @@
                     <encoding>UTF-8</encoding>
                     <docencoding>UTF-8</docencoding>
                     <linksource>true</linksource>
-                    <source>8</source>
+                    <source>17</source>
                 </configuration>
                 <executions>
                     <execution>
@@ -249,7 +251,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>8</source>
-                    <target>8</target>
+                    <target>17</target>
                 </configuration>
             </plugin>
             <plugin>

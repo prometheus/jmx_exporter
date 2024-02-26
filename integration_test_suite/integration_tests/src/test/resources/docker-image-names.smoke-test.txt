@@ -1,4 +1,2 @@
-eclipse-temurin:8-alpine
-eclipse-temurin:11-alpine
 eclipse-temurin:17-alpine
 eclipse-temurin:20-alpine
