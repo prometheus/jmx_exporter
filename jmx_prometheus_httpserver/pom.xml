@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.prometheus.jmx</groupId>
+        <groupId>io.acryl.prometheus.jmx</groupId>
         <artifactId>parent</artifactId>
-        <version>0.20.1-SNAPSHOT</version>
+        <version>0.20.1</version>
     </parent>
 
     <artifactId>jmx_prometheus_httpserver</artifactId>
