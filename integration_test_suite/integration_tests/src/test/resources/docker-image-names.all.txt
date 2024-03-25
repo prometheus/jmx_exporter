@@ -17,15 +17,15 @@ azul/zulu-openjdk:21
 azul/prime:8
 azul/prime:11
 azul/prime:17
-azul/prime:21
+#azul/prime:21 Remove due to issues with JDK
 bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
-bellsoft/liberica-openjdk-debian:21
+bellsoft/liberica-openjdk-debian:22
 bitnami/java:1.8
 bitnami/java:11
 bitnami/java:17
-bitnami/java:21
+bitnami/java:22
 eclipse-temurin:8
 eclipse-temurin:11
 eclipse-temurin:17
@@ -37,13 +37,13 @@ eclipse-temurin:21-alpine
 ghcr.io/graalvm/jdk:java8
 ghcr.io/graalvm/jdk:java11
 ghcr.io/graalvm/jdk:java17
-ghcr.io/graalvm/jdk:21
+ghcr.io/graalvm/jdk:22
 ibmjava:8
 ibmjava:11
 ibm-semeru-runtimes:open-8-jdk-focal
 ibm-semeru-runtimes:open-11-jdk-focal
 ibm-semeru-runtimes:open-17-jdk-focal
-ibm-semeru-runtimes:open-20-jdk-focal
+ibm-semeru-runtimes:open-21-jdk-focal
 konajdk/konajdk:8
 konajdk/konajdk:11
 konajdk/konajdk:17-tlinux
@@ -60,7 +60,7 @@ mcr.microsoft.com/openjdk/jdk:21-ubuntu
 openjdk:8
 openjdk:11
 openjdk:17
-openjdk:21
+openjdk:22
 registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-17-runtime:latest
