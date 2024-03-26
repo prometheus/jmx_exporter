@@ -222,7 +222,7 @@ httpServer:
 
 - PBKDF2WithHmacSHA1 default iterations = `1300000`
 - PBKDF2WithHmacSHA256 default iterations = `600000`
-- PBKDF2WithHmacSHA256 default iterations = `210000`
+- PBKDF2WithHmacSHA512 default iterations = `210000`
 - default keyLength = `128` (bits)
 
 ### Generation of `passwordHash`
