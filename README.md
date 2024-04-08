@@ -7,7 +7,7 @@
 [![Build Status](https://circleci.com/gh/prometheus/jmx_exporter.svg?style=svg)](https://circleci.com/gh/prometheus/jmx_exporter)
 
 JMX to Prometheus exporter: a collector that can configurable scrape and
-expose mBeans of a JMX target.
+expose MBeans of a JMX target.
 
 This exporter is intended to be run as a Java Agent, exposing a HTTP server
 and serving metrics of the local JVM. It can be also run as a standalone
