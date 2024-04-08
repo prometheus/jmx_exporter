@@ -4,7 +4,7 @@
 
 # JMX Exporter
 
-[![Build Status](https://circleci.com/gh/prometheus/jmx_exporter.svg?style=svg)](https://circleci.com/gh/prometheus/jmx_exporter
+[![Build Status](https://circleci.com/gh/prometheus/jmx_exporter.svg?style=svg)](https://circleci.com/gh/prometheus/jmx_exporter)
 
 JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
