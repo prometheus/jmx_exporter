@@ -1,7 +1,3 @@
-<picture>
-  <img src="https://circleci.com/gh/prometheus/jmx_exporter.svg?style=shield"/>
-</picture>
-
 # JMX Exporter
 
 [![Build Status](https://circleci.com/gh/prometheus/jmx_exporter.svg?style=svg)](https://circleci.com/gh/prometheus/jmx_exporter)
