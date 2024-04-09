@@ -17,7 +17,7 @@ process metrics (e.g., memory and CPU usage).
 
 **Documentation is specific to a release.**
 
-[0.20.0](jmx_exporter/docs)
+[0.20.0](docs)
 
 [0.19.0](tree/release-0.19.0)
 
