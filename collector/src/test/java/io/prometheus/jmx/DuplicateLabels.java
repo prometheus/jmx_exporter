@@ -25,19 +25,17 @@ import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
 
 public class DuplicateLabels {
 
     Map<String, UnknownSnapshot.Builder> unknownMap;
 
-    //@Before
+    // @Before
     public void setUp() {
         unknownMap = new HashMap<>();
     }
 
-    //@Test
+    // @Test
     public void testDuplicateLabels() {
         UnknownSnapshot.Builder unknownBuilder =
                 unknownMap.computeIfAbsent(
