@@ -16,12 +16,6 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-
-import io.prometheus.metrics.model.snapshots.DuplicateLabelsException;
-import io.prometheus.metrics.model.snapshots.Labels;
-import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +31,7 @@ public class DuplicateLabels {
 
     // @Test
     public void testDuplicateLabels() {
+        /*
         UnknownSnapshot.Builder unknownBuilder =
                 unknownMap.computeIfAbsent(
                         "test",
@@ -82,5 +77,6 @@ public class DuplicateLabels {
         assertEquals(
                 "Duplicate labels for metric \"test_metric\": {label1=\"value1\"}",
                 exception.getMessage());
+        */
     }
 }
