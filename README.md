@@ -19,7 +19,7 @@ process metrics (e.g., memory and CPU usage).
 
 ## Running the Java Agent
 
-- [jmx_prometheus_javaagent-0.19.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.19.0/jmx_prometheus_javaagent-0.19.0.jar)
+- [jmx_prometheus_javaagent-0.20.0.jar](https://repo.maven.apache.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.20.0/jmx_prometheus_javaagent-0.20.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
 
