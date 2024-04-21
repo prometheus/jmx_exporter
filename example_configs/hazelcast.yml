@@ -1,0 +1,23 @@
+#---
+attrNameSnakeCase: true
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames:
+  - "com.hazelcast:type=Metrics,*"
+
+rules:
+  - pattern: "^com.hazelcast<type=Metrics, instance=(.*), prefix=(.*), tag([0-9]+)=(.*)><>(.+):"
+    name: hazelcast_$5
+    attrNameSnakeCase: true
+    labels:
+      instance: $1
+      prefix: $2
+      tag$3: $4
+
+  - pattern: "^com.hazelcast<type=Metrics, instance=(.*), prefix=(.*)><>(.+):"
+    name: hazelcast_$3
+    attrNameSnakeCase: true
+    labels:
+      instance: $1
+      prefix: $2
+
