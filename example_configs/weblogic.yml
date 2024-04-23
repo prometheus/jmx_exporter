@@ -7,6 +7,7 @@ lowercaseOutputName: true
 lowercaseOutputLabelNames: true
 whitelistObjectNames:
   - "com.bea:Name=*,Type=ServerRuntime"
+  #- "com.bea:Name=*,Type=Domain" # uncomment this if you want to fetch domain name
   - "com.bea:ServerRuntime=*,Type=ApplicationRuntime,*"
   - "com.bea:ServerRuntime=*,Type=JDBCDataSourceRuntime,*"
   - "com.bea:ServerRuntime=*,Type=JMSDestinationRuntime,*"
@@ -46,3 +47,10 @@ rules:
     labels:
       runtime: $1
       name: $2
+
+# Uncomment the following lines if you want to fetch domain name as metric.
+#  - pattern: "^com.bea<Name=(.*), Type=Domain><>(id): (.+)"
+#    name: weblogic_id
+#    attrNameSnakeCase: true
+#    labels:
+#      domain: $1
