@@ -120,7 +120,9 @@ class JmxScraper {
                 environment.put(
                         RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
                         clientSocketFactory);
-                environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+                // https://db.apache.org/derby/docs/10.10/adminguide/radminjmxenablepwdssl.html
+                // this is use a java se 5 jdk, when use java se 17 jdk, will not work. 
+                // environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
             }
 
             jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
