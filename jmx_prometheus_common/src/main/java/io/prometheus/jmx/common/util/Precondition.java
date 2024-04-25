@@ -82,6 +82,7 @@ public class Precondition {
      *
      * @param value value
      * @param minimumValue minimumValue
+     * @param message message
      */
     public static void isGreaterThanOrEqualTo(int value, int minimumValue, String message) {
         if (value < minimumValue) {
