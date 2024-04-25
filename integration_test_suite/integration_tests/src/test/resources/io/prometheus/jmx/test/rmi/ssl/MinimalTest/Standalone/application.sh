@@ -5,18 +5,21 @@
 #
 # When running on RedHat UBI images, testcontainers maps
 # the files as the current user, but the application runs
-# as jboss preventing the chmod commands to lock down
-# the jmxremote.access and jmxremote.password files
+# as "jboss" on UBI8 images and "default" on UBI9 images
+# preventing the chmod commands to change permissions on
+# the jmxremote.access and jmxremote.password files.
 #
-# The code copies the files to /tmp as the jboss user
-# then performs a chmod to restrict permissions
+# The code copies the files to /tmp as the current user
+# then performs a chmod to change permissions.
 #
 
 JMXREMOTE_ACCESS=jmxremote.access
 JMXREMOTE_PASSWORD=jmxremote.password
 
+whoami
+
 WHOAMI=$(whoami)
-if [ "${WHOAMI}" = "jboss" ];
+if [ "${WHOAMI}" = "jboss" ] || [ "${WHOAMI}" = "default" ];
 then
   cp ${JMXREMOTE_ACCESS} /tmp/jmxremote.access
   cp ${JMXREMOTE_PASSWORD} /tmp/jmxremote.password
