@@ -74,6 +74,9 @@ registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-17-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-21-runtime:latest
+registry.access.redhat.com/ubi9/openjdk-11-runtime:latest
+registry.access.redhat.com/ubi9/openjdk-17-runtime:latest
+registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
 sapmachine:11
 sapmachine:17
 sapmachine:21
