@@ -96,6 +96,7 @@ public class HTTPServerFactory {
      * Method to create an HTTPServer using the supplied arguments
      *
      * @param inetAddress inetAddress
+     * @param port port
      * @param prometheusRegistry prometheusRegistry
      * @param exporterYamlFile exporterYamlFile
      * @return an HTTPServer

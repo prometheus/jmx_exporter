@@ -111,6 +111,7 @@ public class YamlMapAccessor {
      * <p>parent paths will be created if required
      *
      * @param path path
+     * @param supplier supplier
      * @return an Optional containing the path Object or Optional created by the Supplier
      */
     public Optional<Object> getOrCreate(String path, Supplier<Object> supplier) {
@@ -164,6 +165,7 @@ public class YamlMapAccessor {
      * doesn't exist
      *
      * @param path path
+     * @param supplier supplier
      * @return an Optional containing the path Object
      */
     public Optional<Object> getOrThrow(String path, Supplier<? extends RuntimeException> supplier) {
