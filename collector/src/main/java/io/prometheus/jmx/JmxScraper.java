@@ -120,7 +120,10 @@ class JmxScraper {
                 environment.put(
                         RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
                         clientSocketFactory);
-                environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+
+                if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
+                    environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+                }
             }
 
             jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);

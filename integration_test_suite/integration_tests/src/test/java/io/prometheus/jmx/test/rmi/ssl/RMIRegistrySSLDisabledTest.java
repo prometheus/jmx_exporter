@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
-public class MinimalTest extends AbstractTest implements Consumer<HttpResponse> {
+public class RMIRegistrySSLDisabledTest extends AbstractTest implements Consumer<HttpResponse> {
 
     /**
      * Method to get the list of TestArguments
