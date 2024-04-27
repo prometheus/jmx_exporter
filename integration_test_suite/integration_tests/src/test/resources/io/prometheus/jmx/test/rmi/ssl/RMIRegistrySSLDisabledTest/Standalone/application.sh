@@ -30,16 +30,17 @@ else
   chmod go-rwx jmxremote.password
 fi
 
+export RMI_REGISTRY_SSL_DISABLED=true
+
 java \
   -Xmx512M \
   -Dcom.sun.management.jmxremote=true \
   -Dcom.sun.management.jmxremote.authenticate=true \
   -Dcom.sun.management.jmxremote.password.file=${JMXREMOTE_PASSWORD} \
   -Dcom.sun.management.jmxremote.port=9999 \
-  -Dcom.sun.management.jmxremote.registry.ssl=true \
   -Dcom.sun.management.jmxremote.access.file=${JMXREMOTE_ACCESS} \
-  -Dcom.sun.management.jmxremote.rmi.port=9999 \
   -Dcom.sun.management.jmxremote.ssl=true \
+  -Dcom.sun.management.jmxremote.rmi.port=8888 \
   -Djavax.net.ssl.keyStore=localhost.pkcs12 \
   -Djavax.net.ssl.keyStorePassword=changeit \
   -Djavax.net.ssl.keyStoreType=pkcs12 \
