@@ -49,6 +49,10 @@ Example
 
 Download the staged artifacts from Maven Central and run the integration test suite.
 
+```
+https://oss.sonatype.org/#stagingRepositories
+```
+
 Example
 
 ```shell
