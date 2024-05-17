@@ -5,7 +5,6 @@
 JMX Exporter
 =====
 
-
 JMX to Prometheus exporter: a collector that can configurable scrape and
 expose mBeans of a JMX target.
 
@@ -15,16 +14,25 @@ HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
 process metrics (e.g., memory and CPU usage).
 
-**Running the exporter as a Java agent is strongly encouraged.**
+### **NOTE**
+
+**Some JVM metric names have changed to conform with the [OpenMetrics](https://openmetrics.io/) specification.**
+
+**Dashboards will need to be changed if referencing the changed JVM metrics.**
+
+https://prometheus.github.io/client_java/migration/simpleclient/#jvm-metrics
+
 
 ## Running the Java Agent
 
-- [jmx_prometheus_javaagent-0.20.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.20.0/jmx_prometheus_javaagent-0.20.0.jar)
+**Running the exporter as a Java agent is strongly encouraged.**
+
+- [jmx_prometheus_javaagent-1.0.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.0/jmx_prometheus_javaagent-1.0.0.jar)
 
 To run as a Java agent, download one of the JARs and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-0.20.0.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-1.0.0.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -41,12 +49,12 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-- [jmx_prometheus_httpserver-0.20.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.20.0/jmx_prometheus_httpserver-0.20.0.jar)
+- [jmx_prometheus_httpserver-1.0.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/1.0.0/jmx_prometheus_httpserver-1.0.0.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-0.20.0.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-1.0.0.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
