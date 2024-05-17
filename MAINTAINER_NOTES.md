@@ -88,7 +88,7 @@ Checkout the `main` branch and increment the version
 
 ```shell
 git checkout main
-./tools/change-version.sh 1.0.0-SNAPSHOT
+./tools/change-version.sh 1.0.0
 git add -u
 git commit -m "prepare for next development iteration"
 ```
