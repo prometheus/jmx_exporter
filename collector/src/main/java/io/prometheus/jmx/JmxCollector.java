@@ -441,13 +441,13 @@ public class JmxCollector implements MultiCollector {
     static class Receiver implements JmxScraper.MBeanReceiver {
 
         Map<String, UnknownSnapshot.Builder> unknownSnapshotBuilderMap = new HashMap<>();
-        Map<String, List<DataPoint>> unknownSnapshotDatapointMap = new HashMap<>();
+        Map<String, List<DataPoint>> unknownDataPointMap = new HashMap<>();
 
         Map<String, CounterSnapshot.Builder> counterSnapshotBuilderMap = new HashMap<>();
-        Map<String, List<DataPoint>> counterSnapshotDatapointMap = new HashMap<>();
+        Map<String, List<DataPoint>> counterDataPointMap = new HashMap<>();
 
         Map<String, GaugeSnapshot.Builder> gaugeSnapshotBuilderMap = new HashMap<>();
-        Map<String, List<DataPoint>> gaugSnapshotDatapointMap = new HashMap<>();
+        Map<String, List<DataPoint>> gaugDataPointMap = new HashMap<>();
 
         Config config;
         MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -738,7 +738,7 @@ public class JmxCollector implements MultiCollector {
                                                 .help(finalMatchedRule.help));
 
                         List<DataPoint> dataPoints =
-                                counterSnapshotDatapointMap.computeIfAbsent(
+                                counterDataPointMap.computeIfAbsent(
                                         sanitizedName, name -> new ArrayList<>());
 
                         dataPoints.add(
@@ -760,7 +760,7 @@ public class JmxCollector implements MultiCollector {
                                                 .help(finalMatchedRule.help));
 
                         List<DataPoint> dataPoints =
-                                gaugSnapshotDatapointMap.computeIfAbsent(
+                                gaugDataPointMap.computeIfAbsent(
                                         sanitizedName, name -> new ArrayList<>());
 
                         dataPoints.add(
@@ -784,7 +784,7 @@ public class JmxCollector implements MultiCollector {
                                                 .help(finalMatchedRule.help));
 
                         List<DataPoint> dataPoints =
-                                unknownSnapshotDatapointMap.computeIfAbsent(
+                                unknownDataPointMap.computeIfAbsent(
                                         sanitizedName, name -> new ArrayList<>());
 
                         dataPoints.add(
@@ -858,7 +858,7 @@ public class JmxCollector implements MultiCollector {
             long counter = 0;
             Set<Labels> labels = new HashSet<>();
 
-            for (DataPoint dataPoint : receiver.counterSnapshotDatapointMap.get(key)) {
+            for (DataPoint dataPoint : receiver.counterDataPointMap.get(key)) {
                 if (labels.contains(dataPoint.labels)) {
                     dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
                     counter++;
@@ -885,7 +885,7 @@ public class JmxCollector implements MultiCollector {
             long counter = 0;
             Set<Labels> labels = new HashSet<>();
 
-            for (DataPoint dataPoint : receiver.gaugSnapshotDatapointMap.get(key)) {
+            for (DataPoint dataPoint : receiver.gaugDataPointMap.get(key)) {
                 if (labels.contains(dataPoint.labels)) {
                     dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
                     counter++;
@@ -913,7 +913,7 @@ public class JmxCollector implements MultiCollector {
             long counter = 0;
             Set<Labels> labels = new HashSet<>();
 
-            for (DataPoint dataPoint : receiver.unknownSnapshotDatapointMap.get(key)) {
+            for (DataPoint dataPoint : receiver.unknownDataPointMap.get(key)) {
                 if (labels.contains(dataPoint.labels)) {
                     dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
                     counter++;
