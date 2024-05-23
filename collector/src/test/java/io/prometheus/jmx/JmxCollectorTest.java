@@ -37,6 +37,8 @@ public class JmxCollectorTest {
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
         Camel.registerBean(mbs);
+        TotalValue.registerBean(mbs);
+        CollidingName.registerBeans(mbs);
     }
 
     @Before

@@ -23,7 +23,9 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -72,10 +74,10 @@ public class PrometheusRegistryUtils {
                                         .filter(
                                                 (Predicate<DataPointSnapshot>)
                                                         dataPointSnapshot ->
-                                                                dataPointSnapshot
-                                                                                .getLabels()
-                                                                                .compareTo(labels)
-                                                                        == 0)
+                                                                isSubsetOfLabels(
+                                                                        dataPointSnapshot
+                                                                                .getLabels(),
+                                                                        labels))
                                         .findFirst()
                                         .ifPresent(
                                                 (Consumer<DataPointSnapshot>)
@@ -105,5 +107,15 @@ public class PrometheusRegistryUtils {
         // TODO add other DataPoint types
 
         return value;
+    }
+
+    private static boolean isSubsetOfLabels(Labels set, Labels subSet) {
+        final Set<String> labelSet = new HashSet<>();
+        set.forEach(label -> labelSet.add(label.getName() + "\\\"->\\\"" + label.getValue()));
+
+        final Set<String> labelSubSet = new HashSet<>();
+        subSet.forEach(label -> labelSubSet.add(label.getName() + "\\\"->\\\"" + label.getValue()));
+
+        return labelSet.containsAll(labelSubSet);
     }
 }

@@ -30,6 +30,7 @@ import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 import io.prometheus.metrics.model.snapshots.Unit;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.io.File;
@@ -40,11 +41,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -437,12 +440,18 @@ public class JmxCollector implements MultiCollector {
 
     static class Receiver implements JmxScraper.MBeanReceiver {
 
-        Map<String, UnknownSnapshot.Builder> unknownMap = new HashMap<>();
-        Map<String, CounterSnapshot.Builder> countersMap = new HashMap<>();
-        Map<String, GaugeSnapshot.Builder> gaugeMap = new HashMap<>();
+        Map<String, UnknownSnapshot.Builder> unknownSnapshotBuilderMap = new HashMap<>();
+        Map<String, List<DataPoint>> unknownSnapshotDatapointMap = new HashMap<>();
+
+        Map<String, CounterSnapshot.Builder> counterSnapshotBuilderMap = new HashMap<>();
+        Map<String, List<DataPoint>> counterSnapshotDatapointMap = new HashMap<>();
+
+        Map<String, GaugeSnapshot.Builder> gaugeSnapshotBuilderMap = new HashMap<>();
+        Map<String, List<DataPoint>> gaugSnapshotDatapointMap = new HashMap<>();
 
         Config config;
         MatchedRulesCache.StalenessTracker stalenessTracker;
+        int counter;
 
         private static final char SEP = '_';
 
@@ -707,47 +716,59 @@ public class JmxCollector implements MultiCollector {
                     matchedRule.labelValues,
                     value.doubleValue());
 
+            String localName = matchedRule.name;
+
+            if (config.lowercaseOutputName) {
+                localName = localName.toLowerCase();
+            }
+
             final MatchedRule finalMatchedRule = matchedRule;
+            final String sanitizedName = PrometheusNaming.sanitizeMetricName(localName);
+            final String hash = String.valueOf(counter);
+            counter++;
 
             switch (matchedRule.type) {
                 case "COUNTER":
                     {
-                        CounterSnapshot.Builder counterBuilder =
-                                countersMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                CounterSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
+                        counterSnapshotBuilderMap.computeIfAbsent(
+                                sanitizedName,
+                                name ->
+                                        CounterSnapshot.builder()
+                                                .name(sanitizedName)
+                                                .help(finalMatchedRule.help));
 
-                        counterBuilder.dataPoint(
-                                CounterSnapshot.CounterDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
+                        List<DataPoint> dataPoints =
+                                counterSnapshotDatapointMap.computeIfAbsent(
+                                        sanitizedName, name -> new ArrayList<>());
+
+                        dataPoints.add(
+                                DataPoint.of(
+                                        Labels.of(
+                                                finalMatchedRule.labelNames,
+                                                finalMatchedRule.labelValues),
+                                        value.doubleValue()));
 
                         break;
                     }
                 case "GAUGE":
                     {
-                        GaugeSnapshot.Builder gaugeBuilder =
-                                gaugeMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                GaugeSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
-                        gaugeBuilder.dataPoint(
-                                GaugeSnapshot.GaugeDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
+                        gaugeSnapshotBuilderMap.computeIfAbsent(
+                                sanitizedName,
+                                name ->
+                                        GaugeSnapshot.builder()
+                                                .name(sanitizedName)
+                                                .help(finalMatchedRule.help));
+
+                        List<DataPoint> dataPoints =
+                                gaugSnapshotDatapointMap.computeIfAbsent(
+                                        sanitizedName, name -> new ArrayList<>());
+
+                        dataPoints.add(
+                                DataPoint.of(
+                                        Labels.of(
+                                                finalMatchedRule.labelNames,
+                                                finalMatchedRule.labelValues),
+                                        value.doubleValue()));
 
                         break;
                     }
@@ -755,21 +776,23 @@ public class JmxCollector implements MultiCollector {
                 case "UNTYPED":
                 default:
                     {
-                        UnknownSnapshot.Builder unknownBuilder =
-                                unknownMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                UnknownSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
-                        unknownBuilder.dataPoint(
-                                UnknownSnapshot.UnknownDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
+                        unknownSnapshotBuilderMap.computeIfAbsent(
+                                sanitizedName,
+                                name ->
+                                        UnknownSnapshot.builder()
+                                                .name(sanitizedName)
+                                                .help(finalMatchedRule.help));
+
+                        List<DataPoint> dataPoints =
+                                unknownSnapshotDatapointMap.computeIfAbsent(
+                                        sanitizedName, name -> new ArrayList<>());
+
+                        dataPoints.add(
+                                DataPoint.of(
+                                        Labels.of(
+                                                finalMatchedRule.labelNames,
+                                                finalMatchedRule.labelValues),
+                                        value.doubleValue()));
 
                         break;
                     }
@@ -824,18 +847,109 @@ public class JmxCollector implements MultiCollector {
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
 
-        for (CounterSnapshot.Builder counter : receiver.countersMap.values()) {
-            result.metricSnapshot(counter.build());
+        Iterator<Map.Entry<String, CounterSnapshot.Builder>> counterSnapshotBuilderMapIterator =
+                receiver.counterSnapshotBuilderMap.entrySet().iterator();
+        while (counterSnapshotBuilderMapIterator.hasNext()) {
+            Map.Entry<String, CounterSnapshot.Builder> entry =
+                    counterSnapshotBuilderMapIterator.next();
+            String key = entry.getKey();
+            CounterSnapshot.Builder builder = entry.getValue();
+
+            long counter = 0;
+            Set<Labels> labels = new HashSet<>();
+
+            for (DataPoint dataPoint : receiver.counterSnapshotDatapointMap.get(key)) {
+                if (labels.contains(dataPoint.labels)) {
+                    dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
+                    counter++;
+                }
+                labels.add(dataPoint.labels);
+                builder.dataPoint(
+                        CounterSnapshot.CounterDataPointSnapshot.builder()
+                                .value(dataPoint.value)
+                                .labels(dataPoint.labels)
+                                .build());
+            }
+
+            result.metricSnapshot(builder.build());
+            counterSnapshotBuilderMapIterator.remove();
         }
 
-        for (GaugeSnapshot.Builder gauge : receiver.gaugeMap.values()) {
-            result.metricSnapshot(gauge.build());
+        Iterator<Map.Entry<String, GaugeSnapshot.Builder>> gaugeSnapshotBuilderMapIterator =
+                receiver.gaugeSnapshotBuilderMap.entrySet().iterator();
+        while (gaugeSnapshotBuilderMapIterator.hasNext()) {
+            Map.Entry<String, GaugeSnapshot.Builder> entry = gaugeSnapshotBuilderMapIterator.next();
+            String key = entry.getKey();
+            GaugeSnapshot.Builder builder = entry.getValue();
+
+            long counter = 0;
+            Set<Labels> labels = new HashSet<>();
+
+            for (DataPoint dataPoint : receiver.gaugSnapshotDatapointMap.get(key)) {
+                if (labels.contains(dataPoint.labels)) {
+                    dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
+                    counter++;
+                }
+                labels.add(dataPoint.labels);
+                builder.dataPoint(
+                        GaugeSnapshot.GaugeDataPointSnapshot.builder()
+                                .value(dataPoint.value)
+                                .labels(dataPoint.labels)
+                                .build());
+            }
+
+            result.metricSnapshot(builder.build());
+            gaugeSnapshotBuilderMapIterator.remove();
         }
 
-        for (UnknownSnapshot.Builder unknown : receiver.unknownMap.values()) {
-            result.metricSnapshot(unknown.build());
+        Iterator<Map.Entry<String, UnknownSnapshot.Builder>> unknownSnapshotBuilderMapIterator =
+                receiver.unknownSnapshotBuilderMap.entrySet().iterator();
+        while (unknownSnapshotBuilderMapIterator.hasNext()) {
+            Map.Entry<String, UnknownSnapshot.Builder> entry =
+                    unknownSnapshotBuilderMapIterator.next();
+            String key = entry.getKey();
+            UnknownSnapshot.Builder builder = entry.getValue();
+
+            long counter = 0;
+            Set<Labels> labels = new HashSet<>();
+
+            for (DataPoint dataPoint : receiver.unknownSnapshotDatapointMap.get(key)) {
+                if (labels.contains(dataPoint.labels)) {
+                    dataPoint.labels = Labels.of("_" + counter + "_", "id").merge(dataPoint.labels);
+                    counter++;
+                }
+                labels.add(dataPoint.labels);
+                builder.dataPoint(
+                        UnknownSnapshot.UnknownDataPointSnapshot.builder()
+                                .value(dataPoint.value)
+                                .labels(dataPoint.labels)
+                                .build());
+            }
+
+            result.metricSnapshot(builder.build());
+            unknownSnapshotBuilderMapIterator.remove();
         }
 
         return result.build();
+    }
+
+    private static class DataPoint {
+
+        public Labels labels;
+        public double value;
+
+        public DataPoint(Labels labels, double value) {
+            this.labels = labels;
+            this.value = value;
+        }
+
+        public static DataPoint of(Labels labels, double value) {
+            return new DataPoint(labels, value);
+        }
+
+        @Override
+        public String toString() {
+            return labels + " " + value;
+        }
     }
 }
