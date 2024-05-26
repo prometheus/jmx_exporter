@@ -26,12 +26,8 @@ import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Gauge;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import io.prometheus.metrics.model.snapshots.CounterSnapshot;
-import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
-import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.Unit;
-import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -437,9 +433,7 @@ public class JmxCollector implements MultiCollector {
 
     static class Receiver implements JmxScraper.MBeanReceiver {
 
-        Map<String, UnknownSnapshot.Builder> unknownMap = new HashMap<>();
-        Map<String, CounterSnapshot.Builder> countersMap = new HashMap<>();
-        Map<String, GaugeSnapshot.Builder> gaugeMap = new HashMap<>();
+        List<MatchedRule> matchedRules = new ArrayList<>();
 
         Config config;
         MatchedRulesCache.StalenessTracker stalenessTracker;
@@ -707,73 +701,7 @@ public class JmxCollector implements MultiCollector {
                     matchedRule.labelValues,
                     value.doubleValue());
 
-            final MatchedRule finalMatchedRule = matchedRule;
-
-            switch (matchedRule.type) {
-                case "COUNTER":
-                    {
-                        CounterSnapshot.Builder counterBuilder =
-                                countersMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                CounterSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
-
-                        counterBuilder.dataPoint(
-                                CounterSnapshot.CounterDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
-
-                        break;
-                    }
-                case "GAUGE":
-                    {
-                        GaugeSnapshot.Builder gaugeBuilder =
-                                gaugeMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                GaugeSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
-                        gaugeBuilder.dataPoint(
-                                GaugeSnapshot.GaugeDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
-
-                        break;
-                    }
-                case "UNKNOWN":
-                case "UNTYPED":
-                default:
-                    {
-                        UnknownSnapshot.Builder unknownBuilder =
-                                unknownMap.computeIfAbsent(
-                                        matchedRule.name,
-                                        name ->
-                                                UnknownSnapshot.builder()
-                                                        .name(finalMatchedRule.name)
-                                                        .help(finalMatchedRule.help));
-                        unknownBuilder.dataPoint(
-                                UnknownSnapshot.UnknownDataPointSnapshot.builder()
-                                        .value(value.doubleValue())
-                                        .labels(
-                                                Labels.of(
-                                                        finalMatchedRule.labelNames,
-                                                        finalMatchedRule.labelValues))
-                                        .build());
-
-                        break;
-                    }
-            }
+            matchedRules.add(matchedRule.withValue(value.doubleValue()));
         }
     }
 
@@ -822,20 +750,6 @@ public class JmxCollector implements MultiCollector {
         jmxScrapeError.set(error);
         jmxScrapeCachedBeans.set(stalenessTracker.cachedCount());
 
-        MetricSnapshots.Builder result = MetricSnapshots.builder();
-
-        for (CounterSnapshot.Builder counter : receiver.countersMap.values()) {
-            result.metricSnapshot(counter.build());
-        }
-
-        for (GaugeSnapshot.Builder gauge : receiver.gaugeMap.values()) {
-            result.metricSnapshot(gauge.build());
-        }
-
-        for (UnknownSnapshot.Builder unknown : receiver.unknownMap.values()) {
-            result.metricSnapshot(unknown.build());
-        }
-
-        return result.build();
+        return MatchedRuleToMetricSnapshotsConverter.convert(receiver.matchedRules);
     }
 }

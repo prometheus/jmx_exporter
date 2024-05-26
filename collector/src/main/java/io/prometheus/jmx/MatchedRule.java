@@ -17,6 +17,7 @@
 package io.prometheus.jmx;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * MatchedRule is the result of matching a JMX bean against the rules present in the configuration
@@ -66,6 +67,11 @@ public class MatchedRule {
         this.valueFactor = valueFactor;
     }
 
+    public MatchedRule withValue(double value) {
+        return new MatchedRule(
+                name, matchName, type, help, labelNames, labelValues, value, valueFactor);
+    }
+
     /**
      * An unmatched MatchedRule, used when no rule matching a JMX bean has been found in the
      * configuration. Cached unmatched rules are still a cache hit, that will not produce any
@@ -83,5 +89,26 @@ public class MatchedRule {
 
     public boolean isMatched() {
         return !isUnmatched();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MatchedRule that = (MatchedRule) o;
+        return Double.compare(valueFactor, that.valueFactor) == 0
+                && Objects.equals(name, that.name)
+                && Objects.equals(matchName, that.matchName)
+                && Objects.equals(type, that.type)
+                && Objects.equals(help, that.help)
+                && Objects.equals(labelNames, that.labelNames)
+                && Objects.equals(labelValues, that.labelValues)
+                && Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                name, matchName, type, help, labelNames, labelValues, value, valueFactor);
     }
 }
