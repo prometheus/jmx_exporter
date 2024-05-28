@@ -28,6 +28,8 @@ public class JmxCollectorTest {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         // Register the MBeans.
+        CollidingName.registerBeans(mbs);
+        TotalValue.registerBean(mbs);
         Cassandra.registerBean(mbs);
         CassandraMetrics.registerBean(mbs);
         Hadoop.registerBean(mbs);
