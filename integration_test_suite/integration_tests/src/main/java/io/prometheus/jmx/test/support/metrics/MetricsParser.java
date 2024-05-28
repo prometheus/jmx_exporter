@@ -189,8 +189,7 @@ public class MetricsParser {
         return line;
     }
 
-    private static Metric createMetric(String typeLine, String helpLine, String metricLine) {
-        String help = helpLine.substring("# HELP".length());
+    private static Metric createMetric(String typeLine, String help, String metricLine) {
         String name;
         TreeMap<String, String> labels = new TreeMap<>();
 
