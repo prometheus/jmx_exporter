@@ -5,6 +5,8 @@ import java.util.*;
 
 public class MatchedRuleToMetricSnapshotsConverter {
 
+    private static final String OBJECTNAME = "_objectname";
+
     public static MetricSnapshots convert(List<MatchedRule> matchedRules) {
 
         Map<String, List<MatchedRule>> rulesByPrometheusMetricName = new HashMap<>();
@@ -24,7 +26,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
     }
 
     private static MetricSnapshot convertRulesWithSameName(List<MatchedRule> rulesWithSameName) {
-        boolean labelsUnique = labelsUnique(rulesWithSameName);
+        boolean labelsUnique = isLabelsUnique(rulesWithSameName);
         switch (getType(rulesWithSameName)) {
             case "COUNTER":
                 CounterSnapshot.Builder counterBuilder =
@@ -34,7 +36,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of("unique_mbean_name", rule.matchName));
+                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
                     }
                     counterBuilder.dataPoint(
                             CounterSnapshot.CounterDataPointSnapshot.builder()
@@ -51,7 +53,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of("unique_mbean_name", rule.matchName));
+                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
                     }
                     gaugeBuilder.dataPoint(
                             GaugeSnapshot.GaugeDataPointSnapshot.builder()
@@ -68,7 +70,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of("unique_mbean_name", rule.matchName));
+                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
                     }
                     unknownBuilder.dataPoint(
                             UnknownSnapshot.UnknownDataPointSnapshot.builder()
@@ -88,7 +90,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
         return "UNKNOWN";
     }
 
-    private static boolean labelsUnique(List<MatchedRule> rulesWithSameName) {
+    private static boolean isLabelsUnique(List<MatchedRule> rulesWithSameName) {
         Set<Labels> labelsSet = new HashSet<>(rulesWithSameName.size());
         for (MatchedRule matchedRule : rulesWithSameName) {
             Labels labels = Labels.of(matchedRule.labelNames, matchedRule.labelValues);

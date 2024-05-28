@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,7 +70,14 @@ public class MatchedRule {
 
     public MatchedRule withValue(double value) {
         return new MatchedRule(
-                name, matchName, type, help, labelNames, labelValues, value, valueFactor);
+                PrometheusNaming.sanitizeMetricName(this.name),
+                this.matchName,
+                this.type,
+                this.help,
+                this.labelNames,
+                this.labelValues,
+                value,
+                this.valueFactor);
     }
 
     /**
