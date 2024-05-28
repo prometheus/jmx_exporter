@@ -36,7 +36,12 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
+                        labels =
+                                labels.merge(
+                                        Labels.of(
+                                                OBJECTNAME,
+                                                rule.matchName.substring(
+                                                        0, rule.matchName.lastIndexOf(":"))));
                     }
                     counterBuilder.dataPoint(
                             CounterSnapshot.CounterDataPointSnapshot.builder()
@@ -53,7 +58,12 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
+                        labels =
+                                labels.merge(
+                                        Labels.of(
+                                                OBJECTNAME,
+                                                rule.matchName.substring(
+                                                        0, rule.matchName.lastIndexOf(":"))));
                     }
                     gaugeBuilder.dataPoint(
                             GaugeSnapshot.GaugeDataPointSnapshot.builder()
@@ -70,7 +80,12 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = Labels.of(rule.labelNames, rule.labelValues);
                     if (!labelsUnique) {
-                        labels = labels.merge(Labels.of(OBJECTNAME, rule.matchName));
+                        labels =
+                                labels.merge(
+                                        Labels.of(
+                                                OBJECTNAME,
+                                                rule.matchName.substring(
+                                                        0, rule.matchName.lastIndexOf(":"))));
                     }
                     unknownBuilder.dataPoint(
                             UnknownSnapshot.UnknownDataPointSnapshot.builder()
