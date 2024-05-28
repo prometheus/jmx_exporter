@@ -13,7 +13,10 @@ This exporter is intended to be run as a Java Agent, exposing a HTTP server
 and serving metrics of the local JVM. It can be also run as a standalone
 HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
-process metrics (e.g., memory and CPU usage).
+process metrics (e.g., memory and CPU usage). In particular all the
+`jvm_*` metrics like `jvm_classes_loaded_total`, `jvm_threads_current`, 
+`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be availabe if
+using the standalone http server.
 
 **Running the exporter as a Java agent is strongly encouraged.**
 
