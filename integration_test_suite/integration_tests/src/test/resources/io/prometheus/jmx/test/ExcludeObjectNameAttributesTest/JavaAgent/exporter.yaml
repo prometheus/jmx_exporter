@@ -40,6 +40,9 @@ excludeObjectNameAttributes:
     - "ObjectName"
   "java.lang:type=Memory":
     - "ObjectName"
+    - "NonHeapMemoryUsage"
+    - "Verbose"
+    - "ObjectPendingFinalizationCount"
   "java.lang:name=CodeHeap 'non-profiled nmethods',type=MemoryPool":
     - "ObjectName"
   "com.sun.management:type=HotSpotDiagnostic":

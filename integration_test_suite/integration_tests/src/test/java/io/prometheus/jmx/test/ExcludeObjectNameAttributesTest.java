@@ -74,18 +74,36 @@ public class ExcludeObjectNameAttributesTest extends AbstractTest
         excludeAttributeNameSet.add("_ClassPath");
         excludeAttributeNameSet.add("_SystemProperties");
 
+        Set<String> excludeJavaLangMemoryAttributeSet = new HashSet<>();
+        excludeJavaLangMemoryAttributeSet.add("NonHeapMemoryUsage");
+        excludeJavaLangMemoryAttributeSet.add("Verbose");
+        excludeJavaLangMemoryAttributeSet.add("ObjectPendingFinalizationCount");
+
         /*
          * Assert that we don't have any metrics that start with ...
          *
          * name = java_lang*
+         * attribute = _ClassPath
+         * attribute = __SystemProperties
+         *
+         * ... or...
+         *
+         * name = java_lang_Memory
+         * attribute = _Verbose
          */
         metrics.forEach(
                 metric -> {
                     String name = metric.name();
-                    if (name.contains("java_lang")) {
+                    if (name.equals("java_lang_Memory")) {
+                        for (String attributeName : excludeJavaLangMemoryAttributeSet) {
+                            if (name.equals(attributeName)) {
+                                fail("metric [" + metric + "] found");
+                            }
+                        }
+                    } else {
                         for (String attributeName : excludeAttributeNameSet) {
                             if (name.contains(attributeName)) {
-                                fail("metric found");
+                                fail("metric [" + metric + "] found");
                             }
                         }
                     }
