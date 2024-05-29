@@ -58,7 +58,7 @@ public class MetricAssertion {
      * Method to set the type to match against
      *
      * @param type type
-     * @return this DoubleValueMetricAssertion
+     * @return this MetricAssertion
      */
     public MetricAssertion type(String type) {
         if (type == null || !VALID_TYPES.contains(type)) {
@@ -72,7 +72,7 @@ public class MetricAssertion {
      * Method to set the name to match against
      *
      * @param name name
-     * @return this DoubleValueMetricAssertion
+     * @return this MetricAssertion
      */
     public MetricAssertion name(String name) {
         this.name = name;
@@ -83,7 +83,7 @@ public class MetricAssertion {
      * Method to set the help to match against
      *
      * @param help help
-     * @return this DoubleValueMetricAssertion
+     * @return this MetricAssertion
      */
     public MetricAssertion help(String help) {
         this.help = help;
@@ -95,9 +95,9 @@ public class MetricAssertion {
      *
      * @param name name
      * @param value value
-     * @return this DoubleValueMetricAssertion
+     * @return this MetricAssertion
      */
-    public MetricAssertion label(String name, String value) {
+    public MetricAssertion addLabel(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
                     String.format("Label name [%s] or value [%s] is null", name, value));
@@ -113,14 +113,18 @@ public class MetricAssertion {
      * Method to set the value to match against
      *
      * @param value value
-     * @return this DoubleValueMetricAssertion
+     * @return this MetricAssertion
      */
     public MetricAssertion value(Double value) {
         this.value = value;
         return this;
     }
 
-    /** Method to assert the Metric is present */
+    /**
+     * Method to assert the Metric is present
+     *
+     * @return this MetricAssertion
+     */
     public MetricAssertion isPresent() {
         return isPresent(true);
     }
@@ -129,6 +133,7 @@ public class MetricAssertion {
      * Method to assert the Metric is present
      *
      * @param isPresent isPresent
+     * @return this MetricAssertion
      */
     public MetricAssertion isPresent(boolean isPresent) {
         List<Metric> metrics =
@@ -160,7 +165,11 @@ public class MetricAssertion {
         return this;
     }
 
-    /** Method to assert the Metric is not present */
+    /**
+     * Method to assert the Metric is not present
+     *
+     * @return this MetricAssertion
+     */
     public MetricAssertion isNotPresent() {
         return isPresent(false);
     }
@@ -169,6 +178,7 @@ public class MetricAssertion {
      * Method to assert the Metric is not present
      *
      * @param isNotPresent isNotPresent
+     * @return this MetricAssertion
      */
     public MetricAssertion isNotPresent(boolean isNotPresent) {
         return isPresent(!isNotPresent);
