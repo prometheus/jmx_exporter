@@ -20,7 +20,7 @@ azul/zulu-openjdk:22
 azul/prime:8
 azul/prime:11
 azul/prime:17
-#azul/prime:21 Remove due to issues with JDK
+azul/prime:21
 bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
