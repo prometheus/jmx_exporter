@@ -76,7 +76,7 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
         new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jmx_exporter_build_info")
-                .label("name", buildInfoName)
+                .addLabel("name", buildInfoName)
                 .value(1d)
                 .isPresent();
 
@@ -91,38 +91,38 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
         new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
-                .label("area", "nonheap")
+                .addLabel("area", "nonheap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
         new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
-                .label("area", "heap")
+                .addLabel("area", "heap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
         new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
-                .label("area", "nonheap")
+                .addLabel("area", "nonheap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
         new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
-                .label("area", "heap")
+                .addLabel("area", "heap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
         new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .label("source", "/dev/sda1")
+                .addLabel("source", "/dev/sda1")
                 .value(7.516192768E9d)
                 .isPresent();
 
         new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .label("source", "/dev/sda2")
+                .addLabel("source", "/dev/sda2")
                 .value(0.8d)
                 .isPresent();
 

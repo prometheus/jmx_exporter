@@ -70,15 +70,15 @@ public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpR
         new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "1")
-                .label("key_path", "/db/query1.xq")
+                .addLabel("key_id", "1")
+                .addLabel("key_path", "/db/query1.xq")
                 .isPresent();
 
         new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "2")
-                .label("key_path", "/db/query2.xq")
+                .addLabel("key_id", "2")
+                .addLabel("key_path", "/db/query2.xq")
                 .isPresent();
     }
 }
