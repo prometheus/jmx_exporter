@@ -25,8 +25,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -67,18 +67,18 @@ public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpR
 
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "1")
-                .label("key_path", "/db/query1.xq")
+                .addLabel("key_id", "1")
+                .addLabel("key_path", "/db/query1.xq")
                 .isPresent();
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .label("key_id", "2")
-                .label("key_path", "/db/query2.xq")
+                .addLabel("key_id", "2")
+                .addLabel("key_path", "/db/query2.xq")
                 .isPresent();
     }
 }

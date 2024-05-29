@@ -19,7 +19,6 @@ package io.prometheus.jmx.test.support.metrics;
 import io.prometheus.jmx.test.support.http.HttpContentType;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.metrics.impl.DoubleValueMetricImpl;
 import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_3_25_3.Metrics;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -78,15 +77,13 @@ public class MetricsParser {
                             {
                                 Metrics.Counter counter = metric.getCounter();
 
-                                DoubleValueMetricImpl doubleValueMetricImpl =
-                                        new DoubleValueMetricImpl(
+                                collection.add(
+                                        new Metric(
                                                 "COUNTER",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
-                                                counter.getValue());
-
-                                collection.add(doubleValueMetricImpl);
+                                                counter.getValue()));
 
                                 break;
                             }
@@ -94,15 +91,13 @@ public class MetricsParser {
                             {
                                 Metrics.Gauge gauge = metric.getGauge();
 
-                                DoubleValueMetricImpl doubleValueMetricImpl =
-                                        new DoubleValueMetricImpl(
+                                collection.add(
+                                        new Metric(
                                                 "GAUGE",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
-                                                gauge.getValue());
-
-                                collection.add(doubleValueMetricImpl);
+                                                gauge.getValue()));
 
                                 break;
                             }
@@ -110,15 +105,13 @@ public class MetricsParser {
                             {
                                 Metrics.Untyped untyped = metric.getUntyped();
 
-                                DoubleValueMetricImpl doubleValueMetricImpl =
-                                        new DoubleValueMetricImpl(
+                                collection.add(
+                                        new Metric(
                                                 "UNTYPED",
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
-                                                untyped.getValue());
-
-                                collection.add(doubleValueMetricImpl);
+                                                untyped.getValue()));
 
                                 break;
                             }
@@ -206,11 +199,11 @@ public class MetricsParser {
         double value = Double.parseDouble(metricLine.substring(metricLine.lastIndexOf(" ")));
 
         if (typeLine.equalsIgnoreCase("COUNTER")) {
-            return new DoubleValueMetricImpl("COUNTER", help, name, labels, value);
+            return new Metric("COUNTER", help, name, labels, value);
         } else if (typeLine.equalsIgnoreCase("GAUGE")) {
-            return new DoubleValueMetricImpl("GAUGE", help, name, labels, value);
+            return new Metric("GAUGE", help, name, labels, value);
         } else {
-            return new DoubleValueMetricImpl("UNTYPED", help, name, labels, value);
+            return new Metric("UNTYPED", help, name, labels, value);
         }
     }
 

@@ -29,6 +29,7 @@ public class JmxCollectorTest {
 
         // Register the MBeans.
         CollidingName.registerBeans(mbs);
+        PerformanceMetrics.registerBean(mbs);
         TotalValue.registerBean(mbs);
         Cassandra.registerBean(mbs);
         CassandraMetrics.registerBean(mbs);
@@ -602,6 +603,39 @@ public class JmxCollectorTest {
         assertEquals("help message", samples.get(0).help);
     }
     */
+
+    @Test
+    public void testCompositeData() throws Exception {
+        JmxCollector jc =
+                new JmxCollector(
+                                "\n---\nrules:\n- pattern: `io.prometheus.jmx.test<name=PerformanceMetricsMBean><PerformanceMetrics>.*`\n  attrNameSnakeCase: true"
+                                        .replace('`', '"'))
+                        .register(prometheusRegistry);
+
+        Double value =
+                getSampleValue(
+                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_active_sessions",
+                        new String[] {},
+                        new String[] {});
+
+        assertEquals(Double.valueOf(2), value);
+
+        value =
+                getSampleValue(
+                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps",
+                        new String[] {},
+                        new String[] {});
+
+        assertEquals(Double.valueOf(4), value);
+
+        value =
+                getSampleValue(
+                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps_deferred",
+                        new String[] {},
+                        new String[] {});
+
+        assertEquals(Double.valueOf(6), value);
+    }
 
     private Double getSampleValue(String name, String[] labelNames, String[] labelValues) {
         return prometheusRegistryUtils.getSampleValue(name, labelNames, labelValues);
