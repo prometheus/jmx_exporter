@@ -23,7 +23,6 @@ import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.DoubleValueMetric;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
@@ -62,12 +61,12 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
 
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
-        metrics.forEach(
-                metric -> {
-                    if (metric.name().startsWith("io_prometheus_jmx_autoIncrementing")) {
-                        value.set(((DoubleValueMetric) metric).value());
-                    }
-                });
+        metrics.stream()
+                .filter(metric -> metric.name().startsWith("io_prometheus_jmx_autoIncrementing"))
+                .map(Metric::value)
+                .limit(1)
+                .findFirst()
+                .ifPresent(d -> value.set(d));
 
         return value.doubleValue();
     }

@@ -31,17 +31,21 @@ public class JmxExampleApplication {
     public static void main(String[] args) throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
-        ObjectName tabularMBean = new ObjectName("io.prometheus.jmx:type=tabularData");
-        mBeanServer.registerMBean(new TabularMBean(), tabularMBean);
+        mBeanServer.registerMBean(
+                new TabularMBean(), new ObjectName("io.prometheus.jmx:type=tabularData"));
 
-        ObjectName autoIncrementingMBan = new ObjectName("io.prometheus.jmx:type=autoIncrementing");
-        mBeanServer.registerMBean(new AutoIncrementing(), autoIncrementingMBan);
+        mBeanServer.registerMBean(
+                new AutoIncrementing(), new ObjectName("io.prometheus.jmx:type=autoIncrementing"));
 
-        ObjectName existDbMXBean = new ObjectName("org.exist.management.exist:type=ProcessReport");
-        mBeanServer.registerMBean(new ExistDb(), existDbMXBean);
+        mBeanServer.registerMBean(
+                new ExistDb(), new ObjectName("org.exist.management.exist:type=ProcessReport"));
 
-        ObjectName optionalValueMBean = new ObjectName("io.prometheus.jmx:type=optionalValue");
-        mBeanServer.registerMBean(new OptionalValue(), optionalValueMBean);
+        mBeanServer.registerMBean(
+                new OptionalValue(), new ObjectName("io.prometheus.jmx:type=optionalValue"));
+
+        mBeanServer.registerMBean(
+                new PerformanceMetrics(),
+                new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean"));
 
         System.out.println(
                 String.format(

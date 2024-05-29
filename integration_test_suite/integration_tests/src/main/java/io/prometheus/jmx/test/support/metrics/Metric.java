@@ -17,35 +17,110 @@
 package io.prometheus.jmx.test.support.metrics;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
-/** Interface implemented by all metrics */
-public interface Metric {
+/** Class to implement a Metric */
+public class Metric {
+
+    private final String type;
+    private final String name;
+    private final String help;
+    private final TreeMap<String, String> labels;
+    private final double value;
+
+    /**
+     * Constructor
+     *
+     * @param type type
+     * @param help help
+     * @param name name
+     * @param labels labels
+     * @param value value
+     */
+    public Metric(
+            String type, String help, String name, TreeMap<String, String> labels, double value) {
+        this.type = type;
+        this.help = help;
+        this.name = name;
+        this.labels = labels != null ? labels : new TreeMap<>();
+        this.value = value;
+    }
 
     /**
      * Method to get the Metric type
      *
      * @return the Metric type
      */
-    String type();
-
-    /**
-     * Method to get the Metric help
-     *
-     * @return the Metric help
-     */
-    String help();
+    public String type() {
+        return type;
+    }
 
     /**
      * Method to get the Metric name
      *
      * @return the Metric name
      */
-    String name();
+    public String name() {
+        return name;
+    }
 
     /**
-     * Metric to get the Metric labels
+     * Method to get the Metric help
+     *
+     * @return the Metric help
+     */
+    public String help() {
+        return help;
+    }
+
+    /**
+     * Method to get the Metric labels
      *
      * @return the Metric labels
      */
-    Map<String, String> labels();
+    public Map<String, String> labels() {
+        return labels;
+    }
+
+    /**
+     * Method to get the Metric value
+     *
+     * @return the Metric value
+     */
+    public double value() {
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Metric that = (Metric) o;
+        return Double.compare(value, that.value) == 0
+                && Objects.equals(type, that.type)
+                && Objects.equals(help, that.help)
+                && Objects.equals(name, that.name)
+                && Objects.equals(labels, that.labels);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, help, name, labels, value);
+    }
+
+    @Override
+    public String toString() {
+        return "type ["
+                + type
+                + "] name ["
+                + name
+                + "] help ["
+                + help
+                + "] labels ["
+                + labels
+                + "] value ["
+                + value
+                + "]";
+    }
 }

@@ -28,8 +28,8 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
-import io.prometheus.jmx.test.support.metrics.DoubleValueMetricAssertion;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -97,57 +97,53 @@ public class RMIRegistrySSLDisabledTest extends AbstractTest implements Consumer
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jmx_exporter_build_info")
                 .label("name", buildInfoName)
                 .value(1d)
                 .isPresent();
 
-        new DoubleValueMetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jmx_scrape_error")
-                .value(0d)
-                .isPresent();
+        new MetricAssertion(metrics).type("GAUGE").name("jmx_scrape_error").value(0d).isPresent();
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("COUNTER")
                 .name("jmx_config_reload_success_total")
                 .value(0d)
                 .isPresent();
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "nonheap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("GAUGE")
                 .name("jvm_memory_used_bytes")
                 .label("area", "heap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .label("source", "/dev/sda1")
                 .value(7.516192768E9d)
                 .isPresent();
 
-        new DoubleValueMetricAssertion(metrics)
+        new MetricAssertion(metrics)
                 .type("UNTYPED")
                 .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .label("source", "/dev/sda2")

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import org.opentest4j.AssertionFailedError;
 
 /** Class to assert a DoubleValueMetric */
-public class DoubleValueMetricAssertion {
+public class MetricAssertion {
 
     private static final Set<String> VALID_TYPES = new HashSet<>();
 
@@ -47,7 +47,7 @@ public class DoubleValueMetricAssertion {
      *
      * @param metrics metrics
      */
-    public DoubleValueMetricAssertion(Collection<Metric> metrics) {
+    public MetricAssertion(Collection<Metric> metrics) {
         if (metrics == null) {
             throw new IllegalArgumentException("Collection<Metrics> is null");
         }
@@ -60,7 +60,7 @@ public class DoubleValueMetricAssertion {
      * @param type type
      * @return this DoubleValueMetricAssertion
      */
-    public DoubleValueMetricAssertion type(String type) {
+    public MetricAssertion type(String type) {
         if (type == null || !VALID_TYPES.contains(type)) {
             throw new IllegalArgumentException(String.format("Type [%s] is null or invalid", type));
         }
@@ -74,7 +74,7 @@ public class DoubleValueMetricAssertion {
      * @param name name
      * @return this DoubleValueMetricAssertion
      */
-    public DoubleValueMetricAssertion name(String name) {
+    public MetricAssertion name(String name) {
         this.name = name;
         return this;
     }
@@ -85,7 +85,7 @@ public class DoubleValueMetricAssertion {
      * @param help help
      * @return this DoubleValueMetricAssertion
      */
-    public DoubleValueMetricAssertion help(String help) {
+    public MetricAssertion help(String help) {
         this.help = help;
         return this;
     }
@@ -97,7 +97,7 @@ public class DoubleValueMetricAssertion {
      * @param value value
      * @return this DoubleValueMetricAssertion
      */
-    public DoubleValueMetricAssertion label(String name, String value) {
+    public MetricAssertion label(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
                     String.format("Label name [%s] or value [%s] is null", name, value));
@@ -115,14 +115,14 @@ public class DoubleValueMetricAssertion {
      * @param value value
      * @return this DoubleValueMetricAssertion
      */
-    public DoubleValueMetricAssertion value(Double value) {
+    public MetricAssertion value(Double value) {
         this.value = value;
         return this;
     }
 
     /** Method to assert the Metric is present */
-    public void isPresent() {
-        isPresent(true);
+    public MetricAssertion isPresent() {
+        return isPresent(true);
     }
 
     /**
@@ -130,10 +130,9 @@ public class DoubleValueMetricAssertion {
      *
      * @param isPresent isPresent
      */
-    public void isPresent(boolean isPresent) {
+    public MetricAssertion isPresent(boolean isPresent) {
         List<Metric> metrics =
                 this.metrics.stream()
-                        .filter(metric -> metric instanceof DoubleValueMetric)
                         .filter(metric -> type == null || metric.type().equals(type))
                         .filter(metric -> name == null || metric.name().equals(name))
                         .filter(metric -> help == null || metric.help().equals(help))
@@ -141,7 +140,6 @@ public class DoubleValueMetricAssertion {
                                 metric ->
                                         labels == null
                                                 || new LabelsSubsetFilter(labels).test(metric))
-                        .map(metric -> (DoubleValueMetric) metric)
                         .filter(metric -> value == null || metric.value() == value)
                         .collect(Collectors.toList());
 
@@ -158,11 +156,13 @@ public class DoubleValueMetricAssertion {
                                     + " present or matches multiple metrics",
                             type, help, name, labels, value));
         }
+
+        return this;
     }
 
     /** Method to assert the Metric is not present */
-    public void isNotPresent() {
-        isPresent(false);
+    public MetricAssertion isNotPresent() {
+        return isPresent(false);
     }
 
     /**
@@ -170,7 +170,7 @@ public class DoubleValueMetricAssertion {
      *
      * @param isNotPresent isNotPresent
      */
-    public void isNotPresent(boolean isNotPresent) {
-        isPresent(!isNotPresent);
+    public MetricAssertion isNotPresent(boolean isNotPresent) {
+        return isPresent(!isNotPresent);
     }
 }
