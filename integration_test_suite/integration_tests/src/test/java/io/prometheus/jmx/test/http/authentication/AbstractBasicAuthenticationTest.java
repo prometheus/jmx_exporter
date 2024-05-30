@@ -18,27 +18,34 @@ package io.prometheus.jmx.test.http.authentication;
 
 import io.prometheus.jmx.test.AbstractTest;
 import io.prometheus.jmx.test.support.TestArgument;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
 public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
 
-    protected final String VALID_USERNAME = "Prometheus";
-    protected final String VALID_PASSWORD = "secret";
-    protected final String[] TEST_USERNAMES =
-            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
-    protected final String[] TEST_PASSWORDS =
-            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
+    protected static final String VALID_USERNAME = "Prometheus";
 
-    protected static final PBKDF2WithHmacTestArgumentFilter PBKDF2WITHHMAC_TEST_ARGUMENT_FILTER =
+    protected static final String VALID_PASSWORD = "secret";
+
+    protected static final String[] INVALID_USERNAMES =
+            new String[] {"prometheus", "bad", "", null};
+
+    protected static final String[] INVALID_PASSWORDS = new String[] {"Secret", "bad", "", null};
+
+    protected static final PBKDF2WithHmacTestArgumentFilter PBKDF2_WITH_MAC_TEST_ARGUMENT_FILTER =
             new PBKDF2WithHmacTestArgumentFilter();
 
-    private static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {
+    /** Class to implement a PBKDF2WithHmacTestArgumentFilter */
+    protected static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {
 
-        private Set<String> filteredDockerImages;
+        private final Set<String> filteredDockerImages;
 
+        /** Constructor */
         public PBKDF2WithHmacTestArgumentFilter() {
+            // Filter out Docker image names that don't support PBKDF2 with HMAC
             filteredDockerImages = new HashSet<>();
             filteredDockerImages.add("ibmjava:8");
             filteredDockerImages.add("ibmjava:8-jre");
@@ -55,6 +62,85 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
         @Override
         public boolean test(TestArgument testArgument) {
             return !filteredDockerImages.contains(testArgument.dockerImageName());
+        }
+    }
+
+    /**
+     * Method to create a Collection of AuthenticationTestCredentials
+     *
+     * @return a Collection of AuthenticationTestCredentials
+     */
+    public static Collection<AuthenticationTestCredentials> getAuthenticationTestCredentials() {
+        Collection<AuthenticationTestCredentials> collection = new ArrayList<>();
+        collection.add(AuthenticationTestCredentials.of(VALID_USERNAME, VALID_PASSWORD, true));
+
+        for (String username : INVALID_USERNAMES) {
+            for (String password : INVALID_PASSWORDS) {
+                collection.add(AuthenticationTestCredentials.of(username, password, false));
+            }
+        }
+
+        return collection;
+    }
+
+    /** Class to implement AuthenticationTestCredentials */
+    public static class AuthenticationTestCredentials {
+
+        private String username;
+        private String password;
+        private boolean isValid;
+
+        /**
+         * Constructor
+         *
+         * @param username
+         * @param password
+         * @param isValid
+         */
+        private AuthenticationTestCredentials(String username, String password, boolean isValid) {
+            this.username = username;
+            this.password = password;
+            this.isValid = isValid;
+        }
+
+        /**
+         * Method to get the username
+         *
+         * @return the username
+         */
+        public String getUsername() {
+            return username;
+        }
+
+        /**
+         * Method to get the password
+         *
+         * @return the password
+         */
+        public String getPassword() {
+            return password;
+        }
+
+        /**
+         * Method to return if the credentials are valid
+         *
+         * @return true if the credentials are valid, else false
+         */
+        public boolean isValid() {
+            return isValid;
+        }
+
+        /**
+         * Method to create an AuthenticationTestCredentials
+         *
+         * @param username username
+         * @param password password
+         * @param isValid isValid
+         * @return an AuthenticationTestCredentials
+         */
+        public static AuthenticationTestCredentials of(
+                String username, String password, boolean isValid) {
+            return new AuthenticationTestCredentials(username, password, isValid);
         }
     }
 }

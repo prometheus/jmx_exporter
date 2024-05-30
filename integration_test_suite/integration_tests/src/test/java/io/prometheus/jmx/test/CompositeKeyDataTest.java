@@ -17,6 +17,7 @@
 package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
@@ -26,7 +27,6 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import io.prometheus.jmx.test.support.metrics.Metric;
-import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -67,18 +67,18 @@ public class CompositeKeyDataTest extends AbstractTest implements Consumer<HttpR
 
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
-        new MetricAssertion(metrics)
-                .type("UNTYPED")
-                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .addLabel("key_id", "1")
-                .addLabel("key_path", "/db/query1.xq")
+        assertMetric(metrics)
+                .ofType("UNTYPED")
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "1")
+                .withLabel("key_path", "/db/query1.xq")
                 .isPresent();
 
-        new MetricAssertion(metrics)
-                .type("UNTYPED")
-                .name("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .addLabel("key_id", "2")
-                .addLabel("key_path", "/db/query2.xq")
+        assertMetric(metrics)
+                .ofType("UNTYPED")
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "2")
+                .withLabel("key_path", "/db/query2.xq")
                 .isPresent();
     }
 }

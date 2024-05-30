@@ -47,7 +47,7 @@ public class MetricAssertion {
      *
      * @param metrics metrics
      */
-    public MetricAssertion(Collection<Metric> metrics) {
+    private MetricAssertion(Collection<Metric> metrics) {
         if (metrics == null) {
             throw new IllegalArgumentException("Collection<Metrics> is null");
         }
@@ -60,7 +60,7 @@ public class MetricAssertion {
      * @param type type
      * @return this MetricAssertion
      */
-    public MetricAssertion type(String type) {
+    public MetricAssertion ofType(String type) {
         if (type == null || !VALID_TYPES.contains(type)) {
             throw new IllegalArgumentException(String.format("Type [%s] is null or invalid", type));
         }
@@ -74,7 +74,7 @@ public class MetricAssertion {
      * @param name name
      * @return this MetricAssertion
      */
-    public MetricAssertion name(String name) {
+    public MetricAssertion withName(String name) {
         this.name = name;
         return this;
     }
@@ -97,7 +97,7 @@ public class MetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MetricAssertion addLabel(String name, String value) {
+    public MetricAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
                     String.format("Label name [%s] or value [%s] is null", name, value));
@@ -115,7 +115,7 @@ public class MetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MetricAssertion value(Double value) {
+    public MetricAssertion withValue(Double value) {
         this.value = value;
         return this;
     }
@@ -132,10 +132,10 @@ public class MetricAssertion {
     /**
      * Method to assert the Metric is present
      *
-     * @param isPresent isPresent
+     * @param condition condition
      * @return this MetricAssertion
      */
-    public MetricAssertion isPresent(boolean isPresent) {
+    public MetricAssertion isPresent(boolean condition) {
         List<Metric> metrics =
                 this.metrics.stream()
                         .filter(metric -> type == null || metric.type().equals(type))
@@ -148,18 +148,28 @@ public class MetricAssertion {
                         .filter(metric -> value == null || metric.value() == value)
                         .collect(Collectors.toList());
 
-        if (isPresent && metrics.size() != 1) {
-            throw new AssertionFailedError(
-                    String.format(
-                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
-                                    + " present or matches multiple metrics",
-                            type, help, name, labels, value));
-        } else if (!isPresent && !metrics.isEmpty()) {
-            throw new AssertionFailedError(
-                    String.format(
-                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
-                                    + " present or matches multiple metrics",
-                            type, help, name, labels, value));
+        if (condition) {
+            if (metrics.size() > 1) {
+                throw new AssertionFailedError(
+                        String.format(
+                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
+                                        + " matches multiple metrics",
+                                type, help, name, labels, value));
+            } else if (metrics.isEmpty()) {
+                throw new AssertionFailedError(
+                        String.format(
+                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
+                                        + " present",
+                                type, help, name, labels, value));
+            }
+        } else {
+            if (metrics.size() > 0) {
+                throw new AssertionFailedError(
+                        String.format(
+                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
+                                        + " present",
+                                type, help, name, labels, value));
+            }
         }
 
         return this;
@@ -177,10 +187,20 @@ public class MetricAssertion {
     /**
      * Method to assert the Metric is not present
      *
-     * @param isNotPresent isNotPresent
+     * @param condition condition
      * @return this MetricAssertion
      */
-    public MetricAssertion isNotPresent(boolean isNotPresent) {
-        return isPresent(!isNotPresent);
+    public MetricAssertion isNotPresent(boolean condition) {
+        return isPresent(!condition);
+    }
+
+    /**
+     * Method to create a MetricAssertion
+     *
+     * @param metrics the collection of metrics
+     * @return a MetricAssertion
+     */
+    public static MetricAssertion assertMetric(Collection<Metric> metrics) {
+        return new MetricAssertion(metrics);
     }
 }

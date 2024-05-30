@@ -17,6 +17,7 @@
 package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.support.Mode;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
@@ -27,7 +28,6 @@ import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import io.prometheus.jmx.test.support.metrics.Metric;
-import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -73,62 +73,66 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jmx_exporter_build_info")
-                .addLabel("name", buildInfoName)
-                .value(1d)
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jmx_exporter_build_info")
+                .withLabel("name", buildInfoName)
+                .withValue(1d)
                 .isPresent();
 
-        new MetricAssertion(metrics).type("GAUGE").name("jmx_scrape_error").value(0d).isPresent();
-
-        new MetricAssertion(metrics)
-                .type("COUNTER")
-                .name("jmx_config_reload_success_total")
-                .value(0d)
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jmx_scrape_error")
+                .withValue(0d)
                 .isPresent();
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jvm_memory_used_bytes")
-                .addLabel("area", "nonheap")
+        assertMetric(metrics)
+                .ofType("COUNTER")
+                .withName("jmx_config_reload_success_total")
+                .withValue(0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "nonheap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jvm_memory_used_bytes")
-                .addLabel("area", "heap")
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "heap")
                 .isPresent(testArgument.mode() == Mode.JavaAgent);
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jvm_memory_used_bytes")
-                .addLabel("area", "nonheap")
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "nonheap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("jvm_memory_used_bytes")
-                .addLabel("area", "heap")
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "heap")
                 .isNotPresent(testArgument.mode() == Mode.Standalone);
 
-        new MetricAssertion(metrics)
-                .type("UNTYPED")
-                .name("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .addLabel("source", "/dev/sda1")
-                .value(7.516192768E9d)
+        assertMetric(metrics)
+                .ofType("UNTYPED")
+                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .withLabel("source", "/dev/sda1")
+                .withValue(7.516192768E9d)
                 .isPresent();
 
-        new MetricAssertion(metrics)
-                .type("UNTYPED")
-                .name("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .addLabel("source", "/dev/sda2")
-                .value(0.8d)
+        assertMetric(metrics)
+                .ofType("UNTYPED")
+                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .withLabel("source", "/dev/sda2")
+                .withValue(0.8d)
                 .isPresent();
 
-        new MetricAssertion(metrics)
-                .type("GAUGE")
-                .name("io_prometheus_jmx_optionalValue_Value")
-                .value(345d);
+        assertMetric(metrics)
+                .ofType("GAUGE")
+                .withName("io_prometheus_jmx_optionalValue_Value")
+                .withValue(345d);
     }
 }
