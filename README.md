@@ -17,7 +17,7 @@ process metrics (e.g., memory and CPU usage).
 
 **Documentation is specific to a release.**
 
-[1.0.1](https://github.com/prometheus/jmx_exporter/tree/release-1.0.1)
+[1.0.1](https://github.com/prometheus/jmx_exporter/tree/release-1.0.1/docs)
 
 [0.20.0](https://github.com/prometheus/jmx_exporter/tree/release-0.20.0)
 
