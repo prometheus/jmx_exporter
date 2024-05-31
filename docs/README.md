@@ -12,13 +12,18 @@ This exporter is intended to be run as a Java Agent, exposing a HTTP server
 and serving metrics of the local JVM. It can be also run as a standalone
 HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
-process metrics (e.g., memory and CPU usage).
+process metrics (e.g., memory and CPU usage). In particular all the
+`jvm_*` metrics like `jvm_classes_loaded_total`, `jvm_threads_current`,
+`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be availabe if
+using the standalone http server.
 
-### **NOTE**
+### **NOTES**
 
-**Some JVM metric names have changed to conform with the [OpenMetrics](https://openmetrics.io/) specification.**
+**- Metrics are no longer served on the root (`/`) path - use the `/metrics` path ** 
 
-**Dashboards will need to be changed if referencing the changed JVM metrics.**
+**- Some JVM metric names have changed to conform with the [OpenMetrics](https://openmetrics.io/) specification.**
+
+**- Dashboards will need to be changed if referencing the changed JVM metrics.**
 
 https://prometheus.github.io/client_java/migration/simpleclient/#jvm-metrics
 
@@ -27,12 +32,12 @@ https://prometheus.github.io/client_java/migration/simpleclient/#jvm-metrics
 
 **Running the exporter as a Java agent is strongly encouraged.**
 
-- [jmx_prometheus_javaagent-1.0.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.0/jmx_prometheus_javaagent-1.0.0.jar)
+- [jmx_prometheus_javaagent-1.0.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar)
 
 To run as a Java agent, download one of the JARs and run:
 
 ```
-java -javaagent:./jmx_prometheus_javaagent-1.0.0.jar=12345:config.yaml -jar yourJar.jar
+java -javaagent:./jmx_prometheus_javaagent-1.0.1.jar=12345:config.yaml -jar yourJar.jar
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -49,12 +54,12 @@ Example configurations can be found in the `example_configs/` directory.
 
 ## Running the Standalone HTTP Server
 
-- [jmx_prometheus_httpserver-1.0.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/1.0.0/jmx_prometheus_httpserver-1.0.0.jar)
+- [jmx_prometheus_httpserver-1.0.1.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/1.0.1/jmx_prometheus_httpserver-1.0.1.jar)
 
 To run the standalone HTTP server, download one of the JARs and run:
 
 ```
-java -jar jmx_prometheus_httpserver-1.0.0.jar 12345 config.yaml
+java -jar jmx_prometheus_httpserver-1.0.1.jar 12345 config.yaml
 ```
 
 Metrics will now be accessible at [http://localhost:12345/metrics](http://localhost:12345/metrics).
@@ -72,6 +77,12 @@ rules:
 ```
 
 As stated above, it is recommended to run JMX exporter as a Java agent and not as a standalone HTTP server.
+
+**NOTES**
+
+**- `jvm_*` metrics will not be available if running in standalone mode**
+
+**- standard Java MBeans that provide JVM metrics will be available using the standard Java MBean ObjectNames**
 
 ## Building
 
