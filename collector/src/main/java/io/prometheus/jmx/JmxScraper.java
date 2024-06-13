@@ -22,23 +22,8 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.JMException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
+import java.util.*;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
@@ -144,8 +129,10 @@ class JmxScraper {
                 }
             }
 
-            // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache:
+            // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache
+            // and dynamic attribute filter:
             jmxMBeanPropertyCache.onlyKeepMBeans(mBeanNames);
+            objectNameAttributeFilter.onlyKeepMBeans(mBeanNames);
 
             for (ObjectName objectName : mBeanNames) {
                 long start = System.nanoTime();
