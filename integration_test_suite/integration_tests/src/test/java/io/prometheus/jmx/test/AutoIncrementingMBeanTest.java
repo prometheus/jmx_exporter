@@ -34,7 +34,7 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
     @TestEngine.Test
     public void testHealthy() {
         new HttpHealthyRequest()
-                .send(testContext.httpClient())
+                .send(testEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
@@ -55,7 +55,7 @@ public class AutoIncrementingMBeanTest extends AbstractTest {
         final AtomicDouble value = new AtomicDouble();
 
         HttpResponse httpResponse =
-                new HttpPrometheusMetricsRequest().send(testContext.httpClient());
+                new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient());
 
         assertHttpMetricsResponse(httpResponse);
 

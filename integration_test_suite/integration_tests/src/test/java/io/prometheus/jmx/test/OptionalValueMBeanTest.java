@@ -19,7 +19,7 @@ package io.prometheus.jmx.test;
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.support.Mode;
+import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
@@ -38,28 +38,30 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
     @TestEngine.Test
     public void testHealthy() {
         new HttpHealthyRequest()
-                .send(testContext.httpClient())
+                .send(testEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpOpenMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusProtobufMetricsRequest()
+                .send(testEnvironment.getHttpClient())
+                .accept(this);
     }
 
     @Override
@@ -69,7 +71,7 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
+                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
@@ -96,25 +98,25 @@ public class OptionalValueMBeanTest extends AbstractTest implements Consumer<Htt
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("UNTYPED")

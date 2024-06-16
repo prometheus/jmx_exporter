@@ -20,8 +20,8 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.AbstractTest;
-import io.prometheus.jmx.test.support.Mode;
-import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestArguments;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
@@ -46,47 +46,49 @@ public class SSLWithJKSKeyStoreTest extends AbstractTest implements Consumer<Htt
      * @return the return value
      */
     @TestEngine.ArgumentSupplier
-    protected static Stream<TestArgument> arguments() {
+    public static Stream<TestArguments> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
         return AbstractTest.arguments()
                 .filter(
                         testArgument ->
                                 !testArgument
-                                        .dockerImageName()
+                                        .getDockerImageName()
                                         .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
-    protected void setBaseUrl() {
-        testContext.baseUrl(BASE_URL);
+    public void setBaseUrl() {
+        testEnvironment.setBaseUrl(BASE_URL);
     }
 
     @TestEngine.Test
     public void testHealthy() {
         new HttpHealthyRequest()
-                .send(testContext.httpClient())
+                .send(testEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpOpenMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusProtobufMetricsRequest()
+                .send(testEnvironment.getHttpClient())
+                .accept(this);
     }
 
     @Override
@@ -96,7 +98,7 @@ public class SSLWithJKSKeyStoreTest extends AbstractTest implements Consumer<Htt
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
+                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
@@ -123,25 +125,25 @@ public class SSLWithJKSKeyStoreTest extends AbstractTest implements Consumer<Htt
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("UNTYPED")

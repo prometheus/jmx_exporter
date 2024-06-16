@@ -38,28 +38,30 @@ public class IncludeAndExcludeObjectNamesTest extends AbstractTest
     @TestEngine.Test
     public void testHealthy() {
         new HttpHealthyRequest()
-                .send(testContext.httpClient())
+                .send(testEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
     @TestEngine.Test
     public void testMetrics() {
-        new HttpMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpOpenMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
     }
 
     @TestEngine.Test
     public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest().send(testContext.httpClient()).accept(this);
+        new HttpPrometheusProtobufMetricsRequest()
+                .send(testEnvironment.getHttpClient())
+                .accept(this);
     }
 
     @Override
