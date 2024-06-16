@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test.http.authentication;
 
 import io.prometheus.jmx.test.AbstractTest;
-import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.TestArguments;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,7 +39,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
             new PBKDF2WithHmacTestArgumentFilter();
 
     /** Class to implement a PBKDF2WithHmacTestArgumentFilter */
-    protected static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArgument> {
+    protected static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArguments> {
 
         private final Set<String> filteredDockerImages;
 
@@ -56,12 +56,12 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
         /**
          * Evaluates this predicate on the given argument.
          *
-         * @param testArgument the input argument
+         * @param testArguments the input argument
          * @return {@code true} if the input argument matches the predicate, otherwise {@code false}
          */
         @Override
-        public boolean test(TestArgument testArgument) {
-            return !filteredDockerImages.contains(testArgument.dockerImageName());
+        public boolean test(TestArguments testArguments) {
+            return !filteredDockerImages.contains(testArguments.getDockerImageName());
         }
     }
 

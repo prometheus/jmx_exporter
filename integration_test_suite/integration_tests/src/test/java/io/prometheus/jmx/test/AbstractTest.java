@@ -18,17 +18,13 @@ package io.prometheus.jmx.test;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.DockerImageNames;
-import io.prometheus.jmx.test.support.Mode;
-import io.prometheus.jmx.test.support.TestArgument;
-import io.prometheus.jmx.test.support.TestContext;
+import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestArguments;
+import io.prometheus.jmx.test.support.TestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
-import io.prometheus.jmx.test.support.http.HttpContentType;
-import io.prometheus.jmx.test.support.http.HttpHeader;
-import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
@@ -43,9 +39,9 @@ public abstract class AbstractTest {
     private static final long MEMORY_BYTES = 1073741824; // 1GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
 
-    protected TestContext testContext;
+    @TestEngine.Argument public TestArguments testArguments;
 
-    @TestEngine.Argument protected TestArgument testArgument;
+    protected TestEnvironment testEnvironment;
 
     /**
      * Method to get the list of TestArguments
@@ -53,18 +49,18 @@ public abstract class AbstractTest {
      * @return the return value
      */
     @TestEngine.ArgumentSupplier
-    protected static Stream<TestArgument> arguments() {
-        List<TestArgument> testArguments = new ArrayList<>();
+    public static Stream<TestArguments> arguments() {
+        List<TestArguments> testArguments = new ArrayList<>();
 
         DockerImageNames.names()
                 .forEach(
                         dockerImageName -> {
-                            for (Mode mode : Mode.values()) {
+                            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
                                 testArguments.add(
-                                        TestArgument.of(
-                                                dockerImageName + " / " + mode,
+                                        TestArguments.of(
+                                                dockerImageName + " / " + jmxExporterMode,
                                                 dockerImageName,
-                                                mode));
+                                                jmxExporterMode));
                             }
                         });
 
@@ -72,36 +68,35 @@ public abstract class AbstractTest {
     }
 
     @TestEngine.Prepare
-    protected final void prepare() {
-        testContext = new TestContext();
-
+    public final void prepare() {
         // Get the Network and get the id to force the network creation
         Network network = Network.newNetwork();
         network.getId();
 
-        testContext.network(network);
-        testContext.baseUrl(BASE_URL);
+        testEnvironment = new TestEnvironment();
+        testEnvironment.setNetwork(network);
+        testEnvironment.setBaseUrl(BASE_URL);
     }
 
     @TestEngine.BeforeAll
-    protected final void beforeAll() {
-        testContext.reset();
+    public final void beforeAll() {
+        testEnvironment.reset();
 
-        Network network = testContext.network();
-        String dockerImageName = testArgument.dockerImageName();
+        Network network = testEnvironment.getNetwork();
+        String dockerImageName = testArguments.getDockerImageName();
         String testName = this.getClass().getName();
-        String baseUrl = testContext.baseUrl();
+        String baseUrl = testEnvironment.getBaseUrl();
 
-        switch (testArgument.mode()) {
+        switch (testArguments.getJmxExporterMode()) {
             case JavaAgent:
                 {
                     GenericContainer<?> applicationContainer =
                             createJavaAgentApplicationContainer(network, dockerImageName, testName);
                     applicationContainer.start();
-                    testContext.applicationContainer(applicationContainer);
+                    testEnvironment.setApplicationContainer(applicationContainer);
 
                     HttpClient httpClient = createHttpClient(applicationContainer, baseUrl);
-                    testContext.httpClient(httpClient);
+                    testEnvironment.setHttpClient(httpClient);
 
                     break;
                 }
@@ -111,15 +106,15 @@ public abstract class AbstractTest {
                             createStandaloneApplicationContainer(
                                     network, dockerImageName, testName);
                     applicationContainer.start();
-                    testContext.applicationContainer(applicationContainer);
+                    testEnvironment.setApplicationContainer(applicationContainer);
 
                     GenericContainer<?> exporterContainer =
                             createStandaloneExporterContainer(network, dockerImageName, testName);
                     exporterContainer.start();
-                    testContext.exporterContainer(exporterContainer);
+                    testEnvironment.setExporterContainer(exporterContainer);
 
                     HttpClient httpClient = createHttpClient(exporterContainer, baseUrl);
-                    testContext.httpClient(httpClient);
+                    testEnvironment.setHttpClient(httpClient);
 
                     break;
                 }
@@ -127,14 +122,14 @@ public abstract class AbstractTest {
     }
 
     @TestEngine.AfterAll
-    protected final void afterAll() {
-        testContext.reset();
+    public final void afterAll() {
+        testEnvironment.reset();
     }
 
     @TestEngine.Conclude
-    protected final void conclude() {
-        testContext.dispose();
-        testContext = null;
+    public final void conclude() {
+        testEnvironment.destroy();
+        testEnvironment = null;
     }
 
     /**
@@ -276,10 +271,5 @@ public abstract class AbstractTest {
     private static HttpClient createHttpClient(
             GenericContainer<?> genericContainer, String baseUrl) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(8888));
-    }
-
-    protected static boolean isProtoBufFormat(HttpResponse httpResponse) {
-        return Objects.requireNonNull(httpResponse.headers().get(HttpHeader.CONTENT_TYPE))
-                .contains(HttpContentType.PROTOBUF);
     }
 }

@@ -21,7 +21,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
 /** Class to a TestContext */
-public class TestContext {
+public class TestEnvironment {
 
     private Network network;
     private GenericContainer<?> applicationContainer;
@@ -30,7 +30,7 @@ public class TestContext {
     private HttpClient httpClient;
 
     /** Constructor */
-    public TestContext() {
+    public TestEnvironment() {
         // DO NOTHING
     }
 
@@ -40,7 +40,7 @@ public class TestContext {
      * @param network network
      * @return this
      */
-    public TestContext network(Network network) {
+    public TestEnvironment setNetwork(Network network) {
         this.network = network;
         return this;
     }
@@ -50,7 +50,7 @@ public class TestContext {
      *
      * @return the Network
      */
-    public Network network() {
+    public Network getNetwork() {
         return network;
     }
 
@@ -60,7 +60,7 @@ public class TestContext {
      * @param applicationContainer application container
      * @return this
      */
-    public TestContext applicationContainer(GenericContainer<?> applicationContainer) {
+    public TestEnvironment setApplicationContainer(GenericContainer<?> applicationContainer) {
         this.applicationContainer = applicationContainer;
         return this;
     }
@@ -70,7 +70,7 @@ public class TestContext {
      *
      * @return the application container
      */
-    public GenericContainer<?> applicationContainer() {
+    public GenericContainer<?> getApplicationContainer() {
         return applicationContainer;
     }
 
@@ -80,7 +80,7 @@ public class TestContext {
      * @param exporterContainer exporter container
      * @return this
      */
-    public TestContext exporterContainer(GenericContainer<?> exporterContainer) {
+    public TestEnvironment setExporterContainer(GenericContainer<?> exporterContainer) {
         this.exporterContainer = exporterContainer;
         return this;
     }
@@ -90,7 +90,7 @@ public class TestContext {
      *
      * @return the exporter container
      */
-    public GenericContainer<?> exporterContainer() {
+    public GenericContainer<?> getExporterContainer() {
         return exporterContainer;
     }
 
@@ -100,7 +100,7 @@ public class TestContext {
      * @param baseUrl baseURL
      * @return this
      */
-    public TestContext baseUrl(String baseUrl) {
+    public TestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
         return this;
     }
@@ -110,7 +110,7 @@ public class TestContext {
      *
      * @return the base URL
      */
-    public String baseUrl() {
+    public String getBaseUrl() {
         return baseUrl;
     }
 
@@ -120,7 +120,7 @@ public class TestContext {
      * @param httpClient httpClient
      * @return this
      */
-    public TestContext httpClient(HttpClient httpClient) {
+    public TestEnvironment setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
         return this;
     }
@@ -130,7 +130,7 @@ public class TestContext {
      *
      * @return the HttpClient
      */
-    public HttpClient httpClient() {
+    public HttpClient getHttpClient() {
         return httpClient;
     }
 
@@ -144,13 +144,13 @@ public class TestContext {
             applicationContainer.close();
         }
 
-        applicationContainer(null);
-        exporterContainer(null);
-        httpClient(null);
+        setApplicationContainer(null);
+        setExporterContainer(null);
+        setHttpClient(null);
     }
 
     /** Method to dispose the test state (containers and network) */
-    public void dispose() {
+    public void destroy() {
         if (exporterContainer != null) {
             exporterContainer.close();
             exporterContainer = null;

@@ -21,8 +21,8 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.http.authentication.AbstractBasicAuthenticationTest;
-import io.prometheus.jmx.test.support.Mode;
-import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestArguments;
 import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
@@ -49,19 +49,19 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
      * @return the return value
      */
     @TestEngine.ArgumentSupplier
-    protected static Stream<TestArgument> arguments() {
+    public static Stream<TestArguments> arguments() {
         return AbstractBasicAuthenticationTest.arguments()
                 .filter(PBKDF2_WITH_MAC_TEST_ARGUMENT_FILTER)
                 .filter(
                         testArgument ->
                                 !testArgument
-                                        .dockerImageName()
+                                        .getDockerImageName()
                                         .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
-    protected void setBaseUrl() {
-        testContext.baseUrl(BASE_URL);
+    public void setBaseUrl() {
+        testEnvironment.setBaseUrl(BASE_URL);
     }
 
     @TestEngine.Test
@@ -79,7 +79,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response ->
                                                     assertHttpResponseCode(response, code.get()));
@@ -101,7 +101,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -127,7 +127,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -153,7 +153,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -179,7 +179,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -197,7 +197,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
+                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
@@ -224,25 +224,25 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("UNTYPED")

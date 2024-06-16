@@ -21,8 +21,8 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.AbstractTest;
-import io.prometheus.jmx.test.support.Mode;
-import io.prometheus.jmx.test.support.TestArgument;
+import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestArguments;
 import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
@@ -58,7 +58,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
      * @return the return value
      */
     @TestEngine.ArgumentSupplier
-    protected static Stream<TestArgument> arguments() {
+    public static Stream<TestArguments> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
         // https://bugs.openjdk.org/browse/JDK-8306037
@@ -66,13 +66,13 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                 .filter(
                         testArgument ->
                                 !testArgument
-                                        .dockerImageName()
+                                        .getDockerImageName()
                                         .contains("eclipse-temurin:8-alpine"));
     }
 
     @TestEngine.Prepare
-    protected void setBaseUrl() {
-        testContext.baseUrl(BASE_URL);
+    public void setBaseUrl() {
+        testEnvironment.setBaseUrl(BASE_URL);
     }
 
     @TestEngine.Test
@@ -87,7 +87,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpHealthyRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testContext.httpClient())
+                        .send(testEnvironment.getHttpClient())
                         .accept(response -> assertHttpResponseCode(response, code.get()));
             }
         }
@@ -105,7 +105,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testContext.httpClient())
+                        .send(testEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -129,7 +129,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpOpenMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testContext.httpClient())
+                        .send(testEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -153,7 +153,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testContext.httpClient())
+                        .send(testEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -177,7 +177,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusProtobufMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testContext.httpClient())
+                        .send(testEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -196,7 +196,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
+                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
@@ -223,25 +223,25 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("UNTYPED")

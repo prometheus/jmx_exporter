@@ -18,39 +18,45 @@ package io.prometheus.jmx.test.support;
 
 import org.antublue.test.engine.api.Argument;
 
-public class TestArgument implements Argument {
+public class TestArguments implements Argument<TestArguments> {
 
     private final String name;
     private final String dockerImageName;
-    private final Mode mode;
+    private final JmxExporterMode jmxExporterMode;
 
-    private TestArgument(String name, String dockerImageName, Mode mode) {
+    private TestArguments(String name, String dockerImageName, JmxExporterMode jmxExporterMode) {
         this.name = name;
         this.dockerImageName = dockerImageName;
-        this.mode = mode;
+        this.jmxExporterMode = jmxExporterMode;
     }
 
     @Override
-    public String name() {
+    public String getName() {
         return name;
     }
 
-    public String dockerImageName() {
+    @Override
+    public TestArguments getPayload() {
+        return this;
+    }
+
+    public String getDockerImageName() {
         return dockerImageName;
     }
 
-    public Mode mode() {
-        return mode;
+    public JmxExporterMode getJmxExporterMode() {
+        return jmxExporterMode;
     }
 
     @Override
     public String toString() {
         return String.format(
                 "TestArgument{name=[%s],dockerImageName=[%s],mode=[%s]}",
-                name, dockerImageName, mode);
+                name, dockerImageName, jmxExporterMode);
     }
 
-    public static TestArgument of(String name, String dockerImageName, Mode mode) {
-        return new TestArgument(name, dockerImageName, mode);
+    public static TestArguments of(
+            String name, String dockerImageName, JmxExporterMode jmxExporterMode) {
+        return new TestArguments(name, dockerImageName, jmxExporterMode);
     }
 }

@@ -20,7 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpResponseCode;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.support.Mode;
+import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
@@ -53,7 +53,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response ->
                                                     assertHttpResponseCode(response, code.get()));
@@ -75,7 +75,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -101,7 +101,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -127,7 +127,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -153,7 +153,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                                             new HttpBasicAuthenticationCredentials(
                                                     authenticationTestArguments.getUsername(),
                                                     authenticationTestArguments.getPassword()))
-                                    .send(testContext.httpClient())
+                                    .send(testEnvironment.getHttpClient())
                                     .accept(
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
@@ -171,7 +171,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
         Collection<Metric> metrics = MetricsParser.parse(httpResponse);
 
         String buildInfoName =
-                testArgument.mode() == Mode.JavaAgent
+                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
@@ -198,25 +198,25 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArgument.mode() == Mode.JavaAgent);
+                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("GAUGE")
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArgument.mode() == Mode.Standalone);
+                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
 
         assertMetric(metrics)
                 .ofType("UNTYPED")
