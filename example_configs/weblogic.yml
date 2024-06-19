@@ -5,7 +5,7 @@
 attrNameSnakeCase: true
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-whitelistObjectNames:
+includeObjectNames:
   - "com.bea:Name=*,Type=ServerRuntime"
   #- "com.bea:Name=*,Type=Domain" # uncomment this if you want to fetch domain name
   - "com.bea:ServerRuntime=*,Type=ApplicationRuntime,*"
