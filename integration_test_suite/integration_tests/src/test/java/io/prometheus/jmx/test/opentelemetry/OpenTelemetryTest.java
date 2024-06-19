@@ -3,6 +3,10 @@ package io.prometheus.jmx.test.opentelemetry;
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.DockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -10,16 +14,11 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 public class OpenTelemetryTest {
 
     private static final String PROMETHEUS_DOCKER_IMAGE_NAME = "prom/prometheus:latest";
-    private static final long MEMORY_BYTES = 1073741824; // 1GB
+
+    private static final long MEMORY_BYTES = 1073741824; // 1 GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
 
     private Network network;
@@ -28,8 +27,7 @@ public class OpenTelemetryTest {
     private GenericContainer<?> javaAgentApplicationContainer;
     private GenericContainer<?> standaloneExporterContainer;
 
-    @TestEngine.Argument
-    public OpenTelemetryTestArguments openTelemetryTestArguments;
+    @TestEngine.Argument public OpenTelemetryTestArguments openTelemetryTestArguments;
 
     /**
      * Method to get the list of TestArguments
@@ -41,20 +39,27 @@ public class OpenTelemetryTest {
         List<OpenTelemetryTestArguments> openTelemetryTestArguments = new ArrayList<>();
 
         List<String> prometheusDockerImageNames = new ArrayList<>();
-        prometheusDockerImageNames.add("prom/prometheus:latest");
+        prometheusDockerImageNames.add(PROMETHEUS_DOCKER_IMAGE_NAME);
 
-        prometheusDockerImageNames.forEach(prometheusDockerImage -> DockerImageNames.names()
-                .forEach(
-                        javaDockerImageName -> {
-                            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
-                                openTelemetryTestArguments.add(
-                                        OpenTelemetryTestArguments.of(
-                                                prometheusDockerImage + " / " + javaDockerImageName + " / " + jmxExporterMode,
-                                                PROMETHEUS_DOCKER_IMAGE_NAME,
-                                                javaDockerImageName,
-                                                jmxExporterMode));
-                            }
-                        }));
+        prometheusDockerImageNames.forEach(
+                prometheusDockerImage ->
+                        DockerImageNames.names()
+                                .forEach(
+                                        javaDockerImageName -> {
+                                            for (JmxExporterMode jmxExporterMode :
+                                                    JmxExporterMode.values()) {
+                                                openTelemetryTestArguments.add(
+                                                        OpenTelemetryTestArguments.of(
+                                                                prometheusDockerImage
+                                                                        + " / "
+                                                                        + javaDockerImageName
+                                                                        + " / "
+                                                                        + jmxExporterMode,
+                                                                PROMETHEUS_DOCKER_IMAGE_NAME,
+                                                                javaDockerImageName,
+                                                                jmxExporterMode));
+                                            }
+                                        }));
 
         return openTelemetryTestArguments.stream();
     }
@@ -69,14 +74,51 @@ public class OpenTelemetryTest {
     @TestEngine.BeforeAll
     public void beforeAll() throws Throwable {
         switch (openTelemetryTestArguments.getJmxExporterMode()) {
-            case Standalone: {
-                setupStandalone();
-                break;
-            }
-            case JavaAgent: {
-                setUpJavaAgent();
-                break;
-            }
+            case JavaAgent:
+                {
+                    prometheusContainer =
+                            createPrometheusContainer(
+                                    openTelemetryTestArguments.getJmxExporterMode(),
+                                    network,
+                                    openTelemetryTestArguments.getPrometheusDockerImageName(),
+                                    getClass().getName());
+
+                    javaAgentApplicationContainer =
+                            createJavaAgentApplicationContainer(
+                                    network,
+                                    openTelemetryTestArguments.getJavaDockerImageName(),
+                                    getClass().getName());
+
+                    prometheusContainer.start();
+                    javaAgentApplicationContainer.start();
+                    break;
+                }
+            case Standalone:
+                {
+                    prometheusContainer =
+                            createPrometheusContainer(
+                                    openTelemetryTestArguments.getJmxExporterMode(),
+                                    network,
+                                    openTelemetryTestArguments.getPrometheusDockerImageName(),
+                                    getClass().getName());
+
+                    standaloneApplicationContainer =
+                            createStandaloneApplicationContainer(
+                                    network,
+                                    openTelemetryTestArguments.getJavaDockerImageName(),
+                                    getClass().getName());
+
+                    standaloneExporterContainer =
+                            createStandaloneExporterContainer(
+                                    network,
+                                    openTelemetryTestArguments.getJavaDockerImageName(),
+                                    getClass().getName());
+
+                    prometheusContainer.start();
+                    standaloneApplicationContainer.start();
+                    standaloneExporterContainer.start();
+                    break;
+                }
         }
     }
 
@@ -89,18 +131,22 @@ public class OpenTelemetryTest {
     public void afterAll() {
         if (javaAgentApplicationContainer != null) {
             javaAgentApplicationContainer.close();
+            javaAgentApplicationContainer = null;
         }
 
         if (standaloneExporterContainer != null) {
             standaloneExporterContainer.close();
+            standaloneExporterContainer = null;
         }
 
         if (standaloneApplicationContainer != null) {
             standaloneApplicationContainer.close();
+            standaloneApplicationContainer = null;
         }
 
         if (prometheusContainer != null) {
             prometheusContainer.close();
+            prometheusContainer = null;
         }
     }
 
@@ -111,25 +157,6 @@ public class OpenTelemetryTest {
         }
     }
 
-    private void setUpJavaAgent()  {
-        prometheusContainer = createPrometheusContainer(network, openTelemetryTestArguments.getPrometheusDockerImageName(), getClass().getName());
-        javaAgentApplicationContainer = createJavaAgentApplicationContainer(network, openTelemetryTestArguments.getJavaDockerImageName(), getClass().getName());
-
-        prometheusContainer.start();
-        javaAgentApplicationContainer.start();
-    }
-
-
-    private void setupStandalone() {
-        prometheusContainer = createPrometheusContainer(network, openTelemetryTestArguments.getPrometheusDockerImageName(), getClass().getName());
-        standaloneApplicationContainer = createStandaloneApplicationContainer(network, openTelemetryTestArguments.getJavaDockerImageName(), getClass().getName());
-        standaloneExporterContainer = createStandaloneExporterContainer(network, openTelemetryTestArguments.getJavaDockerImageName(), getClass().getName());
-
-        prometheusContainer.start();
-        standaloneApplicationContainer.start();
-        standaloneExporterContainer.start();
-    }
-
     /**
      * Method to create a Prometheus container
      *
@@ -138,12 +165,33 @@ public class OpenTelemetryTest {
      * @param testName testName
      * @return the return value
      */
-    private static GenericContainer<?> createPrometheusContainer(Network network, String prometheusDockerImageName, String testName) {
+    private static GenericContainer<?> createPrometheusContainer(
+            JmxExporterMode jmxExporterMode,
+            Network network,
+            String prometheusDockerImageName,
+            String testName) {
         return new GenericContainer<>(prometheusDockerImageName)
-                .withExposedPorts(777)
-                .withNetwork(network)
                 .withClasspathResourceMapping(
-                        testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
+                        testName.replace(".", "/") + "/" + jmxExporterMode + "/prometheus.yml",
+                        "/etc/prometheus/prometheus.yml",
+                        BindMode.READ_ONLY)
+                /*
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(PROMETHEUS_MEMORY_BYTES)
+                                        .withMemorySwap(PROMETHEUS_MEMORY_SWAP_BYTES))
+                 */
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withUlimits(
+                                                new Ulimit[] {
+                                                    new Ulimit("nofile", 65536L, 65536L)
+                                                }))
+                .withExposedPorts(7777)
+                .withNetwork(network)
+                .withNetworkAliases("prometheus")
                 .withStartupTimeout(Duration.ofMillis(30000));
     }
 
@@ -172,7 +220,7 @@ public class OpenTelemetryTest {
                                 c.getHostConfig()
                                         .withUlimits(
                                                 new Ulimit[] {
-                                                        new Ulimit("nofile", 65536L, 65536L)
+                                                    new Ulimit("nofile", 65536L, 65536L)
                                                 }))
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
@@ -215,7 +263,7 @@ public class OpenTelemetryTest {
                                 c.getHostConfig()
                                         .withUlimits(
                                                 new Ulimit[] {
-                                                        new Ulimit("nofile", 65536L, 65536L)
+                                                    new Ulimit("nofile", 65536L, 65536L)
                                                 }))
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
@@ -258,7 +306,7 @@ public class OpenTelemetryTest {
                                 c.getHostConfig()
                                         .withUlimits(
                                                 new Ulimit[] {
-                                                        new Ulimit("nofile", 65536L, 65536L)
+                                                    new Ulimit("nofile", 65536L, 65536L)
                                                 }))
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)

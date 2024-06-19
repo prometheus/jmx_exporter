@@ -10,7 +10,11 @@ public class OpenTelemetryTestArguments implements Argument<OpenTelemetryTestArg
     private final String javaDockerImageName;
     private final JmxExporterMode jmxExporterMode;
 
-    private OpenTelemetryTestArguments(String name, String prometheusDockerImageName, String javaDockerImageName, JmxExporterMode jmxExporterMode) {
+    private OpenTelemetryTestArguments(
+            String name,
+            String prometheusDockerImageName,
+            String javaDockerImageName,
+            JmxExporterMode jmxExporterMode) {
         this.name = name;
         this.prometheusDockerImageName = prometheusDockerImageName;
         this.javaDockerImageName = javaDockerImageName;
@@ -47,7 +51,11 @@ public class OpenTelemetryTestArguments implements Argument<OpenTelemetryTestArg
     }
 
     public static OpenTelemetryTestArguments of(
-            String name, String prometheusDockerImageName, String javaDockerImageName, JmxExporterMode jmxExporterMode) {
-        return new OpenTelemetryTestArguments(name, prometheusDockerImageName, javaDockerImageName, jmxExporterMode);
+            String name,
+            String prometheusDockerImageName,
+            String javaDockerImageName,
+            JmxExporterMode jmxExporterMode) {
+        return new OpenTelemetryTestArguments(
+                name, prometheusDockerImageName, javaDockerImageName, jmxExporterMode);
     }
 }
