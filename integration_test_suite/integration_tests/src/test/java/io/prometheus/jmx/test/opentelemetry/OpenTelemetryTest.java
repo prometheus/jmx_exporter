@@ -175,13 +175,6 @@ public class OpenTelemetryTest {
                         testName.replace(".", "/") + "/" + jmxExporterMode + "/prometheus.yml",
                         "/etc/prometheus/prometheus.yml",
                         BindMode.READ_ONLY)
-                /*
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(PROMETHEUS_MEMORY_BYTES)
-                                        .withMemorySwap(PROMETHEUS_MEMORY_SWAP_BYTES))
-                 */
                 .withCreateContainerCmdModifier(
                         c ->
                                 c.getHostConfig()
