@@ -88,7 +88,7 @@ public class HTTPServerFactory {
     private YamlMapAccessor rootYamlMapAccessor;
 
     /** Constructor */
-    public HTTPServerFactory() {
+    private HTTPServerFactory() {
         // DO NOTHING
     }
 
@@ -121,6 +121,15 @@ public class HTTPServerFactory {
         configureSSL(httpServerBuilder);
 
         return httpServerBuilder.buildAndStart();
+    }
+
+    /**
+     * Method to get an instance of the HTTPServerFactory
+     *
+     * @return the HTTPServerFactory
+     */
+    public static HTTPServerFactory getInstance() {
+        return SingletonHolder.SINGLETON;
     }
 
     /**
@@ -638,5 +647,12 @@ public class HTTPServerFactory {
                 }
             }
         }
+    }
+
+    /** Class to hold the singleton */
+    private static class SingletonHolder {
+
+        /** The singleton */
+        public static final HTTPServerFactory SINGLETON = new HTTPServerFactory();
     }
 }
