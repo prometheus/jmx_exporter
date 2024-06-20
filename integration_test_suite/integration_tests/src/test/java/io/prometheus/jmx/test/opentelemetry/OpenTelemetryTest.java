@@ -1,11 +1,19 @@
 package io.prometheus.jmx.test.opentelemetry;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.DockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
@@ -13,19 +21,21 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 public class OpenTelemetryTest {
 
-    private static final String PROMETHEUS_DOCKER_IMAGE_NAME = "prom/prometheus:latest";
-
     private static final long MEMORY_BYTES = 1073741824; // 1 GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+
+    private static final String BASE_URL = "http://localhost";
 
     private Network network;
     private GenericContainer<?> prometheusContainer;
     private GenericContainer<?> standaloneApplicationContainer;
     private GenericContainer<?> javaAgentApplicationContainer;
     private GenericContainer<?> standaloneExporterContainer;
+    private HttpClient httpClient;
 
     @TestEngine.Argument public OpenTelemetryTestArguments openTelemetryTestArguments;
 
@@ -39,7 +49,14 @@ public class OpenTelemetryTest {
         List<OpenTelemetryTestArguments> openTelemetryTestArguments = new ArrayList<>();
 
         List<String> prometheusDockerImageNames = new ArrayList<>();
-        prometheusDockerImageNames.add(PROMETHEUS_DOCKER_IMAGE_NAME);
+        prometheusDockerImageNames.add("prom/prometheus:v2.46.0");
+        prometheusDockerImageNames.add("prom/prometheus:v2.47.2");
+        prometheusDockerImageNames.add("prom/prometheus:v2.48.1");
+        prometheusDockerImageNames.add("prom/prometheus:v2.49.1");
+        prometheusDockerImageNames.add("prom/prometheus:v2.50.1");
+        prometheusDockerImageNames.add("prom/prometheus:v2.51.2");
+        prometheusDockerImageNames.add("prom/prometheus:v2.52.0");
+        prometheusDockerImageNames.add("prom/prometheus:v2.53.0");
 
         prometheusDockerImageNames.forEach(
                 prometheusDockerImage ->
@@ -55,11 +72,13 @@ public class OpenTelemetryTest {
                                                                         + javaDockerImageName
                                                                         + " / "
                                                                         + jmxExporterMode,
-                                                                PROMETHEUS_DOCKER_IMAGE_NAME,
+                                                                prometheusDockerImage,
                                                                 javaDockerImageName,
                                                                 jmxExporterMode));
                                             }
                                         }));
+
+        System.out.println("test argument count [" + openTelemetryTestArguments.size() + "]");
 
         return openTelemetryTestArguments.stream();
     }
@@ -91,6 +110,7 @@ public class OpenTelemetryTest {
 
                     prometheusContainer.start();
                     javaAgentApplicationContainer.start();
+
                     break;
                 }
             case Standalone:
@@ -117,14 +137,32 @@ public class OpenTelemetryTest {
                     prometheusContainer.start();
                     standaloneApplicationContainer.start();
                     standaloneExporterContainer.start();
+
                     break;
                 }
         }
+
+        httpClient = createPrometheusHttpClient(prometheusContainer, BASE_URL, 9090);
     }
 
     @TestEngine.Test
-    public void testOpenTelemetry() throws Throwable {
-        System.out.println("testOpenTelemetry()");
+    public void testOpenTelemetry() {
+        // Thread.sleep(30);
+
+        sendQuery("up")
+                .accept(
+                        httpResponse -> {
+                            assertThat(httpResponse).isNotNull();
+                            assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+                            assertThat(httpResponse.body()).isNotNull();
+                            assertThat(httpResponse.body().string()).isNotNull();
+
+                            System.out.println(httpResponse.body().string());
+
+                            Map<Object, Object> map = new Yaml().load(httpResponse.body().string());
+                            String status = (String) map.get("status");
+                            assertThat(status).isEqualTo("success");
+                        });
     }
 
     @TestEngine.AfterAll
@@ -157,6 +195,16 @@ public class OpenTelemetryTest {
         }
     }
 
+    private HttpResponse sendQuery(String query) {
+        return httpClient.send(
+                new HttpRequest(
+                        "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8)));
+    }
+
+    private HttpResponse sendRequest(String path) {
+        return httpClient.send(new HttpRequest(path));
+    }
+
     /**
      * Method to create a Prometheus container
      *
@@ -175,6 +223,18 @@ public class OpenTelemetryTest {
                         testName.replace(".", "/") + "/" + jmxExporterMode + "/prometheus.yml",
                         "/etc/prometheus/prometheus.yml",
                         BindMode.READ_ONLY)
+                .withWorkingDirectory("/prometheus")
+                .withCommand(
+                        "--config.file=/etc/prometheus/prometheus.yml",
+                        "--storage.tsdb.path=/prometheus",
+                        "--web.console.libraries=/usr/share/prometheus/console_libraries",
+                        "--web.console.templates=/usr/share/prometheus/consoles",
+                        "--enable-feature=otlp-write-receiver")
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(MEMORY_BYTES)
+                                        .withMemorySwap(MEMORY_SWAP_BYTES))
                 .withCreateContainerCmdModifier(
                         c ->
                                 c.getHostConfig()
@@ -182,10 +242,61 @@ public class OpenTelemetryTest {
                                                 new Ulimit[] {
                                                     new Ulimit("nofile", 65536L, 65536L)
                                                 }))
-                .withExposedPorts(7777)
+                .withExposedPorts(9090)
+                .withLogConsumer(
+                        outputFrame -> {
+                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+                            if (!string.isBlank()) {
+                                System.out.println(string);
+                            }
+                        })
                 .withNetwork(network)
                 .withNetworkAliases("prometheus")
+                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000));
+    }
+
+    /**
+     * Method to create an application container
+     *
+     * @param network network
+     * @param dockerImageName dockerImageName
+     * @param testName testName
+     * @return the return value
+     */
+    private static GenericContainer<?> createJavaAgentApplicationContainer(
+            Network network, String dockerImageName, String testName) {
+        return new GenericContainer<>(dockerImageName)
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
+                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
+                .withClasspathResourceMapping(
+                        testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withMemory(MEMORY_BYTES)
+                                        .withMemorySwap(MEMORY_SWAP_BYTES))
+                .withCreateContainerCmdModifier(
+                        c ->
+                                c.getHostConfig()
+                                        .withUlimits(
+                                                new Ulimit[] {
+                                                    new Ulimit("nofile", 65536L, 65536L)
+                                                }))
+                .withCommand("/bin/sh application.sh")
+                .withExposedPorts(8888)
+                .withLogConsumer(
+                        outputFrame -> {
+                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+                            if (!string.isBlank()) {
+                                System.out.println(string);
+                            }
+                        })
+                .withNetwork(network)
+                .withNetworkAliases("application")
+                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                .withStartupTimeout(Duration.ofMillis(30000))
+                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -275,45 +386,14 @@ public class OpenTelemetryTest {
     }
 
     /**
-     * Method to create an application container
+     * Method to create an HttpClient
      *
-     * @param network network
-     * @param dockerImageName dockerImageName
-     * @param testName testName
+     * @param genericContainer genericContainer
+     * @param baseUrl baseUrl
      * @return the return value
      */
-    private static GenericContainer<?> createJavaAgentApplicationContainer(
-            Network network, String dockerImageName, String testName) {
-        return new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testName.replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println(string);
-                            }
-                        })
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp");
+    private static HttpClient createPrometheusHttpClient(
+            GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
+        return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
     }
 }

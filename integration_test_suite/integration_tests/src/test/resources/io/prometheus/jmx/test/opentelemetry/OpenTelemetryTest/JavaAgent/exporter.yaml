@@ -1,2 +1,6 @@
+openTelemetry:
+  endpoint: http://prometheus:9090
+  protocol: http/protobuf
+  interval: 1
 rules:
   - pattern: ".*"

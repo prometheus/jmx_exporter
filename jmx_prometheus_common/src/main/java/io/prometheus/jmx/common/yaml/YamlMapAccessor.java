@@ -21,12 +21,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import org.yaml.snakeyaml.Yaml;
 
 /** Class to implement a MapAccessor to work with nested Maps / values */
 @SuppressWarnings("unchecked")
 public class YamlMapAccessor {
 
-    private final Map<Object, Object> map;
+    private Map<Object, Object> map;
+
+    /** Constructor */
+    public YamlMapAccessor() {
+        map = new LinkedHashMap<>();
+    }
 
     /**
      * Constructor
@@ -39,6 +45,23 @@ public class YamlMapAccessor {
         }
 
         this.map = map;
+    }
+
+    public YamlMapAccessor load(Object object) {
+        if (object == null) {
+            throw new IllegalArgumentException("object is null");
+        }
+
+        try {
+            if (object instanceof String) {
+                this.map = new Yaml().load((String) object);
+            } else {
+                this.map = (Map<Object, Object>) object;
+            }
+            return this;
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException("object is not a Map<Object, Object>");
+        }
     }
 
     /**

@@ -26,7 +26,7 @@ public class HttpResponse {
         }
     }
 
-    public int code() {
+    public int getStatusCode() {
         return code;
     }
 

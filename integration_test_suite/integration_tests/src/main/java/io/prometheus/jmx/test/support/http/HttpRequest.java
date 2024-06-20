@@ -16,16 +16,18 @@
 
 package io.prometheus.jmx.test.support.http;
 
+import java.util.function.Consumer;
 import okhttp3.Headers;
 
-/** Base class for all tests */
-public abstract class HttpRequest {
+/** Class to implement HttpRequest */
+public class HttpRequest {
 
     protected HttpClient httpClient;
     protected Headers.Builder headersBuilder;
     protected String path;
     protected HttpCredentials httpCredentials;
 
+    /** Constructor */
     public HttpRequest() {
         headersBuilder = new Headers.Builder();
     }
@@ -33,11 +35,11 @@ public abstract class HttpRequest {
     /**
      * Constructor
      *
-     * @param httpClient httpClient
+     * @param path path
      */
-    public HttpRequest(HttpClient httpClient) {
-        this.httpClient = httpClient;
-        this.headersBuilder = new Headers.Builder();
+    public HttpRequest(String path) {
+        headersBuilder = new Headers.Builder();
+        path(path);
     }
 
     /**
@@ -81,7 +83,7 @@ public abstract class HttpRequest {
     }
 
     /**
-     * Method to execute the request
+     * Method to send the request
      *
      * @param httpClient httpClient
      * @return the response
@@ -108,5 +110,15 @@ public abstract class HttpRequest {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+    }
+
+    /**
+     * Method to send the request
+     *
+     * @param httpClient httpClient
+     * @param httpResponseConsumer httpResponseConsumer
+     */
+    public void send(HttpClient httpClient, Consumer<HttpResponse> httpResponseConsumer) {
+        httpResponseConsumer.accept(send(httpClient));
     }
 }

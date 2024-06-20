@@ -109,7 +109,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
-                                    if (response.code() == HttpResponse.OK) {
+                                    if (response.getStatusCode() == HttpResponse.OK) {
                                         accept(response);
                                     }
                                 });
@@ -133,7 +133,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
-                                    if (response.code() == HttpResponse.OK) {
+                                    if (response.getStatusCode() == HttpResponse.OK) {
                                         accept(response);
                                     }
                                 });
@@ -157,7 +157,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
-                                    if (response.code() == HttpResponse.OK) {
+                                    if (response.getStatusCode() == HttpResponse.OK) {
                                         accept(response);
                                     }
                                 });
@@ -181,7 +181,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
-                                    if (response.code() == HttpResponse.OK) {
+                                    if (response.getStatusCode() == HttpResponse.OK) {
                                         accept(response);
                                     }
                                 });
