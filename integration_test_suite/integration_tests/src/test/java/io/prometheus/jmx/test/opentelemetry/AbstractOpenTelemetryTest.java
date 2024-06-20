@@ -3,7 +3,6 @@ package io.prometheus.jmx.test.opentelemetry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.dockerjava.api.model.Ulimit;
-import io.prometheus.jmx.test.support.DockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -11,10 +10,9 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -23,7 +21,8 @@ import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
-public class OpenTelemetryTest {
+/** Class to implement AbstractOpenTelemetryTest */
+public abstract class AbstractOpenTelemetryTest {
 
     private static final long MEMORY_BYTES = 1073741824; // 1 GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
@@ -39,50 +38,6 @@ public class OpenTelemetryTest {
 
     @TestEngine.Argument public OpenTelemetryTestArguments openTelemetryTestArguments;
 
-    /**
-     * Method to get the list of TestArguments
-     *
-     * @return the return value
-     */
-    @TestEngine.ArgumentSupplier
-    public static Stream<OpenTelemetryTestArguments> arguments() {
-        List<OpenTelemetryTestArguments> openTelemetryTestArguments = new ArrayList<>();
-
-        List<String> prometheusDockerImageNames = new ArrayList<>();
-        prometheusDockerImageNames.add("prom/prometheus:v2.46.0");
-        prometheusDockerImageNames.add("prom/prometheus:v2.47.2");
-        prometheusDockerImageNames.add("prom/prometheus:v2.48.1");
-        prometheusDockerImageNames.add("prom/prometheus:v2.49.1");
-        prometheusDockerImageNames.add("prom/prometheus:v2.50.1");
-        prometheusDockerImageNames.add("prom/prometheus:v2.51.2");
-        prometheusDockerImageNames.add("prom/prometheus:v2.52.0");
-        prometheusDockerImageNames.add("prom/prometheus:v2.53.0");
-
-        prometheusDockerImageNames.forEach(
-                prometheusDockerImage ->
-                        DockerImageNames.names()
-                                .forEach(
-                                        javaDockerImageName -> {
-                                            for (JmxExporterMode jmxExporterMode :
-                                                    JmxExporterMode.values()) {
-                                                openTelemetryTestArguments.add(
-                                                        OpenTelemetryTestArguments.of(
-                                                                prometheusDockerImage
-                                                                        + " / "
-                                                                        + javaDockerImageName
-                                                                        + " / "
-                                                                        + jmxExporterMode,
-                                                                prometheusDockerImage,
-                                                                javaDockerImageName,
-                                                                jmxExporterMode));
-                                            }
-                                        }));
-
-        System.out.println("test argument count [" + openTelemetryTestArguments.size() + "]");
-
-        return openTelemetryTestArguments.stream();
-    }
-
     @TestEngine.Prepare
     public void prepare() {
         // Get the Network and get the id to force the network creation
@@ -91,7 +46,7 @@ public class OpenTelemetryTest {
     }
 
     @TestEngine.BeforeAll
-    public void beforeAll() throws Throwable {
+    public void beforeAll() {
         switch (openTelemetryTestArguments.getJmxExporterMode()) {
             case JavaAgent:
                 {
@@ -145,7 +100,9 @@ public class OpenTelemetryTest {
         httpClient = createPrometheusHttpClient(prometheusContainer, BASE_URL, 9090);
     }
 
+    /** Method to test that Prometheus is up */
     @TestEngine.Test
+    @TestEngine.Order(order = 0)
     public void testPrometheusIsUp() {
         sendPrometheusQuery("up")
                 .accept(
@@ -157,8 +114,51 @@ public class OpenTelemetryTest {
 
                             Map<Object, Object> map = new Yaml().load(httpResponse.body().string());
                             String status = (String) map.get("status");
+
                             assertThat(status).isEqualTo("success");
                         });
+    }
+
+    /** Method to test that metrics exist in Prometheus */
+    @TestEngine.Test
+    public void testPrometheusMetrics() {
+        AtomicInteger pollCount = new AtomicInteger(10);
+        AtomicBoolean wasSuccessful = new AtomicBoolean();
+
+        do {
+            sendPrometheusQuery("jmx_exporter_build_info")
+                    .accept(
+                            httpResponse -> {
+                                assertThat(httpResponse).isNotNull();
+                                assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+                                assertThat(httpResponse.body()).isNotNull();
+                                assertThat(httpResponse.body().string()).isNotNull();
+
+                                Map<Object, Object> map =
+                                        new Yaml().load(httpResponse.body().string());
+                                String status = (String) map.get("status");
+
+                                if ("success".equals(status) && map.containsKey("$.data.result")) {
+                                    // TODO real logic
+                                    pollCount.set(0);
+                                    wasSuccessful.set(true);
+                                }
+
+                                pollCount.decrementAndGet();
+                            });
+
+            if (wasSuccessful.get()) {
+                break;
+            }
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                // DO NOTHING
+            }
+        } while (pollCount.get() > 0);
+
+        assertThat(wasSuccessful).isTrue();
     }
 
     @TestEngine.AfterAll
@@ -197,7 +197,7 @@ public class OpenTelemetryTest {
      * @param query query
      * @return an HttpResponse
      */
-    private HttpResponse sendPrometheusQuery(String query) {
+    protected HttpResponse sendPrometheusQuery(String query) {
         return sendRequest(
                 "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
@@ -208,7 +208,7 @@ public class OpenTelemetryTest {
      * @param path path
      * @return an HttpResponse
      */
-    private HttpResponse sendRequest(String path) {
+    protected HttpResponse sendRequest(String path) {
         return httpClient.send(new HttpRequest(path));
     }
 

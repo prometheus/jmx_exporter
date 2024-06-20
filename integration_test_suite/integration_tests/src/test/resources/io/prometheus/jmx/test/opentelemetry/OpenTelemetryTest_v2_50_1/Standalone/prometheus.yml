@@ -1,0 +1,4 @@
+global:
+  scrape_interval: 15s  # Default scrape interval, not used since there are no scrape targets
+
+scrape_configs: []  # Empty scrape_configs means no targets to scrape
