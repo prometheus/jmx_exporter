@@ -146,18 +146,14 @@ public class OpenTelemetryTest {
     }
 
     @TestEngine.Test
-    public void testOpenTelemetry() {
-        // Thread.sleep(30);
-
-        sendQuery("up")
+    public void testPrometheusIsUp() {
+        sendPrometheusQuery("up")
                 .accept(
                         httpResponse -> {
                             assertThat(httpResponse).isNotNull();
                             assertThat(httpResponse.getStatusCode()).isEqualTo(200);
                             assertThat(httpResponse.body()).isNotNull();
                             assertThat(httpResponse.body().string()).isNotNull();
-
-                            System.out.println(httpResponse.body().string());
 
                             Map<Object, Object> map = new Yaml().load(httpResponse.body().string());
                             String status = (String) map.get("status");
@@ -195,14 +191,37 @@ public class OpenTelemetryTest {
         }
     }
 
-    private HttpResponse sendQuery(String query) {
-        return httpClient.send(
-                new HttpRequest(
-                        "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8)));
+    /**
+     * Method to send a Prometheus query
+     *
+     * @param query query
+     * @return an HttpResponse
+     */
+    private HttpResponse sendPrometheusQuery(String query) {
+        return sendRequest(
+                "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
+    /**
+     * Method to send a Http GET request
+     *
+     * @param path path
+     * @return an HttpResponse
+     */
     private HttpResponse sendRequest(String path) {
         return httpClient.send(new HttpRequest(path));
+    }
+
+    /**
+     * Method to create an HttpClient
+     *
+     * @param genericContainer genericContainer
+     * @param baseUrl baseUrl
+     * @return the return value
+     */
+    private static HttpClient createPrometheusHttpClient(
+            GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
+        return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
     }
 
     /**
@@ -383,17 +402,5 @@ public class OpenTelemetryTest {
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
                 .withWorkingDirectory("/temp");
-    }
-
-    /**
-     * Method to create an HttpClient
-     *
-     * @param genericContainer genericContainer
-     * @param baseUrl baseUrl
-     * @return the return value
-     */
-    private static HttpClient createPrometheusHttpClient(
-            GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
-        return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
     }
 }
