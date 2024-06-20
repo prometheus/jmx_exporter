@@ -11,8 +11,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.antublue.test.engine.api.TestEngine;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -121,44 +119,23 @@ public abstract class AbstractOpenTelemetryTest {
 
     /** Method to test that metrics exist in Prometheus */
     @TestEngine.Test
-    public void testPrometheusMetrics() {
-        AtomicInteger pollCount = new AtomicInteger(10);
-        AtomicBoolean wasSuccessful = new AtomicBoolean();
+    public void testGetPrometheusMetrics() {
+        String name = "jmx_build_info";
+        String[] labels = new String[0];
 
-        do {
-            sendPrometheusQuery("jmx_exporter_build_info")
-                    .accept(
-                            httpResponse -> {
-                                assertThat(httpResponse).isNotNull();
-                                assertThat(httpResponse.getStatusCode()).isEqualTo(200);
-                                assertThat(httpResponse.body()).isNotNull();
-                                assertThat(httpResponse.body().string()).isNotNull();
+        sendPrometheusQuery("jmx_build_info")
+                .accept(
+                        httpResponse -> {
+                            assertThat(httpResponse).isNotNull();
+                            assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+                            assertThat(httpResponse.body()).isNotNull();
+                            assertThat(httpResponse.body().string()).isNotNull();
 
-                                Map<Object, Object> map =
-                                        new Yaml().load(httpResponse.body().string());
-                                String status = (String) map.get("status");
+                            Double value = parseResponse(httpResponse, name, labels);
 
-                                if ("success".equals(status) && map.containsKey("$.data.result")) {
-                                    // TODO real logic
-                                    pollCount.set(0);
-                                    wasSuccessful.set(true);
-                                }
-
-                                pollCount.decrementAndGet();
-                            });
-
-            if (wasSuccessful.get()) {
-                break;
-            }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                // DO NOTHING
-            }
-        } while (pollCount.get() > 0);
-
-        assertThat(wasSuccessful).isTrue();
+                            assertThat(value).isNotNull();
+                            assertThat(value).isEqualTo(1.0);
+                        });
     }
 
     @TestEngine.AfterAll
@@ -222,6 +199,33 @@ public abstract class AbstractOpenTelemetryTest {
     private static HttpClient createPrometheusHttpClient(
             GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
+    }
+
+    private static Double parseResponse(HttpResponse httpResponse, String name, String... labels) {
+        Double value = null;
+        String scrapeResponseJson = httpResponse.body().string();
+
+        assertThat(scrapeResponseJson).isNotNull();
+        assertThat(scrapeResponseJson).isNotEmpty();
+
+        /*
+        Criteria criteria = Criteria.where("metric.__name__").eq(name);
+
+        if (labels != null) {
+            for (int i = 0; i < labels.length; i += 2) {
+                criteria = criteria.and("metric." + labels[i]).eq(labels[i + 1]);
+            }
+        }
+
+        JSONArray result =
+                JsonPath.parse(scrapeResponseJson)
+                        .read("$.data.result" + Filter.filter(criteria) + ".value[1]");
+        if (result != null && result.size() == 1) {
+            value = Double.valueOf(result.get(0).toString());
+        }
+        */
+
+        return value;
     }
 
     /**
