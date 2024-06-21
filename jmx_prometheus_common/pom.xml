@@ -8,7 +8,6 @@
         <version>1.x.x</version>
     </parent>
 
-    <groupId>io.prometheus.jmx</groupId>
     <artifactId>jmx_prometheus_common</artifactId>
     <name>Prometheus JMX Exporter - Common</name>
     <description>
