@@ -41,13 +41,15 @@ public class ObjectNameAttributeFilter {
     public static final String AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES =
             "autoExcludeObjectNameAttributes";
 
-    private final Map<ObjectName, Set<String>> excludeObjectNameAttributesMap;
+    private final Map<ObjectName, Set<String>> configExcludeObjectNameAttributesMap;
+    private final Map<ObjectName, Set<String>> dynamicExcludeObjectNameAttributesMap;
 
     private boolean autoExcludeObjectNameAttributes;
 
     /** Constructor */
     private ObjectNameAttributeFilter() {
-        excludeObjectNameAttributesMap = new ConcurrentHashMap<>();
+        configExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
+        dynamicExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -69,15 +71,10 @@ public class ObjectNameAttributeFilter {
                 List<String> attributeNames = (List<String>) entry.getValue();
 
                 Set<String> attributeNameSet =
-                        excludeObjectNameAttributesMap.computeIfAbsent(
+                        configExcludeObjectNameAttributesMap.computeIfAbsent(
                                 objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
                 attributeNameSet.addAll(attributeNames);
-                for (String attribueName : attributeNames) {
-                    attributeNameSet.add(attribueName);
-                }
-
-                excludeObjectNameAttributesMap.put(objectName, attributeNameSet);
             }
         }
 
@@ -102,7 +99,7 @@ public class ObjectNameAttributeFilter {
     public void add(ObjectName objectName, String attributeName) {
         if (autoExcludeObjectNameAttributes) {
             Set<String> attribteNameSet =
-                    excludeObjectNameAttributesMap.computeIfAbsent(
+                    dynamicExcludeObjectNameAttributesMap.computeIfAbsent(
                             objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
             LOGGER.log(
@@ -115,6 +112,16 @@ public class ObjectNameAttributeFilter {
         }
     }
 
+    public void onlyKeepMBeans(Set<ObjectName> aliveMBeans) {
+        if (autoExcludeObjectNameAttributes) {
+            for (ObjectName prevName : dynamicExcludeObjectNameAttributesMap.keySet()) {
+                if (!aliveMBeans.contains(prevName)) {
+                    dynamicExcludeObjectNameAttributesMap.remove(prevName);
+                }
+            }
+        }
+    }
+
     /**
      * Method to check if an attribute should be excluded
      *
@@ -123,15 +130,21 @@ public class ObjectNameAttributeFilter {
      * @return true if it should be excluded, false otherwise
      */
     public boolean exclude(ObjectName objectName, String attributeName) {
-        boolean result = false;
+        return exclude(configExcludeObjectNameAttributesMap, objectName, attributeName)
+                || exclude(dynamicExcludeObjectNameAttributesMap, objectName, attributeName);
+    }
 
-        if (excludeObjectNameAttributesMap.size() > 0) {
-            Set<String> attributeNameSet = excludeObjectNameAttributesMap.get(objectName);
+    private boolean exclude(
+            Map<ObjectName, Set<String>> exclusionMap,
+            ObjectName objectName,
+            String attributeName) {
+        boolean result = false;
+        if (!exclusionMap.isEmpty()) {
+            Set<String> attributeNameSet = exclusionMap.get(objectName);
             if (attributeNameSet != null) {
                 result = attributeNameSet.contains(attributeName);
             }
         }
-
         return result;
     }
 
