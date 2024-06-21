@@ -28,7 +28,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <antublue.test.engine.version>7.0.1-ALPHA-1</antublue.test.engine.version>
+        <antublue.test.engine.version>7.x.x-SNAPSHOT</antublue.test.engine.version>
         <!-- smoke test containers -->
         <docker.image.names/>
         <!-- all test containers -->
@@ -103,6 +103,11 @@
         <dependency>
             <groupId>org.antublue</groupId>
             <artifactId>test-engine-api</artifactId>
+            <version>${antublue.test.engine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antublue</groupId>
+            <artifactId>test-engine-extras</artifactId>
             <version>${antublue.test.engine.version}</version>
         </dependency>
         <dependency>
