@@ -1,6 +1,8 @@
 package io.prometheus.jmx.test.opentelemetry;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.JmxExporterMode;
@@ -11,7 +13,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.antublue.test.engine.api.TestEngine;
+import org.antublue.test.engine.extras.throttle.ExponentialBackoffThrottle;
+import org.antublue.test.engine.extras.throttle.Throttle;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -102,39 +108,62 @@ public abstract class AbstractOpenTelemetryTest {
     @TestEngine.Test
     @TestEngine.Order(order = 0)
     public void testPrometheusIsUp() {
-        sendPrometheusQuery("up")
-                .accept(
-                        httpResponse -> {
-                            assertThat(httpResponse).isNotNull();
-                            assertThat(httpResponse.getStatusCode()).isEqualTo(200);
-                            assertThat(httpResponse.body()).isNotNull();
-                            assertThat(httpResponse.body().string()).isNotNull();
+        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
+        AtomicBoolean success = new AtomicBoolean();
 
-                            Map<Object, Object> map = new Yaml().load(httpResponse.body().string());
-                            String status = (String) map.get("status");
+        for (int i = 0; i < 10; i++) {
+            sendPrometheusQuery("up")
+                    .accept(
+                            httpResponse -> {
+                                assertThat(httpResponse).isNotNull();
 
-                            assertThat(status).isEqualTo("success");
-                        });
+                                if (httpResponse.getStatusCode() != 200) {
+                                    return;
+                                }
+
+                                assertThat(httpResponse.body()).isNotNull();
+                                assertThat(httpResponse.body().string()).isNotNull();
+
+                                Map<Object, Object> map =
+                                        new Yaml().load(httpResponse.body().string());
+
+                                String status = (String) map.get("status");
+                                assertThat(status).isEqualTo("success");
+
+                                success.set(true);
+                            });
+
+            if (success.get()) {
+                break;
+            }
+
+            throttle.throttle();
+        }
+
+        if (!success.get()) {
+            fail("Prometheus is not up");
+        }
     }
 
     /** Method to test that metrics exist in Prometheus */
     @TestEngine.Test
-    public void testGetPrometheusMetrics() {
-        String name = "jmx_build_info";
-        String[] labels = new String[0];
-
-        sendPrometheusQuery("jmx_build_info")
-                .accept(
-                        httpResponse -> {
-                            assertThat(httpResponse).isNotNull();
-                            assertThat(httpResponse.getStatusCode()).isEqualTo(200);
-                            assertThat(httpResponse.body()).isNotNull();
-                            assertThat(httpResponse.body().string()).isNotNull();
-
-                            Double value = parseResponse(httpResponse, name, labels);
-
-                            assertThat(value).isNotNull();
-                            assertThat(value).isEqualTo(1.0);
+    public void testPrometheusMetrics() {
+        ExpectedMetricsNames.getMetricsNames().stream()
+                .filter(
+                        metricName -> {
+                            if (openTelemetryTestArguments.getJmxExporterMode()
+                                                    == JmxExporterMode.Standalone
+                                            && metricName.startsWith("jvm_")
+                                    || metricName.startsWith("process_")) {
+                                return false;
+                            }
+                            return true;
+                        })
+                .forEach(
+                        metricName -> {
+                            Double value = getPrometheusMetric(metricName);
+                            assertThat(value).as("metricName [%s]", metricName).isNotNull();
+                            assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
                         });
     }
 
@@ -168,6 +197,39 @@ public abstract class AbstractOpenTelemetryTest {
         }
     }
 
+    protected Double getPrometheusMetric(String metricName) {
+        return getPrometheusMetric(metricName, null);
+    }
+
+    protected Double getPrometheusMetric(String metricName, String[] labels) {
+        Throttle throttle = new ExponentialBackoffThrottle(100, 6400);
+        AtomicReference<Double> value = new AtomicReference<>();
+
+        for (int i = 0; i < 10; i++) {
+            sendPrometheusQuery(metricName)
+                    .accept(
+                            httpResponse -> {
+                                assertThat(httpResponse).isNotNull();
+                                assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+                                assertThat(httpResponse.body()).isNotNull();
+                                assertThat(httpResponse.body().string()).isNotNull();
+
+                                // TODO parse response and return value
+                                if (httpResponse.body().string().contains(metricName)) {
+                                    value.set(1.0);
+                                }
+                            });
+
+            if (value.get() != null) {
+                break;
+            }
+
+            throttle.throttle();
+        }
+
+        return value.get();
+    }
+
     /**
      * Method to send a Prometheus query
      *
@@ -199,33 +261,6 @@ public abstract class AbstractOpenTelemetryTest {
     private static HttpClient createPrometheusHttpClient(
             GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
-    }
-
-    private static Double parseResponse(HttpResponse httpResponse, String name, String... labels) {
-        Double value = null;
-        String scrapeResponseJson = httpResponse.body().string();
-
-        assertThat(scrapeResponseJson).isNotNull();
-        assertThat(scrapeResponseJson).isNotEmpty();
-
-        /*
-        Criteria criteria = Criteria.where("metric.__name__").eq(name);
-
-        if (labels != null) {
-            for (int i = 0; i < labels.length; i += 2) {
-                criteria = criteria.and("metric." + labels[i]).eq(labels[i + 1]);
-            }
-        }
-
-        JSONArray result =
-                JsonPath.parse(scrapeResponseJson)
-                        .read("$.data.result" + Filter.filter(criteria) + ".value[1]");
-        if (result != null && result.size() == 1) {
-            value = Double.valueOf(result.get(0).toString());
-        }
-        */
-
-        return value;
     }
 
     /**
