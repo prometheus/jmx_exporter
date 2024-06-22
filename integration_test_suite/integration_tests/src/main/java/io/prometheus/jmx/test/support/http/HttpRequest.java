@@ -22,7 +22,6 @@ import okhttp3.Headers;
 /** Class to implement HttpRequest */
 public class HttpRequest {
 
-    protected HttpClient httpClient;
     protected Headers.Builder headersBuilder;
     protected String path;
     protected HttpCredentials httpCredentials;
