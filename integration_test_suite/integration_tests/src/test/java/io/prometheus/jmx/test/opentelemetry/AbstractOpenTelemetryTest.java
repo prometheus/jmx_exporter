@@ -116,7 +116,7 @@ public abstract class AbstractOpenTelemetryTest {
                             httpResponse -> {
                                 assertThat(httpResponse).isNotNull();
 
-                                if (httpResponse.getStatusCode() != 200) {
+                                if (httpResponse.statusCode() != 200) {
                                     return;
                                 }
 
@@ -209,7 +209,7 @@ public abstract class AbstractOpenTelemetryTest {
                     .accept(
                             httpResponse -> {
                                 assertThat(httpResponse).isNotNull();
-                                assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+                                assertThat(httpResponse.statusCode()).isEqualTo(200);
                                 assertThat(httpResponse.body()).isNotNull();
                                 assertThat(httpResponse.body().string()).isNotNull();
 

@@ -9,7 +9,7 @@ public class HttpResponseAssertions {
     }
 
     public static void assertHttpResponseCode(HttpResponse httpResponse, int code) {
-        assertThat(httpResponse.getStatusCode()).isEqualTo(code);
+        assertThat(httpResponse.statusCode()).isEqualTo(code);
     }
 
     public static void assertHttpResponseHasHeaders(HttpResponse httpResponse) {
@@ -28,7 +28,7 @@ public class HttpResponseAssertions {
 
     public static void assertHttpHealthyResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
-        assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+        assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().string().length()).isGreaterThan(0);
         assertThat(httpResponse.body().string()).isEqualTo("Exporter is healthy.\n");
@@ -36,7 +36,7 @@ public class HttpResponseAssertions {
 
     public static void assertHttpMetricsResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
-        assertThat(httpResponse.getStatusCode()).isEqualTo(200);
+        assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertHttpResponseHasHeaders(httpResponse);
         assertHttpResponseHasHeader(httpResponse, HttpHeader.CONTENT_TYPE);
         assertHttpResponseHasBody(httpResponse);
