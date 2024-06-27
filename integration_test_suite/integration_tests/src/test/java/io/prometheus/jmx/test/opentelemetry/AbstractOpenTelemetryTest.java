@@ -1,7 +1,6 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpRequest;
