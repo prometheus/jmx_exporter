@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /** Class to get Docker image names */
-public final class DockerImageNames {
+public final class JavaDockerImageNames {
 
     private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
 
@@ -44,7 +44,7 @@ public final class DockerImageNames {
     public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
 
     /** Constructor */
-    private DockerImageNames() {
+    private JavaDockerImageNames() {
         // DO NOTHING
     }
 
@@ -66,7 +66,7 @@ public final class DockerImageNames {
     public static Stream<String> names(Predicate<String> predicate) {
         Objects.requireNonNull(predicate);
 
-        synchronized (DockerImageNames.class) {
+        synchronized (JavaDockerImageNames.class) {
             if (ALL_DOCKER_IMAGE_NAMES == null) {
                 ALL_DOCKER_IMAGE_NAMES = load(ALL_DOCKER_IMAGE_NAMES_RESOURCE);
             }
@@ -131,7 +131,7 @@ public final class DockerImageNames {
             bufferedReader =
                     new BufferedReader(
                             new InputStreamReader(
-                                    DockerImageNames.class.getResourceAsStream(resource),
+                                    JavaDockerImageNames.class.getResourceAsStream(resource),
                                     StandardCharsets.UTF_8));
 
             while (true) {

@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test;
 
 import com.github.dockerjava.api.model.Ulimit;
-import io.prometheus.jmx.test.support.DockerImageNames;
+import io.prometheus.jmx.test.support.JavaDockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.TestArguments;
 import io.prometheus.jmx.test.support.TestEnvironment;
@@ -52,7 +52,7 @@ public abstract class AbstractTest {
     public static Stream<TestArguments> arguments() {
         List<TestArguments> testArguments = new ArrayList<>();
 
-        DockerImageNames.names()
+        JavaDockerImageNames.names()
                 .forEach(
                         dockerImageName -> {
                             for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {

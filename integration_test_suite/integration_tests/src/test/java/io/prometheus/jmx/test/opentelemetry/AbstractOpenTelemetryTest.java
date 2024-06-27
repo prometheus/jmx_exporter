@@ -7,6 +7,9 @@ import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,6 +26,26 @@ public abstract class AbstractOpenTelemetryTest {
     private Network network;
 
     @TestEngine.Argument public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
+
+    protected static Collection<OpenTelemetryTestEnvironment> buildTestEnvironments(
+            String prometheusDockerImageName,
+            List<String> javaDockerImageNames,
+            JmxExporterMode[] jmsExporterModes) {
+        Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
+
+        javaDockerImageNames.forEach(
+                javaDockerImageName -> {
+                    for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                        openTelemetryTestEnvironments.add(
+                                new OpenTelemetryTestEnvironment(
+                                        prometheusDockerImageName,
+                                        javaDockerImageName,
+                                        jmxExporterMode));
+                    }
+                });
+
+        return openTelemetryTestEnvironments;
+    }
 
     @TestEngine.Prepare
     public void prepare() {
