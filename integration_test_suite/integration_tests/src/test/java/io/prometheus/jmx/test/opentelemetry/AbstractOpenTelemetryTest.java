@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.antublue.test.engine.api.TestEngine;
 import org.antublue.test.engine.extras.throttle.ExponentialBackoffThrottle;
 import org.antublue.test.engine.extras.throttle.Throttle;
+import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
@@ -73,7 +74,7 @@ public abstract class AbstractOpenTelemetryTest {
         }
 
         if (!success.get()) {
-            fail("Prometheus is not up");
+            Assertions.fail("Prometheus is not up");
         }
     }
 
