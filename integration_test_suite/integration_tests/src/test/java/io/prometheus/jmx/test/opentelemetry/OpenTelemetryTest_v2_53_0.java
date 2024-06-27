@@ -1,6 +1,6 @@
 package io.prometheus.jmx.test.opentelemetry;
 
-import io.prometheus.jmx.test.support.JavaDockerImageNames;
+import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,7 +20,7 @@ public class OpenTelemetryTest_v2_53_0 extends AbstractOpenTelemetryTest {
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         return buildTestEnvironments(
                 PROMETHEUS_DOCKER_IMAGE_NAME,
-                JavaDockerImageNames.names().collect(Collectors.toList()),
+                JavaDockerImages.names().collect(Collectors.toList()),
                 JmxExporterMode.values())
                 .stream();
     }

@@ -28,17 +28,17 @@ public abstract class AbstractOpenTelemetryTest {
     @TestEngine.Argument public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
 
     protected static Collection<OpenTelemetryTestEnvironment> buildTestEnvironments(
-            String prometheusDockerImageName,
-            List<String> javaDockerImageNames,
+            String prometheusDockerImage,
+            List<String> javaDockerImages,
             JmxExporterMode[] jmsExporterModes) {
         Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
-        javaDockerImageNames.forEach(
+        javaDockerImages.forEach(
                 javaDockerImageName -> {
                     for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
                         openTelemetryTestEnvironments.add(
                                 new OpenTelemetryTestEnvironment(
-                                        prometheusDockerImageName,
+                                        prometheusDockerImage,
                                         javaDockerImageName,
                                         jmxExporterMode));
                     }

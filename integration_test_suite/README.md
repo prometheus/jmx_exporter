@@ -44,13 +44,13 @@ Pulling Docker images (not required, but you may see request timeouts/pull failu
 Smoke test Docker images
 
 ```shell
-./integration_test_suite/docker-pull-images.smoke-test.sh
+./integration_test_suite/pull-smoke-test-docker-images.sh
 ```
 
 All Docker images
 
 ```shell
-./integration_test_suite/docker-pull-images.all.sh
+./integration_test_suite/pull-java-docker-images.sh
 ```
 
 ## Notes

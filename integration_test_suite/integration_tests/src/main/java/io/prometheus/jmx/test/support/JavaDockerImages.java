@@ -29,22 +29,24 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /** Class to get Docker image names */
-public final class JavaDockerImageNames {
+public final class JavaDockerImages {
 
-    private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
+    private static final String JAVA_DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
-    private static final String ALL_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.all.txt";
-    private static String[] ALL_DOCKER_IMAGE_NAMES;
+    private static final String JAVA_DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
 
-    private static final String SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE =
-            "/docker-image-names.smoke-test.txt";
-    private static String[] SMOKE_TEST_DOCKER_IMAGE_NAMES;
+    private static final String SMOKE_TEST_JAVA_DOCKER_IMAGES_RESOURCE =
+            "/smoke-test-java-docker-images.txt";
+
+    private static String[] ALL_JAVA_DOCKER_IMAGE_NAMES;
+
+    private static String[] SMOKE_TEST_JAVA_DOCKER_IMAGES;
 
     /** Predicate to accept all Docker image names */
     public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
 
     /** Constructor */
-    private JavaDockerImageNames() {
+    private JavaDockerImages() {
         // DO NOTHING
     }
 
@@ -66,12 +68,12 @@ public final class JavaDockerImageNames {
     public static Stream<String> names(Predicate<String> predicate) {
         Objects.requireNonNull(predicate);
 
-        synchronized (JavaDockerImageNames.class) {
-            if (ALL_DOCKER_IMAGE_NAMES == null) {
-                ALL_DOCKER_IMAGE_NAMES = load(ALL_DOCKER_IMAGE_NAMES_RESOURCE);
+        synchronized (JavaDockerImages.class) {
+            if (ALL_JAVA_DOCKER_IMAGE_NAMES == null) {
+                ALL_JAVA_DOCKER_IMAGE_NAMES = load(JAVA_DOCKER_IMAGES_RESOURCE);
             }
-            if (SMOKE_TEST_DOCKER_IMAGE_NAMES == null) {
-                SMOKE_TEST_DOCKER_IMAGE_NAMES = load(SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE);
+            if (SMOKE_TEST_JAVA_DOCKER_IMAGES == null) {
+                SMOKE_TEST_JAVA_DOCKER_IMAGES = load(SMOKE_TEST_JAVA_DOCKER_IMAGES_RESOURCE);
             }
         }
 
@@ -79,7 +81,7 @@ public final class JavaDockerImageNames {
 
         String dockerImageNameValue =
                 System.getenv(
-                        DOCKER_IMAGE_NAMES_CONFIGURATION
+                        JAVA_DOCKER_IMAGES_CONFIGURATION
                                 .toUpperCase(Locale.ENGLISH)
                                 .replace('.', '_'));
 
@@ -91,7 +93,7 @@ public final class JavaDockerImageNames {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNameValue = System.getProperty(DOCKER_IMAGE_NAMES_CONFIGURATION);
+            dockerImageNameValue = System.getProperty(JAVA_DOCKER_IMAGES_CONFIGURATION);
             if (dockerImageNameValue != null) {
                 if (dockerImageNameValue.isBlank()) {
                     dockerImageNameValue = null;
@@ -100,9 +102,9 @@ public final class JavaDockerImageNames {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNames = SMOKE_TEST_DOCKER_IMAGE_NAMES;
+            dockerImageNames = SMOKE_TEST_JAVA_DOCKER_IMAGES;
         } else if (dockerImageNameValue.equalsIgnoreCase("ALL")) {
-            dockerImageNames = ALL_DOCKER_IMAGE_NAMES;
+            dockerImageNames = ALL_JAVA_DOCKER_IMAGE_NAMES;
         } else {
             dockerImageNames = dockerImageNameValue.split("\\s+");
         }
@@ -131,7 +133,7 @@ public final class JavaDockerImageNames {
             bufferedReader =
                     new BufferedReader(
                             new InputStreamReader(
-                                    JavaDockerImageNames.class.getResourceAsStream(resource),
+                                    JavaDockerImages.class.getResourceAsStream(resource),
                                     StandardCharsets.UTF_8));
 
             while (true) {
@@ -149,7 +151,7 @@ public final class JavaDockerImageNames {
             return dockerImageNames.toArray(new String[0]);
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Exception reading resource " + ALL_DOCKER_IMAGE_NAMES_RESOURCE, e);
+                    "Exception reading resource " + JAVA_DOCKER_IMAGES_RESOURCE, e);
         }
     }
 }

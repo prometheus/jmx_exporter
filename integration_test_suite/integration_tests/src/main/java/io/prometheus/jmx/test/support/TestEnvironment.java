@@ -20,7 +20,7 @@ import io.prometheus.jmx.test.support.http.HttpClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-/** Class to a TestContext */
+/** Class to TestEnvironment */
 public class TestEnvironment {
 
     private Network network;
