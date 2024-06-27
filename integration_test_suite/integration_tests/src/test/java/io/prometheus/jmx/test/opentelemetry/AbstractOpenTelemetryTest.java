@@ -122,7 +122,7 @@ public abstract class AbstractOpenTelemetryTest {
     }
 
     /**
-     * Method to get a Promethehus metrics
+     * Method to get a Prometheus metrics
      *
      * @param metricName metricName
      * @param labels labels
