@@ -39,7 +39,7 @@ public abstract class AbstractOpenTelemetryTest {
     /** Method to test that Prometheus is up */
     @TestEngine.Test
     @TestEngine.Order(order = 0)
-    public void testPrometheusIsUp() {
+    public void testIsPrometheusUp() {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         AtomicBoolean success = new AtomicBoolean();
 
@@ -79,7 +79,7 @@ public abstract class AbstractOpenTelemetryTest {
 
     /** Method to test that metrics exist in Prometheus */
     @TestEngine.Test
-    public void testPrometheusMetrics() {
+    public void testPrometheusHasMetrics() {
         ExpectedMetricsNames.getMetricsNames().stream()
                 .filter(
                         metricName -> {
