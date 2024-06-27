@@ -12,9 +12,9 @@ public class OpenTelemetryTest_v2_48_1 extends AbstractOpenTelemetryTest {
     private static final String PROMETHEUS_DOCKER_IMAGE_NAME = "prom/prometheus:v2.48.1";
 
     /**
-     * Method to get the list of TestArguments
+     * Method to get the Stream of test environments
      *
-     * @return the return value
+     * @return the Stream of test environments
      */
     @TestEngine.ArgumentSupplier
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
