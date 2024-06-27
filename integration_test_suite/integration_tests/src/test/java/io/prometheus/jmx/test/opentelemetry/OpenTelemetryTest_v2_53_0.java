@@ -3,12 +3,14 @@ package io.prometheus.jmx.test.opentelemetry;
 import io.prometheus.jmx.test.support.DockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
 /** Class to implement OpenTelemetryTest_v2_53_0 */
 public class OpenTelemetryTest_v2_53_0 extends AbstractOpenTelemetryTest {
+
+    private static final String PROMETHEUS_DOCKER_IMAGE_NAME = "prom/prometheus:v2.53.0";
 
     /**
      * Method to get the list of TestArguments
@@ -16,32 +18,21 @@ public class OpenTelemetryTest_v2_53_0 extends AbstractOpenTelemetryTest {
      * @return the return value
      */
     @TestEngine.ArgumentSupplier
-    public static Stream<OpenTelemetryTestArguments> arguments() {
-        List<OpenTelemetryTestArguments> openTelemetryTestArguments = new ArrayList<>();
+    public static Stream<OpenTelemetryTestEnvironment> arguments() {
+        Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
-        List<String> prometheusDockerImageNames = new ArrayList<>();
-        prometheusDockerImageNames.add("prom/prometheus:v2.53.0");
+        DockerImageNames.names()
+                .forEach(
+                        javaDockerImageName -> {
+                            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                                openTelemetryTestEnvironments.add(
+                                        new OpenTelemetryTestEnvironment(
+                                                PROMETHEUS_DOCKER_IMAGE_NAME,
+                                                javaDockerImageName,
+                                                jmxExporterMode));
+                            }
+                        });
 
-        prometheusDockerImageNames.forEach(
-                prometheusDockerImage ->
-                        DockerImageNames.names()
-                                .forEach(
-                                        javaDockerImageName -> {
-                                            for (JmxExporterMode jmxExporterMode :
-                                                    JmxExporterMode.values()) {
-                                                openTelemetryTestArguments.add(
-                                                        OpenTelemetryTestArguments.of(
-                                                                prometheusDockerImage
-                                                                        + " / "
-                                                                        + javaDockerImageName
-                                                                        + " / "
-                                                                        + jmxExporterMode,
-                                                                prometheusDockerImage,
-                                                                javaDockerImageName,
-                                                                jmxExporterMode));
-                                            }
-                                        }));
-
-        return openTelemetryTestArguments.stream();
+        return openTelemetryTestEnvironments.stream();
     }
 }
