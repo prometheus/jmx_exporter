@@ -2,7 +2,6 @@ package io.prometheus.jmx.test.opentelemetry;
 
 import io.prometheus.jmx.test.support.JavaDockerImageNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
