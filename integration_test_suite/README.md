@@ -4,11 +4,11 @@ Integration Test Suite
 
 ### Smoke test Docker images tested
 
-[Smoke test Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/docker-image-names.smoke-test.txt)
+[Smoke test Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/smoke-test-java-docker-images.txt)
 
 ### Docker images tested (all)
 
-[All Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/docker-image-names.all.txt)
+[All Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/java-docker-images.txt)
 
 ### Running the integration test suite (smoke test Docker images)
 
@@ -19,21 +19,21 @@ Integration Test Suite
 ### Run the integration test suite (all Docker images)
 
 ```shell
-export DOCKER_IMAGE_NAMES=ALL
+export JAVA_DOCKER_IMAGES=ALL
 ./mvnw clean verify
 ```
 
 ### Run the integration test suite on a specific Docker image
 
 ```shell
-export DOCKER_IMAGE_NAMES="<your custom Docker image>"
+export JAVA_DOCKER_IMAGES="<your custom Docker image>"
 ./mvnw clean verify
 ```
 
 Example:
 
 ```shell
-export DOCKER_IMAGE_NAMES="azul/zulu-openjdk:17"
+export JAVA_DOCKER_IMAGES="azul/zulu-openjdk:17"
 ./mvnw clean verify
 ```
 
