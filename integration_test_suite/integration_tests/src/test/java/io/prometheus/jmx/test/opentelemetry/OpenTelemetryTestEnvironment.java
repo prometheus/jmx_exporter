@@ -17,8 +17,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
     private static final String BASE_URL = "http://localhost";
 
-    private final String prometheusDockerImageName;
-    private final String javaDockerImageName;
+    private final String prometheusDockerImage;
+    private final String javaDockerImage;
     private final JmxExporterMode jmxExporterMode;
 
     private Class<?> testClass;
@@ -30,17 +30,17 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     private HttpClient httpClient;
 
     public OpenTelemetryTestEnvironment(
-            String prometheusDockerImageName,
-            String javaDockerImageName,
+            String prometheusDockerImage,
+            String javaDockerImage,
             JmxExporterMode jmxExporterMode) {
-        this.prometheusDockerImageName = prometheusDockerImageName;
-        this.javaDockerImageName = javaDockerImageName;
+        this.prometheusDockerImage = prometheusDockerImage;
+        this.javaDockerImage = javaDockerImage;
         this.jmxExporterMode = jmxExporterMode;
     }
 
     @Override
     public String getName() {
-        return prometheusDockerImageName + " / " + javaDockerImageName + " / " + jmxExporterMode;
+        return prometheusDockerImage + " / " + javaDockerImage + " / " + jmxExporterMode;
     }
 
     @Override
@@ -53,8 +53,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      *
      * @return the Prometheus Docker image name
      */
-    public String getPrometheusDockerImageName() {
-        return prometheusDockerImageName;
+    public String getPrometheusDockerImage() {
+        return prometheusDockerImage;
     }
 
     /**
@@ -62,8 +62,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      *
      * @return the Java Docker image name
      */
-    public String getJavaDockerImageName() {
-        return javaDockerImageName;
+    public String getJavaDockerImage() {
+        return javaDockerImage;
     }
 
     /**
@@ -150,7 +150,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return the return value
      */
     private GenericContainer<?> createPrometheusContainer() {
-        return new GenericContainer<>(prometheusDockerImageName)
+        return new GenericContainer<>(prometheusDockerImage)
                 .withClasspathResourceMapping(
                         testClass.getName().replace(".", "/")
                                 + "/"
@@ -197,7 +197,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return the return value
      */
     private GenericContainer<?> createJavaAgentApplicationContainer() {
-        return new GenericContainer<>(javaDockerImageName)
+        return new GenericContainer<>(javaDockerImage)
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
@@ -238,7 +238,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return the return value
      */
     private GenericContainer<?> createStandaloneApplicationContainer() {
-        return new GenericContainer<>(javaDockerImageName)
+        return new GenericContainer<>(javaDockerImage)
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
@@ -279,7 +279,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return the return value
      */
     private GenericContainer<?> createStandaloneExporterContainer() {
-        return new GenericContainer<>(javaDockerImageName)
+        return new GenericContainer<>(javaDockerImage)
                 .waitingFor(Wait.forListeningPort())
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
