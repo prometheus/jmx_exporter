@@ -27,6 +27,14 @@ public abstract class AbstractOpenTelemetryTest {
 
     @TestEngine.Argument public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
 
+    /**
+     * Method to build the combinations of test environment
+     *
+     * @param prometheusDockerImage prometheusDockerImage
+     * @param javaDockerImages javaDockerImages
+     * @param jmsExporterModes jmsExporterModes
+     * @return a List of OpenTelemetryTestEnvironments
+     */
     protected static Collection<OpenTelemetryTestEnvironment> buildTestEnvironments(
             String prometheusDockerImage,
             List<String> javaDockerImages,
@@ -35,7 +43,7 @@ public abstract class AbstractOpenTelemetryTest {
 
         javaDockerImages.forEach(
                 javaDockerImageName -> {
-                    for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                    for (JmxExporterMode jmxExporterMode : jmsExporterModes) {
                         openTelemetryTestEnvironments.add(
                                 new OpenTelemetryTestEnvironment(
                                         prometheusDockerImage,
