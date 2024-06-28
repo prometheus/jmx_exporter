@@ -88,9 +88,7 @@ public class OpenTelemetryMetricsExporter {
                                                             "Invalid configuration for"
                                                                     + " /openTelemetry/protocol"
                                                                     + " must not be blank")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/openTelemetry/protocol a required string"));
+                                    .orElse("grpc");
 
                     int interval =
                             openTelemetryYamlMapAccessor
