@@ -109,7 +109,7 @@ public class OpenTelemetryMetricsExporter {
                                                             "Invalid configuration for"
                                                                 + " /openTelemetry/interval must be"
                                                                 + " between greater than 0")))
-                                    .orElse(1);
+                                    .orElse(60);
 
                     openTelemetryExporter =
                             OpenTelemetryExporter.builder()
