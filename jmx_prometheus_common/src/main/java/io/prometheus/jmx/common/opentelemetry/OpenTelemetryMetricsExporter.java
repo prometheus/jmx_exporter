@@ -69,9 +69,7 @@ public class OpenTelemetryMetricsExporter {
                                                             "Invalid configuration for"
                                                                     + " /openTelemetry/endpoint"
                                                                     + " must be a URL")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/openTelemetry/endpoint a required string"));
+                                    .orElse("http://localhost:4317");
 
                     String protocol =
                             openTelemetryYamlMapAccessor
