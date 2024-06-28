@@ -38,9 +38,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @param jmxExporterMode jmxExporterMode
      */
     public OpenTelemetryTestEnvironment(
-            String prometheusDockerImage,
-            String javaDockerImage,
-            JmxExporterMode jmxExporterMode) {
+            String prometheusDockerImage, String javaDockerImage, JmxExporterMode jmxExporterMode) {
         this.prometheusDockerImage = prometheusDockerImage;
         this.javaDockerImage = javaDockerImage;
         this.jmxExporterMode = jmxExporterMode;
