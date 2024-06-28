@@ -86,6 +86,11 @@
                 <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
                 <version>${prometheus.metrics.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-exporter-opentelemetry</artifactId>
+                <version>${prometheus.metrics.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

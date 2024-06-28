@@ -1,14 +1,12 @@
-Integration Test Suite
----
----
+# Integration Test Suite
 
-### Smoke test Docker images tested
+### Smoke test Java Docker images tested
 
-[Smoke test Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/docker-image-names.smoke-test.txt)
+[Smoke test Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/smoke-test-java-docker-images.txt)
 
-### Docker images tested (all)
+### All Java Docker images tested (all)
 
-[All Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/docker-image-names.all.txt)
+[All Docker images](https://github.com/prometheus/jmx_exporter/blob/main/integration_test_suite/integration_tests/src/test/resources/java-docker-images.txt)
 
 ### Running the integration test suite (smoke test Docker images)
 
@@ -19,21 +17,21 @@ Integration Test Suite
 ### Run the integration test suite (all Docker images)
 
 ```shell
-export DOCKER_IMAGE_NAMES=ALL
+export JAVA_DOCKER_IMAGES=ALL
 ./mvnw clean verify
 ```
 
 ### Run the integration test suite on a specific Docker image
 
 ```shell
-export DOCKER_IMAGE_NAMES="<your custom Docker image>"
+export JAVA_DOCKER_IMAGES="<your custom Docker image>"
 ./mvnw clean verify
 ```
 
 Example:
 
 ```shell
-export DOCKER_IMAGE_NAMES="azul/zulu-openjdk:17"
+export JAVA_DOCKER_IMAGES="azul/zulu-openjdk:17"
 ./mvnw clean verify
 ```
 
@@ -44,15 +42,46 @@ Pulling Docker images (not required, but you may see request timeouts/pull failu
 Smoke test Docker images
 
 ```shell
-./integration_test_suite/docker-pull-images.smoke-test.sh
+./integration_test_suite/pull-smoke-test-java-docker-images.sh
 ```
 
 All Docker images
 
 ```shell
-./integration_test_suite/docker-pull-images.all.sh
+./integration_test_suite/pull-java-docker-images.sh
 ```
 
 ## Notes
 
 - You may need to set up Docker hub login to pull images
+
+# Docker networks
+
+By default, Docker is not configured to run a large number images simultaneously.
+
+You can increase Docker networks by creating a Docker network configuration file...
+
+```
+/etc/docker/daemon.json
+```
+
+... with the content...
+
+```yaml
+{
+  "default-address-pools": [
+    {
+      "base": "172.16.0.0/16",
+      "size": 24
+    },
+    {
+      "base": "192.168.0.0/16",
+      "size": 24
+    }
+  ]
+}
+```
+
+## Notes
+
+- Docker will need to be restarted

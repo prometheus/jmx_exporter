@@ -18,15 +18,25 @@ public class HttpResponse {
         this.code = response.code();
         this.headers = response.headers();
 
-        ResponseBody responseBody = response.body();
-        if (responseBody != null) {
-            body = new HttpResponseBody(responseBody.bytes());
-        } else {
-            body = null;
+        try {
+            ResponseBody responseBody = response.body();
+            if (responseBody != null) {
+                body = new HttpResponseBody(responseBody.bytes());
+            } else {
+                body = null;
+            }
+        } finally {
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (Throwable t) {
+                    // DO NOTHING
+                }
+            }
         }
     }
 
-    public int code() {
+    public int statusCode() {
         return code;
     }
 

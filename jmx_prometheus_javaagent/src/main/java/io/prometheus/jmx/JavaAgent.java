@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
+import io.prometheus.jmx.common.opentelemetry.OpenTelemetryMetricsExporter;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -39,6 +40,7 @@ public class JavaAgent {
     private static final String DEFAULT_HOST = "0.0.0.0";
 
     private static HTTPServer httpServer;
+    private static OpenTelemetryMetricsExporter openTelemetryMetricsExporter;
 
     public static void agentmain(String agentArgument, Instrumentation instrumentation)
             throws Exception {
@@ -58,12 +60,15 @@ public class JavaAgent {
             String host = config.host != null ? config.host : DEFAULT_HOST;
 
             httpServer =
-                    new HTTPServerFactory()
+                    HTTPServerFactory.getInstance()
                             .createHTTPServer(
                                     InetAddress.getByName(host),
                                     config.port,
                                     PrometheusRegistry.defaultRegistry,
                                     new File(config.file));
+
+            openTelemetryMetricsExporter = new OpenTelemetryMetricsExporter();
+            openTelemetryMetricsExporter.initialize(new File(config.file));
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter");

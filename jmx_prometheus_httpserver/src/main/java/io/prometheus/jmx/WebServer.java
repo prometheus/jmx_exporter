@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
+import io.prometheus.jmx.common.opentelemetry.OpenTelemetryMetricsExporter;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -53,15 +54,19 @@ public class WebServer {
                 .register(PrometheusRegistry.defaultRegistry);
 
         HTTPServer httpServer = null;
+        OpenTelemetryMetricsExporter openTelemetryMetricsExporter = null;
 
         try {
             httpServer =
-                    new HTTPServerFactory()
+                    HTTPServerFactory.getInstance()
                             .createHTTPServer(
                                     InetAddress.getByName(host),
                                     port,
                                     PrometheusRegistry.defaultRegistry,
                                     new File(args[1]));
+
+            openTelemetryMetricsExporter = new OpenTelemetryMetricsExporter();
+            openTelemetryMetricsExporter.initialize(new File(args[1]));
 
             System.out.println(
                     String.format(
@@ -79,6 +84,9 @@ public class WebServer {
             System.err.println("Exception starting");
             t.printStackTrace();
         } finally {
+            if (openTelemetryMetricsExporter != null) {
+                openTelemetryMetricsExporter.close();
+            }
             if (httpServer != null) {
                 httpServer.close();
             }

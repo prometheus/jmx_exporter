@@ -89,7 +89,6 @@
             <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 </project>

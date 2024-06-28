@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -41,6 +42,14 @@ public class HttpClient {
 
     public HttpClient(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public HttpResponse send(HttpRequest httpRequest) {
+        return httpRequest.send(this);
+    }
+
+    public void send(HttpRequest httpRequest, Consumer<HttpResponse> httpResponseConsumer) {
+        httpResponseConsumer.accept(httpRequest.send(this));
     }
 
     public Request.Builder createRequest(String path) {
