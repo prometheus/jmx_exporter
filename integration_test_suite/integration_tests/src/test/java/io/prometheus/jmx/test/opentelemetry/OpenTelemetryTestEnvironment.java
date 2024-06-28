@@ -11,6 +11,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+/** Class to implement OpenTelemetryTestEnvironment */
 public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestEnvironment> {
 
     private static final long MEMORY_BYTES = 1073741824; // 1 GB
@@ -29,6 +30,13 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     private GenericContainer<?> standaloneExporterContainer;
     private HttpClient httpClient;
 
+    /**
+     * Constructor
+     *
+     * @param prometheusDockerImage prometheusDockerImage
+     * @param javaDockerImage javaDockerImage
+     * @param jmxExporterMode jmxExporterMode
+     */
     public OpenTelemetryTestEnvironment(
             String prometheusDockerImage,
             String javaDockerImage,
@@ -315,7 +323,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     }
 
     /**
-     * Method to create an HttpClient
+     * Method to create a Prometheus HttpClient
      *
      * @param genericContainer genericContainer
      * @param baseUrl baseUrl
