@@ -108,6 +108,21 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
+        if (inetAddress == null) {
+            throw new IllegalArgumentException("inetAddress is null");
+        }
+
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("post is out of range [1 - 65535]");
+        }
+
+        if (prometheusRegistry == null) {
+            throw new IllegalArgumentException("prometheusRegistry is null");
+        }
+
+        if (exporterYamlFile == null) {
+            throw new IllegalArgumentException("exporterYamlFile is null");
+        }
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder()

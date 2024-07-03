@@ -18,8 +18,9 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
-import io.prometheus.jmx.common.opentelemetry.OpenTelemetryMetricsExporter;
+import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.net.InetAddress;
@@ -33,6 +34,9 @@ public class WebServer {
             new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
     public static void main(String[] args) throws Exception {
+        HTTPServer httpServer = null;
+        OpenTelemetryExporter openTelemetryExporter = null;
+
         if (args.length < 2) {
             System.err.println("Usage: WebServer <[hostname:]port> <yaml configuration file>");
             System.exit(1);
@@ -53,9 +57,6 @@ public class WebServer {
         new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE)
                 .register(PrometheusRegistry.defaultRegistry);
 
-        HTTPServer httpServer = null;
-        OpenTelemetryMetricsExporter openTelemetryMetricsExporter = null;
-
         try {
             httpServer =
                     HTTPServerFactory.getInstance()
@@ -65,8 +66,8 @@ public class WebServer {
                                     PrometheusRegistry.defaultRegistry,
                                     new File(args[1]));
 
-            openTelemetryMetricsExporter = new OpenTelemetryMetricsExporter();
-            openTelemetryMetricsExporter.initialize(new File(args[1]));
+            openTelemetryExporter =
+                    OpenTelemetryExporterFactory.getInstance().create(new File(args[1]));
 
             System.out.println(
                     String.format(
@@ -84,8 +85,8 @@ public class WebServer {
             System.err.println("Exception starting");
             t.printStackTrace();
         } finally {
-            if (openTelemetryMetricsExporter != null) {
-                openTelemetryMetricsExporter.close();
+            if (openTelemetryExporter != null) {
+                openTelemetryExporter.close();
             }
             if (httpServer != null) {
                 httpServer.close();

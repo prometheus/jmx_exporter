@@ -18,18 +18,28 @@ import java.io.Reader;
 import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement a OpenTelemetry exporter */
-public class OpenTelemetryMetricsExporter {
+/** Class to implement OpenTelemetryExporterFactory */
+public class OpenTelemetryExporterFactory {
 
-    private OpenTelemetryExporter openTelemetryExporter;
+    /** Constructor */
+    private OpenTelemetryExporterFactory() {
+        // DO NOTHING
+    }
 
     /**
-     * Method to initialize the OpenTelemetry exporter
+     * Method to create an OpenTelemetryExporter using the supplied arguments
      *
      * @param exporterYamlFile exporterYamlFile
+     * @return OpenTelemetryExporter OpenTelemetryExporter
      * @throws ConfigurationException ConfigurationException
      */
-    public void initialize(File exporterYamlFile) throws ConfigurationException {
+    public OpenTelemetryExporter create(File exporterYamlFile) throws ConfigurationException {
+        if (exporterYamlFile == null) {
+            throw new IllegalArgumentException("exporterYamlFile is null");
+        }
+
+        OpenTelemetryExporter openTelemetryExporter = null;
+
         try {
             try (Reader reader = new FileReader(exporterYamlFile)) {
                 Map<Object, Object> yamlMap = new Yaml().load(reader);
@@ -119,17 +129,24 @@ public class OpenTelemetryMetricsExporter {
             throw new ConfigurationException(
                     format("Exception loading file [%s]", exporterYamlFile), e);
         }
+
+        return openTelemetryExporter;
     }
 
-    /** Method to close the OpenTelemetryMetricsExporter */
-    public void close() {
-        if (openTelemetryExporter != null) {
-            try {
-                openTelemetryExporter.close();
-                openTelemetryExporter = null;
-            } catch (Throwable t) {
-                // DO NOTHING
-            }
-        }
+    /**
+     * Method to get an instance of the OpenTelemetryExporterFactory
+     *
+     * @return the OpenTelemetryExporterFactory
+     */
+    public static OpenTelemetryExporterFactory getInstance() {
+        return SingletonHolder.SINGLETON;
+    }
+
+    /** Class to hold the singleton */
+    private static class SingletonHolder {
+
+        /** The singleton */
+        public static final OpenTelemetryExporterFactory SINGLETON =
+                new OpenTelemetryExporterFactory();
     }
 }
