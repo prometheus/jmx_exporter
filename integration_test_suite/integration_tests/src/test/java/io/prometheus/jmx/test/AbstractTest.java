@@ -44,7 +44,7 @@ public abstract class AbstractTest {
     protected TestEnvironment testEnvironment;
 
     /**
-     * Method to get the list of TestArguments
+     * Method to get the Collection of TestArguments
      *
      * @return the return value
      */
@@ -69,7 +69,7 @@ public abstract class AbstractTest {
 
     @TestEngine.Prepare
     public final void prepare() {
-        // Get the Network and get the id to force the network creation
+        // Create a Network and get the id to force the network creation
         Network network = Network.newNetwork();
         network.getId();
 

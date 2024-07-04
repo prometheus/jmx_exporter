@@ -21,12 +21,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /** Class to get Docker image names */
 public final class JavaDockerImages {
@@ -51,21 +49,21 @@ public final class JavaDockerImages {
     }
 
     /**
-     * Method to get Stream of all Docker image names
+     * Method to get List of all Docker image names
      *
-     * @return the Stream of Docker image names
+     * @return the List of Docker image names
      */
-    public static Stream<String> names() {
+    public static List<String> names() {
         return names(ALL_JAVA_VERSIONS);
     }
 
     /**
-     * Method to get Stream of Docker image names filtered by a Predicate
+     * Method to get List of Docker image names filtered by a Predicate
      *
      * @param predicate predicate
-     * @return the Stream of Docker image names
+     * @return the List of Docker image names
      */
-    public static Stream<String> names(Predicate<String> predicate) {
+    public static List<String> names(Predicate<String> predicate) {
         Objects.requireNonNull(predicate);
 
         synchronized (JavaDockerImages.class) {
@@ -109,14 +107,14 @@ public final class JavaDockerImages {
             dockerImageNames = dockerImageNameValue.split("\\s+");
         }
 
-        Collection<String> dockerImageNamesCollection = new ArrayList<>();
+        List<String> dockerImageNamesCollection = new ArrayList<>();
         for (String dockerImageName : dockerImageNames) {
             if (predicate.test(dockerImageName)) {
                 dockerImageNamesCollection.add(dockerImageName);
             }
         }
 
-        return dockerImageNamesCollection.stream();
+        return dockerImageNamesCollection;
     }
 
     /**

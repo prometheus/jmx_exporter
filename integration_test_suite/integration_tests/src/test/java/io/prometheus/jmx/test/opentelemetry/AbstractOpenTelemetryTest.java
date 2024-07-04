@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 import org.antublue.test.engine.extras.throttle.ExponentialBackoffThrottle;
 import org.antublue.test.engine.extras.throttle.Throttle;
@@ -33,9 +34,9 @@ public abstract class AbstractOpenTelemetryTest {
      * @param prometheusDockerImage prometheusDockerImage
      * @param javaDockerImages javaDockerImages
      * @param jmsExporterModes jmsExporterModes
-     * @return a List of OpenTelemetryTestEnvironments
+     * @return a Stream of OpenTelemetryTestEnvironments
      */
-    protected static Collection<OpenTelemetryTestEnvironment> buildTestEnvironments(
+    protected static Stream<OpenTelemetryTestEnvironment> buildTestEnvironments(
             String prometheusDockerImage,
             List<String> javaDockerImages,
             JmxExporterMode[] jmsExporterModes) {
@@ -52,12 +53,12 @@ public abstract class AbstractOpenTelemetryTest {
                     }
                 });
 
-        return openTelemetryTestEnvironments;
+        return openTelemetryTestEnvironments.stream();
     }
 
     @TestEngine.Prepare
     public void prepare() {
-        // Get the Network and get the id to force the network creation
+        // Create a Network and get the id to force the network creation
         network = Network.newNetwork();
         network.getId();
     }
