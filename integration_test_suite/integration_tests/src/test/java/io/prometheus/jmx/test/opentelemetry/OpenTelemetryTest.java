@@ -215,7 +215,7 @@ public class OpenTelemetryTest {
     }
 
     /**
-     * Method to send a Http GET request
+     * Method to send an Http GET request
      *
      * @param path path
      * @return an HttpResponse
