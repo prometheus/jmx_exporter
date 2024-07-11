@@ -23,7 +23,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 /** Class to implement OpenTelemetryTest */
-@TestEngine.Parallelize
+@TestEngine.ParallelArgumentTest
 public class OpenTelemetryTest {
 
     private static final List<String> PROMETHEUS_DOCKER_IMAGES = new ArrayList<>();
