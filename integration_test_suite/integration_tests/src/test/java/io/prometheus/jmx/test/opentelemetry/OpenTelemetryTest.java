@@ -10,7 +10,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,19 +25,6 @@ import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 @TestEngine.ParallelArgumentTest
 public class OpenTelemetryTest {
 
-    private static final List<String> PROMETHEUS_DOCKER_IMAGES = new ArrayList<>();
-
-    // List of Prometheus Docker Images
-    static {
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.47.2");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.48.1");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.49.1");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.50.1");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.51.2");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.52.0");
-        PROMETHEUS_DOCKER_IMAGES.add("prom/prometheus:v2.53.0");
-    }
-
     private Network network;
 
     @TestEngine.Argument public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
@@ -52,20 +38,21 @@ public class OpenTelemetryTest {
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
-        PROMETHEUS_DOCKER_IMAGES.forEach(
-                prometheusDockerImage ->
-                        JavaDockerImages.names()
-                                .forEach(
-                                        javaDockerImageName -> {
-                                            for (JmxExporterMode jmxExporterMode :
-                                                    JmxExporterMode.values()) {
-                                                openTelemetryTestEnvironments.add(
-                                                        new OpenTelemetryTestEnvironment(
-                                                                prometheusDockerImage,
-                                                                javaDockerImageName,
-                                                                jmxExporterMode));
-                                            }
-                                        }));
+        PrometheusDockerImages.names()
+                .forEach(
+                        prometheusDockerImage ->
+                                JavaDockerImages.names()
+                                        .forEach(
+                                                javaDockerImageName -> {
+                                                    for (JmxExporterMode jmxExporterMode :
+                                                            JmxExporterMode.values()) {
+                                                        openTelemetryTestEnvironments.add(
+                                                                new OpenTelemetryTestEnvironment(
+                                                                        prometheusDockerImage,
+                                                                        javaDockerImageName,
+                                                                        jmxExporterMode));
+                                                    }
+                                                }));
 
         return openTelemetryTestEnvironments.stream();
     }
@@ -126,13 +113,15 @@ public class OpenTelemetryTest {
     /** Method to test that metrics exist in Prometheus */
     @TestEngine.Test
     public void testPrometheusHasMetrics() {
+        boolean isJmxExporterModeJavaStandalone =
+                openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+
         ExpectedMetricsNames.getMetricsNames().stream()
                 .filter(
                         metricName -> {
-                            if (openTelemetryTestEnvironment.getJmxExporterMode()
-                                                    == JmxExporterMode.Standalone
-                                            && metricName.startsWith("jvm_")
-                                    || metricName.startsWith("process_")) {
+                            if (isJmxExporterModeJavaStandalone
+                                    && (metricName.startsWith("jvm_")
+                                            || metricName.startsWith("process_"))) {
                                 return false;
                             }
                             return true;
@@ -154,6 +143,7 @@ public class OpenTelemetryTest {
     public void conclude() {
         if (network != null) {
             network.close();
+            network = null;
         }
     }
 

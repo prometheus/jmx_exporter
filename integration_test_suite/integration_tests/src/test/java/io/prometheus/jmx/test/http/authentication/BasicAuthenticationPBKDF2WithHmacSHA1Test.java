@@ -17,22 +17,16 @@
 package io.prometheus.jmx.test.http.authentication;
 
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
-import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpResponseCode;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.common.PBKDF2WithHmacExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.TestArguments;
-import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
-import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
-import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
@@ -41,205 +35,82 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test extends AbstractBasicAuth
         implements Consumer<HttpResponse> {
 
     /**
-     * Method to get the list of TestArguments
+     * Method to get the Stream of test environments
      *
-     * @return the return value
+     * @return the Stream of test environments
      */
     @TestEngine.ArgumentSupplier
-    public static Stream<TestArguments> arguments() {
+    public static Stream<ExporterTestEnvironment> arguments() {
         return AbstractBasicAuthenticationTest.arguments()
-                .filter(PBKDF2_WITH_MAC_TEST_ARGUMENT_FILTER);
-    }
-
-    @TestEngine.Test
-    public void testHealthy() {
-        getAuthenticationTestCredentials()
-                .forEach(
-                        authenticationTestArguments -> {
-                            final AtomicInteger code =
-                                    new AtomicInteger(
-                                            authenticationTestArguments.isValid()
-                                                    ? HttpResponse.OK
-                                                    : HttpResponse.UNAUTHORIZED);
-                            new HttpHealthyRequest()
-                                    .credentials(
-                                            new HttpBasicAuthenticationCredentials(
-                                                    authenticationTestArguments.getUsername(),
-                                                    authenticationTestArguments.getPassword()))
-                                    .send(testEnvironment.getHttpClient())
-                                    .accept(
-                                            response ->
-                                                    assertHttpResponseCode(response, code.get()));
-                        });
-    }
-
-    @TestEngine.Test
-    public void testMetrics() {
-        getAuthenticationTestCredentials()
-                .forEach(
-                        authenticationTestArguments -> {
-                            final AtomicInteger code =
-                                    new AtomicInteger(
-                                            authenticationTestArguments.isValid()
-                                                    ? HttpResponse.OK
-                                                    : HttpResponse.UNAUTHORIZED);
-                            new HttpMetricsRequest()
-                                    .credentials(
-                                            new HttpBasicAuthenticationCredentials(
-                                                    authenticationTestArguments.getUsername(),
-                                                    authenticationTestArguments.getPassword()))
-                                    .send(testEnvironment.getHttpClient())
-                                    .accept(
-                                            response -> {
-                                                assertHttpResponseCode(response, code.get());
-                                                if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
-                                                }
-                                            });
-                        });
-    }
-
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
-        getAuthenticationTestCredentials()
-                .forEach(
-                        authenticationTestArguments -> {
-                            final AtomicInteger code =
-                                    new AtomicInteger(
-                                            authenticationTestArguments.isValid()
-                                                    ? HttpResponse.OK
-                                                    : HttpResponse.UNAUTHORIZED);
-                            new HttpOpenMetricsRequest()
-                                    .credentials(
-                                            new HttpBasicAuthenticationCredentials(
-                                                    authenticationTestArguments.getUsername(),
-                                                    authenticationTestArguments.getPassword()))
-                                    .send(testEnvironment.getHttpClient())
-                                    .accept(
-                                            response -> {
-                                                assertHttpResponseCode(response, code.get());
-                                                if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
-                                                }
-                                            });
-                        });
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
-        getAuthenticationTestCredentials()
-                .forEach(
-                        authenticationTestArguments -> {
-                            final AtomicInteger code =
-                                    new AtomicInteger(
-                                            authenticationTestArguments.isValid()
-                                                    ? HttpResponse.OK
-                                                    : HttpResponse.UNAUTHORIZED);
-                            new HttpPrometheusMetricsRequest()
-                                    .credentials(
-                                            new HttpBasicAuthenticationCredentials(
-                                                    authenticationTestArguments.getUsername(),
-                                                    authenticationTestArguments.getPassword()))
-                                    .send(testEnvironment.getHttpClient())
-                                    .accept(
-                                            response -> {
-                                                assertHttpResponseCode(response, code.get());
-                                                if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
-                                                }
-                                            });
-                        });
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
-        getAuthenticationTestCredentials()
-                .forEach(
-                        authenticationTestArguments -> {
-                            final AtomicInteger code =
-                                    new AtomicInteger(
-                                            authenticationTestArguments.isValid()
-                                                    ? HttpResponse.OK
-                                                    : HttpResponse.UNAUTHORIZED);
-                            new HttpPrometheusProtobufMetricsRequest()
-                                    .credentials(
-                                            new HttpBasicAuthenticationCredentials(
-                                                    authenticationTestArguments.getUsername(),
-                                                    authenticationTestArguments.getPassword()))
-                                    .send(testEnvironment.getHttpClient())
-                                    .accept(
-                                            response -> {
-                                                assertHttpResponseCode(response, code.get());
-                                                if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
-                                                }
-                                            });
-                        });
+                .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter());
     }
 
     @Override
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
+        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
+
+        boolean isJmxExporterModeJavaAgent =
+                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
+                isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jmx_exporter_build_info")
                 .withLabel("name", buildInfoName)
                 .withValue(1d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jmx_scrape_error")
                 .withValue(0d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("COUNTER")
+                .ofType(Metric.Type.COUNTER)
                 .withName("jmx_config_reload_success_total")
                 .withValue(0d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("UNTYPED")
+                .ofType(Metric.Type.UNTYPED)
                 .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .withLabel("source", "/dev/sda1")
                 .withValue(7.516192768E9d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("UNTYPED")
+                .ofType(Metric.Type.UNTYPED)
                 .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8d)

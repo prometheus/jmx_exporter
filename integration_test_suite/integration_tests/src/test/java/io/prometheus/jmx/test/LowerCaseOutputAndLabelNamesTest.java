@@ -19,65 +19,34 @@ package io.prometheus.jmx.test;
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
-import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.function.Consumer;
-import org.antublue.test.engine.api.TestEngine;
 
-public class LowerCaseOutputAndLabelNamesTest extends AbstractTest
+public class LowerCaseOutputAndLabelNamesTest extends AbstractExporterTest
         implements Consumer<HttpResponse> {
-
-    @TestEngine.Test
-    public void testHealthy() {
-        new HttpHealthyRequest()
-                .send(testEnvironment.getHttpClient())
-                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
-    }
-
-    @TestEngine.Test
-    public void testMetrics() {
-        new HttpMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest()
-                .send(testEnvironment.getHttpClient())
-                .accept(this);
-    }
 
     @Override
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
         /*
          * Assert that all metrics have lower case names and lower case label names
          */
         metrics.forEach(
                 metric -> {
-                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase());
+                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase(Locale.ENGLISH));
                     metric.labels()
-                            .forEach((key, value) -> assertThat(key).isEqualTo(key.toLowerCase()));
+                            .forEach(
+                                    (key, value) ->
+                                            assertThat(key)
+                                                    .isEqualTo(key.toLowerCase(Locale.ENGLISH)));
                 });
     }
 }

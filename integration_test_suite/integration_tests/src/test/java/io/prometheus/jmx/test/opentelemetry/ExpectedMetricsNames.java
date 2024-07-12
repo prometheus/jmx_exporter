@@ -1,18 +1,20 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 /** Class to implement ExpectedMetricsNames */
 public class ExpectedMetricsNames {
 
-    private static final List<String> metricNames = new ArrayList<>();
+    private static final Collection<String> METRIC_NAMES;
 
     static {
+        Collection<String> metricNames = new ArrayList<>();
+
         metricNames.add("io_prometheus_jmx_autoIncrementing_Value");
 
         // This metric doesn't exist for Java 11+
-
         // metricNames.add("io_prometheus_jmx_optionalValue_Value");
 
         metricNames.add("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail");
@@ -179,6 +181,8 @@ public class ExpectedMetricsNames {
         metricNames.add("process_resident_memory_bytes");
         metricNames.add("process_start_time_seconds");
         metricNames.add("process_virtual_memory_bytes");
+
+        METRIC_NAMES = Collections.unmodifiableCollection(metricNames);
     }
 
     /** Constructor */
@@ -191,7 +195,7 @@ public class ExpectedMetricsNames {
      *
      * @return a List of metrics names
      */
-    public static List<String> getMetricsNames() {
-        return metricNames;
+    public static Collection<String> getMetricsNames() {
+        return METRIC_NAMES;
     }
 }

@@ -30,8 +30,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /** Class to parse Metrics from an HttpResponse */
 public class MetricsParser {
@@ -45,9 +47,22 @@ public class MetricsParser {
      * Method to parse Metrics from an HttpResponse
      *
      * @param httpResponse httpResponse
+     * @return a Map of Metrics
+     */
+    public static Map<String, Collection<Metric>> parseMap(HttpResponse httpResponse) {
+        return parseCollection(httpResponse).stream()
+                .collect(
+                        Collectors.groupingBy(
+                                Metric::name, Collectors.toCollection(ArrayList::new)));
+    }
+
+    /**
+     * Method to parse Metrics from an HttpResponse
+     *
+     * @param httpResponse httpResponse
      * @return a Collection of Metrics
      */
-    public static Collection<Metric> parse(HttpResponse httpResponse) {
+    public static Collection<Metric> parseCollection(HttpResponse httpResponse) {
         if (Objects.requireNonNull(httpResponse.headers().get(HttpHeader.CONTENT_TYPE))
                 .contains(HttpContentType.PROTOBUF)) {
             return parseProtobufMetrics(httpResponse);
@@ -79,7 +94,7 @@ public class MetricsParser {
 
                                 collection.add(
                                         new Metric(
-                                                "COUNTER",
+                                                Metric.Type.COUNTER,
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
@@ -93,7 +108,7 @@ public class MetricsParser {
 
                                 collection.add(
                                         new Metric(
-                                                "GAUGE",
+                                                Metric.Type.GAUGE,
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
@@ -107,7 +122,7 @@ public class MetricsParser {
 
                                 collection.add(
                                         new Metric(
-                                                "UNTYPED",
+                                                Metric.Type.UNTYPED,
                                                 help,
                                                 name,
                                                 toLabels(metric.getLabelList()),
@@ -199,11 +214,11 @@ public class MetricsParser {
         double value = Double.parseDouble(metricLine.substring(metricLine.lastIndexOf(" ")));
 
         if (typeLine.equalsIgnoreCase("COUNTER")) {
-            return new Metric("COUNTER", help, name, labels, value);
+            return new Metric(Metric.Type.COUNTER, help, name, labels, value);
         } else if (typeLine.equalsIgnoreCase("GAUGE")) {
-            return new Metric("GAUGE", help, name, labels, value);
+            return new Metric(Metric.Type.GAUGE, help, name, labels, value);
         } else {
-            return new Metric("UNTYPED", help, name, labels, value);
+            return new Metric(Metric.Type.UNTYPED, help, name, labels, value);
         }
     }
 
@@ -258,7 +273,7 @@ public class MetricsParser {
         return labels;
     }
 
-    /** Class to read a Reader line by line */
+    /** Class to read a Reader line by line with the ability to push a line back to the Reader */
     private static class LineReader implements AutoCloseable {
 
         private final LinkedList<String> lineBuffer;

@@ -20,9 +20,9 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpResponseCode;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.AbstractTest;
+import io.prometheus.jmx.test.common.AbstractExporterTest;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.TestArguments;
 import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
@@ -32,15 +32,17 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.antublue.test.engine.api.TestEngine;
 
-public class CompleteHttpServerConfigurationTest extends AbstractTest
+public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
         implements Consumer<HttpResponse> {
 
-    private final String BASE_URL = "https://localhost";
+    private static final String BASE_URL = "https://localhost";
 
     private final String VALID_USERNAME = "Prometheus";
 
@@ -53,26 +55,29 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
     /**
-     * Method to get the list of TestArguments
+     * Method to get the Stream of test environments
      *
-     * @return the return value
+     * @return the Stream of test environments
      */
     @TestEngine.ArgumentSupplier
-    public static Stream<TestArguments> arguments() {
+    public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
         // https://bugs.openjdk.org/browse/JDK-8306037
-        return AbstractTest.arguments()
+        return AbstractExporterTest.arguments()
                 .filter(
-                        testArgument ->
-                                !testArgument
-                                        .getDockerImageName()
-                                        .contains("eclipse-temurin:8-alpine"));
-    }
-
-    @TestEngine.Prepare
-    public void setBaseUrl() {
-        testEnvironment.setBaseUrl(BASE_URL);
+                        exporterTestEnvironment ->
+                                !exporterTestEnvironment
+                                        .getJavaDockerImage()
+                                        .contains("eclipse-temurin:8-alpine"))
+                .map(
+                        new Function<ExporterTestEnvironment, ExporterTestEnvironment>() {
+                            @Override
+                            public ExporterTestEnvironment apply(
+                                    ExporterTestEnvironment ExporterTestEnvironment) {
+                                return ExporterTestEnvironment.setBaseUrl(BASE_URL);
+                            }
+                        });
     }
 
     @TestEngine.Test
@@ -87,7 +92,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpHealthyRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testEnvironment.getHttpClient())
+                        .send(exporterTestEnvironment.getHttpClient())
                         .accept(response -> assertHttpResponseCode(response, code.get()));
             }
         }
@@ -105,7 +110,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testEnvironment.getHttpClient())
+                        .send(exporterTestEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -129,7 +134,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpOpenMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testEnvironment.getHttpClient())
+                        .send(exporterTestEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -153,7 +158,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testEnvironment.getHttpClient())
+                        .send(exporterTestEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -177,7 +182,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
 
                 new HttpPrometheusProtobufMetricsRequest()
                         .credentials(new HttpBasicAuthenticationCredentials(username, password))
-                        .send(testEnvironment.getHttpClient())
+                        .send(exporterTestEnvironment.getHttpClient())
                         .accept(
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
@@ -193,65 +198,68 @@ public class CompleteHttpServerConfigurationTest extends AbstractTest
     public void accept(HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
+        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
+
+        boolean isJmxExporterModeJavaAgent =
+                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent
+                isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
                         : "jmx_prometheus_httpserver";
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jmx_exporter_build_info")
                 .withLabel("name", buildInfoName)
                 .withValue(1d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jmx_scrape_error")
                 .withValue(0d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("COUNTER")
+                .ofType(Metric.Type.COUNTER)
                 .withName("jmx_config_reload_success_total")
                 .withValue(0d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isPresent(testArguments.getJmxExporterMode() == JmxExporterMode.JavaAgent);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "nonheap")
-                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("GAUGE")
+                .ofType(Metric.Type.GAUGE)
                 .withName("jvm_memory_used_bytes")
                 .withLabel("area", "heap")
-                .isNotPresent(testArguments.getJmxExporterMode() == JmxExporterMode.Standalone);
+                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
-                .ofType("UNTYPED")
+                .ofType(Metric.Type.UNTYPED)
                 .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
                 .withLabel("source", "/dev/sda1")
                 .withValue(7.516192768E9d)
                 .isPresent();
 
         assertMetric(metrics)
-                .ofType("UNTYPED")
+                .ofType(Metric.Type.UNTYPED)
                 .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8d)
