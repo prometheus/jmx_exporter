@@ -29,10 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <antublue.test.engine.version>7.1.0-BETA-3</antublue.test.engine.version>
-        <!-- smoke test containers -->
-        <docker.image.names/>
-        <!-- all test containers -->
-        <!-- <docker.image.names>ALL</docker.image.names> -->
+        <java.docker.images/>
     </properties>
 
     <build>
@@ -84,7 +81,7 @@
                 <version>${antublue.test.engine.version}</version>
                 <configuration>
                     <properties>
-                        <docker.image.names>${docker.image.names}</docker.image.names>
+                        <java.docker.images>${java.docker.images}</java.docker.images>
                     </properties>
                 </configuration>
                 <executions>
