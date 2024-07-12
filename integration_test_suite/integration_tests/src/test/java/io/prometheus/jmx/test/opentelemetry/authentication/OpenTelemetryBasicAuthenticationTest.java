@@ -1,9 +1,13 @@
-package io.prometheus.jmx.test.opentelemetry;
+package io.prometheus.jmx.test.opentelemetry.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.opentelemetry.ExpectedMetricsNames;
+import io.prometheus.jmx.test.opentelemetry.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.opentelemetry.PrometheusDockerImages;
 import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.net.URLEncoder;
@@ -23,7 +27,10 @@ import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 /** Class to implement OpenTelemetryTest */
 @TestEngine.ParallelArgumentTest
-public class OpenTelemetryTest {
+public class OpenTelemetryBasicAuthenticationTest {
+
+    private static final String VALID_USER = "Prometheus";
+    private static final String VALUE_PASSWORD = "secret";
 
     private Network network;
 
@@ -208,6 +215,12 @@ public class OpenTelemetryTest {
      * @return an HttpResponse
      */
     protected HttpResponse sendRequest(String path) {
-        return openTelemetryTestEnvironment.getPrometheusHttpClient().send(new HttpRequest(path));
+        return openTelemetryTestEnvironment
+                .getPrometheusHttpClient()
+                .send(
+                        new HttpRequest(path)
+                                .credentials(
+                                        new HttpBasicAuthenticationCredentials(
+                                                VALID_USER, VALUE_PASSWORD)));
     }
 }

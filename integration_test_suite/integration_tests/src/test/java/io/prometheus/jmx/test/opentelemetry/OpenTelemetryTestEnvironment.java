@@ -3,7 +3,12 @@ package io.prometheus.jmx.test.opentelemetry;
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import org.antublue.test.engine.api.Argument;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -156,45 +161,66 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return the return value
      */
     private GenericContainer<?> createPrometheusContainer() {
-        return new GenericContainer<>(prometheusDockerImage)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/")
-                                + "/"
-                                + jmxExporterMode
-                                + "/prometheus.yml",
-                        "/etc/prometheus/prometheus.yml",
-                        BindMode.READ_ONLY)
-                .withWorkingDirectory("/prometheus")
-                .withCommand(
-                        "--config.file=/etc/prometheus/prometheus.yml",
-                        "--storage.tsdb.path=/prometheus",
-                        "--web.console.libraries=/usr/share/prometheus/console_libraries",
-                        "--web.console.templates=/usr/share/prometheus/consoles",
-                        "--enable-feature=otlp-write-receiver")
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
-                .withExposedPorts(9090)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println(string);
-                            }
-                        })
-                .withNetwork(network)
-                .withNetworkAliases("prometheus")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000));
+        List<String> commands = new ArrayList<>();
+
+        commands.add("--config.file=/etc/prometheus/prometheus.yaml");
+        commands.add("--storage.tsdb.path=/prometheus");
+        commands.add("--web.console.libraries=/usr/share/prometheus/console_libraries");
+        commands.add("--web.console.templates=/usr/share/prometheus/consoles");
+        commands.add("--enable-feature=otlp-write-receiver");
+
+        String webYml =
+                "/" + testClass.getName().replace(".", "/") + "/" + jmxExporterMode + "/web.yaml";
+
+        boolean hasWebYml = hasResource(webYml);
+
+        if (hasWebYml) {
+            commands.add("--web.config.file=/etc/prometheus/web.yaml");
+        }
+
+        GenericContainer<?> genericContainer =
+                new GenericContainer<>(prometheusDockerImage)
+                        .withClasspathResourceMapping(
+                                testClass.getName().replace(".", "/")
+                                        + "/"
+                                        + jmxExporterMode
+                                        + "/prometheus.yaml",
+                                "/etc/prometheus/prometheus.yaml",
+                                BindMode.READ_ONLY)
+                        .withWorkingDirectory("/prometheus")
+                        .withCommand(commands.toArray(new String[0]))
+                        .withCreateContainerCmdModifier(
+                                c ->
+                                        c.getHostConfig()
+                                                .withMemory(MEMORY_BYTES)
+                                                .withMemorySwap(MEMORY_SWAP_BYTES))
+                        .withCreateContainerCmdModifier(
+                                c ->
+                                        c.getHostConfig()
+                                                .withUlimits(
+                                                        new Ulimit[] {
+                                                            new Ulimit("nofile", 65536L, 65536L)
+                                                        }))
+                        .withExposedPorts(9090)
+                        .withLogConsumer(
+                                outputFrame -> {
+                                    String string =
+                                            outputFrame.getUtf8StringWithoutLineEnding().trim();
+                                    if (!string.isBlank()) {
+                                        System.out.println(string);
+                                    }
+                                })
+                        .withNetwork(network)
+                        .withNetworkAliases("prometheus")
+                        .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                        .withStartupTimeout(Duration.ofMillis(30000));
+
+        if (hasWebYml) {
+            genericContainer.withClasspathResourceMapping(
+                    webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
+        }
+
+        return genericContainer;
     }
 
     /**
@@ -330,5 +356,35 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     private static HttpClient createPrometheusHttpClient(
             GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
         return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
+    }
+
+    /**
+     * Method to determin if a resource exists
+     *
+     * @param resource resource
+     * @return true if the resource exists, else false
+     */
+    private static boolean hasResource(String resource) {
+        boolean hasResource = false;
+
+        try (BufferedReader bufferedReader =
+                new BufferedReader(
+                        new InputStreamReader(
+                                OpenTelemetryTestEnvironment.class.getResourceAsStream(resource),
+                                StandardCharsets.UTF_8))) {
+            while (true) {
+                String line = bufferedReader.readLine();
+                if (line == null) {
+                    break;
+                }
+                hasResource = true;
+                break;
+            }
+
+        } catch (Throwable t) {
+            // DO NOTHING
+        }
+
+        return hasResource;
     }
 }
