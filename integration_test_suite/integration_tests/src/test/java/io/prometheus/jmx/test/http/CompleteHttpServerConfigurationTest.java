@@ -34,13 +34,14 @@ import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.Verifyica;
 
 public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
-        implements Consumer<HttpResponse> {
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     private static final String BASE_URL = "https://localhost";
 
@@ -59,7 +60,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -80,8 +81,10 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
                         });
     }
 
-    @TestEngine.Test
-    public void testHealthy() {
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
                 final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
@@ -98,8 +101,10 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
         }
     }
 
-    @TestEngine.Test
-    public void testMetrics() {
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
                 final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
@@ -115,15 +120,17 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
                                     if (response.statusCode() == HttpResponse.OK) {
-                                        accept(response);
+                                        accept(exporterTestEnvironment, response);
                                     }
                                 });
             }
         }
     }
 
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
                 final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
@@ -139,15 +146,17 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
                                     if (response.statusCode() == HttpResponse.OK) {
-                                        accept(response);
+                                        accept(exporterTestEnvironment, response);
                                     }
                                 });
             }
         }
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
                 final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
@@ -163,15 +172,17 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
                                     if (response.statusCode() == HttpResponse.OK) {
-                                        accept(response);
+                                        accept(exporterTestEnvironment, response);
                                     }
                                 });
             }
         }
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
                 final AtomicInteger code = new AtomicInteger(HttpResponse.UNAUTHORIZED);
@@ -187,7 +198,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
                                 response -> {
                                     assertHttpResponseCode(response, code.get());
                                     if (response.statusCode() == HttpResponse.OK) {
-                                        accept(response);
+                                        accept(exporterTestEnvironment, response);
                                     }
                                 });
             }
@@ -195,7 +206,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     }
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);

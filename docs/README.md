@@ -332,7 +332,7 @@ httpServer:
 
 ## Integration Test Suite
 
-The JMX exporter uses the [AntuBLUE Test Engine](https://github.com/antublue/test-engine) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+The JMX exporter uses the [Braxco](https://github.com/antublue/braxco) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
 You need to have Docker installed to run the integration test suite.
 

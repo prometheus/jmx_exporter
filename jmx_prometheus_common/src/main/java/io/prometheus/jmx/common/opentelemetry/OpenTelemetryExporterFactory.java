@@ -3,6 +3,7 @@ package io.prometheus.jmx.common.opentelemetry;
 import static java.lang.String.format;
 
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
+import io.prometheus.jmx.common.configuration.ConvertToMap;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
 import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
@@ -117,12 +118,35 @@ public class OpenTelemetryExporterFactory {
                                                                 + " between greater than 0")))
                                     .orElse(60);
 
-                    openTelemetryExporter =
-                            OpenTelemetryExporter.builder()
-                                    .endpoint(endpoint)
-                                    .protocol(protocol)
-                                    .intervalSeconds(interval)
-                                    .buildAndStart();
+                    Map<String, String> headers =
+                            openTelemetryYamlMapAccessor
+                                    .get("/headers")
+                                    .map(
+                                            new ConvertToMap(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                    + " /openTelemetry/headers"
+                                                                    + " must be a map")))
+                                    .orElse(null);
+
+                    OpenTelemetryExporter.Builder openTelemetryExporterBuilder =
+                            OpenTelemetryExporter.builder();
+
+                    openTelemetryExporterBuilder
+                            .endpoint(endpoint)
+                            .protocol(protocol)
+                            .intervalSeconds(interval);
+
+                    if (headers != null) {
+                        headers.forEach(
+                                (name, value) -> {
+                                    if (name != null && !name.trim().isEmpty()) {
+                                        openTelemetryExporterBuilder.header(name, value);
+                                    }
+                                });
+                    }
+
+                    openTelemetryExporter = openTelemetryExporterBuilder.buildAndStart();
                 }
             }
         } catch (IOException e) {

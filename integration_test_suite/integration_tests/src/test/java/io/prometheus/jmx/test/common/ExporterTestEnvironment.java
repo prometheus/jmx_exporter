@@ -4,7 +4,7 @@ import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import java.time.Duration;
-import org.antublue.test.engine.api.Argument;
+import org.antublue.verifyica.api.Argument;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -102,9 +102,9 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
             case Standalone:
                 {
                     standaloneApplicationContainer = createStandaloneApplicationContainer();
-                    standaloneExporterContainer = createStandaloneExporterContainer();
-
                     standaloneApplicationContainer.start();
+
+                    standaloneExporterContainer = createStandaloneExporterContainer();
                     standaloneExporterContainer.start();
 
                     httpClient = createHttpClient(standaloneExporterContainer, baseUrl, 8888);

@@ -20,18 +20,19 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.AbstractExporterTest;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class LowerCaseOutputLabelNamesTest extends AbstractExporterTest
-        implements Consumer<HttpResponse> {
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);

@@ -19,23 +19,27 @@ package io.prometheus.jmx.test;
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.Verifyica;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
 public class AutoIncrementingMBeanTest extends MinimalTest {
 
-    @TestEngine.Test
-    @TestEngine.Order(order = Integer.MAX_VALUE)
-    public void testAutoIncrementingMBean() {
+    @Verifyica.Test
+    @Verifyica.Order(order = Integer.MAX_VALUE)
+    public void testAutoIncrementingMBean(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         // Collect the auto incrementing MBean values
-        double value1 = collect();
-        double value2 = collect();
-        double value3 = collect();
+        double value1 = collect(exporterTestEnvironment);
+        double value2 = collect(exporterTestEnvironment);
+        double value3 = collect(exporterTestEnvironment);
 
         // Assert that each collection is the previous value + 1
         assertThat(value2).isGreaterThan(value1);
@@ -49,7 +53,7 @@ public class AutoIncrementingMBeanTest extends MinimalTest {
      *
      * @return the auto incrementing MBean value
      */
-    private double collect() {
+    private double collect(ExporterTestEnvironment exporterTestEnvironment) {
         final AtomicDouble value = new AtomicDouble();
 
         HttpResponse httpResponse =

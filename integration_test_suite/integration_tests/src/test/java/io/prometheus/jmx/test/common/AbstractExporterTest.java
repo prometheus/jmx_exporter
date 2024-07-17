@@ -27,23 +27,24 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.ClassContext;
+import org.antublue.verifyica.api.Verifyica;
 import org.testcontainers.containers.Network;
 
-public abstract class AbstractExporterTest implements Consumer<HttpResponse> {
+public abstract class AbstractExporterTest
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
-    protected Network network;
-
-    @TestEngine.Argument public ExporterTestEnvironment exporterTestEnvironment;
+    public static final String NETWORK = "network";
 
     /**
      * Method to get the Stream of test environments
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         Collection<ExporterTestEnvironment> collection = new ArrayList<>();
 
@@ -60,65 +61,87 @@ public abstract class AbstractExporterTest implements Consumer<HttpResponse> {
         return collection.stream();
     }
 
-    @TestEngine.Prepare
-    public final void prepare() {
+    @Verifyica.Prepare
+    public static void prepare(ClassContext classContext) {
         // Create a Network and get the id to force the network creation
-        network = Network.newNetwork();
+        Network network = Network.newNetwork();
         network.getId();
+
+        classContext.getStore().put(NETWORK, network);
     }
 
-    @TestEngine.BeforeAll
-    public void beforeAll() {
-        exporterTestEnvironment.initialize(getClass(), network);
+    @Verifyica.BeforeAll
+    public void beforeAll(ArgumentContext argumentContext) {
+        Network network = argumentContext.getClassContext().getStore().get(NETWORK);
+
+        argumentContext
+                .getArgumentPayload(ExporterTestEnvironment.class)
+                .initialize(getClass(), network);
     }
 
-    @TestEngine.Test
-    public void testHealthy() {
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         new HttpHealthyRequest()
                 .send(exporterTestEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
-    @TestEngine.Test
-    public void testMetrics() {
-        new HttpMetricsRequest().send(exporterTestEnvironment.getHttpClient()).accept(this);
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        accept(
+                exporterTestEnvironment,
+                new HttpMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(exporterTestEnvironment.getHttpClient()).accept(this);
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        accept(
+                exporterTestEnvironment,
+                new HttpOpenMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest()
-                .send(exporterTestEnvironment.getHttpClient())
-                .accept(this);
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        accept(
+                exporterTestEnvironment,
+                new HttpPrometheusMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest()
-                .send(exporterTestEnvironment.getHttpClient())
-                .accept(this);
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        accept(
+                exporterTestEnvironment,
+                new HttpPrometheusProtobufMetricsRequest()
+                        .send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @TestEngine.AfterAll
-    public void afterAll() {
+    @Verifyica.AfterAll
+    public void afterAll(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
         if (exporterTestEnvironment != null) {
             exporterTestEnvironment.destroy();
-            exporterTestEnvironment = null;
         }
     }
 
-    @TestEngine.Conclude
-    public final void conclude() {
+    @Verifyica.Conclude
+    public static void conclude(ClassContext classContext) {
+        Network network = classContext.getStore().remove(NETWORK);
         if (network != null) {
             network.close();
-            network = null;
         }
     }
 
     @Override
-    public abstract void accept(HttpResponse httpResponse);
+    public abstract void accept(
+            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse);
 }

@@ -4,7 +4,7 @@ import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.http.authentication.AbstractBasicAuthenticationTest;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.Verifyica;
 
 public abstract class AbstractSSLTest extends AbstractExporterTest {
 
@@ -15,7 +15,7 @@ public abstract class AbstractSSLTest extends AbstractExporterTest {
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         return AbstractBasicAuthenticationTest.arguments()
                 .map(exporterTestEnvironment -> exporterTestEnvironment.setBaseUrl(BASE_URL));

@@ -30,19 +30,19 @@ import java.util.function.Predicate;
 /** Class to implement JavaDockerImages */
 public final class JavaDockerImages {
 
-    private static final String JAVA_DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
+    private static final String DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
-    private static final String JAVA_DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
+    private static final String DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
 
-    private static final String SMOKE_TEST_JAVA_DOCKER_IMAGES_RESOURCE =
+    private static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE =
             "/smoke-test-java-docker-images.txt";
 
-    private static String[] ALL_JAVA_DOCKER_IMAGE_NAMES;
+    private static String[] ALL_DOCKER_IMAGE_NAMES;
 
-    private static String[] SMOKE_TEST_JAVA_DOCKER_IMAGES;
+    private static String[] SMOKE_TEST_DOCKER_IMAGES;
 
     /** Predicate to accept all Docker image names */
-    public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
+    public static final Predicate<String> ACCEPT_ALL = name -> true;
 
     /** Constructor */
     private JavaDockerImages() {
@@ -55,7 +55,7 @@ public final class JavaDockerImages {
      * @return the Collection of Docker image names
      */
     public static Collection<String> names() {
-        return names(ALL_JAVA_VERSIONS);
+        return names(ACCEPT_ALL);
     }
 
     /**
@@ -68,11 +68,11 @@ public final class JavaDockerImages {
         Objects.requireNonNull(predicate);
 
         synchronized (JavaDockerImages.class) {
-            if (ALL_JAVA_DOCKER_IMAGE_NAMES == null) {
-                ALL_JAVA_DOCKER_IMAGE_NAMES = load(JAVA_DOCKER_IMAGES_RESOURCE);
+            if (ALL_DOCKER_IMAGE_NAMES == null) {
+                ALL_DOCKER_IMAGE_NAMES = load(DOCKER_IMAGES_RESOURCE);
             }
-            if (SMOKE_TEST_JAVA_DOCKER_IMAGES == null) {
-                SMOKE_TEST_JAVA_DOCKER_IMAGES = load(SMOKE_TEST_JAVA_DOCKER_IMAGES_RESOURCE);
+            if (SMOKE_TEST_DOCKER_IMAGES == null) {
+                SMOKE_TEST_DOCKER_IMAGES = load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE);
             }
         }
 
@@ -80,9 +80,7 @@ public final class JavaDockerImages {
 
         String dockerImageNameValue =
                 System.getenv(
-                        JAVA_DOCKER_IMAGES_CONFIGURATION
-                                .toUpperCase(Locale.ENGLISH)
-                                .replace('.', '_'));
+                        DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
         if (dockerImageNameValue != null) {
             dockerImageNameValue = dockerImageNameValue.trim();
@@ -92,7 +90,7 @@ public final class JavaDockerImages {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNameValue = System.getProperty(JAVA_DOCKER_IMAGES_CONFIGURATION);
+            dockerImageNameValue = System.getProperty(DOCKER_IMAGES_CONFIGURATION);
             if (dockerImageNameValue != null) {
                 if (dockerImageNameValue.isBlank()) {
                     dockerImageNameValue = null;
@@ -101,9 +99,9 @@ public final class JavaDockerImages {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNames = SMOKE_TEST_JAVA_DOCKER_IMAGES;
+            dockerImageNames = SMOKE_TEST_DOCKER_IMAGES;
         } else if (dockerImageNameValue.equalsIgnoreCase("ALL")) {
-            dockerImageNames = ALL_JAVA_DOCKER_IMAGE_NAMES;
+            dockerImageNames = ALL_DOCKER_IMAGE_NAMES;
         } else {
             dockerImageNames = dockerImageNameValue.split("\\s+");
         }
@@ -149,8 +147,7 @@ public final class JavaDockerImages {
 
             return dockerImageNames.toArray(new String[0]);
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Exception reading resource " + JAVA_DOCKER_IMAGES_RESOURCE, e);
+            throw new RuntimeException("Exception reading resource " + DOCKER_IMAGES_RESOURCE, e);
         }
     }
 }

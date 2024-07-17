@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 
 import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.AuthenticationCredentials;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
 import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
 import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
@@ -30,7 +31,8 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.Verifyica;
 
 public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTest {
 
@@ -61,8 +63,10 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
         return collection;
     }
 
-    @TestEngine.Test
-    public void testHealthy() {
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         getAuthenticationCredentials()
                 .forEach(
                         authenticationTestArguments -> {
@@ -83,8 +87,10 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
                         });
     }
 
-    @TestEngine.Test
-    public void testMetrics() {
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         getAuthenticationCredentials()
                 .forEach(
                         authenticationCredentials -> {
@@ -103,14 +109,16 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
                                                 if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
+                                                    accept(exporterTestEnvironment, response);
                                                 }
                                             });
                         });
     }
 
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         getAuthenticationCredentials()
                 .forEach(
                         authenticationCredentials -> {
@@ -129,14 +137,16 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
                                                 if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
+                                                    accept(exporterTestEnvironment, response);
                                                 }
                                             });
                         });
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         getAuthenticationCredentials()
                 .forEach(
                         authenticationCredentials -> {
@@ -155,14 +165,16 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
                                                 if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
+                                                    accept(exporterTestEnvironment, response);
                                                 }
                                             });
                         });
     }
 
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
         getAuthenticationCredentials()
                 .forEach(
                         authenticationCredentials -> {
@@ -181,7 +193,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
                                             response -> {
                                                 assertHttpResponseCode(response, code.get());
                                                 if (code.get() == HttpResponse.OK) {
-                                                    accept(response);
+                                                    accept(exporterTestEnvironment, response);
                                                 }
                                             });
                         });

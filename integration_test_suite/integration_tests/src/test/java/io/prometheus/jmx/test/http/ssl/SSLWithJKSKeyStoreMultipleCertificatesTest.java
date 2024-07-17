@@ -26,19 +26,19 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.Verifyica;
 
 public class SSLWithJKSKeyStoreMultipleCertificatesTest extends AbstractSSLTest
-        implements Consumer<HttpResponse> {
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     /**
      * Method to get the Stream of test environments
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -52,7 +52,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest extends AbstractSSLTest
     }
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);

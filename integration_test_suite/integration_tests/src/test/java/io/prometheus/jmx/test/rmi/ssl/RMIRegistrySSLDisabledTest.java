@@ -27,19 +27,19 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
+import org.antublue.verifyica.api.Verifyica;
 
 public class RMIRegistrySSLDisabledTest extends AbstractExporterTest
-        implements Consumer<HttpResponse> {
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     /**
      * Method to get the Stream of test environments
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter the arguments..
         //
@@ -62,7 +62,7 @@ public class RMIRegistrySSLDisabledTest extends AbstractExporterTest
     }
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);

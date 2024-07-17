@@ -19,19 +19,20 @@ package io.prometheus.jmx.test.http.authentication;
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticationTest
-        implements Consumer<HttpResponse> {
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);

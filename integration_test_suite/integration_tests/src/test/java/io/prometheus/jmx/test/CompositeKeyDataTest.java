@@ -20,16 +20,18 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
 import io.prometheus.jmx.test.common.AbstractExporterTest;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
-public class CompositeKeyDataTest extends AbstractExporterTest implements Consumer<HttpResponse> {
+public class CompositeKeyDataTest extends AbstractExporterTest
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
