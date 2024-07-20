@@ -16,15 +16,25 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import io.prometheus.jmx.test.AbstractTest;
-import io.prometheus.jmx.test.support.TestArguments;
+import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpResponseCode;
+
+import io.prometheus.jmx.test.common.AbstractExporterTest;
+import io.prometheus.jmx.test.common.AuthenticationCredentials;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.http.HttpBasicAuthenticationCredentials;
+import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
+import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Predicate;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.Verifyica;
 
-public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
+public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTest {
 
     protected static final String VALID_USERNAME = "Prometheus";
 
@@ -35,112 +45,157 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractTest {
 
     protected static final String[] INVALID_PASSWORDS = new String[] {"Secret", "bad", "", null};
 
-    protected static final PBKDF2WithHmacTestArgumentFilter PBKDF2_WITH_MAC_TEST_ARGUMENT_FILTER =
-            new PBKDF2WithHmacTestArgumentFilter();
-
-    /** Class to implement a PBKDF2WithHmacTestArgumentFilter */
-    protected static class PBKDF2WithHmacTestArgumentFilter implements Predicate<TestArguments> {
-
-        private final Set<String> filteredDockerImages;
-
-        /** Constructor */
-        public PBKDF2WithHmacTestArgumentFilter() {
-            // Filter out Docker image names that don't support PBKDF2 with HMAC
-            filteredDockerImages = new HashSet<>();
-            filteredDockerImages.add("ibmjava:8");
-            filteredDockerImages.add("ibmjava:8-jre");
-            filteredDockerImages.add("ibmjava:8-sdk");
-            filteredDockerImages.add("ibmjava:8-sfj");
-        }
-
-        /**
-         * Evaluates this predicate on the given argument.
-         *
-         * @param testArguments the input argument
-         * @return {@code true} if the input argument matches the predicate, otherwise {@code false}
-         */
-        @Override
-        public boolean test(TestArguments testArguments) {
-            return !filteredDockerImages.contains(testArguments.getDockerImageName());
-        }
-    }
-
     /**
-     * Method to create a Collection of AuthenticationTestCredentials
+     * Method to create a Collection of AuthenticationCredentials
      *
-     * @return a Collection of AuthenticationTestCredentials
+     * @return a Collection of AuthenticationCredentials
      */
-    public static Collection<AuthenticationTestCredentials> getAuthenticationTestCredentials() {
-        Collection<AuthenticationTestCredentials> collection = new ArrayList<>();
-        collection.add(AuthenticationTestCredentials.of(VALID_USERNAME, VALID_PASSWORD, true));
+    public static Collection<AuthenticationCredentials> getAuthenticationCredentials() {
+        Collection<AuthenticationCredentials> collection = new ArrayList<>();
+        collection.add(AuthenticationCredentials.of(VALID_USERNAME, VALID_PASSWORD, true));
 
         for (String username : INVALID_USERNAMES) {
             for (String password : INVALID_PASSWORDS) {
-                collection.add(AuthenticationTestCredentials.of(username, password, false));
+                collection.add(AuthenticationCredentials.of(username, password, false));
             }
         }
 
         return collection;
     }
 
-    /** Class to implement AuthenticationTestCredentials */
-    public static class AuthenticationTestCredentials {
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
 
-        private String username;
-        private String password;
-        private boolean isValid;
+        getAuthenticationCredentials()
+                .forEach(
+                        authenticationTestArguments -> {
+                            final AtomicInteger code =
+                                    new AtomicInteger(
+                                            authenticationTestArguments.isValid()
+                                                    ? HttpResponse.OK
+                                                    : HttpResponse.UNAUTHORIZED);
+                            new HttpHealthyRequest()
+                                    .credentials(
+                                            new HttpBasicAuthenticationCredentials(
+                                                    authenticationTestArguments.getUsername(),
+                                                    authenticationTestArguments.getPassword()))
+                                    .send(exporterTestEnvironment.getHttpClient())
+                                    .accept(
+                                            response ->
+                                                    assertHttpResponseCode(response, code.get()));
+                        });
+    }
 
-        /**
-         * Constructor
-         *
-         * @param username
-         * @param password
-         * @param isValid
-         */
-        private AuthenticationTestCredentials(String username, String password, boolean isValid) {
-            this.username = username;
-            this.password = password;
-            this.isValid = isValid;
-        }
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
 
-        /**
-         * Method to get the username
-         *
-         * @return the username
-         */
-        public String getUsername() {
-            return username;
-        }
+        getAuthenticationCredentials()
+                .forEach(
+                        authenticationCredentials -> {
+                            final AtomicInteger code =
+                                    new AtomicInteger(
+                                            authenticationCredentials.isValid()
+                                                    ? HttpResponse.OK
+                                                    : HttpResponse.UNAUTHORIZED);
+                            new HttpMetricsRequest()
+                                    .credentials(
+                                            new HttpBasicAuthenticationCredentials(
+                                                    authenticationCredentials.getUsername(),
+                                                    authenticationCredentials.getPassword()))
+                                    .send(exporterTestEnvironment.getHttpClient())
+                                    .accept(
+                                            response -> {
+                                                assertHttpResponseCode(response, code.get());
+                                                if (code.get() == HttpResponse.OK) {
+                                                    accept(exporterTestEnvironment, response);
+                                                }
+                                            });
+                        });
+    }
 
-        /**
-         * Method to get the password
-         *
-         * @return the password
-         */
-        public String getPassword() {
-            return password;
-        }
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
 
-        /**
-         * Method to return if the credentials are valid
-         *
-         * @return true if the credentials are valid, else false
-         */
-        public boolean isValid() {
-            return isValid;
-        }
+        getAuthenticationCredentials()
+                .forEach(
+                        authenticationCredentials -> {
+                            final AtomicInteger code =
+                                    new AtomicInteger(
+                                            authenticationCredentials.isValid()
+                                                    ? HttpResponse.OK
+                                                    : HttpResponse.UNAUTHORIZED);
+                            new HttpOpenMetricsRequest()
+                                    .credentials(
+                                            new HttpBasicAuthenticationCredentials(
+                                                    authenticationCredentials.getUsername(),
+                                                    authenticationCredentials.getPassword()))
+                                    .send(exporterTestEnvironment.getHttpClient())
+                                    .accept(
+                                            response -> {
+                                                assertHttpResponseCode(response, code.get());
+                                                if (code.get() == HttpResponse.OK) {
+                                                    accept(exporterTestEnvironment, response);
+                                                }
+                                            });
+                        });
+    }
 
-        /**
-         * Method to create an AuthenticationTestCredentials
-         *
-         * @param username username
-         * @param password password
-         * @param isValid isValid
-         * @return an AuthenticationTestCredentials
-         */
-        public static AuthenticationTestCredentials of(
-                String username, String password, boolean isValid) {
-            return new AuthenticationTestCredentials(username, password, isValid);
-        }
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        getAuthenticationCredentials()
+                .forEach(
+                        authenticationCredentials -> {
+                            final AtomicInteger code =
+                                    new AtomicInteger(
+                                            authenticationCredentials.isValid()
+                                                    ? HttpResponse.OK
+                                                    : HttpResponse.UNAUTHORIZED);
+                            new HttpPrometheusMetricsRequest()
+                                    .credentials(
+                                            new HttpBasicAuthenticationCredentials(
+                                                    authenticationCredentials.getUsername(),
+                                                    authenticationCredentials.getPassword()))
+                                    .send(exporterTestEnvironment.getHttpClient())
+                                    .accept(
+                                            response -> {
+                                                assertHttpResponseCode(response, code.get());
+                                                if (code.get() == HttpResponse.OK) {
+                                                    accept(exporterTestEnvironment, response);
+                                                }
+                                            });
+                        });
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+
+        getAuthenticationCredentials()
+                .forEach(
+                        authenticationCredentials -> {
+                            final AtomicInteger code =
+                                    new AtomicInteger(
+                                            authenticationCredentials.isValid()
+                                                    ? HttpResponse.OK
+                                                    : HttpResponse.UNAUTHORIZED);
+                            new HttpPrometheusProtobufMetricsRequest()
+                                    .credentials(
+                                            new HttpBasicAuthenticationCredentials(
+                                                    authenticationCredentials.getUsername(),
+                                                    authenticationCredentials.getPassword()))
+                                    .send(exporterTestEnvironment.getHttpClient())
+                                    .accept(
+                                            response -> {
+                                                assertHttpResponseCode(response, code.get());
+                                                if (code.get() == HttpResponse.OK) {
+                                                    accept(exporterTestEnvironment, response);
+                                                }
+                                            });
+                        });
     }
 }

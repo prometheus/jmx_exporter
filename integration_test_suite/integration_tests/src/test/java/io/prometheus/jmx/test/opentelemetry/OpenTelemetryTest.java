@@ -6,6 +6,8 @@ import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
+import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -14,27 +16,23 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-import org.antublue.test.engine.api.TestEngine;
-import org.antublue.test.engine.extras.throttle.ExponentialBackoffThrottle;
-import org.antublue.test.engine.extras.throttle.Throttle;
+import org.antublue.verifyica.api.ArgumentContext;
+import org.antublue.verifyica.api.Verifyica;
 import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 /** Class to implement OpenTelemetryTest */
-@TestEngine.ParallelArgumentTest
 public class OpenTelemetryTest {
 
-    private Network network;
-
-    @TestEngine.Argument public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
+    public static final String NETWORK = "network";
 
     /**
      * Method to get the Stream of test environments
      *
      * @return the Stream of test environments
      */
-    @TestEngine.ArgumentSupplier
+    @Verifyica.ArgumentSupplier(parallelism = 10)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
@@ -57,27 +55,31 @@ public class OpenTelemetryTest {
         return openTelemetryTestEnvironments.stream();
     }
 
-    @TestEngine.Prepare
-    public void prepare() {
+    @Verifyica.BeforeAll
+    public void beforeAll(ArgumentContext argumentContext) {
         // Create a Network and get the id to force the network creation
-        network = Network.newNetwork();
+        Network network = Network.newNetwork();
         network.getId();
-    }
 
-    @TestEngine.BeforeAll
-    public void beforeAll() {
-        openTelemetryTestEnvironment.initialize(getClass(), network);
+        argumentContext.getStore().put(NETWORK, network);
+
+        argumentContext
+                .getArgumentPayload(OpenTelemetryTestEnvironment.class)
+                .initialize(getClass(), network);
     }
 
     /** Method to test that Prometheus is up */
-    @TestEngine.Test
-    @TestEngine.Order(order = 0)
-    public void testIsPrometheusUp() {
-        Throttle throttle = new ExponentialBackoffThrottle(100, 2000);
+    @Verifyica.Test
+    @Verifyica.Order(order = 0)
+    public void testIsPrometheusUp(ArgumentContext argumentContext) {
+        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
+                argumentContext.getArgumentPayload();
+
+        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         AtomicBoolean success = new AtomicBoolean();
 
         for (int i = 0; i < 10; i++) {
-            sendPrometheusQuery("up")
+            sendPrometheusQuery(openTelemetryTestEnvironment, "up")
                     .accept(
                             httpResponse -> {
                                 assertThat(httpResponse).isNotNull();
@@ -111,34 +113,34 @@ public class OpenTelemetryTest {
     }
 
     /** Method to test that metrics exist in Prometheus */
-    @TestEngine.Test
-    public void testPrometheusHasMetrics() {
+    @Verifyica.Test
+    public void testPrometheusHasMetrics(ArgumentContext argumentContext) {
+        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
+                argumentContext.getArgumentPayload();
+
+        boolean isJmxExporterModeJavaStandalone =
+                openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+
         ExpectedMetricsNames.getMetricsNames().stream()
                 .filter(
-                        metricName -> {
-                            if (openTelemetryTestEnvironment.getJmxExporterMode()
-                                                    == JmxExporterMode.Standalone
-                                            && metricName.startsWith("jvm_")
-                                    || metricName.startsWith("process_")) {
-                                return false;
-                            }
-                            return true;
-                        })
+                        metricName ->
+                                !isJmxExporterModeJavaStandalone
+                                        || (!metricName.startsWith("jvm_")
+                                                && !metricName.startsWith("process_")))
                 .forEach(
                         metricName -> {
-                            Double value = getPrometheusMetric(metricName);
+                            Double value =
+                                    getPrometheusMetric(openTelemetryTestEnvironment, metricName);
                             assertThat(value).as("metricName [%s]", metricName).isNotNull();
                             assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
                         });
     }
 
-    @TestEngine.AfterAll
-    public void afterAll() {
-        openTelemetryTestEnvironment.destroy();
-    }
+    @Verifyica.AfterAll
+    public void afterAll(ArgumentContext argumentContext) {
+        argumentContext.getArgumentPayload(OpenTelemetryTestEnvironment.class).destroy();
 
-    @TestEngine.Conclude
-    public void conclude() {
+        Network network = argumentContext.getStore().remove(NETWORK);
         if (network != null) {
             network.close();
         }
@@ -147,26 +149,17 @@ public class OpenTelemetryTest {
     /**
      * Method to get a Prometheus metric
      *
+     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
      * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
-    protected Double getPrometheusMetric(String metricName) {
-        return getPrometheusMetric(metricName, null);
-    }
-
-    /**
-     * Method to get a Prometheus metrics
-     *
-     * @param metricName metricName
-     * @param labels labels
-     * @return the metric value, or null if it doesn't exist
-     */
-    protected Double getPrometheusMetric(String metricName, String[] labels) {
-        Throttle throttle = new ExponentialBackoffThrottle(100, 2000);
+    protected Double getPrometheusMetric(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String metricName) {
+        Throttle throttle = new ExponentialBackoffThrottle(100, 6400);
         AtomicReference<Double> value = new AtomicReference<>();
 
         for (int i = 0; i < 10; i++) {
-            sendPrometheusQuery(metricName)
+            sendPrometheusQuery(openTelemetryTestEnvironment, metricName)
                     .accept(
                             httpResponse -> {
                                 assertThat(httpResponse).isNotNull();
@@ -193,21 +186,26 @@ public class OpenTelemetryTest {
     /**
      * Method to send a Prometheus query
      *
+     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
      * @param query query
      * @return an HttpResponse
      */
-    protected HttpResponse sendPrometheusQuery(String query) {
+    protected HttpResponse sendPrometheusQuery(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String query) {
         return sendRequest(
+                openTelemetryTestEnvironment,
                 "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
     /**
-     * Method to send an Http GET request
+     * Method to send a Http GET request
      *
+     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
      * @param path path
      * @return an HttpResponse
      */
-    protected HttpResponse sendRequest(String path) {
+    protected HttpResponse sendRequest(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path) {
         return openTelemetryTestEnvironment.getPrometheusHttpClient().send(new HttpRequest(path));
     }
 }

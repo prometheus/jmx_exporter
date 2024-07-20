@@ -19,55 +19,23 @@ package io.prometheus.jmx.test;
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.http.HttpHealthyRequest;
-import io.prometheus.jmx.test.support.http.HttpMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpOpenMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
-import io.prometheus.jmx.test.support.http.HttpPrometheusProtobufMetricsRequest;
+import io.prometheus.jmx.test.common.AbstractExporterTest;
+import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
-import java.util.function.Consumer;
-import org.antublue.test.engine.api.TestEngine;
+import java.util.Locale;
+import java.util.function.BiConsumer;
 
-public class BlacklistObjectNamesTest extends AbstractTest implements Consumer<HttpResponse> {
-
-    @TestEngine.Test
-    public void testHealthy() {
-        new HttpHealthyRequest()
-                .send(testEnvironment.getHttpClient())
-                .accept(HttpResponseAssertions::assertHttpHealthyResponse);
-    }
-
-    @TestEngine.Test
-    public void testMetrics() {
-        new HttpMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsOpenMetricsFormat() {
-        new HttpOpenMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusFormat() {
-        new HttpPrometheusMetricsRequest().send(testEnvironment.getHttpClient()).accept(this);
-    }
-
-    @TestEngine.Test
-    public void testMetricsPrometheusProtobufFormat() {
-        new HttpPrometheusProtobufMetricsRequest()
-                .send(testEnvironment.getHttpClient())
-                .accept(this);
-    }
+public class BlacklistObjectNamesTest extends AbstractExporterTest
+        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
 
     @Override
-    public void accept(HttpResponse httpResponse) {
+    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parse(httpResponse);
+        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
         /*
          * Assert that we don't have any metrics that start with ...
@@ -75,6 +43,8 @@ public class BlacklistObjectNamesTest extends AbstractTest implements Consumer<H
          * name = java_lang*
          */
         metrics.forEach(
-                metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
+                metric ->
+                        assertThat(metric.name().toLowerCase(Locale.ENGLISH))
+                                .doesNotStartWith("java_lang"));
     }
 }
