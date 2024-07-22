@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -38,7 +39,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      *
      * @return the Stream of test environments
      */
-    @Verifyica.ArgumentSupplier(parallelism = 10)
+    @Verifyica.ArgumentSupplier(parallelism = 2)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
@@ -69,9 +70,12 @@ public class OpenTelemetryBasicAuthenticationTest {
 
         argumentContext.getStore().put(NETWORK, network);
 
-        argumentContext
-                .getArgumentPayload(OpenTelemetryTestEnvironment.class)
-                .initialize(getClass(), network);
+        Class<?> testClass = argumentContext.getClassContext().getTestClass();
+
+        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
+                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
+
+        openTelemetryTestEnvironment.initialize(testClass, network);
     }
 
     /**
@@ -83,7 +87,7 @@ public class OpenTelemetryBasicAuthenticationTest {
     @Verifyica.Order(order = 0)
     public void testIsPrometheusUp(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getArgumentPayload();
+                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
 
         Throttle throttle = new ExponentialBackoffThrottle(100, 2000);
         AtomicBoolean success = new AtomicBoolean();
@@ -130,7 +134,7 @@ public class OpenTelemetryBasicAuthenticationTest {
     @Verifyica.Test
     public void testPrometheusHasMetrics(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getArgumentPayload();
+                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
 
         ExpectedMetricsNames.getMetricsNames().stream()
                 .filter(
@@ -150,12 +154,13 @@ public class OpenTelemetryBasicAuthenticationTest {
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) {
-        argumentContext.getArgumentPayload(OpenTelemetryTestEnvironment.class).destroy();
+        Optional.ofNullable(argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class))
+                .ifPresent(
+                        openTelemetryTestEnvironmentArgument ->
+                                openTelemetryTestEnvironmentArgument.getPayload().destroy());
 
-        Network network = argumentContext.getStore().remove(NETWORK);
-        if (network != null) {
-            network.close();
-        }
+        Optional.ofNullable(argumentContext.getStore().remove(NETWORK, Network.class))
+                .ifPresent(Network::close);
     }
 
     /**

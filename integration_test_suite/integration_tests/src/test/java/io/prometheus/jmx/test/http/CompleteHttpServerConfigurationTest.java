@@ -83,7 +83,8 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
 
     @Verifyica.Test
     public void testHealthy(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -103,7 +104,8 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
 
     @Verifyica.Test
     public void testMetrics(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -129,7 +131,8 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -155,7 +158,8 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -181,7 +185,8 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {

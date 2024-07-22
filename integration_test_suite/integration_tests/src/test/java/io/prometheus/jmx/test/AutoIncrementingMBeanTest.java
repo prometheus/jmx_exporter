@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertH
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
@@ -34,12 +35,16 @@ public class AutoIncrementingMBeanTest extends MinimalTest {
     @Verifyica.Test
     @Verifyica.Order(order = Integer.MAX_VALUE)
     public void testAutoIncrementingMBean(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        HttpClient httpClient =
+                argumentContext
+                        .getTestArgument(ExporterTestEnvironment.class)
+                        .getPayload()
+                        .getHttpClient();
 
         // Collect the auto incrementing MBean values
-        double value1 = collect(exporterTestEnvironment);
-        double value2 = collect(exporterTestEnvironment);
-        double value3 = collect(exporterTestEnvironment);
+        double value1 = collect(httpClient);
+        double value2 = collect(httpClient);
+        double value3 = collect(httpClient);
 
         // Assert that each collection is the previous value + 1
         assertThat(value2).isGreaterThan(value1);
@@ -53,11 +58,10 @@ public class AutoIncrementingMBeanTest extends MinimalTest {
      *
      * @return the auto incrementing MBean value
      */
-    private double collect(ExporterTestEnvironment exporterTestEnvironment) {
+    private double collect(HttpClient httpClient) {
         final AtomicDouble value = new AtomicDouble();
 
-        HttpResponse httpResponse =
-                new HttpPrometheusMetricsRequest().send(exporterTestEnvironment.getHttpClient());
+        HttpResponse httpResponse = new HttpPrometheusMetricsRequest().send(httpClient);
 
         assertHttpMetricsResponse(httpResponse);
 

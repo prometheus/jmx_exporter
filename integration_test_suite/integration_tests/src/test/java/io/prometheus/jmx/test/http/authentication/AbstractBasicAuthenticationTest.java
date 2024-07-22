@@ -65,7 +65,8 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     @Verifyica.Test
     public void testHealthy(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -89,7 +90,8 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     @Verifyica.Test
     public void testMetrics(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -117,7 +119,8 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     @Verifyica.Test
     public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -145,7 +148,8 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     @Verifyica.Test
     public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -173,7 +177,8 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     @Verifyica.Test
     public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         getAuthenticationCredentials()
                 .forEach(

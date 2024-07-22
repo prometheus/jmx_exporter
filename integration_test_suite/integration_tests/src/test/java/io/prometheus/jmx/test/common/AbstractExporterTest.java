@@ -27,6 +27,7 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import org.antublue.verifyica.api.ArgumentContext;
@@ -73,15 +74,18 @@ public abstract class AbstractExporterTest
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Network network = argumentContext.getClassContext().getStore().get(NETWORK);
+        Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
         argumentContext
-                .getArgumentPayload(ExporterTestEnvironment.class)
-                .initialize(getClass(), network);
+                .getTestArgument(ExporterTestEnvironment.class)
+                .getPayload()
+                .initialize(testClass, network);
     }
 
     @Verifyica.Test
     public void testHealthy(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         new HttpHealthyRequest()
                 .send(exporterTestEnvironment.getHttpClient())
@@ -90,7 +94,8 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Test
     public void testMetrics(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         accept(
                 exporterTestEnvironment,
@@ -99,7 +104,8 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         accept(
                 exporterTestEnvironment,
@@ -108,7 +114,8 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         accept(
                 exporterTestEnvironment,
@@ -117,7 +124,8 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Test
     public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
+        ExporterTestEnvironment exporterTestEnvironment =
+                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
         accept(
                 exporterTestEnvironment,
@@ -127,18 +135,16 @@ public abstract class AbstractExporterTest
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) {
-        ExporterTestEnvironment exporterTestEnvironment = argumentContext.getArgumentPayload();
-        if (exporterTestEnvironment != null) {
-            exporterTestEnvironment.destroy();
-        }
+        Optional.ofNullable(argumentContext.getTestArgument(ExporterTestEnvironment.class))
+                .ifPresent(
+                        exporterTestEnvironmentArgument ->
+                                exporterTestEnvironmentArgument.getPayload().destroy());
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        Network network = classContext.getStore().remove(NETWORK);
-        if (network != null) {
-            network.close();
-        }
+        Optional.ofNullable(classContext.getStore().remove(NETWORK, Network.class))
+                .ifPresent(Network::close);
     }
 
     @Override
