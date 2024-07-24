@@ -22,6 +22,8 @@ import org.yaml.snakeyaml.Yaml;
 /** Class to implement OpenTelemetryExporterFactory */
 public class OpenTelemetryExporterFactory {
 
+    private static final int NO_INTERVAL = -1;
+
     /** Constructor */
     private OpenTelemetryExporterFactory() {
         // DO NOTHING
@@ -55,9 +57,7 @@ public class OpenTelemetryExporterFactory {
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
                                                                     + " /openTelemetry")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for /openTelemetry"));
+                                    .orElse(new YamlMapAccessor());
 
                     String endpoint =
                             openTelemetryYamlMapAccessor
@@ -80,7 +80,7 @@ public class OpenTelemetryExporterFactory {
                                                             "Invalid configuration for"
                                                                     + " /openTelemetry/endpoint"
                                                                     + " must be a URL")))
-                                    .orElse("http://localhost:4317");
+                                    .orElse(null);
 
                     String protocol =
                             openTelemetryYamlMapAccessor
@@ -97,7 +97,7 @@ public class OpenTelemetryExporterFactory {
                                                             "Invalid configuration for"
                                                                     + " /openTelemetry/protocol"
                                                                     + " must not be blank")))
-                                    .orElse("grpc");
+                                    .orElse(null);
 
                     int interval =
                             openTelemetryYamlMapAccessor
@@ -115,8 +115,8 @@ public class OpenTelemetryExporterFactory {
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
                                                                 + " /openTelemetry/interval must be"
-                                                                + " between greater than 0")))
-                                    .orElse(60);
+                                                                + " an integer greater than 0")))
+                                    .orElse(NO_INTERVAL);
 
                     Map<String, String> headers =
                             openTelemetryYamlMapAccessor
@@ -132,16 +132,27 @@ public class OpenTelemetryExporterFactory {
                     OpenTelemetryExporter.Builder openTelemetryExporterBuilder =
                             OpenTelemetryExporter.builder();
 
-                    openTelemetryExporterBuilder
-                            .endpoint(endpoint)
-                            .protocol(protocol)
-                            .intervalSeconds(interval);
+                    if (endpoint != null) {
+                        openTelemetryExporterBuilder.endpoint(endpoint);
+                    }
+
+                    if (protocol != null) {
+                        openTelemetryExporterBuilder.protocol(protocol);
+                    }
+
+                    if (interval != NO_INTERVAL) {
+                        openTelemetryExporterBuilder.intervalSeconds(interval);
+                    }
 
                     if (headers != null) {
                         headers.forEach(
                                 (name, value) -> {
-                                    if (name != null && !name.trim().isEmpty()) {
-                                        openTelemetryExporterBuilder.header(name, value);
+                                    if (name != null
+                                            && !name.trim().isEmpty()
+                                            && value != null
+                                            && !value.trim().isEmpty()) {
+                                        openTelemetryExporterBuilder.header(
+                                                name.trim(), value.trim());
                                     }
                                 });
                     }
