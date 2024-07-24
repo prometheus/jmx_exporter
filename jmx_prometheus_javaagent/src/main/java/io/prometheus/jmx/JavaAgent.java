@@ -19,8 +19,6 @@ package io.prometheus.jmx;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
-import io.prometheus.metrics.exporter.httpserver.HTTPServer;
-import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -40,9 +38,6 @@ public class JavaAgent {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
 
-    private static HTTPServer httpServer;
-    private static OpenTelemetryExporter openTelemetryExporter;
-
     public static void agentmain(String agentArgument, Instrumentation instrumentation)
             throws Exception {
         premain(agentArgument, instrumentation);
@@ -60,16 +55,14 @@ public class JavaAgent {
 
             String host = config.host != null ? config.host : DEFAULT_HOST;
 
-            httpServer =
-                    HTTPServerFactory.getInstance()
-                            .createHTTPServer(
-                                    InetAddress.getByName(host),
-                                    config.port,
-                                    PrometheusRegistry.defaultRegistry,
-                                    new File(config.file));
+            HTTPServerFactory.getInstance()
+                    .createHTTPServer(
+                            InetAddress.getByName(host),
+                            config.port,
+                            PrometheusRegistry.defaultRegistry,
+                            new File(config.file));
 
-            openTelemetryExporter =
-                    OpenTelemetryExporterFactory.getInstance().create(new File(config.file));
+            OpenTelemetryExporterFactory.getInstance().create(new File(config.file));
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter");
