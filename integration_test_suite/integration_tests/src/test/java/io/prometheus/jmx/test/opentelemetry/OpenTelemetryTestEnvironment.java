@@ -331,7 +331,6 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                                                     new Ulimit("nofile", 65536L, 65536L)
                                                 }))
                 .withCommand("/bin/sh exporter.sh")
-                .withExposedPorts(8888)
                 .withLogConsumer(
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
