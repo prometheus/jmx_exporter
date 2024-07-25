@@ -12,6 +12,7 @@ import io.prometheus.jmx.common.configuration.ValidateStringIsNotBlank;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -32,11 +33,14 @@ public class OpenTelemetryExporterFactory {
     /**
      * Method to create an OpenTelemetryExporter using the supplied arguments
      *
+     * @param prometheusRegistry prometheusRegistry
      * @param exporterYamlFile exporterYamlFile
      * @return OpenTelemetryExporter OpenTelemetryExporter
      * @throws ConfigurationException ConfigurationException
      */
-    public OpenTelemetryExporter create(File exporterYamlFile) throws ConfigurationException {
+    public OpenTelemetryExporter createOpenTelemetryExporter(
+            PrometheusRegistry prometheusRegistry, File exporterYamlFile)
+            throws ConfigurationException {
         if (exporterYamlFile == null) {
             throw new IllegalArgumentException("exporterYamlFile is null");
         }
@@ -131,6 +135,8 @@ public class OpenTelemetryExporterFactory {
 
                     OpenTelemetryExporter.Builder openTelemetryExporterBuilder =
                             OpenTelemetryExporter.builder();
+
+                    openTelemetryExporterBuilder.registry(prometheusRegistry);
 
                     if (endpoint != null) {
                         openTelemetryExporterBuilder.endpoint(endpoint);

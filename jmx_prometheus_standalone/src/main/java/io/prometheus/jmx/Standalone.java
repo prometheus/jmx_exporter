@@ -95,7 +95,9 @@ public class Standalone {
 
                         openTelemetryExporter =
                                 OpenTelemetryExporterFactory.getInstance()
-                                        .create(new File(args[0]));
+                                        .createOpenTelemetryExporter(
+                                                PrometheusRegistry.defaultRegistry,
+                                                new File(args[0]));
                     }
             }
 

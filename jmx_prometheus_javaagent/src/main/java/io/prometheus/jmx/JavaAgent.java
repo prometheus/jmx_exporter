@@ -62,7 +62,9 @@ public class JavaAgent {
                             PrometheusRegistry.defaultRegistry,
                             new File(config.file));
 
-            OpenTelemetryExporterFactory.getInstance().create(new File(config.file));
+            OpenTelemetryExporterFactory.getInstance()
+                    .createOpenTelemetryExporter(
+                            PrometheusRegistry.defaultRegistry, new File(config.file));
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter");
