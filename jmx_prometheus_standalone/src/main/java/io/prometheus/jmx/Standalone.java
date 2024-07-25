@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class WebServer {
+public class Standalone {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
 
@@ -104,7 +104,7 @@ public class WebServer {
                             "%s | %s | INFO | %s | %s (%s)",
                             SIMPLE_DATE_FORMAT.format(new Date()),
                             Thread.currentThread().getName(),
-                            WebServer.class.getName(),
+                            Standalone.class.getName(),
                             "Running",
                             mode == Mode.HTTP ? "HTTP" : "OpenTelemetry"));
 

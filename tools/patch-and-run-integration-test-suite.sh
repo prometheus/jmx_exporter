@@ -16,7 +16,7 @@ function emit_error () {
 }
 
 JAVA_AGENT_JAR="${1}"
-HTTPSERVER_JAR="${2}"
+STANDALONE_JAR="${2}"
 PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
 
 if [ "$#" -ne 2 ];
@@ -36,9 +36,9 @@ rm -Rf ./integration_test_suite/integration_tests/src/test/resources/common/* > 
 cp "${JAVA_AGENT_JAR}" ./integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_javaagent.jar
 check_exit_code "Failed to patch the integration test suite [${JAVA_AGENT_JAR}]"
 
-# Copy the Java HTTP server exporter jar into the integration test suite
-cp "${HTTPSERVER_JAR}" ./integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_httpserver.jar
-check_exit_code "Failed to patch the integration test suite [${HTTPSERVER_JAR}]"
+# Copy the Java standalone server exporter jar into the integration test suite
+cp "${STANDALONE_JAR}" ./integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_standalone.jar
+check_exit_code "Failed to patch the integration test suite [${STANDALONE_JAR}]"
 
 # Pull smoke test Docker images
 ./integration_test_suite/docker-pull-images.smoke-test.sh
@@ -61,12 +61,12 @@ then
 fi
 
 # Validate the java httpserver jar version
-DOWNLOAD_HTTPSERVER_JAR_SHA256=$(sha256sum "${HTTPSERVER_JAR}")
-INTEGRATION_HTTPSERVER_JAR_SHA256=$(sha256sum ./integration_tests/src/test/resources/common/jmx_prometheus_httpserver.jar)
+DOWNLOAD_STANDALONE_JAR_SHA256=$(sha256sum "${STANDALONE_JAR}")
+INTEGRATION_STANDALONE_JAR_SHA256=$(sha256sum ./integration_tests/src/test/resources/common/jmx_prometheus_standalone.jar)
 
-if [ "${DOWNLOAD_HTTPSERVER_JAR_SHA256}" != "${DOWNLOAD_HTTPSERVER_JAR_SHA256}" ];
+if [ "${DOWNLOAD_STANDALONE_JAR_SHA256}" != "${DOWNLOAD_STANDALONE_JAR_SHA256}" ];
 then
-  emit_error "Java HTTP server jar mismatch"
+  emit_error "Java standalone server jar mismatch"
 fi
 
 # Change to the project root directory

@@ -2,4 +2,4 @@
 
 java \
   -Xmx512M \
-  -jar jmx_prometheus_httpserver.jar exporter.yaml
+  -jar jmx_prometheus_standalone.jar exporter.yaml

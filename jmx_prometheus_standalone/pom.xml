@@ -8,8 +8,8 @@
         <version>1.x.x</version>
     </parent>
 
-    <artifactId>jmx_prometheus_httpserver</artifactId>
-    <name>Prometheus JMX Exporter - Http Server</name>
+    <artifactId>jmx_prometheus_standalone</artifactId>
+    <name>Prometheus JMX Exporter - Standalone Server</name>
     <description>
         See https://github.com/prometheus/jmx_exporter/blob/master/README.md
     </description>
@@ -177,7 +177,7 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>io.prometheus.jmx.WebServer</Main-Class>
+                                        <Main-Class>io.prometheus.jmx.Standalone</Main-Class>
                                         <Implementation-Version>${project.version}</Implementation-Version>
                                         <Implementation-Title>${project.artifactId}</Implementation-Title>
                                     </manifestEntries>
@@ -209,7 +209,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- debian package builder -->
+            <!-- ian package builder -->
             <plugin>
                 <artifactId>jdeb</artifactId>
                 <groupId>org.vafer</groupId>
@@ -267,7 +267,7 @@
                             <fileSets>
                                 <fileSet>
                                     <sourceFile>${project.build.directory}/${project.build.finalName}.jar</sourceFile>
-                                    <destinationFile>../integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_httpserver.jar</destinationFile>
+                                    <destinationFile>../integration_test_suite/integration_tests/src/test/resources/common/jmx_prometheus_standalone.jar</destinationFile>
                                 </fileSet>
                             </fileSets>
                         </configuration>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Script to run a java application for testing jmx4prometheus.
+# Script to run a java application for testing the Prometheus JMX Standalone exporter.
 
 VERSION=$(sed -n -e 's#.*<version>\(.*-SNAPSHOT\)</version>#\1#p' pom.xml)
 
@@ -10,5 +10,5 @@ java \
   -Dcom.sun.management.jmxremote.ssl=false \
   -Dcom.sun.management.jmxremote.authenticate=false \
   -Dcom.sun.management.jmxremote.port=5555 \
-  -jar jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-"${VERSION}".jar 5556 \
+  -jar jmx_prometheus_standalone/target/jmx_prometheus_standalone-"${VERSION}".jar 5556 \
   example_configs/httpserver_sample_config.yml

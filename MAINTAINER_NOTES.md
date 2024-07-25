@@ -57,19 +57,19 @@ Example
 
 ```shell
 /home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar
-/home/dhoard/Downloads/jmx_prometheus_httpserver-0.20.0.jar
+/home/dhoard/Downloads/jmx_prometheus_standalone-0.20.0.jar
 ```
 
 Command
 
 ```shell
-./tools/patch-and-run-integration-test-suite.sh <javaagent.jar> <httpserver.jar>
+./tools/patch-and-run-integration-test-suite.sh <javaagent.jar> <standalone.jar>
 ```
 
 Example
 
 ```shell
-./tools/patch-and-run-integration-test-suite.sh /home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar /home/dhoard/Downloads/jmx_prometheus_httpserver-0.20.0.jar
+./tools/patch-and-run-integration-test-suite.sh /home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar /home/dhoard/Downloads/jmx_prometheus_standalone-0.20.0.jar
 ```
 
 ### Step 3
