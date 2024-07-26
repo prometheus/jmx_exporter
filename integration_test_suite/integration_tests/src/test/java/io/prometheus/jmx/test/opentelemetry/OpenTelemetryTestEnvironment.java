@@ -1,9 +1,11 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import com.github.dockerjava.api.model.Ulimit;
+import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -302,7 +304,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp");
+                .withWorkingDirectory("/temp")
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1));
     }
 
     /**
@@ -342,7 +345,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp");
+                .withWorkingDirectory("/temp")
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1));
     }
 
     /**
@@ -366,18 +370,27 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     private static boolean hasResource(String resource) {
         boolean hasResource = false;
 
-        try (BufferedReader bufferedReader =
-                new BufferedReader(
-                        new InputStreamReader(
-                                OpenTelemetryTestEnvironment.class.getResourceAsStream(resource),
-                                StandardCharsets.UTF_8))) {
-            String line = bufferedReader.readLine();
-            if (line != null) {
-                hasResource = true;
-            }
+        if (!resource.startsWith("/")) {
+            resource = "/" + resource;
+        }
 
-        } catch (Throwable t) {
-            // DO NOTHING
+        InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource);
+        if (inputStream != null) {
+            try (BufferedReader bufferedReader =
+                    new BufferedReader(
+                            new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                while (true) {
+                    String line = bufferedReader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+
+                    hasResource = true;
+                    break;
+                }
+            } catch (Throwable t) {
+                // DO NOTHING
+            }
         }
 
         return hasResource;
