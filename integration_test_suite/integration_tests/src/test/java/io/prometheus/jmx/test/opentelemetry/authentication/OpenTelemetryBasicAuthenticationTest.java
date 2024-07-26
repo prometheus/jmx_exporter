@@ -89,7 +89,7 @@ public class OpenTelemetryBasicAuthenticationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
 
-        Throttle throttle = new ExponentialBackoffThrottle(100, 2000);
+        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         AtomicBoolean success = new AtomicBoolean();
 
         for (int i = 0; i < 10; i++) {
