@@ -101,9 +101,9 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
             case JavaAgent:
                 {
                     prometheusContainer = createPrometheusContainer();
-                    javaAgentApplicationContainer = createJavaAgentApplicationContainer();
-
                     prometheusContainer.start();
+
+                    javaAgentApplicationContainer = createJavaAgentApplicationContainer();
                     javaAgentApplicationContainer.start();
 
                     break;
@@ -111,15 +111,28 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
             case Standalone:
                 {
                     prometheusContainer = createPrometheusContainer();
-                    standaloneApplicationContainer = createStandaloneApplicationContainer();
-                    standaloneExporterContainer = createStandaloneExporterContainer();
-
                     prometheusContainer.start();
+
+                    standaloneApplicationContainer = createStandaloneApplicationContainer();
                     standaloneApplicationContainer.start();
+
+                    standaloneExporterContainer = createStandaloneExporterContainer();
                     standaloneExporterContainer.start();
 
                     break;
                 }
+        }
+
+        if (standaloneApplicationContainer != null && !standaloneApplicationContainer.isRunning()) {
+            throw new IllegalStateException("standalone exporter container is not running");
+        }
+
+        if (standaloneApplicationContainer != null && !standaloneApplicationContainer.isRunning()) {
+            throw new IllegalStateException("standalone exporter container is not running");
+        }
+
+        if (prometheusContainer != null && !prometheusContainer.isRunning()) {
+            throw new IllegalStateException("standalone exporter container is not running");
         }
 
         httpClient = createPrometheusHttpClient(prometheusContainer, BASE_URL, 9090);
@@ -215,7 +228,10 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         .withNetwork(network)
                         .withNetworkAliases("prometheus")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                        .withStartupTimeout(Duration.ofMillis(30000));
+                        .withStartupTimeout(Duration.ofMillis(30000))
+                        .waitingFor(
+                                Wait.forLogMessage(
+                                        ".*Server is ready to receive web requests.*", 1));
 
         if (hasWebYaml) {
             genericContainer.withClasspathResourceMapping(

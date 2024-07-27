@@ -22,6 +22,9 @@
 #
 
 (
+  export JAVA_DOCKER_IMAGES=ALL
+  export PROMETHEUS_DOCKER_IMAGES=ALL
+
   while true;
   do
     DATE=`date`

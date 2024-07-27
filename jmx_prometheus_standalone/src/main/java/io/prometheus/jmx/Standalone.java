@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx;
 
+import static java.lang.String.format;
+
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
@@ -29,18 +31,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/** Class to implement Standalone */
 public class Standalone {
-
-    private static final String DEFAULT_HOST = "0.0.0.0";
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
-    private enum Mode {
-        HTTP,
-        OPEN_TELEMETRY
-    }
-
+    /**
+     * Main method
+     *
+     * @param args args
+     * @throws Exception Exception
+     */
     public static void main(String[] args) throws Exception {
         HTTPServer httpServer = null;
         OpenTelemetryExporter openTelemetryExporter = null;
@@ -52,73 +54,57 @@ public class Standalone {
             System.exit(1);
         }
 
-        Mode mode;
-        if (args.length == 2) {
-            mode = Mode.HTTP;
-        } else {
-            mode = Mode.OPEN_TELEMETRY;
-        }
-
         try {
-            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
+            Arguments arguments = Arguments.parse(args);
+            File file = new File(arguments.getFilename());
 
-            switch (mode) {
+            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
+            new JmxCollector(file, JmxCollector.Mode.STANDALONE)
+                    .register(PrometheusRegistry.defaultRegistry);
+
+            switch (arguments.getMode()) {
                 case HTTP:
                     {
-                        String host = DEFAULT_HOST;
-                        int port;
-                        int colonIndex = args[0].lastIndexOf(':');
-
-                        if (colonIndex < 0) {
-                            port = Integer.parseInt(args[0]);
-                        } else {
-                            port = Integer.parseInt(args[0].substring(colonIndex + 1));
-                            host = args[0].substring(0, colonIndex);
-                        }
-
-                        new JmxCollector(new File(args[1]), JmxCollector.Mode.STANDALONE)
-                                .register(PrometheusRegistry.defaultRegistry);
-
                         httpServer =
                                 HTTPServerFactory.getInstance()
                                         .createHTTPServer(
-                                                InetAddress.getByName(host),
-                                                port,
+                                                InetAddress.getByName(arguments.getHost()),
+                                                arguments.getPort(),
                                                 PrometheusRegistry.defaultRegistry,
-                                                new File(args[1]));
+                                                file);
                         break;
                     }
                 case OPEN_TELEMETRY:
                     {
-                        new JmxCollector(new File(args[0]), JmxCollector.Mode.STANDALONE)
-                                .register(PrometheusRegistry.defaultRegistry);
-
                         openTelemetryExporter =
                                 OpenTelemetryExporterFactory.getInstance()
                                         .createOpenTelemetryExporter(
-                                                PrometheusRegistry.defaultRegistry,
-                                                new File(args[0]));
+                                                PrometheusRegistry.defaultRegistry, file);
+                        break;
+                    }
+                default:
+                    {
+                        throw new RuntimeException("Undefined mode");
                     }
             }
 
-            System.out.println(
-                    String.format(
-                            "%s | %s | INFO | %s | %s (%s)",
-                            SIMPLE_DATE_FORMAT.format(new Date()),
-                            Thread.currentThread().getName(),
-                            Standalone.class.getName(),
-                            "Running",
-                            mode == Mode.HTTP ? "HTTP" : "OpenTelemetry"));
+            info(
+                    "Running (%s)",
+                    arguments.getMode() == Arguments.Mode.HTTP ? "HTTP" : "OpenTelemetry");
 
             Thread.currentThread().join();
         } catch (ConfigurationException e) {
-            System.err.println("Configuration Exception : " + e.getMessage());
-            e.printStackTrace(System.err);
-            System.exit(1);
+            synchronized (System.err) {
+                System.err.println("Configuration Exception : " + e.getMessage());
+                e.printStackTrace(System.err);
+                System.exit(1);
+            }
         } catch (Throwable t) {
-            System.err.println("Exception starting");
-            t.printStackTrace(System.err);
-            System.exit(1);
+            synchronized (System.err) {
+                System.err.println("Exception starting");
+                t.printStackTrace(System.err);
+                System.exit(1);
+            }
         } finally {
             if (openTelemetryExporter != null) {
                 openTelemetryExporter.close();
@@ -127,5 +113,15 @@ public class Standalone {
                 httpServer.close();
             }
         }
+    }
+
+    private static void info(String format, Object... objects) {
+        System.out.println(
+                format(
+                        "%s | %s | INFO | %s | %s",
+                        SIMPLE_DATE_FORMAT.format(new Date()),
+                        Thread.currentThread().getName(),
+                        Standalone.class.getName(),
+                        format(format, objects)));
     }
 }

@@ -172,7 +172,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      */
     protected Double getPrometheusMetric(
             OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String metricName) {
-        Throttle throttle = new ExponentialBackoffThrottle(100, 2000);
+        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         AtomicReference<Double> value = new AtomicReference<>();
 
         for (int i = 0; i < 10; i++) {

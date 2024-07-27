@@ -14,7 +14,7 @@ public class ExpectedMetricsNames {
 
         metricNames.add("io_prometheus_jmx_autoIncrementing_Value");
 
-        // This metric doesn't exist for Java 11+
+        // These metric doesn't exist for Java 11+
         // metricNames.add("io_prometheus_jmx_optionalValue_Value");
 
         metricNames.add("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail");
