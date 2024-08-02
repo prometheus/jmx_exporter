@@ -73,7 +73,7 @@ public abstract class AbstractExporterTest
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Network network = argumentContext.getClassContext().getStore().get(NETWORK);
+        Network network = argumentContext.getClassContext().getStore().get(NETWORK, Network.class);
         Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
         argumentContext
