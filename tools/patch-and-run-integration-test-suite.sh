@@ -21,7 +21,7 @@ PROJECT_ROOT_DIRECTORY=$(git rev-parse --show-toplevel)
 
 if [ "$#" -ne 2 ];
 then
-  echo "Usage: ${0} <javaagent.jar> <httpserver.jar>"
+  echo "Usage: ${0} <javaagent.jar> <standalone.jar>"
   exit 1
 fi
 
@@ -60,7 +60,7 @@ then
   emit_error "Java agent jar mismatch"
 fi
 
-# Validate the java httpserver jar version
+# Validate the java standalone jar version
 DOWNLOAD_STANDALONE_JAR_SHA256=$(sha256sum "${STANDALONE_JAR}")
 INTEGRATION_STANDALONE_JAR_SHA256=$(sha256sum ./integration_tests/src/test/resources/common/jmx_prometheus_standalone.jar)
 
