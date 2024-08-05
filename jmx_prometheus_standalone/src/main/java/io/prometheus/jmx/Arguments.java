@@ -96,43 +96,27 @@ public class Arguments {
 
         if (arguments.length == 2) {
             mode = Mode.HTTP;
+
+            host = DEFAULT_HOST;
+
+            int colonIndex = arguments[0].lastIndexOf(':');
+
+            try {
+                if (colonIndex < 0) {
+                    port = Integer.parseInt(arguments[0]);
+                } else {
+                    port = Integer.parseInt(arguments[0].substring(colonIndex + 1));
+                    host = arguments[0].substring(0, colonIndex);
+                }
+            } catch (NumberFormatException e) {
+                throw new ConfigurationException(
+                        format("Malformed arguments [%s]", toString(arguments)));
+            }
+
             filename = arguments[1];
         } else {
             mode = Mode.OPEN_TELEMETRY;
             filename = arguments[0];
-        }
-
-        switch (mode) {
-            case HTTP:
-                {
-                    host = DEFAULT_HOST;
-
-                    int colonIndex = arguments[0].lastIndexOf(':');
-
-                    try {
-                        if (colonIndex < 0) {
-                            port = Integer.parseInt(arguments[0]);
-                        } else {
-                            port = Integer.parseInt(arguments[0].substring(colonIndex + 1));
-                            host = arguments[0].substring(0, colonIndex);
-                        }
-                    } catch (NumberFormatException e) {
-                        throw new ConfigurationException(
-                                format("Malformed arguments [%s]", toString(arguments)));
-                    }
-
-                    break;
-                }
-            case OPEN_TELEMETRY:
-                {
-                    // INTENTIONALLY BLANK
-                    break;
-                }
-            default:
-                {
-                    throw new ConfigurationException(
-                            format("Malformed arguments [%s]", toString(arguments)));
-                }
         }
 
         return new Arguments(mode, host, port, filename);

@@ -62,30 +62,19 @@ public class Standalone {
             new JmxCollector(file, JmxCollector.Mode.STANDALONE)
                     .register(PrometheusRegistry.defaultRegistry);
 
-            switch (arguments.getMode()) {
-                case HTTP:
-                    {
-                        httpServer =
-                                HTTPServerFactory.getInstance()
-                                        .createHTTPServer(
-                                                InetAddress.getByName(arguments.getHost()),
-                                                arguments.getPort(),
-                                                PrometheusRegistry.defaultRegistry,
-                                                file);
-                        break;
-                    }
-                case OPEN_TELEMETRY:
-                    {
-                        openTelemetryExporter =
-                                OpenTelemetryExporterFactory.getInstance()
-                                        .createOpenTelemetryExporter(
-                                                PrometheusRegistry.defaultRegistry, file);
-                        break;
-                    }
-                default:
-                    {
-                        throw new RuntimeException("Undefined mode");
-                    }
+            if (arguments.getMode() == Arguments.Mode.HTTP) {
+                httpServer =
+                        HTTPServerFactory.getInstance()
+                                .createHTTPServer(
+                                        InetAddress.getByName(arguments.getHost()),
+                                        arguments.getPort(),
+                                        PrometheusRegistry.defaultRegistry,
+                                        file);
+            } else {
+                openTelemetryExporter =
+                        OpenTelemetryExporterFactory.getInstance()
+                                .createOpenTelemetryExporter(
+                                        PrometheusRegistry.defaultRegistry, file);
             }
 
             info(

@@ -52,30 +52,16 @@ public class JavaAgent {
             new JmxCollector(new File(arguments.getFilename()), JmxCollector.Mode.AGENT)
                     .register(PrometheusRegistry.defaultRegistry);
 
-            switch (arguments.getMode()) {
-                case HTTP:
-                    {
-                        HTTPServerFactory.getInstance()
-                                .createHTTPServer(
-                                        InetAddress.getByName(arguments.getHost()),
-                                        arguments.getPort(),
-                                        PrometheusRegistry.defaultRegistry,
-                                        file);
-
-                        break;
-                    }
-                case OPEN_TELEMETRY:
-                    {
-                        OpenTelemetryExporterFactory.getInstance()
-                                .createOpenTelemetryExporter(
-                                        PrometheusRegistry.defaultRegistry, file);
-
-                        break;
-                    }
-                default:
-                    {
-                        throw new RuntimeException("Undefined mode");
-                    }
+            if (arguments.getMode() == Arguments.Mode.HTTP) {
+                HTTPServerFactory.getInstance()
+                        .createHTTPServer(
+                                InetAddress.getByName(arguments.getHost()),
+                                arguments.getPort(),
+                                PrometheusRegistry.defaultRegistry,
+                                file);
+            } else {
+                OpenTelemetryExporterFactory.getInstance()
+                        .createOpenTelemetryExporter(PrometheusRegistry.defaultRegistry, file);
             }
         } catch (Throwable t) {
             synchronized (System.err) {

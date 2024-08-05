@@ -130,12 +130,15 @@ public class Arguments {
                 default:
                     {
                         throw new ConfigurationException(
-                                format("Malformed arguments [%s]", agentArgument));
+                                format(
+                                        "Malformed arguments for Standalone HTTP mode [%s]",
+                                        agentArgument));
                     }
             }
 
             if (host.trim().isEmpty()) {
-                throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
+                throw new ConfigurationException(
+                        format("Malformed arguments for Standalone HTTP mode [%s]", agentArgument));
             }
         } else {
             mode = Mode.OPEN_TELEMETRY;
