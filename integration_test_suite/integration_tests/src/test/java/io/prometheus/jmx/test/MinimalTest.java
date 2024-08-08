@@ -18,6 +18,7 @@ package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
@@ -25,8 +26,12 @@ import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public class MinimalTest extends AbstractExporterTest
@@ -36,7 +41,24 @@ public class MinimalTest extends AbstractExporterTest
     public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertHttpMetricsResponse(httpResponse);
 
-        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
+        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+
+        // Validate no duplicate metrics (metrics with the same name and labels)
+        // and build a Metrics Map for subsequent processing
+
+        Set<String> compositeSet = new LinkedHashSet<>();
+        MetricsParser.parseCollection(httpResponse)
+                .forEach(
+                        metric -> {
+                            String name = metric.name();
+                            Map<String, String> labels = metric.labels();
+                            String composite = name + " " + labels;
+                            assertThat(compositeSet).doesNotContain(composite);
+                            compositeSet.add(composite);
+                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+                        });
+
+        // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
                 exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
