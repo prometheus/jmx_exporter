@@ -22,56 +22,57 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
-/** Class to get Docker image names */
-public final class DockerImageNames {
+/** Class to implement JavaDockerImages */
+public final class JavaDockerImages {
 
-    private static final String DOCKER_IMAGE_NAMES_CONFIGURATION = "docker.image.names";
+    private static final String DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
-    private static final String ALL_DOCKER_IMAGE_NAMES_RESOURCE = "/docker-image-names.all.txt";
+    private static final String DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
+
+    private static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE =
+            "/smoke-test-java-docker-images.txt";
+
     private static String[] ALL_DOCKER_IMAGE_NAMES;
 
-    private static final String SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE =
-            "/docker-image-names.smoke-test.txt";
-    private static String[] SMOKE_TEST_DOCKER_IMAGE_NAMES;
+    private static String[] SMOKE_TEST_DOCKER_IMAGES;
 
     /** Predicate to accept all Docker image names */
-    public static final Predicate<String> ALL_JAVA_VERSIONS = name -> true;
+    public static final Predicate<String> ACCEPT_ALL = name -> true;
 
     /** Constructor */
-    private DockerImageNames() {
+    private JavaDockerImages() {
         // DO NOTHING
     }
 
     /**
-     * Method to get Stream of all Docker image names
+     * Method to get Collection of all Docker image names
      *
-     * @return the Stream of Docker image names
+     * @return the Collection of Docker image names
      */
-    public static Stream<String> names() {
-        return names(ALL_JAVA_VERSIONS);
+    public static Collection<String> names() {
+        return names(ACCEPT_ALL);
     }
 
     /**
-     * Method to get Stream of Docker image names filtered by a Predicate
+     * Method to get List of Docker image names filtered by a Predicate
      *
      * @param predicate predicate
-     * @return the Stream of Docker image names
+     * @return the List of Docker image names
      */
-    public static Stream<String> names(Predicate<String> predicate) {
+    public static Collection<String> names(Predicate<String> predicate) {
         Objects.requireNonNull(predicate);
 
-        synchronized (DockerImageNames.class) {
+        synchronized (JavaDockerImages.class) {
             if (ALL_DOCKER_IMAGE_NAMES == null) {
-                ALL_DOCKER_IMAGE_NAMES = load(ALL_DOCKER_IMAGE_NAMES_RESOURCE);
+                ALL_DOCKER_IMAGE_NAMES = load(DOCKER_IMAGES_RESOURCE);
             }
-            if (SMOKE_TEST_DOCKER_IMAGE_NAMES == null) {
-                SMOKE_TEST_DOCKER_IMAGE_NAMES = load(SMOKE_TEST_DOCKER_IMAGE_NAMES_RESOURCE);
+            if (SMOKE_TEST_DOCKER_IMAGES == null) {
+                SMOKE_TEST_DOCKER_IMAGES = load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE);
             }
         }
 
@@ -79,9 +80,7 @@ public final class DockerImageNames {
 
         String dockerImageNameValue =
                 System.getenv(
-                        DOCKER_IMAGE_NAMES_CONFIGURATION
-                                .toUpperCase(Locale.ENGLISH)
-                                .replace('.', '_'));
+                        DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
         if (dockerImageNameValue != null) {
             dockerImageNameValue = dockerImageNameValue.trim();
@@ -91,7 +90,7 @@ public final class DockerImageNames {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNameValue = System.getProperty(DOCKER_IMAGE_NAMES_CONFIGURATION);
+            dockerImageNameValue = System.getProperty(DOCKER_IMAGES_CONFIGURATION);
             if (dockerImageNameValue != null) {
                 if (dockerImageNameValue.isBlank()) {
                     dockerImageNameValue = null;
@@ -100,7 +99,7 @@ public final class DockerImageNames {
         }
 
         if (dockerImageNameValue == null) {
-            dockerImageNames = SMOKE_TEST_DOCKER_IMAGE_NAMES;
+            dockerImageNames = SMOKE_TEST_DOCKER_IMAGES;
         } else if (dockerImageNameValue.equalsIgnoreCase("ALL")) {
             dockerImageNames = ALL_DOCKER_IMAGE_NAMES;
         } else {
@@ -114,7 +113,7 @@ public final class DockerImageNames {
             }
         }
 
-        return dockerImageNamesCollection.stream();
+        return Collections.unmodifiableCollection(dockerImageNamesCollection);
     }
 
     /**
@@ -124,14 +123,14 @@ public final class DockerImageNames {
      * @return the String array of lines
      */
     private static String[] load(String resource) {
-        List<String> dockerImageNames = new ArrayList<>();
+        Collection<String> dockerImageNames = new ArrayList<>();
         BufferedReader bufferedReader;
 
         try {
             bufferedReader =
                     new BufferedReader(
                             new InputStreamReader(
-                                    DockerImageNames.class.getResourceAsStream(resource),
+                                    JavaDockerImages.class.getResourceAsStream(resource),
                                     StandardCharsets.UTF_8));
 
             while (true) {
@@ -148,8 +147,7 @@ public final class DockerImageNames {
 
             return dockerImageNames.toArray(new String[0]);
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Exception reading resource " + ALL_DOCKER_IMAGE_NAMES_RESOURCE, e);
+            throw new RuntimeException("Exception reading resource " + DOCKER_IMAGES_RESOURCE, e);
         }
     }
 }

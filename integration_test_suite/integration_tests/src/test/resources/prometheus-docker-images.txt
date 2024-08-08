@@ -1,0 +1,7 @@
+prom/prometheus:v2.47.2
+prom/prometheus:v2.48.1
+prom/prometheus:v2.49.1
+prom/prometheus:v2.50.1
+prom/prometheus:v2.51.2
+prom/prometheus:v2.52.0
+prom/prometheus:v2.53.1

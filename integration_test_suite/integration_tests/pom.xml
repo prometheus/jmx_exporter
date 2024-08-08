@@ -28,11 +28,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <antublue.test.engine.version>7.0.0</antublue.test.engine.version>
-        <!-- smoke test containers -->
-        <docker.image.names/>
-        <!-- all test containers -->
-        <!-- <docker.image.names>ALL</docker.image.names> -->
+        <verifyica.version>0.0.6</verifyica.version>
     </properties>
 
     <build>
@@ -62,11 +58,11 @@
                 </configuration>
                 <executions>
                     <execution>
-                    <id>clean-resources</id>
-                    <phase>clean</phase>
-                    <goals>
-                        <goal>clean</goal>
-                    </goals>
+                        <id>clean-resources</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -79,14 +75,9 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.antublue</groupId>
-                <artifactId>test-engine-maven-plugin</artifactId>
-                <version>${antublue.test.engine.version}</version>
-                <configuration>
-                    <properties>
-                        <docker.image.names>${docker.image.names}</docker.image.names>
-                    </properties>
-                </configuration>
+                <groupId>org.antublue.verifyica</groupId>
+                <artifactId>maven-plugin</artifactId>
+                <version>${verifyica.version}</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
@@ -96,14 +87,46 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.22.0</version>
+                            <style>AOSP</style>
+                            <reflowLongStrings>true</reflowLongStrings>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
-            <groupId>org.antublue</groupId>
-            <artifactId>test-engine-api</artifactId>
-            <version>${antublue.test.engine.version}</version>
+            <groupId>org.antublue.verifyica</groupId>
+            <artifactId>api</artifactId>
+            <version>${verifyica.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antublue.verifyica</groupId>
+            <artifactId>engine</artifactId>
+            <version>${verifyica.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus.jmx</groupId>
+            <artifactId>jmx_prometheus_common</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
@@ -128,7 +151,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
@@ -141,10 +164,9 @@
             <version>3.26.0</version>
         </dependency>
         <dependency>
-            <groupId>org.antublue</groupId>
-            <artifactId>test-engine</artifactId>
-            <version>${antublue.test.engine.version}</version>
-            <scope>test</scope>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.2</version>
         </dependency>
     </dependencies>
 
