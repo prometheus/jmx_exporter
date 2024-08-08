@@ -17,26 +17,17 @@
 package io.prometheus.jmx.test.support.metrics;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.opentest4j.AssertionFailedError;
 
-/** Class to assert a DoubleValueMetric */
+/** Class to assert a MetricAssertion */
 public class MetricAssertion {
 
-    private static final Set<String> VALID_TYPES = new HashSet<>();
-
-    static {
-        VALID_TYPES.add("COUNTER");
-        VALID_TYPES.add("GAUGE");
-        VALID_TYPES.add("UNTYPED");
-    }
-
     private final Collection<Metric> metrics;
-    private String type;
+    private Metric.Type type;
     private String name;
     private String help;
     private TreeMap<String, String> labels;
@@ -49,7 +40,7 @@ public class MetricAssertion {
      */
     private MetricAssertion(Collection<Metric> metrics) {
         if (metrics == null) {
-            throw new IllegalArgumentException("Collection<Metrics> is null");
+            throw new IllegalArgumentException("metrics is null");
         }
         this.metrics = metrics;
     }
@@ -60,9 +51,9 @@ public class MetricAssertion {
      * @param type type
      * @return this MetricAssertion
      */
-    public MetricAssertion ofType(String type) {
-        if (type == null || !VALID_TYPES.contains(type)) {
-            throw new IllegalArgumentException(String.format("Type [%s] is null or invalid", type));
+    public MetricAssertion ofType(Metric.Type type) {
+        if (type == null) {
+            throw new IllegalArgumentException("Type is null");
         }
         this.type = type;
         return this;
@@ -126,7 +117,7 @@ public class MetricAssertion {
      * @return this MetricAssertion
      */
     public MetricAssertion isPresent() {
-        return isPresent(true);
+        return isPresentWhen(true);
     }
 
     /**
@@ -135,7 +126,7 @@ public class MetricAssertion {
      * @param condition condition
      * @return this MetricAssertion
      */
-    public MetricAssertion isPresent(boolean condition) {
+    public MetricAssertion isPresentWhen(boolean condition) {
         List<Metric> metrics =
                 this.metrics.stream()
                         .filter(metric -> type == null || metric.type().equals(type))
@@ -144,7 +135,9 @@ public class MetricAssertion {
                         .filter(
                                 metric ->
                                         labels == null
-                                                || new LabelsSubsetFilter(labels).test(metric))
+                                                || metric.labels()
+                                                        .entrySet()
+                                                        .containsAll(labels.entrySet()))
                         .filter(metric -> value == null || metric.value() == value)
                         .collect(Collectors.toList());
 
@@ -163,7 +156,7 @@ public class MetricAssertion {
                                 type, help, name, labels, value));
             }
         } else {
-            if (metrics.size() > 0) {
+            if (!metrics.isEmpty()) {
                 throw new AssertionFailedError(
                         String.format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
@@ -181,7 +174,7 @@ public class MetricAssertion {
      * @return this MetricAssertion
      */
     public MetricAssertion isNotPresent() {
-        return isPresent(false);
+        return isPresentWhen(false);
     }
 
     /**
@@ -190,8 +183,8 @@ public class MetricAssertion {
      * @param condition condition
      * @return this MetricAssertion
      */
-    public MetricAssertion isNotPresent(boolean condition) {
-        return isPresent(!condition);
+    public MetricAssertion isNotPresentWhen(boolean condition) {
+        return isPresentWhen(!condition);
     }
 
     /**
@@ -202,5 +195,15 @@ public class MetricAssertion {
      */
     public static MetricAssertion assertMetric(Collection<Metric> metrics) {
         return new MetricAssertion(metrics);
+    }
+
+    /**
+     * Method to create a MetricAssertion
+     *
+     * @param metrics the collection of metrics
+     * @return a MetricAssertion
+     */
+    public static MapMetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
+        return new MapMetricAssertion(metrics);
     }
 }

@@ -23,11 +23,21 @@ import java.util.TreeMap;
 /** Class to implement a Metric */
 public class Metric {
 
-    private final String type;
+    private final Type type;
     private final String name;
     private final String help;
     private final TreeMap<String, String> labels;
     private final double value;
+
+    /** Metric types */
+    public enum Type {
+        /** Gauge */
+        GAUGE,
+        /** Counter */
+        COUNTER,
+        /** Untyped */
+        UNTYPED
+    }
 
     /**
      * Constructor
@@ -39,7 +49,7 @@ public class Metric {
      * @param value value
      */
     public Metric(
-            String type, String help, String name, TreeMap<String, String> labels, double value) {
+            Type type, String help, String name, TreeMap<String, String> labels, double value) {
         this.type = type;
         this.help = help;
         this.name = name;
@@ -52,7 +62,7 @@ public class Metric {
      *
      * @return the Metric type
      */
-    public String type() {
+    public Type type() {
         return type;
     }
 

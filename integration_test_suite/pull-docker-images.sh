@@ -17,8 +17,5 @@ function check_exit_code() {
   fi
 }
 
-grep -v '^#' integration_tests/src/test/resources/docker-image-names.smoke-test.txt | while read -r LINE;
-do
-  docker pull "${LINE}"
-  check_exit_code "${LINE}"
-done
+./pull-java-docker-images.sh
+./pull-prometheus-docker-images.sh

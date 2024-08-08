@@ -1,5 +1,7 @@
 package io.prometheus.jmx.test.support.http;
 
+import static java.lang.String.format;
+import static org.antublue.verifyica.api.Fail.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HttpResponseAssertions {
@@ -9,7 +11,7 @@ public class HttpResponseAssertions {
     }
 
     public static void assertHttpResponseCode(HttpResponse httpResponse, int code) {
-        assertThat(httpResponse.code()).isEqualTo(code);
+        assertThat(httpResponse.statusCode()).isEqualTo(code);
     }
 
     public static void assertHttpResponseHasHeaders(HttpResponse httpResponse) {
@@ -28,7 +30,7 @@ public class HttpResponseAssertions {
 
     public static void assertHttpHealthyResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
-        assertThat(httpResponse.code()).isEqualTo(200);
+        assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().string().length()).isGreaterThan(0);
         assertThat(httpResponse.body().string()).isEqualTo("Exporter is healthy.\n");
@@ -36,7 +38,22 @@ public class HttpResponseAssertions {
 
     public static void assertHttpMetricsResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
-        assertThat(httpResponse.code()).isEqualTo(200);
+
+        int statusCode = httpResponse.statusCode();
+        if (statusCode != 200) {
+            HttpResponseBody httpResponseBody = httpResponse.body();
+            if (httpResponseBody != null) {
+                String content = httpResponseBody.string();
+                fail(
+                        format(
+                                "Exporter error, HTTP status code [%d] content [%n%s]",
+                                statusCode, content));
+            } else {
+                fail(format("Exporter error, HTTP status code [%d] no content", statusCode));
+            }
+        }
+
+        assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertHttpResponseHasHeaders(httpResponse);
         assertHttpResponseHasHeader(httpResponse, HttpHeader.CONTENT_TYPE);
         assertHttpResponseHasBody(httpResponse);
