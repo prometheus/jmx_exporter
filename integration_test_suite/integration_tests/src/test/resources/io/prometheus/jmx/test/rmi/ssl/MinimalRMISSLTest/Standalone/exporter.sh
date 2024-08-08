@@ -8,4 +8,4 @@ java \
   -Djavax.net.ssl.trustStore=localhost.pkcs12 \
   -Djavax.net.ssl.trustStorePassword=changeit \
   -Djavax.net.ssl.trustStoreType=pkcs12 \
-  -jar jmx_prometheus_standalone.jar 8888 exporter.yaml
+  -jar jmx_prometheus_httpserver.jar 8888 exporter.yaml
