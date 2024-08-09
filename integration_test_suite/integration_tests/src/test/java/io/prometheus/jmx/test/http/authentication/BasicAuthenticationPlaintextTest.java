@@ -43,7 +43,7 @@ public class BasicAuthenticationPlaintextTest extends AbstractBasicAuthenticatio
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_standalone";
+                        : "jmx_prometheus_httpserver";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
