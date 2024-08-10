@@ -128,20 +128,18 @@ public class MapMetricAssertion {
     public MapMetricAssertion isPresentWhen(boolean condition) {
         Collection<Metric> metrics = this.metrics.get(name);
 
-        if (condition && metrics == null) {
-            throw new AssertionFailedError(
-                    String.format(
-                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
-                                    + " matches multiple metrics",
-                            type, help, name, labels, value));
-        } else if (!condition && metrics != null) {
-            throw new AssertionFailedError(
-                    String.format(
-                            "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
-                                    + " present",
-                            type, help, name, labels, value));
-        } else if (!condition) {
-            return this;
+        if (condition) {
+            if (metrics == null) {
+                throw new AssertionFailedError(
+                        String.format(
+                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
+                                        + " present",
+                                type, help, name, labels, value));
+            }
+        } else {
+            if (metrics == null) {
+                return this;
+            }
         }
 
         Collection<Metric> subMetrics =
