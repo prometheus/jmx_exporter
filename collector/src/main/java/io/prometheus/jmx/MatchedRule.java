@@ -100,6 +100,32 @@ public class MatchedRule {
     }
 
     @Override
+    public String toString() {
+        return "MatchedRule{"
+                + "name='"
+                + name
+                + '\''
+                + ", matchName='"
+                + matchName
+                + '\''
+                + ", type='"
+                + type
+                + '\''
+                + ", help='"
+                + help
+                + '\''
+                + ", labelNames="
+                + labelNames
+                + ", labelValues="
+                + labelValues
+                + ", value="
+                + value
+                + ", valueFactor="
+                + valueFactor
+                + '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
