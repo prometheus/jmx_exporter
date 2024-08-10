@@ -1,14 +1,19 @@
 package io.prometheus.jmx;
 
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.model.snapshots.*;
 import java.util.*;
+import java.util.logging.Level;
 
 public class MatchedRuleToMetricSnapshotsConverter {
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(MatchedRuleToMetricSnapshotsConverter.class);
 
     private static final String OBJECTNAME = "_objectname";
 
     public static MetricSnapshots convert(List<MatchedRule> matchedRules) {
-
         Map<String, List<MatchedRule>> rulesByPrometheusMetricName = new HashMap<>();
 
         for (MatchedRule matchedRule : matchedRules) {
@@ -16,6 +21,19 @@ public class MatchedRuleToMetricSnapshotsConverter {
                     rulesByPrometheusMetricName.computeIfAbsent(
                             matchedRule.name, name -> new ArrayList<>());
             matchedRulesWithSameName.add(matchedRule);
+        }
+
+        if (LOGGER.isLoggable(Level.FINE)) {
+            rulesByPrometheusMetricName
+                    .values()
+                    .forEach(
+                            matchedRules1 ->
+                                    matchedRules1.forEach(
+                                            matchedRule ->
+                                                    LOGGER.log(
+                                                            Level.FINE,
+                                                            "matchedRule %s",
+                                                            matchedRule)));
         }
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
