@@ -1,0 +1,37 @@
+------------------------------
+JMX Exporter Standalone Server
+------------------------------
+
+The JMX Exporter Standalone server has two exclusive modes:
+
+Prometheus (HTTP) mode
+----------------------
+
+- Exposes a "/metrics" endpoint to allow metrics collection via Prometheus (HTTP)
+
+Usage:
+
+  java -jar jmx_prometheus_standalone-<VERSION>.jar [HOSTNAME:]<PORT> <YAML configuration file>
+
+Example:
+
+  java -jar jmx_prometheus_standalone-1.0.1.jar 12345 config.yaml
+
+OpenTelemetry mode
+------------------
+
+- Pushes metrics to an OpenTelemetry endpoint
+- Requires "/openTelemetry" to be configured in the YAML configuration file
+
+Usage:
+
+  java -jar jmx_prometheus_standalone-<VERSION>.jar <YAML configuration file>
+
+Example:
+
+  java -jar jmx_prometheus_standalone-1.0.1.jar config.yaml
+
+Documentation
+-------------
+
+https://github.com/prometheus/jmx_exporter

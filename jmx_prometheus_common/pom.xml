@@ -8,7 +8,6 @@
         <version>1.x.x</version>
     </parent>
 
-    <groupId>io.prometheus.jmx</groupId>
     <artifactId>jmx_prometheus_common</artifactId>
     <name>Prometheus JMX Exporter - Common</name>
     <description>
@@ -56,7 +55,7 @@
                 <executions>
                     <execution>
                         <goals>
-                            <goal>check</goal>
+                            <goal>apply</goal>
                         </goals>
                         <phase>compile</phase>
                     </execution>
@@ -77,6 +76,10 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exporter-opentelemetry</artifactId>
         </dependency>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
