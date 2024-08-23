@@ -39,7 +39,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      *
      * @return the Stream of test environments
      */
-    @Verifyica.ArgumentSupplier(parallelism = 2)
+    @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
