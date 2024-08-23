@@ -28,6 +28,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 /** Class to implement OpenTelemetryBasicAuthenticationTest */
+@Verifyica.Order(order = 1)
 public class OpenTelemetryBasicAuthenticationTest {
 
     private static final String NETWORK = "network";
