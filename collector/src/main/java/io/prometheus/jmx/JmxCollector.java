@@ -77,6 +77,16 @@ public class JmxCollector implements MultiCollector {
         ArrayList<String> labelValues;
     }
 
+    public static class MetricCustomizer {
+        MBeanFilter mbeanFilter;
+        List<String> attributesAsLabels;
+    }
+
+    public static class MBeanFilter {
+        String domain;
+        Map<String, String> properties;
+    }
+
     private static class Config {
         Integer startDelaySeconds = 0;
         String jmxUrl = "";
@@ -90,7 +100,7 @@ public class JmxCollector implements MultiCollector {
         ObjectNameAttributeFilter objectNameAttributeFilter;
         final List<Rule> rules = new ArrayList<>();
         long lastUpdate = 0L;
-
+        List<MetricCustomizer> metricCustomizers = new ArrayList<>();
         MatchedRulesCache rulesCache;
     }
 
@@ -326,6 +336,29 @@ public class JmxCollector implements MultiCollector {
             }
         }
 
+        if (yamlConfig.containsKey("metricCustomizers")) {
+            List<Map<String, Object>> metricCustomizersYaml =
+                    (List<Map<String, Object>>) yamlConfig.get("metricCustomizers");
+            for (Map<String, Object> metricCustomizerYaml : metricCustomizersYaml) {
+                Map<String, Object> mbeanFilterYaml =
+                        (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
+                MBeanFilter mbeanFilter = new MBeanFilter();
+                mbeanFilter.domain = (String) mbeanFilterYaml.get("domain");
+                mbeanFilter.properties = (Map<String, String>) mbeanFilterYaml.get("properties");
+
+                List<String> attributesAsLabels =
+                        (List<String>) metricCustomizerYaml.get("attributesAsLabels");
+                if (attributesAsLabels == null) {
+                    attributesAsLabels = new ArrayList<>();
+                }
+
+                MetricCustomizer metricCustomizer = new MetricCustomizer();
+                metricCustomizer.mbeanFilter = mbeanFilter;
+                metricCustomizer.attributesAsLabels = attributesAsLabels;
+                cfg.metricCustomizers.add(metricCustomizer);
+            }
+        }
+
         if (yamlConfig.containsKey("rules")) {
             List<Map<String, Object>> configRules =
                     (List<Map<String, Object>>) yamlConfig.get("rules");
@@ -498,7 +531,8 @@ public class JmxCollector implements MultiCollector {
                 String help,
                 Double value,
                 double valueFactor,
-                String type) {
+                String type,
+                Map<String, String> attributesAsLabelsWithValues) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
             if (!beanProperties.isEmpty()) {
@@ -533,6 +567,7 @@ public class JmxCollector implements MultiCollector {
                     labelValues.add(entry.getValue());
                 }
             }
+            addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
 
             return new MatchedRule(
                     fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
@@ -541,6 +576,7 @@ public class JmxCollector implements MultiCollector {
         public void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
                 LinkedList<String> attrKeys,
                 String attrName,
                 String attrType,
@@ -638,7 +674,8 @@ public class JmxCollector implements MultiCollector {
                                     help,
                                     value,
                                     rule.valueFactor,
-                                    rule.type);
+                                    rule.type,
+                                    attributesAsLabelsWithValues);
                     addToCache(rule, matchName, matchedRule);
                     break;
                 }
@@ -660,6 +697,7 @@ public class JmxCollector implements MultiCollector {
                 // Set the labels.
                 ArrayList<String> labelNames = new ArrayList<>();
                 ArrayList<String> labelValues = new ArrayList<>();
+                addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
                 if (rule.labelNames != null) {
                     for (int i = 0; i < rule.labelNames.size(); i++) {
                         final String unsafeLabelName = rule.labelNames.get(i);
@@ -734,6 +772,18 @@ public class JmxCollector implements MultiCollector {
         }
     }
 
+    private static void addAttributesAsLabelsWithValuesToLabels(Config config, Map<String, String> attributesAsLabelsWithValues, List<String> labelNames, List<String> labelValues) {
+        attributesAsLabelsWithValues.forEach(
+                (attributeAsLabelName, attributeValue) -> {
+                    String labelName = safeName(attributeAsLabelName);
+                    if (config.lowercaseOutputLabelNames) {
+                        labelName = labelName.toLowerCase();
+                    }
+                    labelNames.add(labelName);
+                    labelValues.add(attributeValue);
+                });
+    }
+
     @Override
     public MetricSnapshots collect() {
         // Take a reference to the current config and collect with this one
@@ -754,6 +804,7 @@ public class JmxCollector implements MultiCollector {
                         config.includeObjectNames,
                         config.excludeObjectNames,
                         config.objectNameAttributeFilter,
+                        config.metricCustomizers,
                         receiver,
                         jmxMBeanPropertyCache);
 
