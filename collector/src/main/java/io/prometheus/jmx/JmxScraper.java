@@ -277,24 +277,27 @@ class JmxScraper {
     private Map<String, String> getAttributesAsLabelsWithValues(ObjectName mBeanName, Attribute attribute, Map<String, Object> attributeMap) {
         JmxCollector.Rule matchedRule = null;
         for (JmxCollector.Rule rule : rules) {
-            if (rule.pattern != null) {
-                Object matchBeanValue = rule.cache ? "<cache>" : attribute.getValue();
-                List<String> attrKeys = new LinkedList<>();
-                if (attribute.getValue() instanceof TabularData || attribute.getValue() instanceof CompositeData) {
-                    attrKeys.add(attribute.getName());
-                }
-                String beanName = mBeanName.getDomain()
-                        + angleBrackets(jmxMBeanPropertyCache.getKeyPropertyList(mBeanName).toString())
-                        + angleBrackets(attrKeys.toString());
-                String matchName = beanName + attribute.getName() + ": " + matchBeanValue;
-                Matcher matcher = rule.pattern.matcher(matchName);
-                if (matcher.matches() && rule.attributesAsLabels != null) {
+            if (rule.attributesAsLabels != null && !rule.attributesAsLabels.isEmpty()) {
+                if (rule.pattern != null) {
+                    Object matchBeanValue = rule.cache ? "<cache>" : attribute.getValue();
+                    List<String> attrKeys = new LinkedList<>();
+                    if (attribute.getValue() instanceof TabularData || attribute.getValue() instanceof CompositeData) {
+                        attrKeys.add(attribute.getName());
+                    }
+                    String beanName = mBeanName.getDomain()
+                            + angleBrackets(jmxMBeanPropertyCache.getKeyPropertyList(mBeanName).toString())
+                            + angleBrackets(attrKeys.toString());
+                    String matchName = beanName + attribute.getName() + ": " + matchBeanValue;
+                    Matcher matcher = rule.pattern.matcher(matchName);
+                    if (matcher.matches()) {
+                        matchedRule = rule;
+                    }
+                } else if (rule.name == null) {
                     matchedRule = rule;
                 }
-            } else if (rule.name == null) {
-                matchedRule = rule;
             }
         }
+
         Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
         if (matchedRule != null) {
             for (String attributeAsLabel : matchedRule.attributesAsLabels) {
