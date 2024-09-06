@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.antublue.verifyica.api.ArgumentContext;
 import org.antublue.verifyica.api.Verifyica;
-import org.junit.jupiter.api.Assertions;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
@@ -122,9 +121,7 @@ public class OpenTelemetryBasicAuthenticationTest {
             throttle.throttle();
         }
 
-        if (!success.get()) {
-            Assertions.fail("Prometheus is not up");
-        }
+        assertThat(success.get()).withFailMessage("Prometheus is down").isTrue();
     }
 
     /**
