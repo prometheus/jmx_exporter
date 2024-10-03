@@ -1,0 +1,23 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21 
+          distribution: temurin
+          cache: 'maven'
+      - name: Run the Maven verify phase
+        run: |
+          ./mvnw --batch-mode clean install
+          ./mvnw javadoc:jar
