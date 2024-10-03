@@ -1,21 +1,15 @@
-[![Build Status](https://circleci.com/gh/prometheus/jmx_exporter.svg?style=svg)](https://circleci.com/gh/prometheus/jmx_exporter)
-
 # JMX Exporter
 
-JMX to Prometheus exporter:
+[![Build Status](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml/badge.svg)](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml)
 
-A collector that can configurable scrape and expose MBeans of a JMX target.
+JMX to Prometheus exporter: a collector that can configurable scrape and
+expose MBeans of a JMX target.
 
-This exporter is intended to be run as a Java Agent, exposing either
-an HTTP endpoint or pushing Open Telemetry metrics of the local JVM.
-
-It can be also run as a standalone server and scrape remote JMX targets, but this has various
+This exporter is intended to be run as a Java Agent, exposing a HTTP server
+and serving metrics of the local JVM. It can be also run as a standalone
+HTTP server and scrape remote JMX targets, but this has various
 disadvantages, such as being harder to configure and being unable to expose
 process metrics (e.g., memory and CPU usage).
-
-In particular all the `jvm_*` metrics like `jvm_classes_loaded_total`, `jvm_threads_current`,
-`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be available when
-using the standalone server.
 
 **Running the exporter as a Java agent is strongly encouraged.**
 
