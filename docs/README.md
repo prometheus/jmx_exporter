@@ -337,7 +337,7 @@ httpServer:
 
 ## Integration Test Suite
 
-The JMX exporter project uses [Verifyica](https://github.com/antublue/verifyica) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+The JMX exporter project uses [Verifyica](https://github.com/verifyica-team/verifyica) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
 You need to have Docker installed to run the integration test suite.
 

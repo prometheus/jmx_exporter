@@ -11,12 +11,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import org.antublue.verifyica.api.Argument;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.verifyica.api.Argument;
 
 /** Class to implement OpenTelemetryTestEnvironment */
 public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestEnvironment> {

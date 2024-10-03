@@ -37,8 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.ArgumentContext;
-import org.antublue.verifyica.api.Verifyica;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.Verifyica;
 
 public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
         implements BiConsumer<ExporterTestEnvironment, HttpResponse> {

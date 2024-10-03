@@ -30,10 +30,10 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.ArgumentContext;
-import org.antublue.verifyica.api.ClassContext;
-import org.antublue.verifyica.api.Verifyica;
 import org.testcontainers.containers.Network;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.ClassContext;
+import org.verifyica.api.Verifyica;
 
 public abstract class AbstractExporterTest
         implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
@@ -68,12 +68,12 @@ public abstract class AbstractExporterTest
         Network network = Network.newNetwork();
         network.getId();
 
-        classContext.getStore().put(NETWORK, network);
+        classContext.getMap().put(NETWORK, network);
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Network network = argumentContext.getClassContext().getStore().get(NETWORK, Network.class);
+        Network network = (Network) argumentContext.getClassContext().getMap().get(NETWORK);
         Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
         argumentContext
@@ -82,8 +82,7 @@ public abstract class AbstractExporterTest
                 .initialize(testClass, network);
     }
 
-    @Verifyica.Test
-    public void testHealthy(ArgumentContext argumentContext) {
+    protected void testHealthy(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
                 argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
@@ -92,8 +91,7 @@ public abstract class AbstractExporterTest
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
-    @Verifyica.Test
-    public void testMetrics(ArgumentContext argumentContext) {
+    protected void testMetrics(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
                 argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
@@ -102,8 +100,7 @@ public abstract class AbstractExporterTest
                 new HttpMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+    protected void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
                 argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
@@ -112,8 +109,7 @@ public abstract class AbstractExporterTest
                 new HttpOpenMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+    protected void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
                 argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
@@ -122,8 +118,7 @@ public abstract class AbstractExporterTest
                 new HttpPrometheusMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+    protected void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
                 argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
 
@@ -143,8 +138,11 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        Optional.ofNullable(classContext.getStore().remove(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        Optional.ofNullable(classContext.getMap().remove(NETWORK))
+                .ifPresent(
+                        object -> {
+                            ((Network) object).close();
+                        });
     }
 
     @Override

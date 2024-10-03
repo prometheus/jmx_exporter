@@ -21,13 +21,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.ArgumentContext;
-import org.antublue.verifyica.api.Verifyica;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.Verifyica;
 
 /** Class to implement OpenTelemetryBasicAuthenticationTest */
-@Verifyica.Order(order = 1)
+@Verifyica.Order(-1)
 public class OpenTelemetryBasicAuthenticationTest {
 
     private static final String NETWORK = "network";
@@ -68,7 +68,7 @@ public class OpenTelemetryBasicAuthenticationTest {
         Network network = Network.newNetwork();
         network.getId();
 
-        argumentContext.getStore().put(NETWORK, network);
+        argumentContext.getMap().put(NETWORK, network);
 
         Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
@@ -84,8 +84,8 @@ public class OpenTelemetryBasicAuthenticationTest {
      * @param argumentContext argumentContext
      */
     @Verifyica.Test
-    @Verifyica.Order(order = 0)
-    public void testIsPrometheusUp(ArgumentContext argumentContext) {
+    @Verifyica.Order(1)
+    public void testPrometheusIsUp(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
 
@@ -130,6 +130,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      * @param argumentContext argumentContext
      */
     @Verifyica.Test
+    @Verifyica.Order(2)
     public void testPrometheusHasMetrics(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
@@ -157,8 +158,8 @@ public class OpenTelemetryBasicAuthenticationTest {
                         openTelemetryTestEnvironmentArgument ->
                                 openTelemetryTestEnvironmentArgument.getPayload().destroy());
 
-        Optional.ofNullable(argumentContext.getStore().remove(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        Optional.ofNullable(argumentContext.getMap().remove(NETWORK))
+                .ifPresent(object -> ((Network) object).close());
     }
 
     /**

@@ -28,7 +28,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <verifyica.version>0.0.18</verifyica.version>
+        <verifyica.version>0.1.0</verifyica.version>
     </properties>
 
     <build>
@@ -75,8 +75,8 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.antublue.verifyica</groupId>
-                <artifactId>maven-plugin</artifactId>
+                <groupId>org.verifyica</groupId>
+                <artifactId>verifyica-maven-plugin</artifactId>
                 <version>${verifyica.version}</version>
                 <executions>
                     <execution>
@@ -114,13 +114,13 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.antublue.verifyica</groupId>
-            <artifactId>api</artifactId>
+            <groupId>org.verifyica</groupId>
+            <artifactId>verifyica-api</artifactId>
             <version>${verifyica.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.antublue.verifyica</groupId>
-            <artifactId>engine</artifactId>
+            <groupId>org.verifyica</groupId>
+            <artifactId>verifyica-engine</artifactId>
             <version>${verifyica.version}</version>
         </dependency>
         <dependency>
