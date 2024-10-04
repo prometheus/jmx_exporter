@@ -1,0 +1,13 @@
+excludeObjectNames: ["java.lang:type=ObjectName"]
+excludeObjectNameAttributes:
+  "*:*":
+    - "ObjectName"
+  "java.lang:type=Runtime":
+    - "ClassPath"
+    - "SystemProperties"
+  "java.lang:type=MemoryPool,*":
+    - "UsageThreshold"
+    - "UsageThresholdCount"
+    - "Valid"
+rules:
+  - pattern: ".*"
