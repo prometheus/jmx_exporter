@@ -2,8 +2,8 @@
 ---   
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
-whitelistObjectNames: ["java.lang:type=OperatingSystem", "Catalina:*"]
-blacklistObjectNames: []
+includeObjectNames: ["java.lang:type=OperatingSystem", "Catalina:*"]
+excludeObjectNames: []
 rules:
   - pattern: 'Catalina<type=Server><>serverInfo: (.+)'
     name: tomcat_serverinfo
