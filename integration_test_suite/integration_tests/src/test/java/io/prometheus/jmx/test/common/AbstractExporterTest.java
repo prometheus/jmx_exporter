@@ -45,7 +45,7 @@ public abstract class AbstractExporterTest
      *
      * @return the Stream of test environments
      */
-    @Verifyica.ArgumentSupplier
+    @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<ExporterTestEnvironment> arguments() {
         Collection<ExporterTestEnvironment> collection = new ArrayList<>();
 
@@ -64,16 +64,31 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        // Create a Network and get the id to force the network creation
-        Network network = Network.newNetwork();
-        network.getId();
+        if (classContext.getTestArgumentParallelism() == 1) {
+            // Create the network at the test class level
 
-        classContext.getMap().put(NETWORK, network);
+            // Create a Network and get the id to force the network creation
+            Network network = Network.newNetwork();
+            network.getId();
+
+            classContext.getMap().put(NETWORK, network);
+        }
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Network network = (Network) argumentContext.getClassContext().getMap().get(NETWORK);
+
+        if (network == null) {
+            // Create the network at the argument level
+
+            // Create a Network and get the id to force the network creation
+            network = Network.newNetwork();
+            network.getId();
+
+            argumentContext.getMap().put(NETWORK, network);
+        }
+
         Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
         argumentContext
@@ -134,15 +149,16 @@ public abstract class AbstractExporterTest
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
                                 exporterTestEnvironmentArgument.getPayload().destroy());
+
+        // Close the network if it was created at the argument level
+        Optional.ofNullable((Network) argumentContext.getMap().remove(NETWORK))
+                .ifPresent(Network::close);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        Optional.ofNullable(classContext.getMap().remove(NETWORK))
-                .ifPresent(
-                        object -> {
-                            ((Network) object).close();
-                        });
+        // Close the network if it was created at the test class level
+        Optional.ofNullable((Network) classContext.getMap().remove(NETWORK)).ifPresent(Network::close);
     }
 
     @Override
