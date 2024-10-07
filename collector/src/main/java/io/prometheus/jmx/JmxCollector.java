@@ -71,6 +71,7 @@ public class JmxCollector implements MultiCollector {
         String type = "UNKNOWN";
         ArrayList<String> labelNames;
         ArrayList<String> labelValues;
+        ArrayList<String> attributesAsLabels;
     }
 
     private static class Config {
@@ -348,6 +349,13 @@ public class JmxCollector implements MultiCollector {
                     }
                 }
 
+                if (yamlRule.containsKey("attributesAsLabels")) {
+                    List<String> attributes = (List<String>) yamlRule.get("attributesAsLabels");
+                    rule.attributesAsLabels = new ArrayList<>();
+                    if (attributes != null) {
+                        rule.attributesAsLabels.addAll(attributes);
+                    }
+                }
                 // Validation.
                 if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
                     throw new IllegalArgumentException(
@@ -469,7 +477,8 @@ public class JmxCollector implements MultiCollector {
                 String help,
                 Double value,
                 double valueFactor,
-                String type) {
+                String type,
+                Map<String, String> attributesAsLabelsWithValues) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
             if (beanProperties.size() > 0) {
@@ -504,6 +513,7 @@ public class JmxCollector implements MultiCollector {
                     labelValues.add(entry.getValue());
                 }
             }
+            addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
 
             return new MatchedRule(
                     fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
@@ -512,6 +522,7 @@ public class JmxCollector implements MultiCollector {
         public void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
                 LinkedList<String> attrKeys,
                 String attrName,
                 String attrType,
@@ -609,7 +620,8 @@ public class JmxCollector implements MultiCollector {
                                     help,
                                     value,
                                     rule.valueFactor,
-                                    rule.type);
+                                    rule.type,
+                                    attributesAsLabelsWithValues);
                     addToCache(rule, matchName, matchedRule);
                     break;
                 }
@@ -631,6 +643,7 @@ public class JmxCollector implements MultiCollector {
                 // Set the labels.
                 ArrayList<String> labelNames = new ArrayList<>();
                 ArrayList<String> labelValues = new ArrayList<>();
+                addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
                 if (rule.labelNames != null) {
                     for (int i = 0; i < rule.labelNames.size(); i++) {
                         final String unsafeLabelName = rule.labelNames.get(i);
@@ -705,6 +718,18 @@ public class JmxCollector implements MultiCollector {
         }
     }
 
+    private static void addAttributesAsLabelsWithValuesToLabels(Config config, Map<String, String> attributesAsLabelsWithValues, List<String> labelNames, List<String> labelValues) {
+        attributesAsLabelsWithValues.forEach(
+                (attributeAsLabelName, attributeValue) -> {
+                    String labelName = safeName(attributeAsLabelName);
+                    if (config.lowercaseOutputLabelNames) {
+                        labelName = labelName.toLowerCase();
+                    }
+                    labelNames.add(labelName);
+                    labelValues.add(attributeValue);
+                });
+    }
+
     @Override
     public MetricSnapshots collect() {
         // Take a reference to the current config and collect with this one
@@ -725,6 +750,7 @@ public class JmxCollector implements MultiCollector {
                         config.includeObjectNames,
                         config.excludeObjectNames,
                         config.objectNameAttributeFilter,
+                        config.rules,
                         receiver,
                         jmxMBeanPropertyCache);
 

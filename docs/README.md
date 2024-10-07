@@ -119,6 +119,10 @@ rules:
     cache: false
     type: GAUGE
     attrNameSnakeCase: false
+    attributesAsLabels:
+       - string1
+       - string2
+
 ```
 Name     | Description
 ---------|------------
@@ -144,6 +148,7 @@ labels            | A map of label name to label value pairs. Capture groups fro
 help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description, domain, and name of the attribute.
 cache             | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value, as only the value from the first scrape will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.
 type              | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.
+attributesAsLabels | A list of attributes from an mBean which will be added as labels for all the metrics of that mBean. Defaults to none.
 
 Metric names and label names are sanitized. All characters other than `[a-zA-Z0-9:_]` are replaced with underscores,
 and adjacent underscores are collapsed. There's no limitations on label values or the help text.
