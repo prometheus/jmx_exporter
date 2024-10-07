@@ -146,12 +146,8 @@ public class OpenTelemetryTest {
                         openTelemetryTestEnvironmentArgument ->
                                 openTelemetryTestEnvironmentArgument.getPayload().destroy());
 
-        Optional.ofNullable(argumentContext.getMap().remove(NETWORK))
-                .ifPresent(
-                        object -> {
-                            ((Network) object).close();
-                            ;
-                        });
+        Optional.ofNullable((Network) argumentContext.getMap().remove(NETWORK))
+                .ifPresent(Network::close);
     }
 
     /**
