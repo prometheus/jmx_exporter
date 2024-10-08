@@ -78,7 +78,6 @@ public abstract class AbstractExporterTest
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Network network = (Network) argumentContext.getClassContext().getMap().get(NETWORK);
-
         if (network == null) {
             // Create the network at the argument level
 
@@ -158,7 +157,8 @@ public abstract class AbstractExporterTest
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
         // Close the network if it was created at the test class level
-        Optional.ofNullable((Network) classContext.getMap().remove(NETWORK)).ifPresent(Network::close);
+        Optional.ofNullable((Network) classContext.getMap().remove(NETWORK))
+                .ifPresent(Network::close);
     }
 
     @Override
