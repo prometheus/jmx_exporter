@@ -45,7 +45,7 @@ public abstract class AbstractExporterTest
      *
      * @return the Stream of test environments
      */
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
         Collection<ExporterTestEnvironment> collection = new ArrayList<>();
 
