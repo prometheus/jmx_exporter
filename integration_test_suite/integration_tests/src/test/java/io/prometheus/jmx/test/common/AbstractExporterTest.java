@@ -30,10 +30,10 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.ArgumentContext;
-import org.antublue.verifyica.api.ClassContext;
-import org.antublue.verifyica.api.Verifyica;
 import org.testcontainers.containers.Network;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.ClassContext;
+import org.verifyica.api.Verifyica;
 
 public abstract class AbstractExporterTest
         implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
@@ -64,68 +64,75 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        // Create a Network and get the id to force the network creation
-        Network network = Network.newNetwork();
-        network.getId();
+        if (classContext.testArgumentParallelism() == 1) {
+            // Create the network at the test class scope
+            // Get the id to force the network creation
+            Network network = Network.newNetwork();
+            network.getId();
 
-        classContext.getStore().put(NETWORK, network);
+            classContext.map().put(NETWORK, network);
+        }
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Network network = argumentContext.getClassContext().getStore().get(NETWORK, Network.class);
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
+        Network network = argumentContext.classContext().map().getAs(NETWORK);
+        if (network == null) {
+            // Create the network at the test argument scope
+            // Get the id to force the network creation
+            network = Network.newNetwork();
+            network.getId();
+
+            argumentContext.map().put(NETWORK, network);
+        }
+
+        Class<?> testClass = argumentContext.classContext().testClass();
 
         argumentContext
-                .getTestArgument(ExporterTestEnvironment.class)
-                .getPayload()
+                .testArgument(ExporterTestEnvironment.class)
+                .payload()
                 .initialize(testClass, network);
     }
 
-    @Verifyica.Test
-    public void testHealthy(ArgumentContext argumentContext) {
+    protected void testHealthy(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         new HttpHealthyRequest()
                 .send(exporterTestEnvironment.getHttpClient())
                 .accept(HttpResponseAssertions::assertHttpHealthyResponse);
     }
 
-    @Verifyica.Test
-    public void testMetrics(ArgumentContext argumentContext) {
+    protected void testMetrics(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
                 new HttpMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+    protected void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
                 new HttpOpenMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+    protected void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
                 new HttpPrometheusMetricsRequest().send(exporterTestEnvironment.getHttpClient()));
     }
 
-    @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+    protected void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
@@ -135,15 +142,20 @@ public abstract class AbstractExporterTest
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getTestArgument(ExporterTestEnvironment.class))
+        Optional.ofNullable(argumentContext.testArgument(ExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.getPayload().destroy());
+                                exporterTestEnvironmentArgument.payload().destroy());
+
+        // Close the network if it was created at the test argument scope
+        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
+                .ifPresent(Network::close);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        Optional.ofNullable(classContext.getStore().remove(NETWORK, Network.class))
+        // Close the network if it was created at the test class scope
+        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 
