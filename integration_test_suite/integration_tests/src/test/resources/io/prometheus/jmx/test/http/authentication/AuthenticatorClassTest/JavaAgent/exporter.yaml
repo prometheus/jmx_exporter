@@ -1,0 +1,7 @@
+httpServer:
+  authentication:
+    customAuthenticator:
+      authenticatorClass: io.prometheus.jmx.CustomAuthenticator
+      subjectAttributeName: io.prometheus.jmx.CustomAuthenticatorSubjectAttribute
+rules:
+  - pattern: ".*"
