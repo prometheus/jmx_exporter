@@ -1,0 +1,80 @@
+lowercaseOutputLabelNames: true
+lowercaseOutputName: true
+rules:
+# Apache Ignite provide runtime information on a cluster.  Keep in mind that there will be a certain
+# network delay (usually equal to metrics update delay).
+#
+# see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/cluster/ClusterMetrics.html
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(HeapMemory.*):"
+  name: ignite_$1_$2_heap_bytes
+  help: Ignite cluster amount of heap memory in bytes
+  labels:
+    attr: $3
+  type: GAUGE
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(NonHeapMemory.*):"
+  name: ignite_$1_$2_nonheap_bytes
+  help: Ignite cluster amount of non-heap memory in bytes
+  labels:
+    attr: $3
+  type: GAUGE
+- pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(ClusterMetrics.*)><>(.*Jobs):"
+  name: ignite_$1_$2_job
+  help: Ignite cluster job detalization
+  labels:
+    attr: $3
+# Apache Ignite durable memory can be monitored via data region metrics which will help track overall
+# memory utilization and measure its cluster performance.
+#
+# see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataRegionMetricsMXBean.html
+- pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(.*Pages|AllocationRate):"
+  name: ignite_$1_$2_pages
+  help: Ignite durable memory pages currently loaded in RAM
+  labels:
+    attr: $3
+  type: GAUGE
+- pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(Off[Hh]eap.*|MaxSize|PhysicalMemorySize|TotalAllocatedSize):"
+  name: ignite_$1_$2_pages_bytes
+  help: Ignite durable memory pages size metrics in bytes
+  labels:
+    attr: $3
+  type: GAUGE
+# Apache Ignite provides a set of metrics for persistence when it's enabled for a specific data region.
+# Note, PDS metrics is disabled by default. Use .enableMetrics() to enable persistence metrics collection on node.
+#
+# see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/DataStorageMetricsMXBean.html
+- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(Wal.*):"
+  name: ignite_$1_$2_pds_wal
+  help: Ignite WAL metrics
+  labels:
+    attr: $3
+- pattern: "^org.apache<clsLdr=(.+), group=\"Persistent Store\", name=(DataStorageMetrics)><>(LastCheckpoint.*):"
+  name: ignite_$1_$2_pds_checkpoint
+  help: Ignite persistence last checkpoint metrics
+  labels:
+    attr: $3
+  type: GAUGE
+# Apache Ignite allows to keep an eye on the distributed cache specific statistics available.
+# Note, cache metrics is disbaled by default. Use .enableStatistics() to enable statistic collection for the cache.
+#
+# see https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/CacheMetricsMXBean.html
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Rebalancing.*Rate):"
+  name: ignite_$1_$3_$2_rebalance_rate
+  help: Ignite cache $2 rebalancing rate
+  labels:
+    cache: $2
+    attr: $4
+  type: GAUGE
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(RebalanceClearingPartitionsLeft|KeysToRebalanceLeft):"
+  name: ignite_$1_$3_$2_rebalance_left
+  help: Ignite cache $2 rebalancing data left
+  labels:
+    cache: $2
+    attr: $4
+  type: GAUGE
+- pattern: "^org.apache<clsLdr=(.+), group=(.+), name=.*(CacheClusterMetricsMXBeanImpl).><>(Cache.*):"
+  name: ignite_$1_$3_$2_operations_total
+  help: Ignite cache $2 operations metrics
+  labels:
+    cache: $2
+    attr: $4
+  type: COUNTER
