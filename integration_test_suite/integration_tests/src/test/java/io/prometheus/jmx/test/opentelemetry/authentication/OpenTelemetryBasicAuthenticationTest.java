@@ -65,34 +65,32 @@ public class OpenTelemetryBasicAuthenticationTest {
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        if (classContext.getTestArgumentParallelism() == 1) {
-            // Create the network at the test class level
-
-            // Create a Network and get the id to force the network creation
+        if (classContext.testArgumentParallelism() == 1) {
+            // Create the network at the test class scope
+            // Get the id to force the network creation
             Network network = Network.newNetwork();
             network.getId();
 
-            classContext.getMap().put(NETWORK, network);
+            classContext.map().put(NETWORK, network);
         }
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Network network = (Network) argumentContext.getClassContext().getMap().get(NETWORK);
+        Network network = argumentContext.classContext().map().getAs(NETWORK, Network.class);
         if (network == null) {
-            // Create the network at the argument level
-
-            // Create a Network and get the id to force the network creation
+            // Create the network at the test argument scope
+            // Get the id to force the network creation
             network = Network.newNetwork();
             network.getId();
 
-            argumentContext.getMap().put(NETWORK, network);
+            argumentContext.map().put(NETWORK, network);
         }
 
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
+        Class<?> testClass = argumentContext.classContext().getTestClass();
 
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
+                argumentContext.testArgument(OpenTelemetryTestEnvironment.class).payload();
 
         openTelemetryTestEnvironment.initialize(testClass, network);
     }
@@ -106,7 +104,7 @@ public class OpenTelemetryBasicAuthenticationTest {
     @Verifyica.Order(1)
     public void testPrometheusIsUp(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
+                argumentContext.testArgument(OpenTelemetryTestEnvironment.class).payload();
 
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         AtomicBoolean success = new AtomicBoolean();
@@ -152,7 +150,7 @@ public class OpenTelemetryBasicAuthenticationTest {
     @Verifyica.Order(2)
     public void testPrometheusHasMetrics(ArgumentContext argumentContext) {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class).getPayload();
+                argumentContext.testArgument(OpenTelemetryTestEnvironment.class).payload();
 
         ExpectedMetricsNames.getMetricsNames().stream()
                 .filter(
@@ -172,20 +170,20 @@ public class OpenTelemetryBasicAuthenticationTest {
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getTestArgument(OpenTelemetryTestEnvironment.class))
+        Optional.ofNullable(argumentContext.testArgument(OpenTelemetryTestEnvironment.class))
                 .ifPresent(
                         openTelemetryTestEnvironmentArgument ->
-                                openTelemetryTestEnvironmentArgument.getPayload().destroy());
+                                openTelemetryTestEnvironmentArgument.payload().destroy());
 
-        // Close the network if it was created at the argument level
-        Optional.ofNullable((Network) argumentContext.getMap().remove(NETWORK))
+        // Close the network if it was created at the test argument scope
+        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        // Close the network if it was created at the test class level
-        Optional.ofNullable((Network) classContext.getMap().remove(NETWORK))
+        // Close the network if it was created at the test class scope
+        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 

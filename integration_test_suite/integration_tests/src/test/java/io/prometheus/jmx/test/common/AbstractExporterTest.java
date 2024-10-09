@@ -64,41 +64,39 @@ public abstract class AbstractExporterTest
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        if (classContext.getTestArgumentParallelism() == 1) {
-            // Create the network at the test class level
-
-            // Create a Network and get the id to force the network creation
+        if (classContext.testArgumentParallelism() == 1) {
+            // Create the network at the test class scope
+            // Get the id to force the network creation
             Network network = Network.newNetwork();
             network.getId();
 
-            classContext.getMap().put(NETWORK, network);
+            classContext.map().put(NETWORK, network);
         }
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Network network = (Network) argumentContext.getClassContext().getMap().get(NETWORK);
+        Network network = argumentContext.classContext().map().getAs(NETWORK);
         if (network == null) {
-            // Create the network at the argument level
-
-            // Create a Network and get the id to force the network creation
+            // Create the network at the test argument scope
+            // Get the id to force the network creation
             network = Network.newNetwork();
             network.getId();
 
-            argumentContext.getMap().put(NETWORK, network);
+            argumentContext.map().put(NETWORK, network);
         }
 
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
+        Class<?> testClass = argumentContext.classContext().testClass();
 
         argumentContext
-                .getTestArgument(ExporterTestEnvironment.class)
-                .getPayload()
+                .testArgument(ExporterTestEnvironment.class)
+                .payload()
                 .initialize(testClass, network);
     }
 
     protected void testHealthy(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         new HttpHealthyRequest()
                 .send(exporterTestEnvironment.getHttpClient())
@@ -107,7 +105,7 @@ public abstract class AbstractExporterTest
 
     protected void testMetrics(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
@@ -116,7 +114,7 @@ public abstract class AbstractExporterTest
 
     protected void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
@@ -125,7 +123,7 @@ public abstract class AbstractExporterTest
 
     protected void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
@@ -134,7 +132,7 @@ public abstract class AbstractExporterTest
 
     protected void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         accept(
                 exporterTestEnvironment,
@@ -144,20 +142,20 @@ public abstract class AbstractExporterTest
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getTestArgument(ExporterTestEnvironment.class))
+        Optional.ofNullable(argumentContext.testArgument(ExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.getPayload().destroy());
+                                exporterTestEnvironmentArgument.payload().destroy());
 
-        // Close the network if it was created at the argument level
-        Optional.ofNullable((Network) argumentContext.getMap().remove(NETWORK))
+        // Close the network if it was created at the test argument scope
+        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) {
-        // Close the network if it was created at the test class level
-        Optional.ofNullable((Network) classContext.getMap().remove(NETWORK))
+        // Close the network if it was created at the test class scope
+        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 

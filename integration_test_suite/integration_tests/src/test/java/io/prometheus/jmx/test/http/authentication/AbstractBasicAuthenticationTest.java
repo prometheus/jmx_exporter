@@ -64,7 +64,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     public void testHealthy(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -88,7 +88,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     public void testMetrics(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -116,7 +116,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -144,7 +144,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         getAuthenticationCredentials()
                 .forEach(
@@ -172,7 +172,7 @@ public abstract class AbstractBasicAuthenticationTest extends AbstractExporterTe
 
     public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         getAuthenticationCredentials()
                 .forEach(

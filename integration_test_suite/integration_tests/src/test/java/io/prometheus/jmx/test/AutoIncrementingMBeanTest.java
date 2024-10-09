@@ -70,8 +70,8 @@ public class AutoIncrementingMBeanTest extends AbstractExporterTest {
     public void testAutoIncrementingMBean(ArgumentContext argumentContext) {
         HttpClient httpClient =
                 argumentContext
-                        .getTestArgument(ExporterTestEnvironment.class)
-                        .getPayload()
+                        .testArgument(ExporterTestEnvironment.class)
+                        .payload()
                         .getHttpClient();
 
         // Collect the auto incrementing MBean values
