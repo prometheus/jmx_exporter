@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import org.junit.Test;
 
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
@@ -53,7 +54,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
         String[] algorithms = new String[] {"SHA-1", "SHA-256", "SHA-512"};
 
         for (String algorithm : algorithms) {
-            String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase();
+            String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase(Locale.ENGLISH);
 
             MessageDigestAuthenticator messageDigestAuthenticator =
                     new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);

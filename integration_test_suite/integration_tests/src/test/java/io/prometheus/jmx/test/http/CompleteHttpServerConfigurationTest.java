@@ -37,8 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.ArgumentContext;
-import org.antublue.verifyica.api.Verifyica;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.Verifyica;
 
 public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
         implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
@@ -84,7 +84,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     @Verifyica.Test
     public void testHealthy(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -105,7 +105,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     @Verifyica.Test
     public void testMetrics(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -132,7 +132,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     @Verifyica.Test
     public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -159,7 +159,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     @Verifyica.Test
     public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -186,7 +186,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
     @Verifyica.Test
     public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
         ExporterTestEnvironment exporterTestEnvironment =
-                argumentContext.getTestArgument(ExporterTestEnvironment.class).getPayload();
+                argumentContext.testArgument(ExporterTestEnvironment.class).payload();
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -222,7 +222,7 @@ public class CompleteHttpServerConfigurationTest extends AbstractExporterTest
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                        : "jmx_prometheus_standalone";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

@@ -26,7 +26,7 @@ import javax.management.ObjectName;
 public class JmxExampleApplication {
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     public static void main(String[] args) throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

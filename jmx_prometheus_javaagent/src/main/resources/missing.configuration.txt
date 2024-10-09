@@ -1,0 +1,14 @@
+-----------------------
+JMX Exporter Java Agent
+-----------------------
+
+OpenTelemetry mode
+------------------
+
+- "/openTelemetry" must be defined
+- "/httpServer" must not be defined
+
+Documentation
+-------------
+
+https://github.com/prometheus/jmx_exporter

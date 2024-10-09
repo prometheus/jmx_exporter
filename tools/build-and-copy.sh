@@ -49,7 +49,7 @@ BUILD_EXIT_CODE="$?"
 if [ "${BUILD_EXIT_CODE}" == "0" ];
 then
   cp "jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-${BUILD_VERSION}.jar" "${DESTINATION_DIRECTORY}"
-  cp "jmx_prometheus_httpserver/target/jmx_prometheus_httpserver-${BUILD_VERSION}.jar" "${DESTINATION_DIRECTORY}"
+  cp "jmx_prometheus_standalone/target/jmx_prometheus_standalone-${BUILD_VERSION}.jar" "${DESTINATION_DIRECTORY}"
 fi
 
 # Revert the versions

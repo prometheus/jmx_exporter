@@ -48,8 +48,8 @@
     <modules>
         <module>collector</module>
         <module>jmx_prometheus_common</module>
-        <module>jmx_prometheus_httpserver</module>
         <module>jmx_prometheus_javaagent</module>
+        <module>jmx_prometheus_standalone</module>
         <module>integration_test_suite</module>
     </modules>
 
@@ -84,6 +84,11 @@
             <dependency>
                 <groupId>io.prometheus</groupId>
                 <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+                <version>${prometheus.metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-exporter-opentelemetry</artifactId>
                 <version>${prometheus.metrics.version}</version>
             </dependency>
         </dependencies>
@@ -200,7 +205,7 @@
                         </goals>
                         <configuration>
                             <rules>
-                                <requirePluginVersions />
+                                <requirePluginVersions/>
                             </rules>
                         </configuration>
                     </execution>

@@ -181,7 +181,7 @@ public class JmxCollector implements MultiCollector {
             LOGGER.log(
                     SEVERE,
                     "Configuration error: When running jmx_exporter in standalone mode (using"
-                            + " jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or"
+                            + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
                             + " 'hostPort'.");
             System.exit(-1);
         }

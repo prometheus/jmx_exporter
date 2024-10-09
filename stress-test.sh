@@ -27,6 +27,9 @@
     DATE=`date`
     echo "STRESS-TEST-START    ${DATE}"
 
+    export JAVA_DOCKER_IMAGES=all
+    export PROMETHEUS_DOCKER_IMAGES=all
+
     ./mvnw clean verify
     if [[ "$?" -ne 0 ]];
     then

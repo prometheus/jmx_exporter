@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec java -jar /usr/share/jmx_exporter/jmx_prometheus_httpserver-*.jar $@

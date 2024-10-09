@@ -3,3 +3,4 @@ eclipse-temurin:11-alpine
 eclipse-temurin:17-alpine
 eclipse-temurin:21-alpine
 eclipse-temurin:22-alpine
+eclipse-temurin:23-alpine

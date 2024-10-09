@@ -1,7 +1,6 @@
 package io.prometheus.jmx.test.support.http;
 
 import static java.lang.String.format;
-import static org.antublue.verifyica.api.Fail.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HttpResponseAssertions {
@@ -44,16 +43,18 @@ public class HttpResponseAssertions {
             HttpResponseBody httpResponseBody = httpResponse.body();
             if (httpResponseBody != null) {
                 String content = httpResponseBody.string();
-                fail(
+                throw new AssertionError(
                         format(
-                                "Exporter error, HTTP status code [%d] content [%n%s]",
-                                statusCode, content));
+                                "Expected statusCode [%d] but was [%d] content [%s]",
+                                200, statusCode, content));
             } else {
-                fail(format("Exporter error, HTTP status code [%d] no content", statusCode));
+                throw new AssertionError(
+                        format(
+                                "Expected statusCode [%d] but was [%d] no content",
+                                200, statusCode));
             }
         }
 
-        assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertHttpResponseHasHeaders(httpResponse);
         assertHttpResponseHasHeader(httpResponse, HttpHeader.CONTENT_TYPE);
         assertHttpResponseHasBody(httpResponse);

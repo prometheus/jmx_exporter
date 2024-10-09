@@ -16,17 +16,27 @@
 
 package io.prometheus.jmx.common.yaml;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import org.yaml.snakeyaml.Yaml;
 
 /** Class to implement a MapAccessor to work with nested Maps / values */
 @SuppressWarnings("unchecked")
 public class YamlMapAccessor {
 
     private final Map<Object, Object> map;
+
+    /** Constructor */
+    public YamlMapAccessor() {
+        map = new LinkedHashMap<>();
+    }
 
     /**
      * Constructor
@@ -39,6 +49,35 @@ public class YamlMapAccessor {
         }
 
         this.map = map;
+    }
+
+    /**
+     * Method to load a File
+     *
+     * @param file file
+     * @return this YamlMapAccessor
+     * @throws IOException IOException
+     */
+    public YamlMapAccessor load(File file) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("file is null");
+        }
+
+        try (Reader reader = new FileReader(file)) {
+            return load(reader);
+        }
+    }
+
+    /**
+     * Method to load a Reader
+     *
+     * @param reader reader
+     * @return this YamlMapAccessor
+     * @throws IOException IOException
+     */
+    public YamlMapAccessor load(Reader reader) throws IOException {
+        map.putAll(new Yaml().load(reader));
+        return this;
     }
 
     /**

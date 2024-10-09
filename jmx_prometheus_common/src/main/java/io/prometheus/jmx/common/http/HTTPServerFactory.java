@@ -88,7 +88,7 @@ public class HTTPServerFactory {
     private YamlMapAccessor rootYamlMapAccessor;
 
     /** Constructor */
-    public HTTPServerFactory() {
+    private HTTPServerFactory() {
         // DO NOTHING
     }
 
@@ -108,6 +108,21 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
+        if (inetAddress == null) {
+            throw new IllegalArgumentException("inetAddress is null");
+        }
+
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("post is out of range [1 - 65535]");
+        }
+
+        if (prometheusRegistry == null) {
+            throw new IllegalArgumentException("prometheusRegistry is null");
+        }
+
+        if (exporterYamlFile == null) {
+            throw new IllegalArgumentException("exporterYamlFile is null");
+        }
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder()
@@ -121,6 +136,15 @@ public class HTTPServerFactory {
         configureSSL(httpServerBuilder);
 
         return httpServerBuilder.buildAndStart();
+    }
+
+    /**
+     * Method to get an instance of the HTTPServerFactory
+     *
+     * @return the HTTPServerFactory
+     */
+    public static HTTPServerFactory getInstance() {
+        return SingletonHolder.SINGLETON;
     }
 
     /**
@@ -638,5 +662,12 @@ public class HTTPServerFactory {
                 }
             }
         }
+    }
+
+    /** Class to hold the singleton */
+    private static class SingletonHolder {
+
+        /** The singleton */
+        public static final HTTPServerFactory SINGLETON = new HTTPServerFactory();
     }
 }

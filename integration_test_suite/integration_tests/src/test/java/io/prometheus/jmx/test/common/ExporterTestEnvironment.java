@@ -4,14 +4,14 @@ import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import java.time.Duration;
-import org.antublue.verifyica.api.Argument;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.verifyica.api.Argument;
 
-/** Class to implement OpenTelemetryTestEnvironment */
+/** Class to implement ExporterTestEnvironment */
 public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment> {
 
     private static final long MEMORY_BYTES = 1073741824; // 1 GB
@@ -264,6 +264,25 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withStartupTimeout(Duration.ofMillis(30000))
                 .withWorkingDirectory("/temp")
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1));
+    }
+
+    public int getMappedPort(int port) {
+        int mappedPort = 0;
+
+        switch (jmxExporterMode) {
+            case JavaAgent:
+                {
+                    mappedPort = javaAgentApplicationContainer.getMappedPort(port);
+                    break;
+                }
+            case Standalone:
+                {
+                    mappedPort = standaloneExporterContainer.getMappedPort(port);
+                    break;
+                }
+        }
+
+        return mappedPort;
     }
 
     /**

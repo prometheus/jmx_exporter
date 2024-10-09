@@ -27,9 +27,36 @@ import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.Verifyica;
 
 public class BasicAuthenticationSHA1Test extends AbstractBasicAuthenticationTest
         implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
+
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        super.testHealthy(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        super.testMetrics(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        super.testMetricsOpenMetricsFormat(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        super.testMetricsPrometheusFormat(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        super.testMetricsPrometheusProtobufFormat(argumentContext);
+    }
 
     @Override
     public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
@@ -43,7 +70,7 @@ public class BasicAuthenticationSHA1Test extends AbstractBasicAuthenticationTest
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                        : "jmx_prometheus_standalone";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
