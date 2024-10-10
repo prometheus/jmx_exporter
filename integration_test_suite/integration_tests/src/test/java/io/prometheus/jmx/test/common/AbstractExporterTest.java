@@ -27,12 +27,14 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseAssertions;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
+import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
 public abstract class AbstractExporterTest
@@ -45,7 +47,7 @@ public abstract class AbstractExporterTest
      *
      * @return the Stream of test environments
      */
-    @Verifyica.ArgumentSupplier
+    @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<ExporterTestEnvironment> arguments() {
         Collection<ExporterTestEnvironment> collection = new ArrayList<>();
 
@@ -141,22 +143,43 @@ public abstract class AbstractExporterTest
     }
 
     @Verifyica.AfterAll
-    public void afterAll(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(ExporterTestEnvironment.class))
-                .ifPresent(
-                        exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.payload().destroy());
+    public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        List<Trap> traps = new ArrayList<>();
+
+        traps.add(
+                new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                argumentContext.testArgument(
+                                                        ExporterTestEnvironment.class))
+                                        .ifPresent(
+                                                exporterTestEnvironmentArgument ->
+                                                        exporterTestEnvironmentArgument
+                                                                .payload()
+                                                                .destroy())));
 
         // Close the network if it was created at the test argument scope
-        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        traps.add(
+                new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                argumentContext
+                                                        .map()
+                                                        .removeAs(NETWORK, Network.class))
+                                        .ifPresent(Network::close)));
+
+        Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
-    public static void conclude(ClassContext classContext) {
+    public static void conclude(ClassContext classContext) throws Throwable {
         // Close the network if it was created at the test class scope
-        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                classContext.map().removeAs(NETWORK, Network.class))
+                                        .ifPresent(Network::close))
+                .assertEmpty();
     }
 
     @Override
