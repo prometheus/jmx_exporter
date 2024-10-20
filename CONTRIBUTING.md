@@ -8,7 +8,7 @@ Prometheus uses GitHub to manage reviews of pull requests.
 
   - The project uses a simplified Gitflow branching paradigm
 
-  - Pull requests should be opened against `development` for the next release
+  - Pull requests should be opened against `main` for the next release
 
 * If you plan to do something more involved, first discuss your ideas
   on our [mailing list](https://groups.google.com/forum/?fromgroups#!forum/prometheus-developers).
