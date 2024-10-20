@@ -20,13 +20,13 @@ import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.stream.Stream;
-import org.antublue.verifyica.api.Verifyica;
+import org.verifyica.api.Verifyica;
 
 public class AuthenticatorClassTest extends BasicAuthenticationPlaintextTest {
 
     @Verifyica.ArgumentSupplier
     public static Stream<ExporterTestEnvironment> arguments() {
-        // custom authenticator class is only on the agent classpath
+        // Custom authenticator class is only on the agent classpath
         return AbstractExporterTest.arguments()
                 .filter(
                         exporterTestEnvironment ->
