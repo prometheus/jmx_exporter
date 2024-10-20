@@ -20,6 +20,8 @@ import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.stream.Stream;
+
+import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.Verifyica;
 
 public class AuthenticatorClassTest extends BasicAuthenticationPlaintextTest {
@@ -33,5 +35,30 @@ public class AuthenticatorClassTest extends BasicAuthenticationPlaintextTest {
                                 exporterTestEnvironment
                                         .getName()
                                         .contains(JmxExporterMode.JavaAgent.name()));
+    }
+
+    @Verifyica.Test
+    public void testHealthy(ArgumentContext argumentContext) {
+        super.testHealthy(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetrics(ArgumentContext argumentContext) {
+        super.testMetrics(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
+        super.testMetricsOpenMetricsFormat(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
+        super.testMetricsPrometheusFormat(argumentContext);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
+        super.testMetricsPrometheusProtobufFormat(argumentContext);
     }
 }
