@@ -24,7 +24,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <prometheus.metrics.version>1.4.0-SNAPSHOT</prometheus.metrics.version>
+        <prometheus.metrics.version>1.3.2</prometheus.metrics.version>
     </properties>
 
     <scm>
