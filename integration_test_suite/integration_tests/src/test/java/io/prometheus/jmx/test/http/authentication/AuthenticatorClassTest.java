@@ -20,7 +20,6 @@ import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.stream.Stream;
-
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.Verifyica;
 
