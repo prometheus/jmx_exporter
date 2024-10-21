@@ -9,6 +9,7 @@ import javax.management.ObjectName;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ObjectNameAttributeFilterTest {
 
     static final String CONFIG_EXCLUDE_MAP_FIELD = "configExcludeObjectNameAttributesMap";
