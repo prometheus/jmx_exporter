@@ -88,9 +88,25 @@ public class JmxCollector implements MultiCollector {
         long lastUpdate = 0L;
 
         MatchedRulesCache rulesCache;
+
+        private JmxScraper _jmxScraper;
+
+        JmxScraper jmxScraper() {
+            if (_jmxScraper == null) {
+                _jmxScraper =
+                        new JmxScraper(
+                                jmxUrl,
+                                username,
+                                password,
+                                ssl,
+                                includeObjectNames,
+                                excludeObjectNames,
+                                objectNameAttributeFilter);
+            }
+            return _jmxScraper;
+        }
     }
 
-    private PrometheusRegistry prometheusRegistry;
     private Config config;
     private File configFile;
     private long createTimeNanoSecs = System.nanoTime();
@@ -100,8 +116,6 @@ public class JmxCollector implements MultiCollector {
     private Gauge jmxScrapeDurationSeconds;
     private Gauge jmxScrapeError;
     private Gauge jmxScrapeCachedBeans;
-
-    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         this(in, null);
@@ -130,8 +144,6 @@ public class JmxCollector implements MultiCollector {
     }
 
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
-        this.prometheusRegistry = prometheusRegistry;
-
         configReloadSuccess =
                 Counter.builder()
                         .name("jmx_config_reload_success_total")
@@ -716,18 +728,6 @@ public class JmxCollector implements MultiCollector {
 
         Receiver receiver = new Receiver(config, stalenessTracker);
 
-        JmxScraper scraper =
-                new JmxScraper(
-                        config.jmxUrl,
-                        config.username,
-                        config.password,
-                        config.ssl,
-                        config.includeObjectNames,
-                        config.excludeObjectNames,
-                        config.objectNameAttributeFilter,
-                        receiver,
-                        jmxMBeanPropertyCache);
-
         long start = System.nanoTime();
         double error = 0;
 
@@ -736,7 +736,7 @@ public class JmxCollector implements MultiCollector {
             throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
         }
         try {
-            scraper.doScrape();
+            config.jmxScraper().doScrape(receiver);
         } catch (Exception e) {
             error = 1;
             StringWriter sw = new StringWriter();
