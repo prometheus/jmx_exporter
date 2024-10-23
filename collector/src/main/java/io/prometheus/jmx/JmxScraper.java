@@ -29,6 +29,7 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
+import javax.management.relation.MBeanServerNotificationFilter;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -62,9 +63,23 @@ class JmxScraper {
 
     // Values cached per connection.
     private MBeanServerConnection _beanConn;
-    private Set<ObjectName> mBeanNames;
-    private ObjectNameAttributeFilter objectNameAttributeFilter;
-    private JmxMBeanPropertyCache jmxMBeanPropertyCache;
+    private Cache cache;
+    private boolean cacheIsStale = false;
+
+    private class Cache {
+        private final Set<ObjectName> mBeanNames;
+        private final ObjectNameAttributeFilter objectNameAttributeFilter;
+        private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
+
+        private Cache(
+                Set<ObjectName> mBeanNames,
+                ObjectNameAttributeFilter objectNameAttributeFilter,
+                JmxMBeanPropertyCache jmxMBeanPropertyCache) {
+            this.mBeanNames = mBeanNames;
+            this.objectNameAttributeFilter = objectNameAttributeFilter;
+            this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+        }
+    }
 
     public JmxScraper(
             String jmxUrl,
@@ -119,9 +134,41 @@ class JmxScraper {
         return jmxc.getMBeanServerConnection();
     }
 
-    private void loadMBeanNames(MBeanServerConnection beanConn) throws Exception {
+    private synchronized MBeanServerConnection getMBeanServerConnection() throws Exception {
+        if (_beanConn == null) {
+            cacheIsStale = true;
+            _beanConn = connectToMBeanServer();
+            // Subscribe to MBeans register/unregister events to invalidate cache
+            MBeanServerNotificationFilter filter = new MBeanServerNotificationFilter();
+            filter.enableAllObjectNames();
+            _beanConn.addNotificationListener(
+                    MBeanServerDelegate.DELEGATE_NAME,
+                    (notification, handback) -> {
+                        String type = notification.getType();
+                        if (MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(type)
+                                || MBeanServerNotification.UNREGISTRATION_NOTIFICATION.equals(
+                                        type)) {
+                            LOGGER.log(FINE, "Marking cache as stale due to %s", type);
+                            // Mark cache as stale instead of refreshing it immediately
+                            // to debounce multiple notifications.
+                            synchronized (this) {
+                                cacheIsStale = true;
+                            }
+                        }
+                    },
+                    filter,
+                    null);
+        }
+        if (cacheIsStale) {
+            cache = fetchCache(_beanConn);
+            cacheIsStale = false;
+        }
+        return _beanConn;
+    }
+
+    private Cache fetchCache(MBeanServerConnection beanConn) throws Exception {
         // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
-        mBeanNames = new HashSet<>();
+        Set<ObjectName> mBeanNames = new HashSet<>();
         for (ObjectName name : includeObjectNames) {
             for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
                 mBeanNames.add(instance.getObjectName());
@@ -134,10 +181,10 @@ class JmxScraper {
             }
         }
 
-        this.jmxMBeanPropertyCache = new JmxMBeanPropertyCache(mBeanNames);
+        ObjectNameAttributeFilter attributeFilter = defaultObjectNameAttributeFilter.dup();
+        attributeFilter.onlyKeepMBeans(mBeanNames);
 
-        this.objectNameAttributeFilter = defaultObjectNameAttributeFilter.dup();
-        objectNameAttributeFilter.onlyKeepMBeans(mBeanNames);
+        return new Cache(mBeanNames, attributeFilter, new JmxMBeanPropertyCache(mBeanNames));
     }
 
     /**
@@ -145,16 +192,13 @@ class JmxScraper {
      *
      * <p>Values are passed to the receiver in a single thread.
      */
-    public void doScrape(MBeanReceiver receiver) throws Exception {
-        synchronized (this) {
-            if (_beanConn == null) {
-                _beanConn = connectToMBeanServer();
-                loadMBeanNames(_beanConn);
-            }
-        }
-        MBeanServerConnection beanConn = _beanConn;
+    public synchronized void doScrape(MBeanReceiver receiver) throws Exception {
+        // Method is synchronized to avoid multiple scrapes running concurrently
+        // and let one of them refresh the cache in the middle of the scrape.
 
-        for (ObjectName objectName : mBeanNames) {
+        MBeanServerConnection beanConn = getMBeanServerConnection();
+
+        for (ObjectName objectName : cache.mBeanNames) {
             long start = System.nanoTime();
             scrapeBean(receiver, beanConn, objectName);
             LOGGER.log(FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
@@ -162,9 +206,7 @@ class JmxScraper {
     }
 
     private void scrapeBean(
-            MBeanReceiver receiver,
-            MBeanServerConnection beanConn,
-            ObjectName mBeanName) {
+            MBeanReceiver receiver, MBeanServerConnection beanConn, ObjectName mBeanName) {
         MBeanInfo mBeanInfo;
 
         try {
@@ -186,7 +228,7 @@ class JmxScraper {
                 continue;
             }
 
-            if (objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
+            if (cache.objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
                 continue;
             }
 
@@ -249,7 +291,7 @@ class JmxScraper {
                         receiver,
                         mBeanName,
                         mBeanDomain,
-                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        cache.jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         new LinkedList<>(),
                         mBeanAttributeInfo.getName(),
                         mBeanAttributeInfo.getType(),
@@ -289,7 +331,7 @@ class JmxScraper {
                     receiver,
                     mbeanName,
                     mbeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                    cache.jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
                     new LinkedList<>(),
                     attr.getName(),
                     attr.getType(),
@@ -447,7 +489,7 @@ class JmxScraper {
                     attrDescription,
                     value.toString());
         } else {
-            objectNameAttributeFilter.add(objectName, attrName);
+            cache.objectNameAttributeFilter.add(objectName, attrName);
             LOGGER.log(FINE, "%s%s scrape: %s not exported", domain, beanProperties, attrType);
         }
     }
