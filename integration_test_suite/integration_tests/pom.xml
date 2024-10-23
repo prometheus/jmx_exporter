@@ -28,7 +28,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <verifyica.version>0.5.0</verifyica.version>
+        <verifyica.version>0.5.1</verifyica.version>
     </properties>
 
     <build>
