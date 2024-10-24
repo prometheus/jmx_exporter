@@ -16,6 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,6 +26,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
+import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
 /** Class to implement OpenTelemetryBasicAuthenticationTest */
@@ -169,22 +171,43 @@ public class OpenTelemetryBasicAuthenticationTest {
     }
 
     @Verifyica.AfterAll
-    public void afterAll(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(OpenTelemetryTestEnvironment.class))
-                .ifPresent(
-                        openTelemetryTestEnvironmentArgument ->
-                                openTelemetryTestEnvironmentArgument.payload().destroy());
+    public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        List<Trap> traps = new ArrayList<>();
+
+        traps.add(
+                new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                argumentContext.testArgument(
+                                                        OpenTelemetryTestEnvironment.class))
+                                        .ifPresent(
+                                                openTelemetryTestEnvironmentArgument ->
+                                                        openTelemetryTestEnvironmentArgument
+                                                                .payload()
+                                                                .destroy())));
 
         // Close the network if it was created at the test argument scope
-        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        traps.add(
+                new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                argumentContext
+                                                        .map()
+                                                        .removeAs(NETWORK, Network.class))
+                                        .ifPresent(Network::close)));
+
+        Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
-    public static void conclude(ClassContext classContext) {
+    public static void conclude(ClassContext classContext) throws Throwable {
         // Close the network if it was created at the test class scope
-        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
+        new Trap(
+                        () ->
+                                Optional.ofNullable(
+                                                classContext.map().removeAs(NETWORK, Network.class))
+                                        .ifPresent(Network::close))
+                .assertEmpty();
     }
 
     /**
