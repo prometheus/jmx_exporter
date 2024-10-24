@@ -196,12 +196,18 @@ class JmxScraper {
         // Method is synchronized to avoid multiple scrapes running concurrently
         // and let one of them refresh the cache in the middle of the scrape.
 
-        MBeanServerConnection beanConn = getMBeanServerConnection();
+        try {
+            MBeanServerConnection beanConn = getMBeanServerConnection();
 
-        for (ObjectName objectName : cache.mBeanNames) {
-            long start = System.nanoTime();
-            scrapeBean(receiver, beanConn, objectName);
-            LOGGER.log(FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
+            for (ObjectName objectName : cache.mBeanNames) {
+                long start = System.nanoTime();
+                scrapeBean(receiver, beanConn, objectName);
+                LOGGER.log(FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
+            }
+        } finally {
+            // reconnect to resolve connection issues
+            // TODO: should it make a single retry with a new connection?
+            _beanConn = null;
         }
     }
 
