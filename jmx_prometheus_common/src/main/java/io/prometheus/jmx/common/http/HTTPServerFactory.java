@@ -39,6 +39,7 @@ import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -88,7 +89,7 @@ public class HTTPServerFactory {
     private YamlMapAccessor rootYamlMapAccessor;
 
     /** Constructor */
-    private HTTPServerFactory() {
+    public HTTPServerFactory() {
         // DO NOTHING
     }
 
@@ -108,6 +109,7 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
+        /*
         if (inetAddress == null) {
             throw new IllegalArgumentException("inetAddress is null");
         }
@@ -123,6 +125,7 @@ public class HTTPServerFactory {
         if (exporterYamlFile == null) {
             throw new IllegalArgumentException("exporterYamlFile is null");
         }
+        */
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder()
@@ -136,15 +139,6 @@ public class HTTPServerFactory {
         configureSSL(httpServerBuilder);
 
         return httpServerBuilder.buildAndStart();
-    }
-
-    /**
-     * Method to get an instance of the HTTPServerFactory
-     *
-     * @return the HTTPServerFactory
-     */
-    public static HTTPServerFactory getInstance() {
-        return SingletonHolder.SINGLETON;
     }
 
     /**
@@ -277,128 +271,226 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     private void configureAuthentication(HTTPServer.Builder httpServerBuilder) {
+        Authenticator authenticator;
+
         if (rootYamlMapAccessor.containsPath("/httpServer/authentication")) {
-            YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
-                    rootYamlMapAccessor
-                            .get("/httpServer/authentication/basic")
-                            .map(
-                                    new ConvertToMapAccessor(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for"
-                                                            + " /httpServer/authentication/basic")))
-                            .orElseThrow(
-                                    ConfigurationException.supplier(
-                                            "/httpServer/authentication/basic configuration values"
-                                                    + " are required"));
 
-            String username =
-                    httpServerAuthenticationBasicYamlMapAccessor
-                            .get("/username")
-                            .map(
-                                    new ConvertToString(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for"
-                                                        + " /httpServer/authentication/basic/username"
-                                                        + " must be a string")))
-                            .map(
-                                    new ValidateStringIsNotBlank(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for"
-                                                        + " /httpServer/authentication/basic/username"
-                                                        + " must not be blank")))
-                            .orElseThrow(
-                                    ConfigurationException.supplier(
-                                            "/httpServer/authentication/basic/username is a"
-                                                    + " required string"));
+            Optional<Object> authenticatorClassAttribute =
+                    rootYamlMapAccessor.get("/httpServer/authentication/customAuthenticator");
+            if (authenticatorClassAttribute.isPresent()) {
 
-            String algorithm =
-                    httpServerAuthenticationBasicYamlMapAccessor
-                            .get("/algorithm")
-                            .map(
-                                    new ConvertToString(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for"
-                                                        + " /httpServer/authentication/basic/algorithm"
-                                                        + " must be a string")))
-                            .map(
-                                    new ValidateStringIsNotBlank(
-                                            ConfigurationException.supplier(
-                                                    "Invalid configuration for"
-                                                        + " /httpServer/authentication/basic/algorithm"
-                                                        + " must not be blank")))
-                            .orElse(PLAINTEXT);
+                YamlMapAccessor httpServerAuthenticationCustomAuthenticatorYamlMapAccessor =
+                        rootYamlMapAccessor
+                                .get("/httpServer/authentication/customAuthenticator")
+                                .map(
+                                        new ConvertToMapAccessor(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/customAuthenticator")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/customAuthenticator"
+                                                        + " configuration values are required"));
 
-            Authenticator authenticator;
-
-            if (PLAINTEXT.equalsIgnoreCase(algorithm)) {
-                String password =
-                        httpServerAuthenticationBasicYamlMapAccessor
-                                .get("/password")
+                String authenticatorClass =
+                        httpServerAuthenticationCustomAuthenticatorYamlMapAccessor
+                                .get("/authenticatorClass")
                                 .map(
                                         new ConvertToString(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                            + " /httpServer/authentication/basic/password"
-                                                            + " must be a string")))
+                                                            + " /httpServer/authentication/customAuthenticator/authenticatorClass,"
+                                                            + " it must be a string")))
                                 .map(
                                         new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                            + " /httpServer/authentication/basic/password"
-                                                            + " must not be blank")))
+                                                            + " /httpServer/authentication/customAuthenticator/authenticatorClass,"
+                                                            + " it must not be blank")))
                                 .orElseThrow(
                                         ConfigurationException.supplier(
-                                                "/httpServer/authentication/basic/password is a"
-                                                        + " required string"));
+                                                "/httpServer/authentication/customAuthenticator/authenticatorClass"
+                                                    + " is a required string"));
 
-                authenticator = new PlaintextAuthenticator("/", username, password);
-            } else if (SHA_ALGORITHMS.contains(algorithm)
-                    || PBKDF2_ALGORITHMS.contains(algorithm)) {
-                String hash =
-                        httpServerAuthenticationBasicYamlMapAccessor
-                                .get("/passwordHash")
-                                .map(
-                                        new ConvertToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/authentication/basic/passwordHash"
-                                                            + " must be a string")))
-                                .map(
-                                        new ValidateStringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/authentication/basic/passwordHash"
-                                                            + " must not be blank")))
-                                .orElseThrow(
-                                        ConfigurationException.supplier(
-                                                "/httpServer/authentication/basic/passwordHash is a"
-                                                        + " required string"));
+                Optional<Object> subjectAttribute =
+                        httpServerAuthenticationCustomAuthenticatorYamlMapAccessor.get(
+                                "/subjectAttributeName");
+                if (subjectAttribute.isPresent()) {
 
-                if (SHA_ALGORITHMS.contains(algorithm)) {
-                    authenticator =
-                            createMessageDigestAuthenticator(
-                                    httpServerAuthenticationBasicYamlMapAccessor,
-                                    REALM,
-                                    username,
-                                    hash,
-                                    algorithm);
-                } else {
-                    authenticator =
-                            createPBKDF2Authenticator(
-                                    httpServerAuthenticationBasicYamlMapAccessor,
-                                    REALM,
-                                    username,
-                                    hash,
-                                    algorithm);
+                    String subjectAttributeName =
+                            subjectAttribute
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/customAuthenticator/subjectAttributeName"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/customAuthenticator/subjectAttributeName"
+                                                                + " must not be blank")))
+                                    .get();
+
+                    // need subject.doAs for subsequent handlers
+                    httpServerBuilder.authenticatedSubjectAttributeName(subjectAttributeName);
                 }
+
+                authenticator = loadAuthenticator(authenticatorClass);
             } else {
-                throw new ConfigurationException(
-                        String.format(
-                                "Unsupported /httpServer/authentication/basic/algorithm [%s]",
-                                algorithm));
+
+                YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
+                        rootYamlMapAccessor
+                                .get("/httpServer/authentication/basic")
+                                .map(
+                                        new ConvertToMapAccessor(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic configuration"
+                                                        + " values are required"));
+
+                String username =
+                        httpServerAuthenticationBasicYamlMapAccessor
+                                .get("/username")
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/username"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidateStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/username"
+                                                            + " must not be blank")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic/username is a"
+                                                        + " required string"));
+
+                String algorithm =
+                        httpServerAuthenticationBasicYamlMapAccessor
+                                .get("/algorithm")
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/algorithm"
+                                                            + " must be a string")))
+                                .map(
+                                        new ValidateStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/algorithm"
+                                                            + " must not be blank")))
+                                .orElse(PLAINTEXT);
+
+                if (PLAINTEXT.equalsIgnoreCase(algorithm)) {
+                    String password =
+                            httpServerAuthenticationBasicYamlMapAccessor
+                                    .get("/password")
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/password"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/password"
+                                                                + " must not be blank")))
+                                    .orElseThrow(
+                                            ConfigurationException.supplier(
+                                                    "/httpServer/authentication/basic/password is a"
+                                                            + " required string"));
+
+                    authenticator = new PlaintextAuthenticator("/", username, password);
+                } else if (SHA_ALGORITHMS.contains(algorithm)
+                        || PBKDF2_ALGORITHMS.contains(algorithm)) {
+                    String hash =
+                            httpServerAuthenticationBasicYamlMapAccessor
+                                    .get("/passwordHash")
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/passwordHash"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/passwordHash"
+                                                                + " must not be blank")))
+                                    .orElseThrow(
+                                            ConfigurationException.supplier(
+                                                    "/httpServer/authentication/basic/passwordHash"
+                                                            + " is a required string"));
+
+                    if (SHA_ALGORITHMS.contains(algorithm)) {
+                        authenticator =
+                                createMessageDigestAuthenticator(
+                                        httpServerAuthenticationBasicYamlMapAccessor,
+                                        REALM,
+                                        username,
+                                        hash,
+                                        algorithm);
+                    } else {
+                        authenticator =
+                                createPBKDF2Authenticator(
+                                        httpServerAuthenticationBasicYamlMapAccessor,
+                                        REALM,
+                                        username,
+                                        hash,
+                                        algorithm);
+                    }
+                } else {
+                    throw new ConfigurationException(
+                            String.format(
+                                    "Unsupported /httpServer/authentication/basic/algorithm [%s]",
+                                    algorithm));
+                }
             }
 
             httpServerBuilder.authenticator(authenticator);
+        }
+    }
+
+    private Authenticator loadAuthenticator(String className) {
+
+        Class<?> clazz;
+        try {
+            clazz = this.getClass().getClassLoader().loadClass(className);
+        } catch (ClassNotFoundException e) {
+            throw new ConfigurationException(
+                    String.format(
+                            "configured /httpServer/authentication/authenticatorClass [%s]"
+                                    + " not found, loadClass resulted in [%s:%s]",
+                            className, e.getClass(), e.getMessage()));
+        }
+        if (!Authenticator.class.isAssignableFrom(clazz)) {
+            throw new ConfigurationException(
+                    String.format(
+                            "configured /httpServer/authentication/authenticatorClass [%s]"
+                                + " loadClass resulted in [%s] of the wrong type, is not assignable"
+                                + " from Authenticator",
+                            className, clazz.getCanonicalName()));
+        }
+        try {
+            return (Authenticator) clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new ConfigurationException(
+                    String.format(
+                            "configured /httpServer/authentication/authenticatorClass [%s] no arg"
+                                    + " constructor newInstance resulted in exception [%s:%s]",
+                            className, e.getClass(), e.getMessage()));
         }
     }
 
@@ -662,12 +754,5 @@ public class HTTPServerFactory {
                 }
             }
         }
-    }
-
-    /** Class to hold the singleton */
-    private static class SingletonHolder {
-
-        /** The singleton */
-        public static final HTTPServerFactory SINGLETON = new HTTPServerFactory();
     }
 }

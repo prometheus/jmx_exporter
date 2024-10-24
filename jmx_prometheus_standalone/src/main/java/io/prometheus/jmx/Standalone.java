@@ -86,7 +86,7 @@ public class Standalone {
 
             if (arguments.getMode() == Arguments.Mode.HTTP) {
                 httpServer =
-                        HTTPServerFactory.getInstance()
+                        new HTTPServerFactory()
                                 .createHTTPServer(
                                         InetAddress.getByName(arguments.getHost()),
                                         arguments.getPort(),

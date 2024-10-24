@@ -256,6 +256,28 @@ httpServer:
 
 ---
 
+### Java agent use of a custom com.sun.net.httpserver.Authenticator class
+It is possible to provide a custom Authenticator implementation for the Java agent.
+The custom class needs to be on the jvm classpath.
+The class name to load is provided through `authentication/customAuthenticator` configuration as follows:
+
+```yaml
+httpServer:
+  authentication:
+    customAuthenticator:
+       authenticatorClass: my.custom.AuthenticatorWithNoArgConstructor
+```
+If the custom authenticatorClass needs to provide an authenticated Subject visible to the application, it can set a named attribute on the HttpExchange with that subject. The agent will arrange that subsequent calls occur in a Subject.doAs().
+The name of the attributed must be provided through `subjectAttributeName` configuration as follows:
+```yaml
+httpServer:
+  authentication:
+    customAuthenticator:
+       authenticatorClass: my.custom.AuthenticatorWithNoArgConstructorThatSetsASubjectAttribute
+       subjectAttributeName: "custom.subject.for.doAs");
+```
+
+
 ## HTTPS support (optional)
 
 HTTPS support can be configured using either a JKS or PKCS12 format keystore via two possible methods:

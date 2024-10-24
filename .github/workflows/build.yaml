@@ -20,4 +20,4 @@ jobs:
       - name: Run the Maven verify phase
         run: |
           ./mvnw --batch-mode clean install
-          ./mvnw --batch-mode ajavadoc:jar
+          ./mvnw --batch-mode javadoc:jar

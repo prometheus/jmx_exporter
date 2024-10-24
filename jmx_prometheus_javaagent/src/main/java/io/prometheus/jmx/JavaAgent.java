@@ -77,7 +77,7 @@ public class JavaAgent {
                     .register(PrometheusRegistry.defaultRegistry);
 
             if (arguments.getMode() == Arguments.Mode.HTTP) {
-                HTTPServerFactory.getInstance()
+                new HTTPServerFactory()
                         .createHTTPServer(
                                 InetAddress.getByName(arguments.getHost()),
                                 arguments.getPort(),
