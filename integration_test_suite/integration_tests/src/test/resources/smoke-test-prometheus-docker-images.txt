@@ -1,1 +1,2 @@
 prom/prometheus:v2.54.1
+prom/prometheus:v2.55.0
