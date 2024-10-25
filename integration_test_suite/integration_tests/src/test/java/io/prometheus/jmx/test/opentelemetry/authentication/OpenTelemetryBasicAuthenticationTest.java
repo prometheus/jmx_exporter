@@ -30,7 +30,6 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
 /** Class to implement OpenTelemetryBasicAuthenticationTest */
-// @Verifyica.Order(1)
 public class OpenTelemetryBasicAuthenticationTest {
 
     private static final String NETWORK = "network";

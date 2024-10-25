@@ -26,7 +26,6 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
 /** Class to implement OpenTelemetryTest */
-// @Verifyica.Order(1)
 public class OpenTelemetryTest {
 
     public static final String NETWORK = "network";
