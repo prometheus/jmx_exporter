@@ -13,6 +13,7 @@ antublue/openlogic-openjdk:8
 antublue/openlogic-openjdk:11
 antublue/openlogic-openjdk:17
 antublue/openlogic-openjdk:21
+antublue/konajdk:21
 azul/zulu-openjdk:8
 azul/zulu-openjdk:11
 azul/zulu-openjdk:17
