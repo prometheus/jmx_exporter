@@ -173,6 +173,12 @@
                                         <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
                                 </filter>
+                                <filter>
+                                    <artifact>io.prometheus:otel-agent-resources</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
                             </filters>
                             <relocations>
                                 <relocation>

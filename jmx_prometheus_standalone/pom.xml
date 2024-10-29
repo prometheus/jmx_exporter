@@ -168,6 +168,12 @@
                                     </excludes>
                                 </filter>
                                 <filter>
+                                    <artifact>io.prometheus:otel-agent-resources</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
                                     <artifact>org.yaml:snakeyaml</artifact>
                                     <excludes>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
