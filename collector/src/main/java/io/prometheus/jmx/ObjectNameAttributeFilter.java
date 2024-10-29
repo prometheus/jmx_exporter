@@ -20,7 +20,6 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +60,7 @@ public class ObjectNameAttributeFilter {
      */
     private ObjectNameAttributeFilter initialize(Map<String, Object> yamlConfig)
             throws MalformedObjectNameException {
+        /*
         if (yamlConfig.containsKey(EXCLUDE_OBJECT_NAME_ATTRIBUTES)) {
             Map<Object, Object> objectNameAttributeMap =
                     (Map<Object, Object>) yamlConfig.get(EXCLUDE_OBJECT_NAME_ATTRIBUTES);
@@ -84,6 +84,9 @@ public class ObjectNameAttributeFilter {
         } else {
             autoExcludeObjectNameAttributes = true;
         }
+        */
+
+        autoExcludeObjectNameAttributes = false;
 
         LOGGER.log(Level.FINE, "dynamicExclusion [%b]", autoExcludeObjectNameAttributes);
 
