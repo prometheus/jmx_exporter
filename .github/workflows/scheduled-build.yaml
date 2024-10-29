@@ -1,0 +1,20 @@
+name: Scheduled Build (every 3 hours)
+on:
+  schedule:
+    - cron: "0 */3 * * *"  # Runs every 3 hours
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+          cache: 'maven'
+      - name: Run the Maven verify phase
+        run: |
+          ./mvnw --batch-mode clean install
+          ./mvnw --batch-mode javadoc:jar
