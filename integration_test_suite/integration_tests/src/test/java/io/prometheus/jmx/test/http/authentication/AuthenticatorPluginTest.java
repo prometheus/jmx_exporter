@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.rmi.ssl;
+package io.prometheus.jmx.test.http.authentication;
 
 import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
-import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.common.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -39,28 +41,25 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class RMIRegistrySSLDisabledTest {
+public class AuthenticatorPluginTest {
+
+    private final String VALID_USERNAME = "Prometheus";
+
+    private final String VALID_PASSWORD = "secret";
+
+    private final String[] TEST_USERNAMES =
+            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+
+    private final String[] TEST_PASSWORDS =
+            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
     @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<ExporterTestEnvironment> arguments() {
-        // Filter the arguments..
-        //
-        // 1. only run the Standalone exporter
-        // 2. filter out the GraalVM 1.8 JVM - exception is that SunJSSE is not found
-        // 3. filter out all ibmjava* JVMs - exception is that SunJSSE is not found
-        //
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
-                                exporterTestEnvironment.getName().contains("Standalone"))
-                .filter(
-                        exporterTestEnvironment ->
-                                !exporterTestEnvironment
-                                        .getJavaDockerImage()
-                                        .contains("graalvm/jdk:java8"))
-                .filter(
-                        exporterTestEnvironment ->
-                                !exporterTestEnvironment.getJavaDockerImage().contains("ibmjava"));
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.JavaAgent);
     }
 
     @Verifyica.Prepare
@@ -78,55 +77,149 @@ public class RMIRegistrySSLDisabledTest {
     @Verifyica.Test
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertHealthyResponse(httpResponse);
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder().url(url).authorization(username, password).build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
+            }
+        }
     }
 
     @Verifyica.Test
     public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder().url(url).authorization(username, password).build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.Test
     public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        "CONTENT-TYPE",
-                        "application/openmetrics-text; version=1.0.0; charset=utf-8");
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header(
+                                        "CONTENT-TYPE",
+                                        "application/openmetrics-text; version=1.0.0;"
+                                                + " charset=utf-8")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.Test
     public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url, "CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8");
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header("CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.Test
     public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        "CONTENT-TYPE",
-                        "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
-                                + " encoding=delimited");
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header(
+                                        "CONTENT-TYPE",
+                                        "application/vnd.google.protobuf;"
+                                                + " proto=io.prometheus.client.MetricFamily;"
+                                                + " encoding=delimited")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.AfterAll
@@ -150,7 +243,7 @@ public class RMIRegistrySSLDisabledTest {
             ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertCommonMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 
         boolean isJmxExporterModeJavaAgent =
                 exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;

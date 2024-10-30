@@ -254,66 +254,63 @@ public class HTTPServerFactory {
      * @param httpServerBuilder httpServerBuilder
      */
     private void configureAuthentication(HTTPServer.Builder httpServerBuilder) {
-
         Authenticator authenticator;
 
         if (rootYamlMapAccessor.containsPath("/httpServer/authentication")) {
-
             Optional<Object> authenticatorClassAttribute =
-                    rootYamlMapAccessor.get("/httpServer/authentication/customAuthenticator");
+                    rootYamlMapAccessor.get("/httpServer/authentication/plugin");
             if (authenticatorClassAttribute.isPresent()) {
 
                 YamlMapAccessor httpServerAuthenticationCustomAuthenticatorYamlMapAccessor =
                         rootYamlMapAccessor
-                                .get("/httpServer/authentication/customAuthenticator")
+                                .get("/httpServer/authentication/plugin")
                                 .map(
                                         new ConvertToMapAccessor(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                            + " /httpServer/authentication/customAuthenticator")))
+                                                            + " /httpServer/authentication/plugin")))
                                 .orElseThrow(
                                         ConfigurationException.supplier(
-                                                "/httpServer/authentication/customAuthenticator"
+                                                "/httpServer/authentication/plugin"
                                                         + " configuration values are required"));
 
                 String authenticatorClass =
                         httpServerAuthenticationCustomAuthenticatorYamlMapAccessor
-                                .get("/authenticatorClass")
+                                .get("/class")
                                 .map(
                                         new ConvertToString(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                            + " /httpServer/authentication/customAuthenticator/authenticatorClass,"
-                                                            + " it must be a string")))
+                                                            + " /httpServer/authentication/plugin/class"
+                                                            + " must be a string")))
                                 .map(
                                         new ValidateStringIsNotBlank(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                            + " /httpServer/authentication/customAuthenticator/authenticatorClass,"
-                                                            + " it must not be blank")))
+                                                            + " /httpServer/authentication/plugin/class"
+                                                            + " must not be blank")))
                                 .orElseThrow(
                                         ConfigurationException.supplier(
-                                                "/httpServer/authentication/customAuthenticator/authenticatorClass"
-                                                    + " is a required string"));
+                                                "/httpServer/authentication/plugin/class is a"
+                                                        + " required string"));
 
                 Optional<Object> subjectAttribute =
                         httpServerAuthenticationCustomAuthenticatorYamlMapAccessor.get(
                                 "/subjectAttributeName");
                 if (subjectAttribute.isPresent()) {
-
                     String subjectAttributeName =
                             subjectAttribute
                                     .map(
                                             new ConvertToString(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/customAuthenticator/subjectAttributeName"
+                                                                + " /httpServer/authentication/plugin/class/subjectAttributeName"
                                                                 + " must be a string")))
                                     .map(
                                             new ValidateStringIsNotBlank(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/customAuthenticator/subjectAttributeName"
+                                                                + " /httpServer/authentication/plugin/subjectAttributeName"
                                                                 + " must not be blank")))
                                     .get();
 
@@ -323,7 +320,6 @@ public class HTTPServerFactory {
 
                 authenticator = loadAuthenticator(authenticatorClass);
             } else {
-
                 YamlMapAccessor httpServerAuthenticationBasicYamlMapAccessor =
                         rootYamlMapAccessor
                                 .get("/httpServer/authentication/basic")

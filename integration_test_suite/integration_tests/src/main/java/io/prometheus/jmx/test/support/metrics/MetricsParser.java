@@ -16,8 +16,6 @@
 
 package io.prometheus.jmx.test.support.metrics;
 
-import io.prometheus.jmx.test.support.http.HttpContentType;
-import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_28_2.Metrics;
 import java.io.BufferedReader;
@@ -63,18 +61,26 @@ public class MetricsParser {
      * @return a Collection of Metrics
      */
     public static Collection<Metric> parseCollection(HttpResponse httpResponse) {
-        if (Objects.requireNonNull(httpResponse.headers().get(HttpHeader.CONTENT_TYPE))
-                .contains(HttpContentType.PROTOBUF)) {
-            return parseProtobufMetrics(httpResponse);
+        if (Objects.requireNonNull(httpResponse.headers().get("CONTENT-TYPE"))
+                .contains(
+                        "application/vnd.google.protobuf;"
+                                + " proto=io.prometheus.client.MetricFamily;")) {
+            return parseProtobufMetrics(httpResponse.body().bytes());
         } else {
-            return parseTextMetrics(httpResponse);
+            return parseTextMetrics(httpResponse.body().string());
         }
     }
 
-    private static Collection<Metric> parseProtobufMetrics(HttpResponse httpResponse) {
+    /**
+     * Method to parse Protobuf Metrics
+     *
+     * @param bytes bytes
+     * @return a Collection of metrics
+     */
+    private static Collection<Metric> parseProtobufMetrics(byte[] bytes) {
         Collection<Metric> collection = new ArrayList<>();
 
-        try (InputStream inputStream = new ByteArrayInputStream(httpResponse.body().bytes())) {
+        try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
             while (true) {
                 Metrics.MetricFamily metricFamily =
                         Metrics.MetricFamily.parseDelimitedFrom(inputStream);
@@ -144,11 +150,16 @@ public class MetricsParser {
         }
     }
 
-    private static Collection<Metric> parseTextMetrics(HttpResponse httpResponse) {
+    /**
+     * Method to parse test Metrics
+     *
+     * @param body body
+     * @return a Collection of Metrics
+     */
+    private static Collection<Metric> parseTextMetrics(String body) {
         Collection<Metric> metrics = new ArrayList<>();
 
-        try (LineReader lineReader =
-                new LineReader(new StringReader(httpResponse.body().string()))) {
+        try (LineReader lineReader = new LineReader(new StringReader(body))) {
             String typeLine;
             String helpLine;
 
@@ -175,6 +186,13 @@ public class MetricsParser {
         }
     }
 
+    /**
+     * Method to read the HELP line
+     *
+     * @param lineReader lineReader
+     * @return the HELP line
+     * @throws IOException IOException
+     */
     private static String readHelpLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
         if (line != null) {
@@ -183,11 +201,25 @@ public class MetricsParser {
         return line;
     }
 
+    /**
+     * Method to read the TYPE line
+     *
+     * @param lineReader lineRedaer
+     * @return the TYPE line
+     * @throws IOException IOException
+     */
     private static String readTypeLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
         return line.substring(line.lastIndexOf(" ")).trim();
     }
 
+    /**
+     * Method to read the metric line
+     *
+     * @param lineReader lineReader
+     * @return the metric line
+     * @throws IOException IOException
+     */
     private static String readMetricLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
         if (line != null && line.startsWith("#")) {
@@ -197,6 +229,14 @@ public class MetricsParser {
         return line;
     }
 
+    /**
+     * Method to create a Metric
+     *
+     * @param typeLine typeLine
+     * @param help help
+     * @param metricLine metricLine
+     * @return
+     */
     private static Metric createMetric(String typeLine, String help, String metricLine) {
         String name;
         TreeMap<String, String> labels = new TreeMap<>();
@@ -222,6 +262,12 @@ public class MetricsParser {
         }
     }
 
+    /**
+     * Method to parse labels
+     *
+     * @param labelsLine labelsLine
+     * @return a TreeMap of labels
+     */
     private static TreeMap<String, String> parseLabels(String labelsLine) {
         if (labelsLine.endsWith(",")) {
             labelsLine = labelsLine.substring(0, labelsLine.length() - 1);
@@ -248,21 +294,33 @@ public class MetricsParser {
         return map;
     }
 
-    private static List<String> splitOnCommas(String input) {
+    /**
+     * Method to split a String on commas
+     *
+     * @param string string
+     * @return a List of String tokens
+     */
+    private static List<String> splitOnCommas(String string) {
         List<String> result = new ArrayList<>();
         int start = 0;
         boolean inQuotes = false;
-        for (int current = 0; current < input.length(); current++) {
-            if (input.charAt(current) == '\"') inQuotes = !inQuotes; // toggle state
-            else if (input.charAt(current) == ',' && !inQuotes) {
-                result.add(input.substring(start, current));
+        for (int current = 0; current < string.length(); current++) {
+            if (string.charAt(current) == '\"') inQuotes = !inQuotes; // toggle state
+            else if (string.charAt(current) == ',' && !inQuotes) {
+                result.add(string.substring(start, current));
                 start = current + 1;
             }
         }
-        result.add(input.substring(start));
+        result.add(string.substring(start));
         return result;
     }
 
+    /**
+     * Method to convert a List of Metrics.LabelPair to a TreeMap
+     *
+     * @param labelPairs labelPairs
+     * @return a TreeMap of labels
+     */
     private static TreeMap<String, String> toLabels(List<Metrics.LabelPair> labelPairs) {
         TreeMap<String, String> labels = new TreeMap<>();
 

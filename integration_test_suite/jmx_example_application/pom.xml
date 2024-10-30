@@ -33,13 +33,13 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>prometheus-metrics-core</artifactId>
-            <version>1.3.2</version>
+            <version>${prometheus.metrics.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>prometheus-metrics-exposition-formats</artifactId>
-            <version>1.3.2</version>
+            <version>${prometheus.metrics.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

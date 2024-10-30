@@ -112,6 +112,11 @@ public class ObjectNameAttributeFilter {
         }
     }
 
+    /**
+     * Method to only keep "alive" mBeans, remove old mBeans to prevent memory growth
+     *
+     * @param aliveMBeans aliveMBeans
+     */
     public void onlyKeepMBeans(Set<ObjectName> aliveMBeans) {
         if (autoExcludeObjectNameAttributes) {
             for (ObjectName prevName : dynamicExcludeObjectNameAttributesMap.keySet()) {

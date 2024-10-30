@@ -17,3 +17,5 @@ output.log
 stress-test.log
 test.sh
 test.log
+verify-full.sh
+verify-full.log

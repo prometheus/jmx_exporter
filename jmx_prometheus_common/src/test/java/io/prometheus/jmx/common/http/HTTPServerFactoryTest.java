@@ -32,14 +32,13 @@ public class HTTPServerFactoryTest {
 
     @Test
     public void createHTTPServerWithCustomAuthenticatorClass451RoundTrip() throws Exception {
-
         File config = temporaryFolder.newFile("ok");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
+        writer.println("    plugin:");
         writer.println(
-                "      authenticatorClass:"
+                "      class:"
                         + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticator451");
         writer.close();
 
@@ -55,9 +54,9 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
+        writer.println("    plugin:");
         writer.println(
-                "      authenticatorClass:"
+                "      class:"
                     + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
         writer.println("      subjectAttributeName: custom.subject");
 
@@ -76,9 +75,9 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
+        writer.println("    plugin:");
         writer.println(
-                "      authenticatorClass:"
+                "      class:"
                     + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
         writer.println("      subjectAttributeName: not.the.correct.custom.subject.attribute");
 
@@ -120,9 +119,9 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
+        writer.println("    plugin:");
         writer.println(
-                "      authenticatorClass:"
+                "      class:"
                         + " io.prometheus.jmx.common.http.authenticator.PlaintextAuthenticator");
         writer.close();
 
@@ -136,10 +135,9 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
+        writer.println("    plugin:");
         writer.println(
-                "      authenticatorClass:"
-                        + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
+                "      class:" + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
         writer.close();
 
         httpServer = startServer(config);
@@ -152,8 +150,8 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
-        writer.println("       authenticatorClass: 10");
+        writer.println("    plugin:");
+        writer.println("       class: 10");
         writer.close();
 
         httpServer = startServer(config);
@@ -166,8 +164,8 @@ public class HTTPServerFactoryTest {
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
-        writer.println("    customAuthenticator:");
-        writer.println("      authenticatorClass:");
+        writer.println("    plugin:");
+        writer.println("      class:");
         writer.close();
 
         httpServer = startServer(config);

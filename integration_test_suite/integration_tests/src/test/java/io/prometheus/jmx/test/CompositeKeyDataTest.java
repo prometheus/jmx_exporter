@@ -16,50 +16,121 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.common.ExporterTestSupport;
+import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.BiConsumer;
+import java.util.List;
+import java.util.stream.Stream;
+import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.ClassContext;
+import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class CompositeKeyDataTest extends AbstractExporterTest
-        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
+public class CompositeKeyDataTest {
 
-    @Verifyica.Test
-    public void testHealthy(ArgumentContext argumentContext) {
-        super.testHealthy(argumentContext);
+    @Verifyica.ArgumentSupplier(parallelism = 4)
+    public static Stream<ExporterTestEnvironment> arguments() {
+        return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
+    }
+
+    @Verifyica.Prepare
+    public static void prepare(ClassContext classContext) {
+        ExporterTestSupport.getOrCreateNetwork(classContext);
+    }
+
+    @Verifyica.BeforeAll
+    public void beforeAll(ArgumentContext argumentContext) {
+        Class<?> testClass = argumentContext.classContext().testClass();
+        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
+        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
-    public void testMetrics(ArgumentContext argumentContext) {
-        super.testMetrics(argumentContext);
+    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+        assertHealthyResponse(httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        super.testMetricsOpenMetricsFormat(argumentContext);
+    public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusFormat(argumentContext);
+    public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        "CONTENT-TYPE",
+                        "application/openmetrics-text; version=1.0.0; charset=utf-8");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusProtobufFormat(argumentContext);
+    public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url, "CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
-    @Override
-    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertHttpMetricsResponse(httpResponse);
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        "CONTENT-TYPE",
+                        "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
+                                + " encoding=delimited");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+    }
+
+    @Verifyica.AfterAll
+    public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        List<Trap> traps = new ArrayList<>();
+
+        traps.add(
+                new Trap(
+                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+
+        Trap.assertEmpty(traps);
+    }
+
+    @Verifyica.Conclude
+    public static void conclude(ClassContext classContext) throws Throwable {
+        ExporterTestSupport.destroyNetwork(classContext);
+    }
+
+    private void assertMetricsResponse(
+            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
