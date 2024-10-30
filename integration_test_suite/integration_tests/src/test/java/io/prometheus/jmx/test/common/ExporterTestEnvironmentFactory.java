@@ -6,12 +6,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+/** Class to implement ExporterTestEnvironmentFactory */
 public class ExporterTestEnvironmentFactory {
 
+    /** Constructor */
     private ExporterTestEnvironmentFactory() {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * Create the ExporterTestEnvironments
+     *
+     * @return a Stream of ExporterTestEnvironments
+     */
     public static Stream<ExporterTestEnvironment> createExporterTestEnvironments() {
         Collection<ExporterTestEnvironment> collection = new ArrayList<>();
 
