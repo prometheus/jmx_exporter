@@ -16,64 +16,230 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.common.ExporterTestSupport;
 import io.prometheus.jmx.test.common.PBKDF2WithHmacExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.ClassContext;
+import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class BasicAuthenticationPBKDF2WithHmacSHA256Test extends AbstractBasicAuthenticationTest
-        implements BiConsumer<ExporterTestEnvironment, HttpResponse> {
+public class BasicAuthenticationPBKDF2WithHmacSHA256Test {
 
-    /**
-     * Method to get the Stream of test environments
-     *
-     * @return the Stream of test environments
-     */
-    @Verifyica.ArgumentSupplier
+    private final String VALID_USERNAME = "Prometheus";
+
+    private final String VALID_PASSWORD = "secret";
+
+    private final String[] TEST_USERNAMES =
+            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+
+    private final String[] TEST_PASSWORDS =
+            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
+
+    @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<ExporterTestEnvironment> arguments() {
-        return AbstractBasicAuthenticationTest.arguments()
+        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter());
     }
 
-    @Verifyica.Test
-    public void testHealthy(ArgumentContext argumentContext) {
-        super.testHealthy(argumentContext);
+    @Verifyica.Prepare
+    public static void prepare(ClassContext classContext) {
+        ExporterTestSupport.getOrCreateNetwork(classContext);
+    }
+
+    @Verifyica.BeforeAll
+    public void beforeAll(ArgumentContext argumentContext) {
+        Class<?> testClass = argumentContext.classContext().testClass();
+        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
+        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
-    public void testMetrics(ArgumentContext argumentContext) {
-        super.testMetrics(argumentContext);
+    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder().url(url).authorization(username, password).build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
+            }
+        }
     }
 
     @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        super.testMetricsOpenMetricsFormat(argumentContext);
+    public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder().url(url).authorization(username, password).build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusFormat(argumentContext);
+    public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header(
+                                        "CONTENT-TYPE",
+                                        "application/openmetrics-text; version=1.0.0;"
+                                                + " charset=utf-8")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusProtobufFormat(argumentContext);
+    public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header("CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
     }
 
-    @Override
-    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertHttpMetricsResponse(httpResponse);
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header(
+                                        "CONTENT-TYPE",
+                                        "application/vnd.google.protobuf;"
+                                                + " proto=io.prometheus.client.MetricFamily;"
+                                                + " encoding=delimited")
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
+    }
+
+    @Verifyica.AfterAll
+    public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        List<Trap> traps = new ArrayList<>();
+
+        traps.add(
+                new Trap(
+                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+
+        Trap.assertEmpty(traps);
+    }
+
+    @Verifyica.Conclude
+    public static void conclude(ClassContext classContext) throws Throwable {
+        ExporterTestSupport.destroyNetwork(classContext);
+    }
+
+    private void assertMetricsResponse(
+            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 

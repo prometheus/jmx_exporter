@@ -2,7 +2,6 @@ package io.prometheus.jmx.test.common;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.http.HttpClient;
 import java.time.Duration;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -27,7 +26,6 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
     private GenericContainer<?> standaloneApplicationContainer;
     private GenericContainer<?> javaAgentApplicationContainer;
     private GenericContainer<?> standaloneExporterContainer;
-    private HttpClient httpClient;
 
     /**
      * Constructor
@@ -95,8 +93,6 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                     javaAgentApplicationContainer = createJavaAgentApplicationContainer();
                     javaAgentApplicationContainer.start();
 
-                    httpClient = createHttpClient(javaAgentApplicationContainer, baseUrl, 8888);
-
                     break;
                 }
             case Standalone:
@@ -107,20 +103,28 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                     standaloneExporterContainer = createStandaloneExporterContainer();
                     standaloneExporterContainer.start();
 
-                    httpClient = createHttpClient(standaloneExporterContainer, baseUrl, 8888);
-
                     break;
                 }
         }
     }
 
-    /**
-     * Method to get an HttpClient for the test environment
-     *
-     * @return an HttpClient
-     */
-    public HttpClient getHttpClient() {
-        return httpClient;
+    public String getBaseUrl() {
+        int port = 0;
+
+        switch (jmxExporterMode) {
+            case JavaAgent:
+                {
+                    port = javaAgentApplicationContainer.getMappedPort(8888);
+                    break;
+                }
+            case Standalone:
+                {
+                    port = standaloneExporterContainer.getMappedPort(8888);
+                    break;
+                }
+        }
+
+        return baseUrl + ":" + port;
     }
 
     /** Method to destroy the test environment */
@@ -264,36 +268,5 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withStartupTimeout(Duration.ofMillis(30000))
                 .withWorkingDirectory("/temp")
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1));
-    }
-
-    public int getMappedPort(int port) {
-        int mappedPort = 0;
-
-        switch (jmxExporterMode) {
-            case JavaAgent:
-                {
-                    mappedPort = javaAgentApplicationContainer.getMappedPort(port);
-                    break;
-                }
-            case Standalone:
-                {
-                    mappedPort = standaloneExporterContainer.getMappedPort(port);
-                    break;
-                }
-        }
-
-        return mappedPort;
-    }
-
-    /**
-     * Method to create a Prometheus HttpClient
-     *
-     * @param genericContainer genericContainer
-     * @param baseUrl baseUrl
-     * @return the return value
-     */
-    private static HttpClient createHttpClient(
-            GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
-        return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
     }
 }

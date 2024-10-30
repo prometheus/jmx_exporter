@@ -1,11 +1,9 @@
 name: Build
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,5 +17,6 @@ jobs:
           cache: 'maven'
       - name: Run the Maven verify phase
         run: |
+          ./integration_test_suite/pull-smoke-test-docker-images.sh
           ./mvnw --batch-mode clean install
           ./mvnw --batch-mode javadoc:jar

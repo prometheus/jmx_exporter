@@ -26,7 +26,7 @@ import java.util.Objects;
 import javax.security.auth.Subject;
 
 /** Example custom authenticator */
-public class CustomAuthenticator extends Authenticator {
+public class AuthenticatorPlugin extends Authenticator {
 
     private static final String AUTHORIZATION = "Authorization";
     private static final String BASIC = "Basic";

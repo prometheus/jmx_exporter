@@ -16,68 +16,135 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.http.HttpResponseAssertions.assertHttpMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.AbstractExporterTest;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
+import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.common.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
-import io.prometheus.jmx.test.support.http.HttpPrometheusMetricsRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.ClassContext;
+import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class AutoIncrementingMBeanTest extends AbstractExporterTest {
+public class AutoIncrementingMBeanTest {
 
-    @Verifyica.Test
-    public void testHealthy(ArgumentContext argumentContext) {
-        super.testHealthy(argumentContext);
+    @Verifyica.ArgumentSupplier(parallelism = 4)
+    public static Stream<ExporterTestEnvironment> arguments() {
+        return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
     }
 
-    @Verifyica.Test
-    public void testMetrics(ArgumentContext argumentContext) {
-        super.testMetrics(argumentContext);
+    @Verifyica.Prepare
+    public static void prepare(ClassContext classContext) {
+        ExporterTestSupport.getOrCreateNetwork(classContext);
     }
 
-    @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ArgumentContext argumentContext) {
-        super.testMetricsOpenMetricsFormat(argumentContext);
-    }
-
-    @Verifyica.Test
-    public void testMetricsPrometheusFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusFormat(argumentContext);
-    }
-
-    @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ArgumentContext argumentContext) {
-        super.testMetricsPrometheusProtobufFormat(argumentContext);
+    @Verifyica.BeforeAll
+    public void beforeAll(ArgumentContext argumentContext) {
+        Class<?> testClass = argumentContext.classContext().testClass();
+        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
+        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testAutoIncrementingMBean(ArgumentContext argumentContext) {
-        HttpClient httpClient =
-                argumentContext
-                        .testArgument(ExporterTestEnvironment.class)
-                        .payload()
-                        .getHttpClient();
+    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+        assertHealthyResponse(httpResponse);
+    }
+
+    @Verifyica.Test
+    public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+    }
+
+    @Verifyica.Test
+    public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        "CONTENT-TYPE",
+                        "application/openmetrics-text; version=1.0.0; charset=utf-8");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url, "CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+    }
+
+    @Verifyica.Test
+    public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        "CONTENT-TYPE",
+                        "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
+                                + " encoding=delimited");
+
+        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+    }
+
+    @Verifyica.AfterAll
+    public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        List<Trap> traps = new ArrayList<>();
+
+        traps.add(
+                new Trap(
+                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+
+        Trap.assertEmpty(traps);
+    }
+
+    @Verifyica.Conclude
+    public static void conclude(ClassContext classContext) throws Throwable {
+        ExporterTestSupport.destroyNetwork(classContext);
+    }
+
+    @Verifyica.Test
+    public void testAutoIncrementingMBean(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
 
         // Collect the auto incrementing MBean values
-        double value1 = collect(httpClient);
-        double value2 = collect(httpClient);
-        double value3 = collect(httpClient);
+        double value1 = collect(url);
+        double value2 = collect(url);
+        double value3 = collect(url);
 
         // Assert that each collection is the previous value + 1
         assertThat(value2).isGreaterThan(value1);
@@ -86,9 +153,9 @@ public class AutoIncrementingMBeanTest extends AbstractExporterTest {
         assertThat(value3).isEqualTo(value2 + 1);
     }
 
-    @Override
-    public void accept(ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertHttpMetricsResponse(httpResponse);
+    private void assertMetricsResponse(
+            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
@@ -201,12 +268,12 @@ public class AutoIncrementingMBeanTest extends AbstractExporterTest {
      *
      * @return the auto incrementing MBean value
      */
-    private double collect(HttpClient httpClient) {
+    private double collect(String url) throws IOException {
         final AtomicDouble value = new AtomicDouble();
 
-        HttpResponse httpResponse = new HttpPrometheusMetricsRequest().send(httpClient);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertHttpMetricsResponse(httpResponse);
+        assertCommonMetricsResponse(httpResponse);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
