@@ -1,11 +1,10 @@
-name: Build
+name: Scheduled Build (every hour)
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  schedule:
+    - cron: "0 * * * *"
 jobs:
   build:
+    if: github.repository == 'prometheus/jmx_exporter'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

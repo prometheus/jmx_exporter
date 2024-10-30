@@ -18,6 +18,8 @@ package io.prometheus.jmx.test.support;
 
 /** Enum of the two operational modes */
 public enum JmxExporterMode {
+    /** JavaAgent */
     JavaAgent,
+    /** Standalone */
     Standalone
 }

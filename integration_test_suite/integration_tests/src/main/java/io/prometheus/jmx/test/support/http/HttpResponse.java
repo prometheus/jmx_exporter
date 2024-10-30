@@ -1,55 +1,76 @@
 package io.prometheus.jmx.test.support.http;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-import okhttp3.Headers;
-import okhttp3.ResponseBody;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
+/** Class to implement HttpResponse */
 public class HttpResponse {
 
-    public static final int OK = 200;
-    public static final int UNAUTHORIZED = 401;
-
-    private final int code;
-    private final Headers headers;
+    private final int statusCode;
+    private final String statusMessage;
     private final HttpResponseBody body;
+    private final Map<String, List<String>> headers;
 
-    public HttpResponse(okhttp3.Response response) throws IOException {
-        this.code = response.code();
-        this.headers = response.headers();
-
-        try {
-            ResponseBody responseBody = response.body();
-            if (responseBody != null) {
-                body = new HttpResponseBody(responseBody.bytes());
-            } else {
-                body = null;
-            }
-        } finally {
-            if (response != null) {
-                try {
-                    response.close();
-                } catch (Throwable t) {
-                    // DO NOTHING
-                }
-            }
-        }
+    /**
+     * Constructor
+     *
+     * @param statusCode statusCode
+     * @param statusMessage statusMessage
+     * @param headers headers
+     * @param body body
+     */
+    public HttpResponse(
+            int statusCode, String statusMessage, Map<String, List<String>> headers, byte[] body) {
+        this.statusCode = statusCode;
+        this.statusMessage = statusMessage;
+        this.headers = headers;
+        this.body = new HttpResponseBody(body);
     }
 
+    /**
+     * Get the status code
+     *
+     * @return the status code
+     */
     public int statusCode() {
-        return code;
+        return statusCode;
     }
 
-    public Headers headers() {
+    /**
+     * Get the status message
+     *
+     * @return the status message
+     */
+    public String statusMessage() {
+        return statusMessage;
+    }
+
+    /**
+     * Get the Map of headers
+     *
+     * @return a Map of headers
+     */
+    public Map<String, List<String>> headers() {
         return headers;
     }
 
-    public HttpResponseBody body() {
-        return body;
+    /**
+     * Get a List of header values
+     *
+     * @param name name
+     * @return a List of header values
+     */
+    public List<String> header(String name) {
+        return headers.get(name.toUpperCase(Locale.US));
     }
 
-    public HttpResponse accept(Consumer<HttpResponse> consumer) {
-        consumer.accept(this);
-        return this;
+    /**
+     * Get the body
+     *
+     * @return the body
+     */
+    public HttpResponseBody body() {
+        return body;
     }
 }

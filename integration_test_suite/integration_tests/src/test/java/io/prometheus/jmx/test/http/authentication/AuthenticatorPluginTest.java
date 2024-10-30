@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.http.ssl;
+package io.prometheus.jmx.test.http.authentication;
 
 import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
@@ -41,9 +41,7 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
-
-    private static final String BASE_URL = "https://localhost";
+public class AuthenticatorPluginTest {
 
     private final String VALID_USERNAME = "Prometheus";
 
@@ -57,16 +55,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
 
     @Verifyica.ArgumentSupplier(parallelism = 4)
     public static Stream<ExporterTestEnvironment> arguments() {
-        // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
-        // https://github.com/adoptium/temurin-build/issues/3002
-        // https://bugs.openjdk.org/browse/JDK-8306037
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
-                                !exporterTestEnvironment
-                                        .getJavaDockerImage()
-                                        .contains("eclipse-temurin:8-alpine"))
-                .map(exporterTestEnvironment -> exporterTestEnvironment.setBaseUrl(BASE_URL));
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.JavaAgent);
     }
 
     @Verifyica.Prepare
@@ -258,7 +251,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_standalone";
+                        : "jmx_prometheus_httpserver";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

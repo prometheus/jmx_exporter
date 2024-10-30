@@ -6,11 +6,9 @@ import java.lang.reflect.Field;
 import java.util.*;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
-@Ignore
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ObjectNameAttributeFilterTest {
 
