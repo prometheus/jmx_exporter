@@ -2,11 +2,11 @@ package io.prometheus.jmx.test.opentelemetry.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.common.TestEnvironmentFactory;
-import io.prometheus.jmx.test.common.TestSupport;
 import io.prometheus.jmx.test.opentelemetry.ExpectedMetricsNames;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.support.TestEnvironmentFactory;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;

@@ -20,10 +20,10 @@ import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.TestEnvironmentFactory;
-import io.prometheus.jmx.test.common.TestSupport;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestEnvironmentFactory;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;

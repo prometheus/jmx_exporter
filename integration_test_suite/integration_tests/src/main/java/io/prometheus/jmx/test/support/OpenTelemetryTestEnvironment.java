@@ -1,8 +1,7 @@
-package io.prometheus.jmx.test.common;
+package io.prometheus.jmx.test.support;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import java.io.BufferedReader;
 import java.io.InputStream;

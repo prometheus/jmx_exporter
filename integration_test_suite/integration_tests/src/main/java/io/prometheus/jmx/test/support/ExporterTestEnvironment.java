@@ -1,7 +1,6 @@
-package io.prometheus.jmx.test.common;
+package io.prometheus.jmx.test.support;
 
 import com.github.dockerjava.api.model.Ulimit;
-import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.time.Duration;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
