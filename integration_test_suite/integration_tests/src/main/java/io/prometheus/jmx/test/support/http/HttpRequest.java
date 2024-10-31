@@ -4,10 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 /** Class to implement HttpRequest */
 public class HttpRequest {
@@ -89,12 +89,12 @@ public class HttpRequest {
 
         private String url;
         private Method method = Method.GET;
-        private final Map<String, List<String>> headers = new HashMap<>();
+        private final Map<String, List<String>> headers;
         private String body;
 
         /** Constructor */
         public Builder() {
-            // INTENTIONALLY BLANK
+            headers = new TreeMap<>();
         }
 
         /**
@@ -167,7 +167,9 @@ public class HttpRequest {
          * @param credential credential
          * @return the Builder
          */
-        public Builder authorization(String principal, String credential) {
+        public Builder basicAuthentication(String principal, String credential) {
+            headers.remove("AUTHORIZATION");
+
             return header(
                     "AUTHORIZATION",
                     String.format(

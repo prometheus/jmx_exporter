@@ -182,7 +182,7 @@ public class OpenTelemetryBasicAuthenticationTest {
         return HttpClient.sendRequest(
                 HttpRequest.builder()
                         .url(openTelemetryTestEnvironment.getBaseUrl() + path)
-                        .authorization(VALID_USER, VALUE_PASSWORD)
+                        .basicAuthentication(VALID_USER, VALUE_PASSWORD)
                         .build());
     }
 }

@@ -94,7 +94,10 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -116,7 +119,10 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -145,7 +151,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         "CONTENT-TYPE",
                                         "application/openmetrics-text; version=1.0.0;"
@@ -179,7 +185,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header("CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8")
                                 .build();
 
@@ -210,7 +216,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         "CONTENT-TYPE",
                                         "application/vnd.google.protobuf;"
