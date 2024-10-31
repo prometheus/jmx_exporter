@@ -21,9 +21,9 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
 import io.prometheus.jmx.test.common.PKCS12KeyStoreExporterTestEnvironmentFilter;
+import io.prometheus.jmx.test.common.TestEnvironmentFactory;
+import io.prometheus.jmx.test.common.TestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -52,21 +52,21 @@ public class SSLWithPKCS12KeyStoreTest {
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return TestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
                 .map(exporterTestEnvironment -> exporterTestEnvironment.setBaseUrl(BASE_URL));
     }
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        ExporterTestSupport.getOrCreateNetwork(classContext);
+        TestSupport.getOrCreateNetwork(classContext);
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
-        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
-        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+        Network network = TestSupport.getOrCreateNetwork(argumentContext);
+        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
@@ -127,17 +127,15 @@ public class SSLWithPKCS12KeyStoreTest {
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(
-                new Trap(
-                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) throws Throwable {
-        ExporterTestSupport.destroyNetwork(classContext);
+        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
     }
 
     private void assertMetricsResponse(

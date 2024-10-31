@@ -1,4 +1,4 @@
-package io.prometheus.jmx.test.opentelemetry;
+package io.prometheus.jmx.test.common;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.common.util.ResourceSupport;
@@ -31,11 +31,11 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
 
     private Class<?> testClass;
     private Network network;
+    private String baseUrl;
     private GenericContainer<?> prometheusContainer;
     private GenericContainer<?> standaloneApplicationContainer;
     private GenericContainer<?> javaAgentApplicationContainer;
     private GenericContainer<?> standaloneExporterContainer;
-    private HttpClient httpClient;
 
     /**
      * Constructor
@@ -49,6 +49,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
         this.prometheusDockerImage = prometheusDockerImage;
         this.javaDockerImage = javaDockerImage;
         this.jmxExporterMode = jmxExporterMode;
+        this.baseUrl = BASE_URL;
     }
 
     @Override
@@ -58,6 +59,17 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
 
     @Override
     public OpenTelemetryTestEnvironment getPayload() {
+        return this;
+    }
+
+    /**
+     * Method to set the base URL
+     *
+     * @param baseUrl baseUrl
+     * @return the ExporterTestEnvironment
+     */
+    public OpenTelemetryTestEnvironment setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
         return this;
     }
 
@@ -134,17 +146,15 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
         if (prometheusContainer != null && !prometheusContainer.isRunning()) {
             throw new IllegalStateException("standalone exporter container is not running");
         }
-
-        httpClient = createPrometheusHttpClient(prometheusContainer, BASE_URL, 9090);
     }
 
     /**
-     * Method to get an HttpClient for the test environment
+     * Method to get the base URL
      *
-     * @return an HttpClient
+     * @return the base URL
      */
-    public HttpClient getPrometheusHttpClient() {
-        return httpClient;
+    public String getBaseUrl() {
+        return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
     /** Method to destroy the test environment */
@@ -374,7 +384,8 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      */
     private static HttpClient createPrometheusHttpClient(
             GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
-        return new HttpClient(baseUrl + ":" + genericContainer.getMappedPort(mappedPort));
+        return null; // return new HttpClient(baseUrl + ":" +
+        // genericContainer.getMappedPort(mappedPort));
     }
 
     /**

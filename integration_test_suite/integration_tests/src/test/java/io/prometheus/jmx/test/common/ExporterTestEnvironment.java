@@ -108,6 +108,11 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
         }
     }
 
+    /**
+     * Method to get the base URL
+     *
+     * @return the base URL
+     */
     public String getBaseUrl() {
         int port = 0;
 

@@ -4,16 +4,15 @@ import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
-import org.verifyica.api.Trap;
 
-/** Class to implement ExporterTestSupport */
-public class ExporterTestSupport {
+/** Class to implement TestSupport */
+public class TestSupport {
 
     /** Network configuration constant */
     public static final String NETWORK = "network";
 
     /** Constructor */
-    private ExporterTestSupport() {
+    private TestSupport() {
         // INTENTIONALLY BLANK
     }
 
@@ -68,6 +67,21 @@ public class ExporterTestSupport {
     }
 
     /**
+     * Initializes the OpenTelemetryTestEnvironment
+     *
+     * @param argumentContext argumentContext
+     * @param network network
+     * @param testClass testClass
+     */
+    public static void initializeOpenTelemetryTestEnvironment(
+            ArgumentContext argumentContext, Network network, Class<?> testClass) {
+        argumentContext
+                .testArgument(OpenTelemetryTestEnvironment.class)
+                .payload()
+                .initialize(testClass, network);
+    }
+
+    /**
      * Destroys the ExporterTestEnvironment
      *
      * @param argumentContext argumentContext
@@ -80,34 +94,34 @@ public class ExporterTestSupport {
     }
 
     /**
+     * Destroys the OpenTelemetryTestEnvironment
+     *
+     * @param argumentContext argumentContext
+     */
+    public static void destroyOpenTelemetryTestEnvironment(ArgumentContext argumentContext) {
+        Optional.ofNullable(argumentContext.testArgument(OpenTelemetryTestEnvironment.class))
+                .ifPresent(
+                        openTelemetryTestEnvironment ->
+                                openTelemetryTestEnvironment.payload().destroy());
+    }
+
+    /**
      * Destroys an ArgumentContext scoped Network
      *
      * @param argumentContext argumentContext
-     * @throws Throwable Throwable
      */
-    public static void destroyNetwork(ArgumentContext argumentContext) throws Throwable {
-        new Trap(
-                        () ->
-                                Optional.ofNullable(
-                                                argumentContext
-                                                        .map()
-                                                        .removeAs(NETWORK, Network.class))
-                                        .ifPresent(Network::close))
-                .assertEmpty();
+    public static void destroyNetwork(ArgumentContext argumentContext) {
+        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
+                .ifPresent(Network::close);
     }
 
     /**
      * Destroys a ClassContext scoped Network
      *
      * @param classContext classContext
-     * @throws Throwable Throwable
      */
-    public static void destroyNetwork(ClassContext classContext) throws Throwable {
-        new Trap(
-                        () ->
-                                Optional.ofNullable(
-                                                classContext.map().removeAs(NETWORK, Network.class))
-                                        .ifPresent(Network::close))
-                .assertEmpty();
+    public static void destroyNetwork(ClassContext classContext) {
+        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
+                .ifPresent(Network::close);
     }
 }

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.opentelemetry;
+package io.prometheus.jmx.test.support;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.test.support.JavaDockerImages;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
