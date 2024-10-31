@@ -1,4 +1,4 @@
-name: Scheduled Build (every hour)
+name: Scheduled Build (hourly)
 on:
   schedule:
     - cron: "0 * * * *"
