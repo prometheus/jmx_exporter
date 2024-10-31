@@ -1,4 +1,5 @@
-# Integration Test Suite
+Integration Test Suite
+---
 
 ### Smoke test Java Docker images tested
 
@@ -42,46 +43,42 @@ Pulling Docker images (not required, but you may see request timeouts/pull failu
 Smoke test Docker images
 
 ```shell
-./integration_test_suite/pull-smoke-test-java-docker-images.sh
+./integration_test_suite/pull-smoke-test-docker-images.sh
 ```
 
 All Docker images
 
 ```shell
-./integration_test_suite/pull-java-docker-images.sh
+./integration_test_suite/pull-docker-images.sh
 ```
 
 ## Notes
 
 - You may need to set up Docker hub login to pull images
 
-# Docker networks
+---
 
-By default, Docker is not configured to run a large number images simultaneously.
+### Docker Configuration changes
 
-You can increase Docker networks by creating a Docker network configuration file...
+When running the integration test suite, Docker may need to be configured to support network addresses.
 
-```
+On Linux:
+
+```shell
 /etc/docker/daemon.json
 ```
 
-... with the content...
-
 ```yaml
 {
-  "default-address-pools": [
+  "default-address-pools" : [
     {
-      "base": "172.16.0.0/16",
-      "size": 24
+      "base" : "172.16.0.0/16",
+      "size" : 24
     },
     {
-      "base": "192.168.0.0/16",
-      "size": 24
+      "base" : "192.168.0.0/16",
+      "size" : 24
     }
   ]
 }
 ```
-
-## Notes
-
-- Docker will need to be restarted

@@ -256,24 +256,32 @@ httpServer:
 
 ---
 
-### Java agent use of a custom com.sun.net.httpserver.Authenticator class
-It is possible to provide a custom Authenticator implementation for the Java agent.
+## Pluggable Authenticator (Optional)
+
+It is possible to use a custom Authenticator (`com.sun.net.httpserver.Authenticator`) implementation for the Java agent.
+
 The custom class needs to be on the jvm classpath.
-The class name to load is provided through `authentication/customAuthenticator` configuration as follows:
+
+The class name to load is provided through `authentication/plugin` configuration as follows:
 
 ```yaml
 httpServer:
   authentication:
-    customAuthenticator:
-       authenticatorClass: my.custom.AuthenticatorWithNoArgConstructor
+    plugin:
+       class: my.custom.AuthenticatorWithNoArgConstructor
 ```
-If the custom authenticatorClass needs to provide an authenticated Subject visible to the application, it can set a named attribute on the HttpExchange with that subject. The agent will arrange that subsequent calls occur in a Subject.doAs().
+
+If the custom authenticatorClass needs to provide an authenticated Subject visible to the application, it can set a named attribute on the HttpExchange with that subject.
+
+The agent will arrange that subsequent calls occur in a Subject.doAs().
+
 The name of the attributed must be provided through `subjectAttributeName` configuration as follows:
+
 ```yaml
 httpServer:
   authentication:
-    customAuthenticator:
-       authenticatorClass: my.custom.AuthenticatorWithNoArgConstructorThatSetsASubjectAttribute
+    plugin:
+       class: my.custom.AuthenticatorWithNoArgConstructorThatSetsASubjectAttribute
        subjectAttributeName: "custom.subject.for.doAs");
 ```
 
@@ -359,7 +367,7 @@ httpServer:
 
 ## Integration Test Suite
 
-The JMX exporter project uses [Verifyica](https://github.com/verifyica-team/verifyica) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
+The JMX exporter uses [Verifyica](https://github.com/verifyica-team/verifyica) and [Testcontainers](https://www.testcontainers.org/) to run integration tests with different Java versions.
 
 You need to have Docker installed to run the integration test suite.
 
