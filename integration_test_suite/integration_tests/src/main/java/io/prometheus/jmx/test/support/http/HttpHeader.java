@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.throttle;
+package io.prometheus.jmx.test.support.http;
 
-/** Interface to implement Throttle */
-public interface Throttle {
+/** Class to implement HttpHeader */
+public class HttpHeader {
 
-    /** Method to throttle the current thread */
-    void throttle();
+    /** Content-Type header */
+    public static final String CONTENT_TYPE = "CONTENT-TYPE";
+
+    /** Constructor */
+    private HttpHeader() {
+        // INTENTIONALLY BLANK
+    }
 }

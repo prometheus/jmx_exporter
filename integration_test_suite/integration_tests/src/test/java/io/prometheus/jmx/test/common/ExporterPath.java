@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.throttle;
+package io.prometheus.jmx.test.common;
 
-/** Interface to implement Throttle */
-public interface Throttle {
+/** Class to implement ExporterPath */
+public class ExporterPath {
 
-    /** Method to throttle the current thread */
-    void throttle();
+    /** Healthy exporter path */
+    public static final String HEALTHY = "/-/healthy";
+
+    /** Metrics exporter path */
+    public static final String METRICS = "/metrics";
+
+    /** Constructor */
+    private ExporterPath() {
+        // INTENTIONALLY BLANK
+    }
 }
