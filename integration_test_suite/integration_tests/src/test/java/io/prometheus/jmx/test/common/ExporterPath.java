@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
+ * Copyright (C) 2024-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx;
+package io.prometheus.jmx.test.common;
 
-public enum State {
-    RUNNING(1, 2),
-    TERMINATED(2, 3);
+/** Class to implement ExporterPath */
+public class ExporterPath {
 
-    private int valueOne;
+    /** Healthy exporter path */
+    public static final String HEALTHY = "/-/healthy";
 
-    private int valueTwo;
+    /** Metrics exporter path */
+    public static final String METRICS = "/metrics";
 
-    State(int valueOne, int valueTwo) {
-        this.valueOne = valueOne;
-        this.valueTwo = valueTwo;
-    }
-
-    public int getValueOne() {
-        return valueOne;
-    }
-
-    public int getValueTwo() {
-        return valueTwo;
+    /** Constructor */
+    private ExporterPath() {
+        // INTENTIONALLY BLANK
     }
 }

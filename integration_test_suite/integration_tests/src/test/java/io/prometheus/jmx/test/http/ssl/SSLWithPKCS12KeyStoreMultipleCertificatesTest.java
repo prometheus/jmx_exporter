@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.common.ExporterPath;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.common.ExporterTestSupport;
+import io.prometheus.jmx.test.common.MetricsType;
 import io.prometheus.jmx.test.common.PKCS12KeyStoreExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
@@ -70,55 +73,52 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     }
 
     @Verifyica.Test
+    @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
+        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url,
-                        "CONTENT-TYPE",
-                        "application/openmetrics-text; version=1.0.0; charset=utf-8");
+                        url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, "CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8");
+                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url,
-                        "CONTENT-TYPE",
-                        "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
-                                + " encoding=delimited");
+                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
     }

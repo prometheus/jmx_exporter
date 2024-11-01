@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,14 @@ import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsRespo
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.common.ExporterPath;
 import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.common.ExporterTestSupport;
+import io.prometheus.jmx.test.common.MetricsType;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
@@ -71,8 +74,9 @@ public class BasicAuthenticationPlaintextTest {
     }
 
     @Verifyica.Test
+    @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/-/healthy";
+        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -93,8 +97,9 @@ public class BasicAuthenticationPlaintextTest {
     }
 
     @Verifyica.Test
-    public void testMetrics(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -119,9 +124,9 @@ public class BasicAuthenticationPlaintextTest {
     }
 
     @Verifyica.Test
-    public void testMetricsOpenMetricsFormat(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -136,9 +141,8 @@ public class BasicAuthenticationPlaintextTest {
                                 .url(url)
                                 .authorization(username, password)
                                 .header(
-                                        "CONTENT-TYPE",
-                                        "application/openmetrics-text; version=1.0.0;"
-                                                + " charset=utf-8")
+                                        HttpHeader.CONTENT_TYPE,
+                                        MetricsType.OPEN_METRICS_TEXT_METRICS)
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -153,40 +157,9 @@ public class BasicAuthenticationPlaintextTest {
     }
 
     @Verifyica.Test
-    public void testMetricsPrometheusFormat(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
-
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .authorization(username, password)
-                                .header("CONTENT-TYPE", "text/plain; version=0.0.4; charset=utf-8")
-                                .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
-                }
-            }
-        }
-    }
-
-    @Verifyica.Test
-    public void testMetricsPrometheusProtobufFormat(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + "/metrics";
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -201,7 +174,40 @@ public class BasicAuthenticationPlaintextTest {
                                 .url(url)
                                 .authorization(username, password)
                                 .header(
-                                        "CONTENT-TYPE",
+                                        HttpHeader.CONTENT_TYPE,
+                                        MetricsType.PROMETHEUS_TEXT_METRICS)
+                                .build();
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                if (expectedStatusCode == 401) {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                } else {
+                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                }
+            }
+        }
+    }
+
+    @Verifyica.Test
+    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
+            throws IOException {
+        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
+        for (String username : TEST_USERNAMES) {
+            for (String password : TEST_PASSWORDS) {
+                int expectedStatusCode = 401;
+
+                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                    expectedStatusCode = 200;
+                }
+
+                HttpRequest httpRequest =
+                        HttpRequest.builder()
+                                .url(url)
+                                .authorization(username, password)
+                                .header(
+                                        HttpHeader.CONTENT_TYPE,
                                         "application/vnd.google.protobuf;"
                                                 + " proto=io.prometheus.client.MetricFamily;"
                                                 + " encoding=delimited")

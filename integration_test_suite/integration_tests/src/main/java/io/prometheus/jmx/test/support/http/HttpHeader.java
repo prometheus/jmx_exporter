@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
+ * Copyright (C) 2024-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx;
+package io.prometheus.jmx.test.support.http;
 
-public enum State {
-    RUNNING(1, 2),
-    TERMINATED(2, 3);
+/** Class to implement HttpHeader */
+public class HttpHeader {
 
-    private int valueOne;
+    /** Content-Type header */
+    public static final String CONTENT_TYPE = "CONTENT-TYPE";
 
-    private int valueTwo;
-
-    State(int valueOne, int valueTwo) {
-        this.valueOne = valueOne;
-        this.valueTwo = valueTwo;
-    }
-
-    public int getValueOne() {
-        return valueOne;
-    }
-
-    public int getValueTwo() {
-        return valueTwo;
+    /** Constructor */
+    private HttpHeader() {
+        // INTENTIONALLY BLANK
     }
 }
