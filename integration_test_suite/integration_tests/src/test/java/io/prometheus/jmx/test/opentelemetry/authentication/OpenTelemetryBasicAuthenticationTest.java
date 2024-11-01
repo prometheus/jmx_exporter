@@ -181,7 +181,7 @@ public class OpenTelemetryBasicAuthenticationTest {
             throws IOException {
         return HttpClient.sendRequest(
                 HttpRequest.builder()
-                        .url(openTelemetryTestEnvironment.getBaseUrl() + path)
+                        .url(openTelemetryTestEnvironment.getUrl(path))
                         .basicAuthentication(VALID_USER, VALUE_PASSWORD)
                         .build());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2015-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public class JmxCollector implements MultiCollector {
             LOGGER.log(
                     SEVERE,
                     "Configuration error: When running jmx_exporter in standalone mode (using"
-                            + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
+                            + " jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or"
                             + " 'hostPort'.");
             System.exit(-1);
         }

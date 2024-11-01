@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Locale;
 import org.junit.Test;
 
 public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
@@ -144,7 +143,7 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
                     + ":E0:72:6E:69:7D:EB:83:05:05:E5:D6:F2:19:99:49:3F:89:DA:DE:83:D7:2B:5B:7D:C9:56:B4:F2:F6:A5:61:29"
                     + ":29:ED:DF:4C:4E:8D:EA:DF:47:A2:B0:89:11:86:D4:77:A1:02:E9:0C:26:A4:1E:2A:C1:A8:71:E0:93:8F:A4";
 
-        hash = hash.toUpperCase(Locale.ENGLISH).replace(":", "");
+        hash = hash.toUpperCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
@@ -282,7 +281,7 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
                     + ":9C:CB:AD:55:25:46:C5:73:09:6C:38:9C:F2:FD:82:7F:90:E5:31:EF:7E:3E:6B:B2:0C:38:77:23:EC:3A:CF:29"
                     + ":F7:E5:4D:4E:CC:35:7A:C2:E5:CB:E3:B3:E5:09:2B:CC:B9:40:26:A4:28:E9:5F:2D:18:B2:14:41:E7:4D:5B";
 
-        hash = hash.toUpperCase(Locale.ENGLISH).replace(":", "");
+        hash = hash.toUpperCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(
@@ -405,7 +404,7 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
         String hash =
                 "07:6F:E2:27:9B:CA:48:66:9B:13:9E:02:9C:AE:FC:E4:1A:2F:0F:E6:48:A3:FF:8E:D2:30:59:68:12:A6:29:34:FC:99:29:8A:98:65:AE:4B:05:7C:B6:83:A4:83:C0:32:E4:90:61:1D:DD:2E:53:17:01:FF:6A:64:48:B2:AA:22:DE:B3:BC:56:08:C6:66:EC:98:F8:96:8C:1B:DA:B2:F2:2A:6C:22:8E:19:CC:B2:62:55:3E:BE:DC:C7:58:36:9D:92:CF:D7:D2:A1:6D:8F:DC:DE:8E:E9:36:D4:E7:2D:0A:6D:A1:B8:56:0A:53:BB:17:E2:D5:DE:A0:48:51:FC:33";
 
-        hash = hash.toUpperCase(Locale.ENGLISH).replace(":", "");
+        hash = hash.toUpperCase().replace(":", "");
 
         PBKDF2Authenticator PBKDF2Authenticator =
                 new PBKDF2Authenticator(

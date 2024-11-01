@@ -14,5 +14,5 @@ jobs:
       - name: Build
         run: |
           ./integration_test_suite/pull-smoke-test-docker-images.sh
-          ./mvnw clean install
-          ./mvnw javadoc:jar
+          ./mvnw --batch-mode clean install
+          ./mvnw --batch-mode javadoc:jar

@@ -1,5 +1,5 @@
 Prometheus exporter for JMX beans.
-Copyright 2012-2015 The Prometheus Authors
+Copyright 2012-present The Prometheus jmx_exporter Authors
 
 This product includes software developed at
 SoundCloud Ltd. (http://soundcloud.com/).

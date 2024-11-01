@@ -108,6 +108,19 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
     }
 
     /**
+     * Method to get a URL
+     *
+     * @param path path
+     */
+    public String getUrl(String path) {
+        if (path.startsWith("/")) {
+            return getBaseUrl() + path;
+        } else {
+            return getBaseUrl() + "/" + path;
+        }
+    }
+
+    /**
      * Method to get the base URL
      *
      * @return the base URL

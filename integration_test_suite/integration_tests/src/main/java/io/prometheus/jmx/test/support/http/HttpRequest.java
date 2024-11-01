@@ -1,13 +1,29 @@
+/*
+ * Copyright (C) 2024-present The Prometheus jmx_exporter Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.prometheus.jmx.test.support.http;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
 /** Class to implement HttpRequest */
 public class HttpRequest {
@@ -89,12 +105,12 @@ public class HttpRequest {
 
         private String url;
         private Method method = Method.GET;
-        private final Map<String, List<String>> headers;
+        private final Map<String, List<String>> headers = new HashMap<>();
         private String body;
 
         /** Constructor */
         public Builder() {
-            headers = new TreeMap<>();
+            // INTENTIONALLY BLANK
         }
 
         /**
@@ -161,15 +177,13 @@ public class HttpRequest {
         }
 
         /**
-         * Set the BASIC authentication header
+         * Set the BASIC authentication
          *
          * @param principal principal
          * @param credential credential
          * @return the Builder
          */
         public Builder basicAuthentication(String principal, String credential) {
-            headers.remove("AUTHORIZATION");
-
             return header(
                     "AUTHORIZATION",
                     String.format(

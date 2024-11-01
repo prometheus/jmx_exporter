@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2023-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Locale;
 import org.junit.Test;
 
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
@@ -54,7 +53,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
         String[] algorithms = new String[] {"SHA-1", "SHA-256", "SHA-512"};
 
         for (String algorithm : algorithms) {
-            String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase(Locale.ENGLISH);
+            String hash = hash(algorithm, VALID_PASSWORD, SALT).toUpperCase();
 
             MessageDigestAuthenticator messageDigestAuthenticator =
                     new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);

@@ -174,6 +174,6 @@ public class OpenTelemetryTest {
     protected HttpResponse sendRequest(
             OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path)
             throws IOException {
-        return HttpClient.sendRequest(openTelemetryTestEnvironment.getBaseUrl() + path);
+        return HttpClient.sendRequest(openTelemetryTestEnvironment.getUrl(path));
     }
 }

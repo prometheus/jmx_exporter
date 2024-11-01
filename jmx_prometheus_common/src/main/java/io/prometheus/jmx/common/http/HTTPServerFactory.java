@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2022-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,23 +109,6 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
-        /*
-        if (inetAddress == null) {
-            throw new IllegalArgumentException("inetAddress is null");
-        }
-
-        if (port < 1 || port > 65535) {
-            throw new IllegalArgumentException("post is out of range [1 - 65535]");
-        }
-
-        if (prometheusRegistry == null) {
-            throw new IllegalArgumentException("prometheusRegistry is null");
-        }
-
-        if (exporterYamlFile == null) {
-            throw new IllegalArgumentException("exporterYamlFile is null");
-        }
-        */
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder()
