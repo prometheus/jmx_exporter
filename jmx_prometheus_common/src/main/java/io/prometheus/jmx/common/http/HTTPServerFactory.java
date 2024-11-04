@@ -109,7 +109,6 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
-
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder()
                         .inetAddress(inetAddress)
