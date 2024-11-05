@@ -1,7 +1,7 @@
 name: Hourly Build Cleanup
 on:
   workflow_run:
-    workflows: ["hourly-build.yaml"]
+    workflows: [Hourly Build]
     types:
       - completed
 jobs:
