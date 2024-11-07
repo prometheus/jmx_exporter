@@ -8,13 +8,12 @@
         <version>1.0.1-post</version>
     </parent>
 
-    <groupId>io.prometheus.jmx</groupId>
     <artifactId>jmx_prometheus_common</artifactId>
     <name>Prometheus JMX Exporter - Common</name>
     <description>
         See https://github.com/prometheus/jmx_exporter/blob/master/README.md
     </description>
-    <url>http://github.com/prometheus/jmx_exporter</url>
+    <url>https://github.com/prometheus/jmx_exporter</url>
 
     <licenses>
         <license>
