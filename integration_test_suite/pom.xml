@@ -9,7 +9,7 @@
         See https://github.com/prometheus/jmx_exporter/blob/master/README.md
     </description>
 
-    <url>http://github.com/prometheus/jmx_exporter</url>
+    <url>https://github.com/prometheus/jmx_exporter</url>
 
     <packaging>pom</packaging>
 

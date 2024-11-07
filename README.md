@@ -29,7 +29,7 @@ process metrics (e.g., memory and CPU usage).
 
 # Contributing and community
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the [community section](http://prometheus.io/community/) of the Prometheus homepage.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [community section](https://prometheus.io/community/) of the Prometheus homepage.
 
 The Prometheus Java community is present on the [CNCF Slack](https://cloud-native.slack.com) on `#prometheus-java`, and we have a fortnightly community call in the [Prometheus public calendar](https://prometheus.io/community/).
 
