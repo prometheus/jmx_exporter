@@ -172,7 +172,14 @@ class JmxScraper {
                 continue;
             }
 
-            name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+            if (objectNameAttributeFilter.includeObjectNameAttributesIsEmpty()) {
+                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+                continue;
+            }
+
+            if (objectNameAttributeFilter.include(mBeanName, mBeanAttributeInfo.getName())) {
+                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+            }
         }
 
         if (name2MBeanAttributeInfo.isEmpty()) {
