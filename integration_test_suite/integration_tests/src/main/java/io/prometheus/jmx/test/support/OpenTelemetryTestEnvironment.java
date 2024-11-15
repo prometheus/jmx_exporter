@@ -204,7 +204,12 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
         commands.add("--storage.tsdb.path=/prometheus");
         commands.add("--web.console.libraries=/usr/share/prometheus/console_libraries");
         commands.add("--web.console.templates=/usr/share/prometheus/consoles");
-        commands.add("--enable-feature=otlp-write-receiver");
+
+        if (prometheusDockerImage.contains("v3.")) {
+            commands.add("--web.enable-otlp-receiver");
+        } else{
+            commands.add("--enable-feature=otlp-write-receiver");
+        }
 
         String webYml =
                 "/" + testClass.getName().replace(".", "/") + "/" + jmxExporterMode + "/web.yaml";
