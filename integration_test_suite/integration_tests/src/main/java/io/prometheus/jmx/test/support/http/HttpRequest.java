@@ -177,7 +177,7 @@ public class HttpRequest {
         }
 
         /**
-         * Set the BASIC authentication
+         * Set the BASIC authentication header
          *
          * @param principal principal
          * @param credential credential

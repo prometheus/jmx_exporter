@@ -58,7 +58,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -87,7 +87,7 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -103,7 +103,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                                 .basicAuthentication(username, password)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
             }
@@ -129,7 +133,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                                 .basicAuthentication(username, password)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -162,7 +170,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                                         MetricsType.OPEN_METRICS_TEXT_METRICS)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -195,7 +207,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                                         MetricsType.PROMETHEUS_TEXT_METRICS)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -230,7 +246,11 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
                                                 + " encoding=delimited")
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);

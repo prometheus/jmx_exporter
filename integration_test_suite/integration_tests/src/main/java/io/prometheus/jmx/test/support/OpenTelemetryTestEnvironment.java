@@ -165,7 +165,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      *
      * @return the base URL
      */
-    public String getBaseUrl() {
+    private String getBaseUrl() {
         return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
@@ -207,7 +207,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
 
         if (prometheusDockerImage.contains("v3.")) {
             commands.add("--web.enable-otlp-receiver");
-        } else{
+        } else {
             commands.add("--enable-feature=otlp-write-receiver");
         }
 

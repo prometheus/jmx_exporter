@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test.support.http;
 
+import io.prometheus.jmx.test.support.SSLContextException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -35,8 +36,11 @@ import javax.net.ssl.X509TrustManager;
 /** Class to implement HttpClient */
 public class HttpClient {
 
-    private static final int CONNECT_TIMEOUT = 30000;
-    private static final int READ_TIMEOUT = 30000;
+    /** Default connect timeout */
+    public static final int CONNECT_TIMEOUT = 30000;
+
+    /** Default read timeout */
+    public static final int READ_TIMEOUT = 30000;
 
     static {
         try {
@@ -48,7 +52,7 @@ public class HttpClient {
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException(
+            throw new SSLContextException(
                     "Failed to initialize SSL context for self-signed certificates", e);
         }
     }
@@ -61,7 +65,7 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(String url) throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).build());
+        return sendRequest(HttpRequest.builder().url(url).build());
     }
 
     /**
@@ -75,7 +79,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, String header, String value)
             throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).header(header, value).build());
+        return sendRequest(HttpRequest.builder().url(url).header(header, value).build());
     }
 
     /**
@@ -88,7 +92,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, Map<String, Collection<String>> headers)
             throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).headers(headers).build());
+        return sendRequest(HttpRequest.builder().url(url).headers(headers).build());
     }
 
     /**
@@ -99,11 +103,25 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(HttpRequest httpRequest) throws IOException {
+        return sendRequest(httpRequest, CONNECT_TIMEOUT, READ_TIMEOUT);
+    }
+
+    /**
+     * Send an HttpRequest
+     *
+     * @param httpRequest httpRequest
+     * @param connectTimeout connectTimeout
+     * @param readTimeout readTimeout
+     * @return an HttpResponse
+     * @throws IOException IOException
+     */
+    public static HttpResponse sendRequest(
+            HttpRequest httpRequest, int connectTimeout, int readTimeout) throws IOException {
         URL url = new URL(httpRequest.url());
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-        connection.setConnectTimeout(CONNECT_TIMEOUT);
-        connection.setReadTimeout(READ_TIMEOUT);
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
 
         HttpRequest.Method method = httpRequest.method();
 

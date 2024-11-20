@@ -33,7 +33,7 @@ public class OpenTelemetryBasicAuthenticationTest {
     private static final String VALID_USER = "Prometheus";
     private static final String VALUE_PASSWORD = "secret";
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         return TestEnvironmentFactory.createOpenTelemetryTestEnvironments();
     }

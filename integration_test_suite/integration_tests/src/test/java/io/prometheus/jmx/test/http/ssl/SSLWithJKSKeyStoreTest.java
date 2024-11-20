@@ -50,7 +50,7 @@ public class SSLWithJKSKeyStoreTest {
 
     private static final String BASE_URL = "https://localhost";
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -89,6 +89,7 @@ public class SSLWithJKSKeyStoreTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
@@ -98,6 +99,7 @@ public class SSLWithJKSKeyStoreTest {
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
@@ -109,6 +111,7 @@ public class SSLWithJKSKeyStoreTest {
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
@@ -120,6 +123,7 @@ public class SSLWithJKSKeyStoreTest {
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);

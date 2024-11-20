@@ -28,7 +28,7 @@ import org.yaml.snakeyaml.Yaml;
 /** Class to implement OpenTelemetryTest */
 public class OpenTelemetryTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         return TestEnvironmentFactory.createOpenTelemetryTestEnvironments();
     }

@@ -44,7 +44,7 @@ import org.verifyica.api.Verifyica;
 
 public class LowerCaseOutputAndLabelNamesTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
     }
@@ -74,6 +74,7 @@ public class LowerCaseOutputAndLabelNamesTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
@@ -83,6 +84,7 @@ public class LowerCaseOutputAndLabelNamesTest {
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
@@ -94,6 +96,7 @@ public class LowerCaseOutputAndLabelNamesTest {
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
@@ -105,6 +108,7 @@ public class LowerCaseOutputAndLabelNamesTest {
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);

@@ -51,7 +51,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
 
     private static final String BASE_URL = "https://localhost";
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
@@ -85,6 +85,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
@@ -94,6 +95,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
@@ -105,6 +107,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
@@ -116,6 +119,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);

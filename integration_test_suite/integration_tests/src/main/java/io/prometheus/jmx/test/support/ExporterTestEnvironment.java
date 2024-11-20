@@ -125,7 +125,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      *
      * @return the base URL
      */
-    public String getBaseUrl() {
+    private String getBaseUrl() {
         int port = 0;
 
         switch (jmxExporterMode) {

@@ -56,7 +56,7 @@ public class BasicAuthenticationPlaintextTest {
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
     }
@@ -76,7 +76,7 @@ public class BasicAuthenticationPlaintextTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
