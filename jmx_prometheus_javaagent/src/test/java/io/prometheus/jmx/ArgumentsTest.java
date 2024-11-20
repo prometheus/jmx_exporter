@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Prometheus jmx_exporter Authors
+ * Copyright (C) 2024-present The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package io.prometheus.jmx;
 
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import io.prometheus.jmx.common.http.ConfigurationException;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class ArgumentsTest {
 
@@ -277,16 +278,14 @@ public class ArgumentsTest {
                 "/opt/prometheus/config.yaml")*/
     };
 
-    @Test
-    public void testsArguments() {
-        for (int i = 0; i < ARGUMENTS_TEST_DEFINITIONS.length; i++) {
-            ArgumentsTestDefinition argumentsTestDefinition = ARGUMENTS_TEST_DEFINITIONS[i];
-            System.out.println(
-                    format(
-                            "testing Java agent argument [%d] [%s]",
-                            i, argumentsTestDefinition.getArgument()));
-            ARGUMENTS_TEST_DEFINITIONS[i].assertValid();
-        }
+    public static Stream<ArgumentsTestDefinition> arguments() {
+        return Stream.of(ARGUMENTS_TEST_DEFINITIONS);
+    }
+
+    @ParameterizedTest
+    @MethodSource("arguments")
+    public void testsArgument(ArgumentsTestDefinition argumentsTestDefinition) {
+        argumentsTestDefinition.assertValid();
     }
 
     public static class ArgumentsTestDefinition {
@@ -311,10 +310,6 @@ public class ArgumentsTest {
             this.host = host;
             this.port = port;
             this.filename = filename;
-        }
-
-        public String getArgument() {
-            return argument;
         }
 
         public void assertValid() {
