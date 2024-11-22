@@ -3,9 +3,9 @@ package io.prometheus.jmx.test.opentelemetry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
 import io.prometheus.jmx.test.common.TestSupport;
+import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
@@ -174,6 +174,6 @@ public class OpenTelemetryTest {
     protected HttpResponse sendRequest(
             OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path)
             throws IOException {
-        return HttpClient.sendRequest(openTelemetryTestEnvironment.getUrl(path));
+        return HttpClient.sendRequest(openTelemetryTestEnvironment.getPrometheusUrl(path));
     }
 }

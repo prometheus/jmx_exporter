@@ -3,7 +3,6 @@ package io.prometheus.jmx.test.common;
 import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.PrometheusDockerImages;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;

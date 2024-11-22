@@ -1,12 +1,11 @@
-package io.prometheus.jmx.test.opentelemetry.authentication;
+package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.opentelemetry.ExpectedMetricsNames;
-import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
 import io.prometheus.jmx.test.common.TestSupport;
+import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -27,16 +26,13 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
-/**
- * Class to implement OpenTelemetryBasicAuthenticationTest
- */
+/** Class to implement OpenTelemetryBasicAuthenticationTest */
 public class OpenTelemetryBasicAuthenticationTest {
 
     private static final String VALID_USER = "Prometheus";
     private static final String VALUE_PASSWORD = "secret";
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
         return OpenTelemetryTestEnvironmentFactory.createOpenTelemetryTestEnvironments();
     }
@@ -53,9 +49,7 @@ public class OpenTelemetryBasicAuthenticationTest {
         TestSupport.initializeOpenTelemetryTestEnvironment(argumentContext, network, testClass);
     }
 
-    /**
-     * Method to test that Prometheus is up
-     */
+    /** Method to test that Prometheus is up */
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testPrometheusIsUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
@@ -87,9 +81,7 @@ public class OpenTelemetryBasicAuthenticationTest {
         assertThat(isUp).withFailMessage("Prometheus is down").isTrue();
     }
 
-    /**
-     * Method to test that metrics exist in Prometheus
-     */
+    /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
     @Verifyica.Order(2)
     public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
@@ -103,7 +95,7 @@ public class OpenTelemetryBasicAuthenticationTest {
                                 metricName ->
                                         !isJmxExporterModeJavaStandalone
                                                 || (!metricName.startsWith("jvm_")
-                                                && !metricName.startsWith("process_")))
+                                                        && !metricName.startsWith("process_")))
                         .collect(Collectors.toList())) {
             Double value = getPrometheusMetric(openTelemetryTestEnvironment, metricName);
 
@@ -131,7 +123,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      * Method to get a Prometheus metric
      *
      * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
-     * @param metricName                   metricName
+     * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
     protected Double getPrometheusMetric(
@@ -165,7 +157,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      * Method to send a Prometheus query
      *
      * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
-     * @param query                        query
+     * @param query query
      * @return an HttpResponse
      */
     protected HttpResponse sendPrometheusQuery(
@@ -180,7 +172,7 @@ public class OpenTelemetryBasicAuthenticationTest {
      * Method to send a Http GET request
      *
      * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
-     * @param path                         path
+     * @param path path
      * @return an HttpResponse
      */
     protected HttpResponse sendRequest(
@@ -188,7 +180,7 @@ public class OpenTelemetryBasicAuthenticationTest {
             throws IOException {
         return HttpClient.sendRequest(
                 HttpRequest.builder()
-                        .url(openTelemetryTestEnvironment.getUrl(path))
+                        .url(openTelemetryTestEnvironment.getPrometheusUrl(path))
                         .basicAuthentication(VALID_USER, VALUE_PASSWORD)
                         .build());
     }

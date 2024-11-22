@@ -149,24 +149,55 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     }
 
     /**
-     * Method to get a URL
+     * Method to get an exporter URL
      *
      * @param path path
+     * @return an exporter URL
      */
-    public String getUrl(String path) {
-        if (path.startsWith("/")) {
-            return getBaseUrl() + path;
-        } else {
-            return getBaseUrl() + "/" + path;
-        }
+    public String getExporterUrl(String path) {
+        return !path.startsWith("/") ? getExporterBaseUrl() + "/" + path : getExporterBaseUrl() + path;
     }
 
     /**
-     * Method to get the base URL
+     * Method to get the exporter base URL
      *
-     * @return the base URL
+     * @return the exporter base URL
      */
-    private String getBaseUrl() {
+    private String getExporterBaseUrl() {
+        int port = 0;
+
+        switch (jmxExporterMode) {
+            case JavaAgent:
+            {
+                port = javaAgentApplicationContainer.getMappedPort(8888);
+                break;
+            }
+            case Standalone:
+            {
+                port = standaloneExporterContainer.getMappedPort(8888);
+                break;
+            }
+        }
+
+        return baseUrl + ":" + port;
+    }
+
+    /**
+     * Method to get a Prometheus URL
+     *
+     * @param path path
+     * @return a Prometheus URL
+     */
+    public String getPrometheusUrl(String path) {
+        return !path.startsWith("/") ? getPrometheusBaseUrl() + "/" + path : getPrometheusBaseUrl() + path;
+    }
+
+    /**
+     * Method to get the Prometheus base URL
+     *
+     * @return the Prometheus base URL
+     */
+    private String getPrometheusBaseUrl() {
         return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
@@ -378,6 +409,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                                                     new Ulimit("nofile", 65536L, 65536L)
                                                 }))
                 .withCommand("/bin/sh exporter.sh")
+                .withExposedPorts(8888)
                 .withLogConsumer(
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();

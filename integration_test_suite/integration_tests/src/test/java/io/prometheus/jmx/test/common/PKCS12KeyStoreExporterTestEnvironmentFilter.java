@@ -1,7 +1,5 @@
 package io.prometheus.jmx.test.common;
 
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;

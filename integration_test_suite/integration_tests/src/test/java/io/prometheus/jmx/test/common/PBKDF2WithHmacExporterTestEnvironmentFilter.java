@@ -1,22 +1,16 @@
 package io.prometheus.jmx.test.common;
 
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/**
- * Class to implement PBKDF2WithHmacTestArgumentFilter
- */
+/** Class to implement PBKDF2WithHmacTestArgumentFilter */
 public class PBKDF2WithHmacExporterTestEnvironmentFilter
         implements Predicate<ExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
-    /**
-     * Constructor
-     */
+    /** Constructor */
     public PBKDF2WithHmacExporterTestEnvironmentFilter() {
         // Filter out Docker image names that don't support PBKDF2 with HMAC
         filteredDockerImages = new HashSet<>();
