@@ -1,4 +1,4 @@
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.common;
 
 import java.util.Optional;
 import org.testcontainers.containers.Network;

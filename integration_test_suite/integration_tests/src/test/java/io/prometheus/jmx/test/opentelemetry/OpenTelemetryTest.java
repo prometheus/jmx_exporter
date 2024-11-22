@@ -2,10 +2,10 @@ package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.support.TestEnvironmentFactory;
-import io.prometheus.jmx.test.support.TestSupport;
+import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
+import io.prometheus.jmx.test.common.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
@@ -30,7 +30,7 @@ public class OpenTelemetryTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
-        return TestEnvironmentFactory.createOpenTelemetryTestEnvironments();
+        return OpenTelemetryTestEnvironmentFactory.createOpenTelemetryTestEnvironments();
     }
 
     @Verifyica.Prepare
