@@ -125,15 +125,13 @@ public class Arguments {
                 default:
                     {
                         throw new ConfigurationException(
-                                format(
-                                        "Malformed arguments for Standalone HTTP mode [%s]",
-                                        agentArgument));
+                                format("Malformed arguments [%s]", agentArgument));
                     }
             }
 
             if (host.trim().isEmpty()) {
                 throw new ConfigurationException(
-                        format("Malformed arguments for Standalone HTTP mode [%s]", agentArgument));
+                        format("Malformed arguments for [%s]", agentArgument));
             }
         } else {
             filename = agentArgument;

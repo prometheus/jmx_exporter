@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.common.util;
 
+import static java.lang.String.format;
+
 public class Precondition {
 
     private Precondition() {
@@ -49,7 +51,7 @@ public class Precondition {
      * @param string string
      */
     public static void notNullOrEmpty(String string) {
-        notNullOrEmpty(string, String.format("string [%s] is null or empty", string));
+        notNullOrEmpty(string, format("string [%s] is null or empty", string));
     }
 
     /**
@@ -74,7 +76,7 @@ public class Precondition {
         isGreaterThanOrEqualTo(
                 value,
                 minimumValue,
-                String.format("value [%s] is less than minimum value [%s]", value, minimumValue));
+                format("value [%s] is less than minimum value [%s]", value, minimumValue));
     }
 
     /**

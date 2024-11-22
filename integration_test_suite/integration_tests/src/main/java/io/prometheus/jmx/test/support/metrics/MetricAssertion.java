@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test.support.metrics;
 
+import static java.lang.String.format;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +93,7 @@ public class MetricAssertion {
     public MetricAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
-                    String.format("Label name [%s] or value [%s] is null", name, value));
+                    format("Label name [%s] or value [%s] is null", name, value));
         }
         if (labels == null) {
             labels = new TreeMap<>();
@@ -144,13 +146,13 @@ public class MetricAssertion {
         if (condition) {
             if (metrics.size() > 1) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
                                         + " matches multiple metrics",
                                 type, help, name, labels, value));
             } else if (metrics.isEmpty()) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
                                         + " present",
                                 type, help, name, labels, value));
@@ -158,7 +160,7 @@ public class MetricAssertion {
         } else {
             if (!metrics.isEmpty()) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
                                         + " present",
                                 type, help, name, labels, value));

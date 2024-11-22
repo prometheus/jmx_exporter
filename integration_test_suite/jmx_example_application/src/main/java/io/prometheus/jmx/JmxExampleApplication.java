@@ -47,13 +47,12 @@ public class JmxExampleApplication {
                 new PerformanceMetrics(),
                 new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean"));
 
-        System.out.println(
-                String.format(
-                        "%s | %s | INFO | %s | %s",
-                        SIMPLE_DATE_FORMAT.format(new Date()),
-                        Thread.currentThread().getName(),
-                        JmxExampleApplication.class.getName(),
-                        "Running"));
+        System.out.printf(
+                "%s | %s | INFO | %s | %s%n",
+                SIMPLE_DATE_FORMAT.format(new Date()),
+                Thread.currentThread().getName(),
+                JmxExampleApplication.class.getName(),
+                "Running");
 
         Thread.currentThread().join(); // wait forever
     }

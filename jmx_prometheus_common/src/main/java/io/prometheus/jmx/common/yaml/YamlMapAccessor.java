@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.common.yaml;
 
+import static java.lang.String.format;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -88,7 +90,7 @@ public class YamlMapAccessor {
      */
     public boolean containsPath(String path) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -122,7 +124,7 @@ public class YamlMapAccessor {
      */
     public Optional<Object> get(String path) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -155,7 +157,7 @@ public class YamlMapAccessor {
      */
     public Optional<Object> getOrCreate(String path, Supplier<Object> supplier) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         path = validatePath(path);
@@ -190,7 +192,7 @@ public class YamlMapAccessor {
             } catch (ClassCastException e) {
                 if ((i + 1) == pathTokens.length) {
                     throw new IllegalArgumentException(
-                            String.format("path [%s] isn't a Map", flatten(pathTokens, 1, i)));
+                            format("path [%s] isn't a Map", flatten(pathTokens, 1, i)));
                 }
                 return Optional.empty();
             }
@@ -209,7 +211,7 @@ public class YamlMapAccessor {
      */
     public Optional<Object> getOrThrow(String path, Supplier<? extends RuntimeException> supplier) {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         if (supplier == null) {
@@ -270,11 +272,11 @@ public class YamlMapAccessor {
         }
 
         if (!path.startsWith("/")) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         if (path.endsWith("/")) {
-            throw new IllegalArgumentException(String.format("path [%s] is invalid", path));
+            throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         return path;
