@@ -76,6 +76,7 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);

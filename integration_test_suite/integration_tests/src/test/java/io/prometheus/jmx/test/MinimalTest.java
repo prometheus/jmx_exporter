@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterPath;
@@ -48,7 +48,7 @@ import org.verifyica.api.Verifyica;
 
 public class MinimalTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
+    @Verifyica.ArgumentSupplier(parallelism = 1) // Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
     }
@@ -69,6 +69,7 @@ public class MinimalTest {
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);
@@ -76,7 +77,7 @@ public class MinimalTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
+            throws IOException, InterruptedException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);

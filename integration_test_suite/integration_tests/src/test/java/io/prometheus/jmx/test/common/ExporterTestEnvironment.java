@@ -131,11 +131,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      * @return the URL (base URL + path)
      */
     public String getUrl(String path) {
-        if (!path.startsWith("/")) {
-            return getBaseUrl() + "/" + path;
-        } else {
-            return getBaseUrl() + path;
-        }
+        return !path.startsWith("/") ? getBaseUrl() + "/" + path : getBaseUrl() + path;
     }
 
     /**
@@ -187,7 +183,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      */
     private GenericContainer<?> createJavaAgentApplicationContainer() {
         return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
+                .waitingFor(Wait.forListeningPort())
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
                         testClass.getName().replace(".", "/") + "/JavaAgent",
@@ -259,8 +255,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp")
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1));
+                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -270,7 +265,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      */
     private GenericContainer<?> createStandaloneExporterContainer() {
         return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forListeningPort())
+                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
                         testClass.getName().replace(".", "/") + "/Standalone",
@@ -301,7 +296,6 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
-                .withWorkingDirectory("/temp")
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1));
+                .withWorkingDirectory("/temp");
     }
 }
