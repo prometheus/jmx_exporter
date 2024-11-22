@@ -16,9 +16,13 @@
 
 package io.prometheus.jmx.test.support.http;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -35,8 +39,11 @@ import javax.net.ssl.X509TrustManager;
 /** Class to implement HttpClient */
 public class HttpClient {
 
-    private static final int CONNECT_TIMEOUT = 30000;
-    private static final int READ_TIMEOUT = 30000;
+    /** Default connect timeout */
+    public static final int CONNECT_TIMEOUT = 30000;
+
+    /** Default read timeout */
+    public static final int READ_TIMEOUT = 30000;
 
     static {
         try {
@@ -48,7 +55,7 @@ public class HttpClient {
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException(
+            throw new SSLContextException(
                     "Failed to initialize SSL context for self-signed certificates", e);
         }
     }
@@ -61,7 +68,7 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(String url) throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).build());
+        return sendRequest(HttpRequest.builder().url(url).build());
     }
 
     /**
@@ -75,7 +82,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, String header, String value)
             throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).header(header, value).build());
+        return sendRequest(HttpRequest.builder().url(url).header(header, value).build());
     }
 
     /**
@@ -88,7 +95,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, Map<String, Collection<String>> headers)
             throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder().url(url).headers(headers).build());
+        return sendRequest(HttpRequest.builder().url(url).headers(headers).build());
     }
 
     /**
@@ -99,31 +106,28 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(HttpRequest httpRequest) throws IOException {
+        return sendRequest(httpRequest, CONNECT_TIMEOUT, READ_TIMEOUT);
+    }
+
+    /**
+     * Send an HttpRequest
+     *
+     * @param httpRequest httpRequest
+     * @param connectTimeout connectTimeout
+     * @param readTimeout readTimeout
+     * @return an HttpResponse
+     * @throws IOException IOException
+     */
+    public static HttpResponse sendRequest(
+            HttpRequest httpRequest, int connectTimeout, int readTimeout) throws IOException {
         URL url = new URL(httpRequest.url());
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-        connection.setConnectTimeout(CONNECT_TIMEOUT);
-        connection.setReadTimeout(READ_TIMEOUT);
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
 
         HttpRequest.Method method = httpRequest.method();
-
-        switch (method) {
-            case PUT:
-                {
-                    connection.setRequestMethod("PUT");
-                    break;
-                }
-            case POST:
-                {
-                    connection.setRequestMethod("POST");
-                    break;
-                }
-            default:
-                {
-                    connection.setRequestMethod("GET");
-                    break;
-                }
-        }
+        connection.setRequestMethod(method.toString());
 
         for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
@@ -134,7 +138,7 @@ public class HttpClient {
         if (method == HttpRequest.Method.PUT || method == HttpRequest.Method.POST) {
             connection.setDoOutput(true);
             try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = httpRequest.body().getBytes("utf-8");
+                byte[] input = httpRequest.body().getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
         }
@@ -178,6 +182,7 @@ public class HttpClient {
 
         while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
             buffer.write(data, 0, bytesRead);
+            buffer.flush();
         }
 
         return buffer.toByteArray();
@@ -196,5 +201,28 @@ public class HttpClient {
 
         @Override
         public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+    }
+
+    /** Class to implement SSLContextException */
+    private static class SSLContextException extends RuntimeException {
+
+        /**
+         * Constructor
+         *
+         * @param message message
+         */
+        public SSLContextException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructor
+         *
+         * @param message message
+         * @param throwable throwable
+         */
+        public SSLContextException(String message, Throwable throwable) {
+            super(message, throwable);
+        }
     }
 }

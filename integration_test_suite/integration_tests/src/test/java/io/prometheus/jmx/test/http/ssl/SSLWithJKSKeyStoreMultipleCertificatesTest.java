@@ -16,16 +16,17 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -50,7 +51,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
 
     private static final String BASE_URL = "https://localhost";
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -79,7 +80,8 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);
@@ -89,6 +91,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
@@ -98,6 +101,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
@@ -109,6 +113,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
@@ -120,6 +125,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
@@ -146,6 +152,8 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
 
     private void assertMetricsResponse(
             ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
+
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)
@@ -171,7 +179,7 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                        : "jmx_prometheus_standalone";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

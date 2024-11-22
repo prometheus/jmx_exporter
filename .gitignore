@@ -10,12 +10,7 @@ target/
 .settings/
 .classpath
 dependency-reduced-pom.xml
-output.txt
 pom.xml.versionsBackup
 integration_test_suite/integration_tests/src/test/resources/common/**.jar
-output.log
-stress-test.log
-test.sh
-test.log
-verify-full.sh
-verify-full.log
+smoke-test.log
+regression-test.log

@@ -48,8 +48,8 @@
     <modules>
         <module>collector</module>
         <module>jmx_prometheus_common</module>
-        <module>jmx_prometheus_httpserver</module>
         <module>jmx_prometheus_javaagent</module>
+        <module>jmx_prometheus_standalone</module>
         <module>integration_test_suite</module>
     </modules>
 
@@ -86,6 +86,11 @@
                 <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
                 <version>${prometheus.metrics.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-exporter-opentelemetry</artifactId>
+                <version>${prometheus.metrics.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -96,19 +101,19 @@
                 <!-- https://github.com/apache/maven/tree/maven-3.8.1/maven-core/src/main/resources/META-INF/plexus -->
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.3</version>
+                    <version>2.4</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.3</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>2.6</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.12.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
@@ -116,15 +121,15 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>2.4</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.3.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>3.3</version>
                 </plugin>
                 <!-- Plugins with groupId org.apache.maven.plugins that are not part of default bindings. -->
                 <plugin>
@@ -137,11 +142,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>2.5.3</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.1.2</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
@@ -149,19 +154,19 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.7</version>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>1.4.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.7.1</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -174,7 +179,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>com.coderplus.maven.plugins</groupId>
@@ -184,7 +189,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.43.0</version>
+                    <version>2.40.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -200,9 +205,7 @@
                         </goals>
                         <configuration>
                             <rules>
-                                <requireMavenVersion>
-                                    <version>3.9.6</version>
-                                </requireMavenVersion>
+                                <requirePluginVersions />
                             </rules>
                         </configuration>
                     </execution>
@@ -225,7 +228,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>5.1.9</version>
+                <version>2.4.0</version>
                 <extensions>true</extensions>
             </plugin>
             <plugin>
@@ -266,7 +269,7 @@
                 <configuration>
                     <java>
                         <googleJavaFormat>
-                            <version>1.24.0</version>
+                            <version>1.22.0</version>
                             <style>AOSP</style>
                             <reflowLongStrings>true</reflowLongStrings>
                         </googleJavaFormat>
@@ -275,7 +278,7 @@
                 <executions>
                     <execution>
                         <goals>
-                            <goal>apply</goal>
+                            <goal>check</goal>
                         </goals>
                         <phase>compile</phase>
                     </execution>
@@ -289,7 +292,7 @@
             <plugin>
                 <!-- maven-site-plugin 3.3 requires maven-project-info-reports-plugin < 3.0 -->
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>2.9</version>
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>

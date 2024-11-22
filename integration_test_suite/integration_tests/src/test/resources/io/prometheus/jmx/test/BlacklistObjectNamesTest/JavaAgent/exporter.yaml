@@ -1,3 +1,0 @@
-blacklistObjectNames: ["java.lang:*"]
-rules:
-  - pattern: ".*"

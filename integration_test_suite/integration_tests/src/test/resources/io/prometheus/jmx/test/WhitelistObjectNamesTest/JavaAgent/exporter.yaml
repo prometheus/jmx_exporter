@@ -1,3 +1,0 @@
-whitelistObjectNames: ["java.lang:*", "io.prometheus.jmx:*"]
-rules:
-  - pattern: ".*"

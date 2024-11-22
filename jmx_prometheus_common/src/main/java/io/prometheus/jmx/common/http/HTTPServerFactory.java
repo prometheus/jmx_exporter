@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.common.http;
 
+import static java.lang.String.format;
+
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
@@ -134,8 +136,7 @@ public class HTTPServerFactory {
             rootYamlMapAccessor = new YamlMapAccessor(yamlMap);
         } catch (Throwable t) {
             throw new ConfigurationException(
-                    String.format("Exception loading exporter YAML file [%s]", exporterYamlFile),
-                    t);
+                    format("Exception loading exporter YAML file [%s]", exporterYamlFile), t);
         }
     }
 
@@ -432,7 +433,7 @@ public class HTTPServerFactory {
                     }
                 } else {
                     throw new ConfigurationException(
-                            String.format(
+                            format(
                                     "Unsupported /httpServer/authentication/basic/algorithm [%s]",
                                     algorithm));
                 }
@@ -449,14 +450,14 @@ public class HTTPServerFactory {
             clazz = this.getClass().getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
             throw new ConfigurationException(
-                    String.format(
+                    format(
                             "configured /httpServer/authentication/authenticatorClass [%s]"
                                     + " not found, loadClass resulted in [%s:%s]",
                             className, e.getClass(), e.getMessage()));
         }
         if (!Authenticator.class.isAssignableFrom(clazz)) {
             throw new ConfigurationException(
-                    String.format(
+                    format(
                             "configured /httpServer/authentication/authenticatorClass [%s]"
                                 + " loadClass resulted in [%s] of the wrong type, is not assignable"
                                 + " from Authenticator",
@@ -466,7 +467,7 @@ public class HTTPServerFactory {
             return (Authenticator) clazz.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new ConfigurationException(
-                    String.format(
+                    format(
                             "configured /httpServer/authentication/authenticatorClass [%s] no arg"
                                     + " constructor newInstance resulted in exception [%s:%s]",
                             className, e.getClass(), e.getMessage()));
@@ -513,7 +514,7 @@ public class HTTPServerFactory {
             return new MessageDigestAuthenticator(realm, username, password, algorithm, salt);
         } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
-                    String.format(
+                    format(
                             "Invalid /httpServer/authentication/basic/algorithm, unsupported"
                                     + " algorithm [%s]",
                             algorithm));
@@ -599,7 +600,7 @@ public class HTTPServerFactory {
                     realm, username, password, algorithm, salt, iterations, keyLength);
         } catch (GeneralSecurityException e) {
             throw new ConfigurationException(
-                    String.format(
+                    format(
                             "Invalid /httpServer/authentication/basic/algorithm, unsupported"
                                     + " algorithm [%s]",
                             algorithm));
@@ -681,7 +682,7 @@ public class HTTPServerFactory {
                 }
 
                 throw new ConfigurationException(
-                        String.format("Exception loading SSL configuration%s", message), e);
+                        format("Exception loading SSL configuration%s", message), e);
             }
         }
     }
@@ -708,9 +709,7 @@ public class HTTPServerFactory {
         @Override
         public Thread newThread(Runnable r) {
             Thread t = delegate.newThread(r);
-            t.setName(
-                    String.format(
-                            "prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
+            t.setName(format("prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
             t.setDaemon(daemon);
             return t;
         }

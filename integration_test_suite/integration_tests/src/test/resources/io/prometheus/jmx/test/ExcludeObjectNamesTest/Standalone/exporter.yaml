@@ -1,4 +1,0 @@
-hostPort: application:9999
-excludeObjectNames: ["java.lang:*"]
-rules:
-  - pattern: ".*"

@@ -20,12 +20,12 @@ import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsRespo
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -58,7 +58,7 @@ public class CompleteHttpServerConfigurationTest {
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
@@ -87,7 +87,7 @@ public class CompleteHttpServerConfigurationTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -98,7 +98,10 @@ public class CompleteHttpServerConfigurationTest {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -121,7 +124,10 @@ public class CompleteHttpServerConfigurationTest {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -150,7 +156,7 @@ public class CompleteHttpServerConfigurationTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         MetricsType.OPEN_METRICS_TEXT_METRICS)
@@ -183,7 +189,7 @@ public class CompleteHttpServerConfigurationTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         MetricsType.PROMETHEUS_TEXT_METRICS)
@@ -216,7 +222,7 @@ public class CompleteHttpServerConfigurationTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         "application/vnd.google.protobuf;"
@@ -264,7 +270,7 @@ public class CompleteHttpServerConfigurationTest {
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                        : "jmx_prometheus_standalone";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

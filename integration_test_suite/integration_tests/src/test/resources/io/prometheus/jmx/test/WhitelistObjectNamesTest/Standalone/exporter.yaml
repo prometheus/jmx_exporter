@@ -1,4 +1,0 @@
-hostPort: application:9999
-whitelistObjectNames: ["java.lang:*"]
-rules:
-  - pattern: ".*"

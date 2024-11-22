@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-present The Prometheus jmx_exporter Authors
+ * Copyright (C) 2015-2023 The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,105 +16,98 @@
 
 package io.prometheus.jmx;
 
-import io.prometheus.jmx.common.http.ConfigurationException;
+import static java.lang.String.format;
+
 import io.prometheus.jmx.common.http.HTTPServerFactory;
-import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.yaml.YamlMapAccessor;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetAddress;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class JavaAgent {
 
-    public static final String CONFIGURATION_REGEX =
-            "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?"
-                    + // host name, or ipv4, or ipv6 address in brackets
-                    "(\\d{1,5}):"
-                    + // port
-                    "(.+)"; // config file
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
-    private static final String DEFAULT_HOST = "0.0.0.0";
+    private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
-    private static HTTPServer httpServer;
-
-    public static void agentmain(String agentArgument, Instrumentation instrumentation)
-            throws Exception {
+    /**
+     * Java agent main
+     *
+     * @param agentArgument agentArgument
+     * @param instrumentation instrumentation
+     */
+    public static void agentmain(String agentArgument, Instrumentation instrumentation) {
         premain(agentArgument, instrumentation);
     }
 
-    public static void premain(String agentArgument, Instrumentation instrumentation)
-            throws Exception {
+    /**
+     * Java agent premain
+     *
+     * @param agentArgument agentArgument
+     * @param instrumentation instrumentation
+     */
+    public static void premain(String agentArgument, Instrumentation instrumentation) {
+        info("Starting ...");
+
         try {
-            Config config = parseConfig(agentArgument);
+            Arguments arguments = Arguments.parse(agentArgument);
+            File file = new File(arguments.getFilename());
+            YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
+            boolean httpEnabled = arguments.isHttpEnabled();
+            boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
-            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
-            JvmMetrics.builder().register(PrometheusRegistry.defaultRegistry);
-            new JmxCollector(new File(config.file), JmxCollector.Mode.AGENT)
-                    .register(PrometheusRegistry.defaultRegistry);
+            new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+            JvmMetrics.builder().register(DEFAULT_REGISTRY);
+            new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
-            String host = config.host != null ? config.host : DEFAULT_HOST;
+            info("HTTP enabled [%b]", httpEnabled);
+            if (httpEnabled) {
+                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
+            }
+            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
-            httpServer =
-                    new HTTPServerFactory()
-                            .createHTTPServer(
-                                    InetAddress.getByName(host),
-                                    config.port,
-                                    PrometheusRegistry.defaultRegistry,
-                                    new File(config.file));
+            if (httpEnabled) {
+                new HTTPServerFactory()
+                        .createHTTPServer(
+                                InetAddress.getByName(arguments.getHostname()),
+                                arguments.getPort(),
+                                PrometheusRegistry.defaultRegistry,
+                                file);
+            }
+
+            if (openTelemetryEnabled) {
+                OpenTelemetryExporterFactory.getInstance()
+                        .createOpenTelemetryExporter(PrometheusRegistry.defaultRegistry, file);
+            }
+
+            info("Running ...");
         } catch (Throwable t) {
             synchronized (System.err) {
-                System.err.println("Failed to start Prometheus JMX Exporter");
+                System.err.println("Failed to start Prometheus JMX Exporter ...");
                 System.err.println();
-                t.printStackTrace();
+                t.printStackTrace(System.err);
                 System.err.println();
                 System.err.println("Prometheus JMX Exporter exiting");
                 System.err.flush();
             }
+
             System.exit(1);
         }
     }
 
-    /**
-     * Parse the Java Agent configuration. The arguments are typically specified to the JVM as a
-     * javaagent as {@code -javaagent:/path/to/agent.jar=<CONFIG>}. This method parses the {@code
-     * <CONFIG>} portion.
-     *
-     * @param args provided agent args
-     * @return configuration to use for our application
-     */
-    private static Config parseConfig(String args) {
-        Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
-
-        Matcher matcher = pattern.matcher(args);
-        if (!matcher.matches()) {
-            System.err.println(
-                    "Usage: -javaagent:/path/to/JavaAgent.jar=[host:]<port>:<yaml configuration"
-                            + " file> ");
-            throw new ConfigurationException("Malformed arguments - " + args);
-        }
-
-        String givenHost = matcher.group(1);
-        String givenPort = matcher.group(2);
-        String givenConfigFile = matcher.group(3);
-
-        int port = Integer.parseInt(givenPort);
-
-        return new Config(givenHost, port, givenConfigFile);
-    }
-
-    private static class Config {
-
-        String host;
-        int port;
-        String file;
-
-        Config(String host, int port, String file) {
-            this.host = host;
-            this.port = port;
-            this.file = file;
-        }
+    private static void info(String format, Object... objects) {
+        System.out.printf(
+                "%s | %s | INFO | %s | %s%n",
+                SIMPLE_DATE_FORMAT.format(new Date()),
+                Thread.currentThread().getName(),
+                JavaAgent.class.getName(),
+                format(format, objects));
     }
 }

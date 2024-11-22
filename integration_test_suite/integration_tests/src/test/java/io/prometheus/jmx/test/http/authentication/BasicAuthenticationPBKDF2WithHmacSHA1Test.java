@@ -20,13 +20,13 @@ import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsRespo
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
-import io.prometheus.jmx.test.common.PBKDF2WithHmacExporterTestEnvironmentFilter;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.MetricsType;
+import io.prometheus.jmx.test.support.PBKDF2WithHmacExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -57,7 +57,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter());
@@ -78,7 +78,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -89,9 +89,16 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
             }
@@ -112,9 +119,16 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -141,13 +155,17 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         MetricsType.OPEN_METRICS_TEXT_METRICS)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -174,13 +192,17 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         MetricsType.PROMETHEUS_TEXT_METRICS)
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -207,7 +229,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
                                         HttpHeader.CONTENT_TYPE,
                                         "application/vnd.google.protobuf;"
@@ -215,7 +237,11 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
                                                 + " encoding=delimited")
                                 .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                HttpResponse httpResponse =
+                        HttpClient.sendRequest(
+                                httpRequest,
+                                HttpClient.CONNECT_TIMEOUT,
+                                HttpClient.READ_TIMEOUT * 2);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
@@ -255,7 +281,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
         String buildInfoName =
                 isJmxExporterModeJavaAgent
                         ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                        : "jmx_prometheus_standalone";
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

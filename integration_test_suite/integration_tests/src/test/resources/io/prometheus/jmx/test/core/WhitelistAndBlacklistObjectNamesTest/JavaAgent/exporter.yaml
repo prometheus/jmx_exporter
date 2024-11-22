@@ -1,0 +1,4 @@
+whitelistObjectNames: ["java.lang:*"]
+blacklistObjectNames: ["java.lang:*"]
+rules:
+  - pattern: ".*"

@@ -1,3 +1,0 @@
-autoExcludeObjectNameAttributes: false
-rules:
-  - pattern: ".*"
