@@ -80,7 +80,7 @@ public class AuthenticatorPluginTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
