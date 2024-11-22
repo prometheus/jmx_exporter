@@ -24,6 +24,6 @@
 (
   unset JAVA_DOCKER_IMAGES
   unset PROMETHEUS_DOCKER_IMAGES
-  ./integration_test_suite/pull-docker-images.sh
+  ./integration_test_suite/pull-smoke-test-docker-images.sh
   ./mvnw clean verify
 ) 2>&1 | tee smoke-test.log
