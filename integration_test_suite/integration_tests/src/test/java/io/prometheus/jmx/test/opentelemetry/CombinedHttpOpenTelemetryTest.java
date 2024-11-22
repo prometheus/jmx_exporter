@@ -6,7 +6,6 @@ import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMe
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
 import io.prometheus.jmx.test.common.MetricsType;
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
@@ -60,7 +59,8 @@ public class CombinedHttpOpenTelemetryTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
+    public void testHealthy(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+            throws IOException {
         String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -81,8 +81,8 @@ public class CombinedHttpOpenTelemetryTest {
 
     @Verifyica.Test
     @Verifyica.Order(3)
-    public void testOpenMetricsTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
+    public void testOpenMetricsTextMetrics(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
         String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse =
@@ -107,8 +107,8 @@ public class CombinedHttpOpenTelemetryTest {
 
     @Verifyica.Test
     @Verifyica.Order(5)
-    public void testPrometheusProtobufMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
+    public void testPrometheusProtobufMetrics(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
         String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse =

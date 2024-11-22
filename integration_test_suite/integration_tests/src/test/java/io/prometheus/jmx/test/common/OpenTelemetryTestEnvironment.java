@@ -155,7 +155,9 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return an exporter URL
      */
     public String getExporterUrl(String path) {
-        return !path.startsWith("/") ? getExporterBaseUrl() + "/" + path : getExporterBaseUrl() + path;
+        return !path.startsWith("/")
+                ? getExporterBaseUrl() + "/" + path
+                : getExporterBaseUrl() + path;
     }
 
     /**
@@ -168,15 +170,15 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
 
         switch (jmxExporterMode) {
             case JavaAgent:
-            {
-                port = javaAgentApplicationContainer.getMappedPort(8888);
-                break;
-            }
+                {
+                    port = javaAgentApplicationContainer.getMappedPort(8888);
+                    break;
+                }
             case Standalone:
-            {
-                port = standaloneExporterContainer.getMappedPort(8888);
-                break;
-            }
+                {
+                    port = standaloneExporterContainer.getMappedPort(8888);
+                    break;
+                }
         }
 
         return baseUrl + ":" + port;
@@ -189,7 +191,9 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @return a Prometheus URL
      */
     public String getPrometheusUrl(String path) {
-        return !path.startsWith("/") ? getPrometheusBaseUrl() + "/" + path : getPrometheusBaseUrl() + path;
+        return !path.startsWith("/")
+                ? getPrometheusBaseUrl() + "/" + path
+                : getPrometheusBaseUrl() + path;
     }
 
     /**
