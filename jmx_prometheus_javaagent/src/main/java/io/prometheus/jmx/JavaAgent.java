@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx;
 
+import static java.lang.String.format;
+
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
@@ -23,8 +25,14 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetAddress;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class JavaAgent {
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     /**
      * Java agent main
@@ -43,12 +51,17 @@ public class JavaAgent {
      * @param instrumentation instrumentation
      */
     public static void premain(String agentArgument, Instrumentation instrumentation) {
+        info("Starting ...");
+
         try {
             Arguments arguments = Arguments.parse(agentArgument);
             File file = new File(arguments.getFilename());
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
+
+            info("HTTP enabled [%b]", httpEnabled);
+            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
                 new HTTPServerFactory()
@@ -63,9 +76,11 @@ public class JavaAgent {
                 OpenTelemetryExporterFactory.getInstance()
                         .createOpenTelemetryExporter(PrometheusRegistry.defaultRegistry, file);
             }
+
+            info("Running ...");
         } catch (Throwable t) {
             synchronized (System.err) {
-                System.err.println("Failed to start Prometheus JMX Exporter");
+                System.err.println("Failed to start Prometheus JMX Exporter ...");
                 System.err.println();
                 t.printStackTrace(System.err);
                 System.err.println();
@@ -75,5 +90,14 @@ public class JavaAgent {
 
             System.exit(1);
         }
+    }
+
+    private static void info(String format, Object... objects) {
+        System.out.printf(
+                "%s | %s | INFO | %s | %s%n",
+                SIMPLE_DATE_FORMAT.format(new Date()),
+                Thread.currentThread().getName(),
+                JavaAgent.class.getName(),
+                format(format, objects));
     }
 }

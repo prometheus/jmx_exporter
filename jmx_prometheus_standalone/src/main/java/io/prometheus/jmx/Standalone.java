@@ -45,6 +45,8 @@ public class Standalone {
      * @throws Exception Exception
      */
     public static void main(String[] args) throws Exception {
+        info("Starting ...");
+
         HTTPServer httpServer = null;
         OpenTelemetryExporter openTelemetryExporter = null;
         String usage = ResourceSupport.load("/usage.txt");
@@ -61,6 +63,9 @@ public class Standalone {
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
+
+            info("HTTP enabled [%b]", httpEnabled);
+            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
                 httpServer =
@@ -79,36 +84,51 @@ public class Standalone {
                                         PrometheusRegistry.defaultRegistry, file);
             }
 
-            info(
-                    "Running (HTTP enabled [%b] OpenTelemetry enabled [%b])",
-                    httpEnabled, openTelemetryEnabled);
+            info("Running ...", httpEnabled, openTelemetryEnabled);
 
             Thread.currentThread().join();
         } catch (ConfigurationException e) {
             synchronized (System.err) {
-                System.err.println("Configuration Exception : " + e.getMessage());
+                System.err.println(
+                        "Failed to start Prometheus JMX Exporter (Configuration exception) ...");
+                System.err.println();
                 e.printStackTrace(System.err);
-                System.exit(1);
+                System.err.println();
+                System.err.println("Prometheus JMX Exporter exiting");
+                System.err.flush();
             }
+
+            System.exit(1);
         } catch (Throwable t) {
             synchronized (System.err) {
-                System.err.println("Exception starting");
+                System.err.println("Failed to start Prometheus JMX Exporter ...");
+                System.err.println();
                 t.printStackTrace(System.err);
-                System.exit(1);
+                System.err.println();
+                System.err.println("Prometheus JMX Exporter exiting");
+                System.err.flush();
             }
+
+            System.exit(1);
         } finally {
-            if (openTelemetryExporter != null) {
-                openTelemetryExporter.close();
-            }
-            if (httpServer != null) {
-                httpServer.close();
+            close(openTelemetryExporter);
+            close(httpServer);
+        }
+    }
+
+    private static void close(AutoCloseable autoCloseable) {
+        if (autoCloseable != null) {
+            try {
+                autoCloseable.close();
+            } catch (Throwable t) {
+                // INTENTIONALLY BLANK
             }
         }
     }
 
     private static void info(String format, Object... objects) {
         System.out.printf(
-                "%s | %s | INFO | %s | %s",
+                "%s | %s | INFO | %s | %s%n",
                 SIMPLE_DATE_FORMAT.format(new Date()),
                 Thread.currentThread().getName(),
                 Standalone.class.getName(),
