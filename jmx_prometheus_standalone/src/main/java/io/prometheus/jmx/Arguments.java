@@ -73,7 +73,7 @@ public class Arguments {
      */
     public static Arguments parse(String[] arguments) {
         if (arguments == null || arguments.length == 0) {
-            throw new ConfigurationException("No arguments provided");
+            throw new ConfigurationException("Malformed arguments (none provided)");
         }
 
         for (String argument : arguments) {
