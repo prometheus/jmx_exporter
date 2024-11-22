@@ -30,6 +30,7 @@ public class ObjectNameAttributeFilterTest {
 
     static final String CONFIG_EXCLUDE_MAP_FIELD = "configExcludeObjectNameAttributesMap";
     static final String DYNAMIC_EXCLUDE_MAP_FIELD = "dynamicExcludeObjectNameAttributesMap";
+    static final String CONFIG_INCLUDE_MAP_FIELD = "includeObjectNameAttributesMap";
 
     @Test
     public void emptyConfig() throws Exception {
@@ -37,21 +38,28 @@ public class ObjectNameAttributeFilterTest {
 
         assertEquals(0, excludeMapSize(filter, CONFIG_EXCLUDE_MAP_FIELD));
         assertEquals(0, excludeMapSize(filter, DYNAMIC_EXCLUDE_MAP_FIELD));
+        assertEquals(0, includeMapSize(filter));
     }
 
     @Test
     public void nonEmptyConfigShouldInitializeConfigExcludeMap() throws Exception {
         ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
 
-        Map<ObjectName, Set<String>> configMap =
+        Map<ObjectName, Set<String>> configExcludeMap =
                 getInternalMapValue(filter, CONFIG_EXCLUDE_MAP_FIELD);
         Map<ObjectName, Set<String>> dynamicMap =
                 getInternalMapValue(filter, DYNAMIC_EXCLUDE_MAP_FIELD);
+        Map<ObjectName, Set<String>> configIncludeMap =
+                getInternalMapValue(filter, CONFIG_INCLUDE_MAP_FIELD);
 
-        assertEquals(2, configMap.size());
-        assertEquals(1, configMap.get(new ObjectName("java.lang:type=OperatingSystem")).size());
-        assertEquals(2, configMap.get(new ObjectName("java.lang:type=Runtime")).size());
+        assertEquals(2, configExcludeMap.size());
+        assertEquals(
+                1, configExcludeMap.get(new ObjectName("java.lang:type=OperatingSystem")).size());
+        assertEquals(2, configExcludeMap.get(new ObjectName("java.lang:type=Runtime")).size());
         assertEquals(0, dynamicMap.size());
+        assertEquals(2, configIncludeMap.size());
+        assertEquals(1, configIncludeMap.get(new ObjectName("java.lang:type=Threading")).size());
+        assertEquals(1, configIncludeMap.get(new ObjectName("java.lang:type=ClassLoading")).size());
     }
 
     @Test
@@ -136,9 +144,22 @@ public class ObjectNameAttributeFilterTest {
         }
     }
 
+    @Test
+    public void includeShouldCheckConfigInclusionMap() throws Exception {
+        ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
+
+        boolean result = filter.include(new ObjectName("java.lang:type=Threading"), "ThreadCount");
+
+        assertTrue("java.lang:type=Threading<>ThreadCount should be included by config", result);
+    }
+
     private static ObjectNameAttributeFilter initEmptyConfigFilter() {
         return ObjectNameAttributeFilter.create(
-                new Yaml().load("---\nexcludeObjectNameAttributes: {}\n"));
+                new Yaml()
+                        .load(
+                                "---\n"
+                                        + "excludeObjectNameAttributes: {}\n"
+                                        + "includeObjectNameAttributes: {}\n"));
     }
 
     private static ObjectNameAttributeFilter initNonEmptyConfigFilter() {
@@ -151,7 +172,12 @@ public class ObjectNameAttributeFilterTest {
                                         + "    - \"ObjectName\"\n"
                                         + "  \"java.lang:type=Runtime\":\n"
                                         + "    - \"ClassPath\"\n"
-                                        + "    - \"SystemProperties\"\n"));
+                                        + "    - \"SystemProperties\"\n"
+                                        + "includeObjectNameAttributes:\n"
+                                        + "  \"java.lang:type=Threading\":\n"
+                                        + "    - \"ThreadCount\"\n"
+                                        + "  \"java.lang:type=ClassLoading\":\n"
+                                        + "    - \"LoadedClassCount\"\n"));
     }
 
     private static Set<ObjectName> getAliveMBeans() throws MalformedObjectNameException {
@@ -165,6 +191,10 @@ public class ObjectNameAttributeFilterTest {
 
     private int excludeMapSize(ObjectNameAttributeFilter filter, String mapName) throws Exception {
         return getInternalMapValue(filter, mapName).size();
+    }
+
+    private int includeMapSize(ObjectNameAttributeFilter filter) throws Exception {
+        return getInternalMapValue(filter, CONFIG_INCLUDE_MAP_FIELD).size();
     }
 
     private Map getInternalMapValue(ObjectNameAttributeFilter filter, String mapName)
