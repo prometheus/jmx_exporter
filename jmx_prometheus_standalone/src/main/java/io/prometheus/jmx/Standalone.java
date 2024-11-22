@@ -65,6 +65,7 @@ public class Standalone {
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
             info("HTTP enabled [%b]", httpEnabled);
+            info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
             info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
