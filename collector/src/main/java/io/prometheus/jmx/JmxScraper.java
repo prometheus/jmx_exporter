@@ -22,12 +22,14 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.ref.Cleaner;
 import java.util.*;
 import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
+import javax.management.relation.MBeanServerNotificationFilter;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -38,6 +40,7 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 class JmxScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
+    private static final Cleaner CLEANER = Cleaner.create();
 
     public interface MBeanReceiver {
         void recordBean(
@@ -50,14 +53,33 @@ class JmxScraper {
                 Object value);
     }
 
-    private final MBeanReceiver receiver;
     private final String jmxUrl;
     private final String username;
     private final String password;
     private final boolean ssl;
     private final List<ObjectName> includeObjectNames, excludeObjectNames;
-    private final ObjectNameAttributeFilter objectNameAttributeFilter;
-    private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
+    // TODO: accept lists of attributes rather than filter object
+    private final ObjectNameAttributeFilter defaultObjectNameAttributeFilter;
+
+    // Values cached per connection.
+    private MBeanServerConnection _beanConn;
+    private Cache cache;
+    private boolean cacheIsStale = false;
+
+    private class Cache {
+        private final Set<ObjectName> mBeanNames;
+        private final ObjectNameAttributeFilter objectNameAttributeFilter;
+        private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
+
+        private Cache(
+                Set<ObjectName> mBeanNames,
+                ObjectNameAttributeFilter objectNameAttributeFilter,
+                JmxMBeanPropertyCache jmxMBeanPropertyCache) {
+            this.mBeanNames = mBeanNames;
+            this.objectNameAttributeFilter = objectNameAttributeFilter;
+            this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+        }
+    }
 
     public JmxScraper(
             String jmxUrl,
@@ -66,18 +88,103 @@ class JmxScraper {
             boolean ssl,
             List<ObjectName> includeObjectNames,
             List<ObjectName> excludeObjectNames,
-            ObjectNameAttributeFilter objectNameAttributeFilter,
-            MBeanReceiver receiver,
-            JmxMBeanPropertyCache jmxMBeanPropertyCache) {
+            ObjectNameAttributeFilter objectNameAttributeFilter) {
         this.jmxUrl = jmxUrl;
-        this.receiver = receiver;
         this.username = username;
         this.password = password;
         this.ssl = ssl;
         this.includeObjectNames = includeObjectNames;
         this.excludeObjectNames = excludeObjectNames;
-        this.objectNameAttributeFilter = objectNameAttributeFilter;
-        this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
+        this.defaultObjectNameAttributeFilter = objectNameAttributeFilter;
+    }
+
+    private MBeanServerConnection connectToMBeanServer() throws Exception {
+        if (jmxUrl.isEmpty()) {
+            return ManagementFactory.getPlatformMBeanServer();
+        }
+
+        Map<String, Object> environment = new HashMap<>();
+        if (username != null
+                && username.length() != 0
+                && password != null
+                && password.length() != 0) {
+            String[] credent = new String[] {username, password};
+            environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
+        }
+        if (ssl) {
+            environment.put(Context.SECURITY_PROTOCOL, "ssl");
+            SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+            environment.put(
+                    RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+
+            if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
+                environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+            }
+        }
+        JMXConnector jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
+        CLEANER.register(
+                this,
+                () -> {
+                    try {
+                        jmxc.close();
+                    } catch (IOException e) {
+                        LOGGER.log(FINE, "Failed to close JMX connection", e);
+                    }
+                });
+        return jmxc.getMBeanServerConnection();
+    }
+
+    private synchronized MBeanServerConnection getMBeanServerConnection() throws Exception {
+        if (_beanConn == null) {
+            cacheIsStale = true;
+            _beanConn = connectToMBeanServer();
+            // Subscribe to MBeans register/unregister events to invalidate cache
+            MBeanServerNotificationFilter filter = new MBeanServerNotificationFilter();
+            filter.enableAllObjectNames();
+            _beanConn.addNotificationListener(
+                    MBeanServerDelegate.DELEGATE_NAME,
+                    (notification, handback) -> {
+                        String type = notification.getType();
+                        if (MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(type)
+                                || MBeanServerNotification.UNREGISTRATION_NOTIFICATION.equals(
+                                        type)) {
+                            LOGGER.log(FINE, "Marking cache as stale due to %s", type);
+                            // Mark cache as stale instead of refreshing it immediately
+                            // to debounce multiple notifications.
+                            synchronized (this) {
+                                cacheIsStale = true;
+                            }
+                        }
+                    },
+                    filter,
+                    null);
+        }
+        if (cacheIsStale) {
+            cache = fetchCache(_beanConn);
+            cacheIsStale = false;
+        }
+        return _beanConn;
+    }
+
+    private Cache fetchCache(MBeanServerConnection beanConn) throws Exception {
+        // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
+        Set<ObjectName> mBeanNames = new HashSet<>();
+        for (ObjectName name : includeObjectNames) {
+            for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
+                mBeanNames.add(instance.getObjectName());
+            }
+        }
+
+        for (ObjectName name : excludeObjectNames) {
+            for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
+                mBeanNames.remove(instance.getObjectName());
+            }
+        }
+
+        ObjectNameAttributeFilter attributeFilter = defaultObjectNameAttributeFilter.dup();
+        attributeFilter.onlyKeepMBeans(mBeanNames);
+
+        return new Cache(mBeanNames, attributeFilter, new JmxMBeanPropertyCache(mBeanNames));
     }
 
     /**
@@ -85,68 +192,27 @@ class JmxScraper {
      *
      * <p>Values are passed to the receiver in a single thread.
      */
-    public void doScrape() throws Exception {
-        MBeanServerConnection beanConn;
-        JMXConnector jmxc = null;
-        if (jmxUrl.isEmpty()) {
-            beanConn = ManagementFactory.getPlatformMBeanServer();
-        } else {
-            Map<String, Object> environment = new HashMap<>();
-            if (username != null
-                    && username.length() != 0
-                    && password != null
-                    && password.length() != 0) {
-                String[] credent = new String[] {username, password};
-                environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
-            }
-            if (ssl) {
-                environment.put(Context.SECURITY_PROTOCOL, "ssl");
-                SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
-                environment.put(
-                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                        clientSocketFactory);
+    public synchronized void doScrape(MBeanReceiver receiver) throws Exception {
+        // Method is synchronized to avoid multiple scrapes running concurrently
+        // and let one of them refresh the cache in the middle of the scrape.
 
-                if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
-                    environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
-                }
-            }
-
-            jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
-            beanConn = jmxc.getMBeanServerConnection();
-        }
         try {
-            // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
-            Set<ObjectName> mBeanNames = new HashSet<>();
-            for (ObjectName name : includeObjectNames) {
-                for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
-                    mBeanNames.add(instance.getObjectName());
-                }
-            }
+            MBeanServerConnection beanConn = getMBeanServerConnection();
 
-            for (ObjectName name : excludeObjectNames) {
-                for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
-                    mBeanNames.remove(instance.getObjectName());
-                }
-            }
-
-            // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache
-            // and dynamic attribute filter:
-            jmxMBeanPropertyCache.onlyKeepMBeans(mBeanNames);
-            objectNameAttributeFilter.onlyKeepMBeans(mBeanNames);
-
-            for (ObjectName objectName : mBeanNames) {
+            for (ObjectName objectName : cache.mBeanNames) {
                 long start = System.nanoTime();
-                scrapeBean(beanConn, objectName);
+                scrapeBean(receiver, beanConn, objectName);
                 LOGGER.log(FINE, "TIME: %d ns for %s", System.nanoTime() - start, objectName);
             }
         } finally {
-            if (jmxc != null) {
-                jmxc.close();
-            }
+            // reconnect to resolve connection issues
+            // TODO: should it make a single retry with a new connection?
+            _beanConn = null;
         }
     }
 
-    private void scrapeBean(MBeanServerConnection beanConn, ObjectName mBeanName) {
+    private void scrapeBean(
+            MBeanReceiver receiver, MBeanServerConnection beanConn, ObjectName mBeanName) {
         MBeanInfo mBeanInfo;
 
         try {
@@ -168,7 +234,7 @@ class JmxScraper {
                 continue;
             }
 
-            if (objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
+            if (cache.objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
                 continue;
             }
 
@@ -205,7 +271,7 @@ class JmxScraper {
                     e.getMessage());
 
             // couldn't get them all in one go, try them 1 by 1
-            processAttributesOneByOne(beanConn, mBeanName, name2MBeanAttributeInfo);
+            processAttributesOneByOne(receiver, beanConn, mBeanName, name2MBeanAttributeInfo);
             return;
         }
 
@@ -235,9 +301,10 @@ class JmxScraper {
                         name2MBeanAttributeInfo.get(attribute.getName());
                 LOGGER.log(FINE, "%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
+                        receiver,
                         mBeanName,
                         mBeanDomain,
-                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        cache.jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         new LinkedList<>(),
                         mBeanAttributeInfo.getName(),
                         mBeanAttributeInfo.getType(),
@@ -259,6 +326,7 @@ class JmxScraper {
     }
 
     private void processAttributesOneByOne(
+            MBeanReceiver receiver,
             MBeanServerConnection beanConn,
             ObjectName mbeanName,
             Map<String, MBeanAttributeInfo> name2AttrInfo) {
@@ -273,9 +341,10 @@ class JmxScraper {
 
             LOGGER.log(FINE, "%s_%s process", mbeanName, attr.getName());
             processBeanValue(
+                    receiver,
                     mbeanName,
                     mbeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                    cache.jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
                     new LinkedList<>(),
                     attr.getName(),
                     attr.getType(),
@@ -290,6 +359,7 @@ class JmxScraper {
      * pass of getting the values/names out in a way it can be processed elsewhere easily.
      */
     private void processBeanValue(
+            MBeanReceiver receiver,
             ObjectName objectName,
             String domain,
             LinkedHashMap<String, String> beanProperties,
@@ -309,7 +379,7 @@ class JmxScraper {
                 value = ((java.util.Date) value).getTime() / 1000.0;
             }
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
-            this.receiver.recordBean(
+            receiver.recordBean(
                     domain, beanProperties, attrKeys, attrName, attrType, attrDescription, value);
         } else if (value instanceof CompositeData) {
             LOGGER.log(FINE, "%s%s%s scrape: compositedata", domain, beanProperties, attrName);
@@ -321,6 +391,7 @@ class JmxScraper {
                 String typ = type.getType(key).getTypeName();
                 Object valu = composite.get(key);
                 processBeanValue(
+                        receiver,
                         objectName,
                         domain,
                         beanProperties,
@@ -387,6 +458,7 @@ class JmxScraper {
                             name = attrName;
                         }
                         processBeanValue(
+                                receiver,
                                 objectName,
                                 domain,
                                 l2s,
@@ -407,6 +479,7 @@ class JmxScraper {
             Optional<?> optional = (Optional<?>) value;
             if (optional.isPresent()) {
                 processBeanValue(
+                        receiver,
                         objectName,
                         domain,
                         beanProperties,
@@ -419,6 +492,7 @@ class JmxScraper {
         } else if (value.getClass().isEnum()) {
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             processBeanValue(
+                    receiver,
                     objectName,
                     domain,
                     beanProperties,
@@ -428,7 +502,7 @@ class JmxScraper {
                     attrDescription,
                     value.toString());
         } else {
-            objectNameAttributeFilter.add(objectName, attrName);
+            cache.objectNameAttributeFilter.add(objectName, attrName);
             LOGGER.log(FINE, "%s%s scrape: %s not exported", domain, beanProperties, attrType);
         }
     }
@@ -460,10 +534,8 @@ class JmxScraper {
                             (args.length > 3 && "ssl".equalsIgnoreCase(args[3])),
                             objectNames,
                             new LinkedList<>(),
-                            objectNameAttributeFilter,
-                            new StdoutWriter(),
-                            new JmxMBeanPropertyCache())
-                    .doScrape();
+                            objectNameAttributeFilter)
+                    .doScrape(new StdoutWriter());
         } else if (args.length > 0) {
             new JmxScraper(
                             args[0],
@@ -472,10 +544,8 @@ class JmxScraper {
                             false,
                             objectNames,
                             new LinkedList<>(),
-                            objectNameAttributeFilter,
-                            new StdoutWriter(),
-                            new JmxMBeanPropertyCache())
-                    .doScrape();
+                            objectNameAttributeFilter)
+                    .doScrape(new StdoutWriter());
         } else {
             new JmxScraper(
                             "",
@@ -484,10 +554,8 @@ class JmxScraper {
                             false,
                             objectNames,
                             new LinkedList<>(),
-                            objectNameAttributeFilter,
-                            new StdoutWriter(),
-                            new JmxMBeanPropertyCache())
-                    .doScrape();
+                            objectNameAttributeFilter)
+                    .doScrape(new StdoutWriter());
         }
     }
 }

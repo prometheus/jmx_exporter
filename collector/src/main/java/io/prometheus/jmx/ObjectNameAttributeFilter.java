@@ -56,6 +56,13 @@ public class ObjectNameAttributeFilter {
         includeObjectNameAttributesMap = new ConcurrentHashMap<>();
     }
 
+    public ObjectNameAttributeFilter dup() {
+        ObjectNameAttributeFilter copy = new ObjectNameAttributeFilter();
+        copy.configExcludeObjectNameAttributesMap.putAll(configExcludeObjectNameAttributesMap);
+        copy.dynamicExcludeObjectNameAttributesMap.putAll(dynamicExcludeObjectNameAttributesMap);
+        return copy;
+    }
+
     /**
      * Method to initialize the ObjectNameAttributeFilter
      *

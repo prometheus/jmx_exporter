@@ -64,6 +64,13 @@ class JmxMBeanPropertyCache {
         this.keyPropertiesPerBean = new ConcurrentHashMap<>();
     }
 
+    public JmxMBeanPropertyCache(Set<ObjectName> mBeanNames) {
+        this();
+        for (ObjectName mBeanName : mBeanNames) {
+            getKeyPropertyList(mBeanName);
+        }
+    }
+
     Map<ObjectName, LinkedHashMap<String, String>> getKeyPropertiesPerBean() {
         return keyPropertiesPerBean;
     }
