@@ -38,6 +38,8 @@ public class Standalone {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
+    private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
+
     /**
      * Main method
      *
@@ -60,6 +62,10 @@ public class Standalone {
         try {
             Arguments arguments = Arguments.parse(args);
             File file = new File(arguments.getFilename());
+
+            new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+            new JmxCollector(file, JmxCollector.Mode.STANDALONE).register(DEFAULT_REGISTRY);
+
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");

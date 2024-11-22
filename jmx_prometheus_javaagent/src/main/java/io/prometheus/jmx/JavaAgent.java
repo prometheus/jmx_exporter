@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
@@ -33,6 +34,8 @@ public class JavaAgent {
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+
+    private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
     /**
      * Java agent main
@@ -59,6 +62,10 @@ public class JavaAgent {
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
+
+            new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+            JvmMetrics.builder().register(DEFAULT_REGISTRY);
+            new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
             info("HTTP enabled [%b]", httpEnabled);
             if (httpEnabled) {
