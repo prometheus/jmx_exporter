@@ -61,13 +61,15 @@ public class JavaAgent {
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
             info("HTTP enabled [%b]", httpEnabled);
-            info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
+            if (httpEnabled) {
+                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
+            }
             info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
                 new HTTPServerFactory()
                         .createHTTPServer(
-                                InetAddress.getByName(arguments.getHost()),
+                                InetAddress.getByName(arguments.getHostname()),
                                 arguments.getPort(),
                                 PrometheusRegistry.defaultRegistry,
                                 file);

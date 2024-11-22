@@ -84,13 +84,13 @@ public class Arguments {
         }
 
         boolean httpEnabled = false;
-        String host = null;
+        String hostname = null;
         Integer port = null;
         String filename;
 
         if (arguments.length == 2) {
             httpEnabled = true;
-            host = DEFAULT_HOST;
+            hostname = DEFAULT_HOST;
 
             int colonIndex = arguments[0].lastIndexOf(':');
 
@@ -99,7 +99,7 @@ public class Arguments {
                     port = Integer.parseInt(arguments[0]);
                 } else {
                     port = Integer.parseInt(arguments[0].substring(colonIndex + 1));
-                    host = arguments[0].substring(0, colonIndex);
+                    hostname = arguments[0].substring(0, colonIndex);
                 }
             } catch (NumberFormatException e) {
                 throw new ConfigurationException(
@@ -111,7 +111,7 @@ public class Arguments {
             filename = arguments[0];
         }
 
-        return new Arguments(httpEnabled, host, port, filename);
+        return new Arguments(httpEnabled, hostname, port, filename);
     }
 
     private static String toString(String[] arguments) {

@@ -19,7 +19,7 @@ public class Arguments {
                     + "(.+)"; // config file
 
     private final boolean httpEnabled;
-    private final String host;
+    private final String hostname;
     private final Integer port;
     private final String filename;
 
@@ -27,13 +27,13 @@ public class Arguments {
      * Constructor
      *
      * @param httpEnabled httpEnabled
-     * @param host host
+     * @param hostname hostname
      * @param port port
      * @param filename filename
      */
-    private Arguments(boolean httpEnabled, String host, Integer port, String filename) {
+    private Arguments(boolean httpEnabled, String hostname, Integer port, String filename) {
         this.httpEnabled = httpEnabled;
-        this.host = host;
+        this.hostname = hostname;
         this.port = port;
         this.filename = filename;
     }
@@ -52,8 +52,8 @@ public class Arguments {
      *
      * @return the host if it exists, else null
      */
-    public String getHost() {
-        return host;
+    public String getHostname() {
+        return hostname;
     }
 
     /**
