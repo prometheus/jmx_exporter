@@ -20,6 +20,7 @@ import io.prometheus.jmx.test.support.SSLContextException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -124,24 +125,7 @@ public class HttpClient {
         connection.setReadTimeout(readTimeout);
 
         HttpRequest.Method method = httpRequest.method();
-
-        switch (method) {
-            case PUT:
-                {
-                    connection.setRequestMethod("PUT");
-                    break;
-                }
-            case POST:
-                {
-                    connection.setRequestMethod("POST");
-                    break;
-                }
-            default:
-                {
-                    connection.setRequestMethod("GET");
-                    break;
-                }
-        }
+        connection.setRequestMethod(method.toString());
 
         for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
@@ -152,7 +136,7 @@ public class HttpClient {
         if (method == HttpRequest.Method.PUT || method == HttpRequest.Method.POST) {
             connection.setDoOutput(true);
             try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = httpRequest.body().getBytes("utf-8");
+                byte[] input = httpRequest.body().getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
         }
@@ -196,6 +180,7 @@ public class HttpClient {
 
         while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
             buffer.write(data, 0, bytesRead);
+            buffer.flush();
         }
 
         return buffer.toByteArray();
