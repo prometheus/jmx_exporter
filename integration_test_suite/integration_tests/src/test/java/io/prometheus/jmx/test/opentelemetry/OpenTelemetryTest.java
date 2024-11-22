@@ -2,10 +2,10 @@ package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.TestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.common;
+package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.JmxExporterMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;

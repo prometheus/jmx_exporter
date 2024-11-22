@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.common;
+package io.prometheus.jmx.test.support;
 
-/** Class to implement ContentType */
-public class MetricsType {
+/** Class to implement ExporterPath */
+public class ExporterPath {
 
-    /** Prometheus text format */
-    public static final String PROMETHEUS_TEXT_METRICS = "text/plain; version=0.0.4; charset=utf-8";
+    /** Healthy exporter path */
+    public static final String HEALTHY = "/-/healthy";
 
-    /** Prometheus Protobuf format */
-    public static final String PROMETHEUS_PROTOBUF_METRICS =
-            "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;"
-                    + " encoding=delimited";
-
-    /** OpenMetrics text format */
-    public static final String OPEN_METRICS_TEXT_METRICS =
-            "application/openmetrics-text; version=1.0.0; charset=utf-8";
+    /** Metrics exporter path */
+    public static final String METRICS = "/metrics";
 
     /** Constructor */
-    private MetricsType() {
+    private ExporterPath() {
         // INTENTIONALLY BLANK
     }
 }

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test;
+package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static org.assertj.core.api.Assertions.fail;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
+import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -33,9 +34,8 @@ import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -43,7 +43,7 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class ExcludeObjectNameAttributesTest {
+public class OptionalValueMBeanTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
@@ -139,45 +139,76 @@ public class ExcludeObjectNameAttributesTest {
             ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
         assertCommonMetricsResponse(httpResponse);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 
-        Set<String> excludeAttributeNameSet = new HashSet<>();
-        excludeAttributeNameSet.add("_ClassPath");
-        excludeAttributeNameSet.add("_SystemProperties");
+        boolean isJmxExporterModeJavaAgent =
+                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        Set<String> excludeJavaLangMemoryAttributeSet = new HashSet<>();
-        excludeJavaLangMemoryAttributeSet.add("NonHeapMemoryUsage");
-        excludeJavaLangMemoryAttributeSet.add("Verbose");
-        excludeJavaLangMemoryAttributeSet.add("ObjectPendingFinalizationCount");
+        String buildInfoName =
+                isJmxExporterModeJavaAgent
+                        ? "jmx_prometheus_javaagent"
+                        : "jmx_prometheus_standalone";
 
-        /*
-         * Assert that we don't have any metrics that start with ...
-         *
-         * name = java_lang*
-         * attribute = _ClassPath
-         * attribute = __SystemProperties
-         *
-         * ... or...
-         *
-         * name = java_lang_Memory
-         * attribute = _Verbose
-         */
-        metrics.forEach(
-                metric -> {
-                    String name = metric.name();
-                    if (name.equals("java_lang_Memory")) {
-                        for (String attributeName : excludeJavaLangMemoryAttributeSet) {
-                            if (name.equals(attributeName)) {
-                                fail("metric [" + metric + "] found");
-                            }
-                        }
-                    } else {
-                        for (String attributeName : excludeAttributeNameSet) {
-                            if (name.contains(attributeName)) {
-                                fail("metric [" + metric + "] found");
-                            }
-                        }
-                    }
-                });
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jmx_exporter_build_info")
+                .withLabel("name", buildInfoName)
+                .withValue(1d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jmx_scrape_error")
+                .withValue(0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.COUNTER)
+                .withName("jmx_config_reload_success_total")
+                .withValue(0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "nonheap")
+                .isPresentWhen(isJmxExporterModeJavaAgent);
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "heap")
+                .isPresentWhen(isJmxExporterModeJavaAgent);
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "nonheap")
+                .isPresentWhen(isJmxExporterModeJavaAgent);
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "heap")
+                .isPresentWhen(isJmxExporterModeJavaAgent);
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
+                .withLabel("source", "/dev/sda1")
+                .withValue(7.516192768E9d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
+                .withLabel("source", "/dev/sda2")
+                .withValue(0.8d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("io_prometheus_jmx_optionalValue_Value")
+                .withValue(345d);
     }
 }

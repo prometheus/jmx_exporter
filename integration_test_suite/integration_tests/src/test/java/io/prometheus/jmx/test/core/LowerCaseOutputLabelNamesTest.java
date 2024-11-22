@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test;
+package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
+import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -42,7 +42,7 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class WhitelistAndBlacklistObjectNamesTest {
+public class LowerCaseOutputLabelNamesTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
@@ -141,13 +141,15 @@ public class WhitelistAndBlacklistObjectNamesTest {
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
         /*
-         * Assert that we don't have any metrics that start with ...
-         *
-         * name = java_lang*
+         * Assert that all metrics have lower case label names
          */
         metrics.forEach(
                 metric ->
-                        assertThat(metric.name().toLowerCase(Locale.ENGLISH))
-                                .doesNotStartWith("java_lang"));
+                        metric.labels()
+                                .forEach(
+                                        (key, value) ->
+                                                assertThat(key)
+                                                        .isEqualTo(
+                                                                key.toLowerCase(Locale.ENGLISH))));
     }
 }

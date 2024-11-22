@@ -16,7 +16,6 @@
 
 package io.prometheus.jmx.test.support.http;
 
-import io.prometheus.jmx.test.support.SSLContextException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -202,5 +201,28 @@ public class HttpClient {
 
         @Override
         public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+    }
+
+    /** Class to implement SSLContextException */
+    private static class SSLContextException extends RuntimeException {
+
+        /**
+         * Constructor
+         *
+         * @param message message
+         */
+        public SSLContextException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructor
+         *
+         * @param message message
+         * @param throwable throwable
+         */
+        public SSLContextException(String message, Throwable throwable) {
+            super(message, throwable);
+        }
     }
 }

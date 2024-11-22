@@ -5,12 +5,12 @@ import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.MetricsType;
-import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.common.OpenTelemetryTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.TestSupport;
+import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.MetricsType;
+import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;

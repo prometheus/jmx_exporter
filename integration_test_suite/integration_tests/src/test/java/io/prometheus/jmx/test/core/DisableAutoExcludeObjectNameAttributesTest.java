@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test;
+package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
+import io.prometheus.jmx.test.support.ExporterTestSupport;
+import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -33,8 +33,9 @@ import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -42,7 +43,7 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class LowerCaseOutputLabelNamesTest {
+public class DisableAutoExcludeObjectNameAttributesTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
@@ -140,16 +141,25 @@ public class LowerCaseOutputLabelNamesTest {
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
+        Set<String> excludeAttributeNameSet = new HashSet<>();
+        excludeAttributeNameSet.add("_ClassPath");
+        excludeAttributeNameSet.add("_SystemProperties");
+
         /*
-         * Assert that all metrics have lower case label names
+         * Assert that we don't have any metrics that start with ...
+         *
+         * name = java_lang*
          */
         metrics.forEach(
-                metric ->
-                        metric.labels()
-                                .forEach(
-                                        (key, value) ->
-                                                assertThat(key)
-                                                        .isEqualTo(
-                                                                key.toLowerCase(Locale.ENGLISH))));
+                metric -> {
+                    String name = metric.name();
+                    if (metric.name().contains("java_lang")) {
+                        for (String attributeName : excludeAttributeNameSet) {
+                            if (name.contains(attributeName)) {
+                                fail("metric found");
+                            }
+                        }
+                    }
+                });
     }
 }
