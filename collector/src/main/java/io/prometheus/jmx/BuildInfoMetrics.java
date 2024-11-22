@@ -31,7 +31,13 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
  * Metrics being exported:
  *
  * <pre>
- *   jmx_exporter_build_info{version="3.2.0",name="jmx_prometheus_httpserver",} 1.0
+ *   jmx_exporter_build_info{version="3.2.0",name="jmx_prometheus_javaagent",} 1.0
+ * </pre>
+ *
+ * or
+ *
+ * <pre>
+ *   jmx_exporter_build_info{version="3.2.0",name="jmx_prometheus_standalone",} 1.0
  * </pre>
  */
 public class BuildInfoMetrics {
