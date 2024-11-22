@@ -26,256 +26,242 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class ArgumentsTest {
 
+    private static final boolean HTTP_ENABLED = true;
+    private static final boolean HTTP_DISABLED = !HTTP_ENABLED;
     private static final boolean VALID_CONFIGURATION = true;
-    private static final boolean INVALID_CONFIGURATION = false;
 
     private static final ArgumentsTestDefinition[] ARGUMENTS_TEST_DEFINITIONS = {
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub_domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub_domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub_domain.prometheus.org",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub_domain.prometheus.org",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub_domain.prometheus.org:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "myhostname.sub_domain.prometheus.org",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "192.168.1.1:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "192.168.1.1",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::/0]:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "::/0",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config_file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/config_file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/jmx-exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
-                Arguments.Mode.HTTP,
+                HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "/opt/prometheus/config.yaml",
-                Arguments.Mode.OPEN_TELEMETRY,
+                HTTP_DISABLED,
                 null,
                 null,
                 "/opt/prometheus/config.yaml"),
-        /*
-        new ArgumentsTestDefinition(
-                INVALID_CONFIGURATION,
-                "::/opt/prometheus/config.yaml",
-                Arguments.Mode.HTTP,
-                null,
-                null,
-                "/opt/prometheus/config.yaml"),
-        new ArgumentsTestDefinition(
-                INVALID_CONFIGURATION,
-                "::/opt/prometheus/config.yaml",
-                Arguments.Mode.OPEN_TELEMETRY,
-                null,
-                null,
-                "/opt/prometheus/config.yaml")*/
     };
 
     public static Stream<ArgumentsTestDefinition> arguments() {
@@ -292,7 +278,7 @@ public class ArgumentsTest {
 
         private final String argument;
         private final boolean validConfiguration;
-        private final Arguments.Mode mode;
+        private final boolean httpEnabled;
         private final String host;
         private final Integer port;
         private final String filename;
@@ -300,13 +286,13 @@ public class ArgumentsTest {
         public ArgumentsTestDefinition(
                 boolean validConfiguration,
                 String argument,
-                Arguments.Mode mode,
+                boolean httpEnabled,
                 String host,
                 Integer port,
                 String filename) {
             this.argument = argument;
             this.validConfiguration = validConfiguration;
-            this.mode = mode;
+            this.httpEnabled = httpEnabled;
             this.host = host;
             this.port = port;
             this.filename = filename;
@@ -315,7 +301,7 @@ public class ArgumentsTest {
         public void assertValid() {
             if (validConfiguration) {
                 Arguments arguments = Arguments.parse(argument);
-                assertThat(arguments.getMode()).isEqualTo(mode);
+                assertThat(arguments.isHttpEnabled()).isEqualTo(httpEnabled);
                 assertThat(arguments.getHost()).isEqualTo(host);
                 assertThat(arguments.getPort()).isEqualTo(port);
                 assertThat(arguments.getFilename()).isEqualTo(filename);

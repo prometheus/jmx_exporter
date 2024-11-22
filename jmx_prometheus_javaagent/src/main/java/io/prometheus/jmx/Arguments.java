@@ -11,11 +11,6 @@ public class Arguments {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
 
-    public enum Mode {
-        HTTP,
-        OPEN_TELEMETRY
-    }
-
     private static final String CONFIGURATION_REGEX =
             "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?"
                     + // host name, or ipv4, or ipv6 address in brackets
@@ -23,7 +18,7 @@ public class Arguments {
                     // port
                     + "(.+)"; // config file
 
-    private final Mode mode;
+    private final boolean httpEnabled;
     private final String host;
     private final Integer port;
     private final String filename;
@@ -31,25 +26,25 @@ public class Arguments {
     /**
      * Constructor
      *
-     * @param mode mode
+     * @param httpEnabled httpEnabled
      * @param host host
      * @param port port
      * @param filename filename
      */
-    private Arguments(Mode mode, String host, Integer port, String filename) {
-        this.mode = mode;
+    private Arguments(boolean httpEnabled, String host, Integer port, String filename) {
+        this.httpEnabled = httpEnabled;
         this.host = host;
         this.port = port;
         this.filename = filename;
     }
 
     /**
-     * Method to get the mode inferred by the Java agent arguments
+     * Method to return if HTTP is enabled
      *
-     * @return the mode
+     * @return true if HTTP is enabled, else false
      */
-    public Mode getMode() {
-        return mode;
+    public boolean isHttpEnabled() {
+        return httpEnabled;
     }
 
     /**
@@ -93,7 +88,7 @@ public class Arguments {
         Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
         Matcher matcher = pattern.matcher(agentArgument);
 
-        Mode mode;
+        boolean httpEnabled = false;
         String host = null;
         Integer port = null;
         String filename;
@@ -102,7 +97,7 @@ public class Arguments {
             switch (matcher.groupCount()) {
                 case 2:
                     {
-                        mode = Mode.HTTP;
+                        httpEnabled = true;
                         host = DEFAULT_HOST;
 
                         try {
@@ -116,7 +111,7 @@ public class Arguments {
                     }
                 case 3:
                     {
-                        mode = Mode.HTTP;
+                        httpEnabled = true;
                         host = matcher.group(1) != null ? matcher.group(1) : DEFAULT_HOST;
 
                         if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
@@ -141,10 +136,9 @@ public class Arguments {
                         format("Malformed arguments for Standalone HTTP mode [%s]", agentArgument));
             }
         } else {
-            mode = Mode.OPEN_TELEMETRY;
             filename = agentArgument;
         }
 
-        return new Arguments(mode, host, port, filename);
+        return new Arguments(httpEnabled, host, port, filename);
     }
 }

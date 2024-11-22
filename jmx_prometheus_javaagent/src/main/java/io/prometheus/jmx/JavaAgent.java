@@ -18,9 +18,7 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
-import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
-import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
@@ -48,48 +46,25 @@ public class JavaAgent {
         try {
             Arguments arguments = Arguments.parse(agentArgument);
             File file = new File(arguments.getFilename());
-            String conflictingConfiguration =
-                    ResourceSupport.load("/conflicting.configuration.txt");
-            String missingConfiguration = ResourceSupport.load("/missing.configuration.txt");
-
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
+            boolean httpEnabled = arguments.isHttpEnabled();
+            boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
-            if (arguments.getMode() == Arguments.Mode.HTTP
-                    && yamlMapAccessor.containsPath("/openTelemetry")) {
-                System.err.println(conflictingConfiguration);
-                System.err.println();
-                System.exit(1);
-            } else if (arguments.getMode() == Arguments.Mode.OPEN_TELEMETRY
-                    && yamlMapAccessor.containsPath("/httpServer")) {
-                System.err.println(conflictingConfiguration);
-                System.err.println();
-                System.exit(1);
-            } else if (arguments.getMode() == Arguments.Mode.OPEN_TELEMETRY
-                    && !yamlMapAccessor.containsPath("/openTelemetry")) {
-                System.err.println(missingConfiguration);
-                System.err.println();
-                System.exit(1);
-            }
-
-            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
-            JvmMetrics.builder().register(PrometheusRegistry.defaultRegistry);
-            new JmxCollector(new File(arguments.getFilename()), JmxCollector.Mode.AGENT)
-                    .register(PrometheusRegistry.defaultRegistry);
-
-            if (arguments.getMode() == Arguments.Mode.HTTP) {
+            if (httpEnabled) {
                 new HTTPServerFactory()
                         .createHTTPServer(
                                 InetAddress.getByName(arguments.getHost()),
                                 arguments.getPort(),
                                 PrometheusRegistry.defaultRegistry,
                                 file);
-            } else {
+            }
+
+            if (openTelemetryEnabled) {
                 OpenTelemetryExporterFactory.getInstance()
                         .createOpenTelemetryExporter(PrometheusRegistry.defaultRegistry, file);
             }
         } catch (Throwable t) {
             synchronized (System.err) {
-                // Usage information
                 System.err.println("Failed to start Prometheus JMX Exporter");
                 System.err.println();
                 t.printStackTrace(System.err);

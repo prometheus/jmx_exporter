@@ -9,12 +9,7 @@ public class Arguments {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
 
-    public enum Mode {
-        HTTP,
-        OPEN_TELEMETRY
-    }
-
-    private final Mode mode;
+    private final boolean httpEnabled;
     private final String host;
     private final Integer port;
     private final String filename;
@@ -22,25 +17,25 @@ public class Arguments {
     /**
      * Constructor
      *
-     * @param mode mode
+     * @param httpEnabled httpEnabled
      * @param host host
      * @param port port
      * @param filename filename
      */
-    private Arguments(Mode mode, String host, Integer port, String filename) {
-        this.mode = mode;
+    private Arguments(boolean httpEnabled, String host, Integer port, String filename) {
+        this.httpEnabled = httpEnabled;
         this.host = host;
         this.port = port;
         this.filename = filename;
     }
 
     /**
-     * Method to get the mode inferred by the Java agent arguments
+     * Method to return if HTTP is enabled
      *
-     * @return
+     * @return true if HTTP is enabled, else false
      */
-    public Mode getMode() {
-        return mode;
+    public boolean isHttpEnabled() {
+        return httpEnabled;
     }
 
     /**
@@ -78,8 +73,7 @@ public class Arguments {
      */
     public static Arguments parse(String[] arguments) {
         if (arguments == null || arguments.length == 0) {
-            throw new ConfigurationException(
-                    format("Malformed arguments [%s]", toString(arguments)));
+            throw new ConfigurationException("No arguments provided");
         }
 
         for (String argument : arguments) {
@@ -89,14 +83,13 @@ public class Arguments {
             }
         }
 
-        Mode mode;
+        boolean httpEnabled = false;
         String host = null;
         Integer port = null;
         String filename;
 
         if (arguments.length == 2) {
-            mode = Mode.HTTP;
-
+            httpEnabled = true;
             host = DEFAULT_HOST;
 
             int colonIndex = arguments[0].lastIndexOf(':');
@@ -115,26 +108,25 @@ public class Arguments {
 
             filename = arguments[1];
         } else {
-            mode = Mode.OPEN_TELEMETRY;
             filename = arguments[0];
         }
 
-        return new Arguments(mode, host, port, filename);
+        return new Arguments(httpEnabled, host, port, filename);
     }
 
-    private static String toString(String[] strings) {
-        if (strings == null) {
-            return null;
-        }
-
+    private static String toString(String[] arguments) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (String string : strings) {
-            if (stringBuilder.length() > 0) {
-                stringBuilder.append(" ");
+
+        for (String argument : arguments) {
+            stringBuilder.append(" ");
+
+            if (argument == null) {
+                stringBuilder.append("(null)");
+            } else if (argument.trim().isEmpty()) {
+                stringBuilder.append("\"").append(argument.trim()).append("\"");
             }
-            stringBuilder.append(string);
         }
 
-        return stringBuilder.toString();
+        return stringBuilder.toString().trim();
     }
 }

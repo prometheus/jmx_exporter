@@ -48,8 +48,6 @@ public class Standalone {
         HTTPServer httpServer = null;
         OpenTelemetryExporter openTelemetryExporter = null;
         String usage = ResourceSupport.load("/usage.txt");
-        String conflictingConfiguration = ResourceSupport.load("/conflicting.configuration.txt");
-        String missingConfiguration = ResourceSupport.load("/missing.configuration.txt");
 
         if (args == null || args.length < 1 || args.length > 2) {
             System.err.println(usage);
@@ -60,31 +58,11 @@ public class Standalone {
         try {
             Arguments arguments = Arguments.parse(args);
             File file = new File(arguments.getFilename());
-
             YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
+            boolean httpEnabled = arguments.isHttpEnabled();
+            boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
-            if (arguments.getMode() == Arguments.Mode.HTTP
-                    && yamlMapAccessor.containsPath("/openTelemetry")) {
-                System.err.println(conflictingConfiguration);
-                System.err.println();
-                System.exit(1);
-            } else if (arguments.getMode() == Arguments.Mode.OPEN_TELEMETRY
-                    && yamlMapAccessor.containsPath("/httpServer")) {
-                System.err.println(conflictingConfiguration);
-                System.err.println();
-                System.exit(1);
-            } else if (arguments.getMode() == Arguments.Mode.OPEN_TELEMETRY
-                    && !yamlMapAccessor.containsPath("/openTelemetry")) {
-                System.err.println(missingConfiguration);
-                System.err.println();
-                System.exit(1);
-            }
-
-            new BuildInfoMetrics().register(PrometheusRegistry.defaultRegistry);
-            new JmxCollector(file, JmxCollector.Mode.STANDALONE)
-                    .register(PrometheusRegistry.defaultRegistry);
-
-            if (arguments.getMode() == Arguments.Mode.HTTP) {
+            if (httpEnabled) {
                 httpServer =
                         new HTTPServerFactory()
                                 .createHTTPServer(
@@ -92,7 +70,9 @@ public class Standalone {
                                         arguments.getPort(),
                                         PrometheusRegistry.defaultRegistry,
                                         file);
-            } else {
+            }
+
+            if (openTelemetryEnabled) {
                 openTelemetryExporter =
                         OpenTelemetryExporterFactory.getInstance()
                                 .createOpenTelemetryExporter(
@@ -100,8 +80,8 @@ public class Standalone {
             }
 
             info(
-                    "Running (%s)",
-                    arguments.getMode() == Arguments.Mode.HTTP ? "HTTP" : "OpenTelemetry");
+                    "Running (HTTP enabled [%b] OpenTelemetry enabled [%b])",
+                    httpEnabled, openTelemetryEnabled);
 
             Thread.currentThread().join();
         } catch (ConfigurationException e) {
@@ -127,12 +107,11 @@ public class Standalone {
     }
 
     private static void info(String format, Object... objects) {
-        System.out.println(
-                format(
-                        "%s | %s | INFO | %s | %s",
-                        SIMPLE_DATE_FORMAT.format(new Date()),
-                        Thread.currentThread().getName(),
-                        Standalone.class.getName(),
-                        format(format, objects)));
+        System.out.printf(
+                "%s | %s | INFO | %s | %s",
+                SIMPLE_DATE_FORMAT.format(new Date()),
+                Thread.currentThread().getName(),
+                Standalone.class.getName(),
+                format(format, objects));
     }
 }
