@@ -67,7 +67,8 @@ public class IncludeObjectNameAttributesTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);
@@ -77,6 +78,7 @@ public class IncludeObjectNameAttributesTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsResponse(exporterTestEnvironment, httpResponse);
@@ -86,6 +88,7 @@ public class IncludeObjectNameAttributesTest {
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
@@ -97,6 +100,7 @@ public class IncludeObjectNameAttributesTest {
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
@@ -108,6 +112,7 @@ public class IncludeObjectNameAttributesTest {
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
                         url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
@@ -187,7 +192,9 @@ public class IncludeObjectNameAttributesTest {
                                                 .toLowerCase(Locale.ENGLISH)
                                                 .startsWith("process_"))
                         .collect(Collectors.toSet());
+
         assertThat(includeMetrics).hasSize(includeJavaLangThreadingAttributeSet.size());
+
         includeMetrics.forEach(
                 metric ->
                         assertThat(includeJavaLangThreadingAttributeSet.contains(metric.name()))

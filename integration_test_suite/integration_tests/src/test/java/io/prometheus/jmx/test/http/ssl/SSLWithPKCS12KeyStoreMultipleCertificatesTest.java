@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -147,6 +148,8 @@ public class SSLWithPKCS12KeyStoreMultipleCertificatesTest {
 
     private void assertMetricsResponse(
             ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
+
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)

@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.test;
 
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +49,7 @@ import org.verifyica.api.Verifyica;
 
 public class MinimalTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = 1) // Integer.MAX_VALUE)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
     }
@@ -140,6 +141,8 @@ public class MinimalTest {
 
     private void assertMetricsResponse(
             ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
+        assertCommonMetricsResponse(httpResponse);
+
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)
