@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test.support.metrics;
 
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_28_2.Metrics;
+import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_28_3.Metrics;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
