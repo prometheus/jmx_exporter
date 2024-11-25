@@ -292,7 +292,7 @@
             <plugin>
                 <!-- maven-site-plugin 3.3 requires maven-project-info-reports-plugin < 3.0 -->
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.9</version>
+                <version>3.8.0</version>
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
