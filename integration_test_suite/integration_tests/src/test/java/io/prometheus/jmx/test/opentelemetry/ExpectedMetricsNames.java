@@ -187,7 +187,7 @@ public class ExpectedMetricsNames {
 
     /** Constructor */
     private ExpectedMetricsNames() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**

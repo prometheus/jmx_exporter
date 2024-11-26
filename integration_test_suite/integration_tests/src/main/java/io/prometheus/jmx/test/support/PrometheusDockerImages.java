@@ -49,7 +49,7 @@ public final class PrometheusDockerImages {
 
     /** Constructor */
     private PrometheusDockerImages() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -117,7 +117,7 @@ public final class PrometheusDockerImages {
                 try {
                     bufferedReader.close();
                 } catch (Throwable t) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
             }
 
@@ -125,7 +125,7 @@ public final class PrometheusDockerImages {
                 try {
                     inputStream.close();
                 } catch (Throwable t) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
             }
         }

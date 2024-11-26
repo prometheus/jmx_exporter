@@ -18,10 +18,12 @@ package io.prometheus.jmx.common.util;
 
 import static java.lang.String.format;
 
+/** Class to implement Precondition */
 public class Precondition {
 
+    /** Constructor */
     private Precondition() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**

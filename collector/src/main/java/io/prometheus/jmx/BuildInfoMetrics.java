@@ -42,6 +42,11 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
  */
 public class BuildInfoMetrics {
 
+    /** Constructor */
+    public BuildInfoMetrics() {
+        // INTENTIONALLY BLANK
+    }
+
     /**
      * Method to register BuildInfoMetrics
      *

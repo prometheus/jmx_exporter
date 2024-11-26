@@ -18,16 +18,34 @@ package io.prometheus.jmx.common.http;
 
 import java.util.function.Supplier;
 
+/** Class to implement ConfigurationException */
 public class ConfigurationException extends RuntimeException {
 
+    /**
+     * Constructor
+     *
+     * @param message message
+     */
     public ConfigurationException(String message) {
         super(message);
     }
 
+    /**
+     * Constructor
+     *
+     * @param message message
+     * @param throwable throwable
+     */
     public ConfigurationException(String message, Throwable throwable) {
         super(message, throwable);
     }
 
+    /**
+     * Method to create a ConfigurationException supplier
+     *
+     * @param message message
+     * @return a ConfigurationException supplier
+     */
     public static Supplier<ConfigurationException> supplier(String message) {
         return () -> new ConfigurationException(message);
     }

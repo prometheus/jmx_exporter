@@ -34,9 +34,10 @@ public class ObjectNameAttributeFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectNameAttributeFilter.class);
 
-    /** Configuration constant to define a mapping of ObjectNames to attribute names */
+    /** Configuration constant to define a mapping of ObjectNames to attribute names to exclude */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES = "excludeObjectNameAttributes";
 
+    /** Configuration constant to define a mapping of ObjectNames to attribute names to include */
     public static final String INCLUDE_OBJECT_NAME_ATTRIBUTES = "includeObjectNameAttributes";
 
     /** Configuration constant to enable auto ObjectName attributes filtering */
@@ -172,6 +173,13 @@ public class ObjectNameAttributeFilter {
         return result;
     }
 
+    /**
+     * Method to return whether an attribute should be included
+     *
+     * @param objectName objectName
+     * @param attributeName attributeName
+     * @return true if the attribute should be included, else false
+     */
     public boolean include(ObjectName objectName, String attributeName) {
         boolean result = false;
 
@@ -183,6 +191,11 @@ public class ObjectNameAttributeFilter {
         return result;
     }
 
+    /**
+     * Method to return whether any attributes are included
+     *
+     * @return true if empty, else false
+     */
     public boolean includeObjectNameAttributesIsEmpty() {
         return includeObjectNameAttributesMap.isEmpty();
     }

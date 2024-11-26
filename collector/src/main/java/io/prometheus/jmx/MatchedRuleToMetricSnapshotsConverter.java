@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+/** Class to implement MatchedRuleToMetricSnapshotsConverter */
 public class MatchedRuleToMetricSnapshotsConverter {
 
     private static final Logger LOGGER =
@@ -39,6 +40,17 @@ public class MatchedRuleToMetricSnapshotsConverter {
 
     private static final String OBJECTNAME = "_objectname";
 
+    /** Constructor */
+    public MatchedRuleToMetricSnapshotsConverter() {
+        // INTENTIONALLY BLANK
+    }
+
+    /**
+     * Method to convert a List of MatchedRules to MetricSnapshots
+     *
+     * @param matchedRules matchedRules
+     * @return a MetricSnapshots
+     */
     public static MetricSnapshots convert(List<MatchedRule> matchedRules) {
         Map<String, List<MatchedRule>> rulesByPrometheusMetricName = new HashMap<>();
 

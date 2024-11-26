@@ -20,6 +20,7 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/** Class to implement ValidateIntegerInRange */
 public class ValidateIntegerInRange implements Function<Integer, Integer> {
 
     private final int minimum;

@@ -38,7 +38,7 @@ public class MetricsParser {
 
     /** Constructor */
     private MetricsParser() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -382,7 +382,7 @@ public class MetricsParser {
                 try {
                     bufferedReader.close();
                 } catch (Throwable t) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
 
                 bufferedReader = null;

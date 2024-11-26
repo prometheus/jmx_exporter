@@ -27,7 +27,7 @@ public class OpenTelemetryExporterFactory {
 
     /** Constructor */
     private OpenTelemetryExporterFactory() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**

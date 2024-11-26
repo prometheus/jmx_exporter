@@ -26,7 +26,7 @@ public interface OptionalValueMBean {
 class OptionalValue implements OptionalValueMBean {
 
     public OptionalValue() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     @Override

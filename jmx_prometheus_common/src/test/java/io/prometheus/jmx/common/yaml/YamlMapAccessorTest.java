@@ -112,28 +112,28 @@ public class YamlMapAccessorTest {
             yamlMapAccessor.get("");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("//");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("foo");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("/foo/");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
     }
 
