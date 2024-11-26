@@ -59,10 +59,8 @@ public class OpenTelemetryExporterFactory {
                                         new ConvertToMapAccessor(
                                                 ConfigurationException.supplier(
                                                         "Invalid configuration for"
-                                                                + " /openTelemetry")))
-                                .orElseThrow(
-                                        ConfigurationException.supplier(
-                                                "Missing /openTelemetry configuration"));
+                                                                + " /openTelemetry must be a map")))
+                                .orElse(new YamlMapAccessor());
 
                 String endpoint =
                         openTelemetryYamlMapAccessor
