@@ -48,13 +48,17 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
 
+/** Class to implement JmxCollector */
 @SuppressWarnings("unchecked")
 public class JmxCollector implements MultiCollector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxCollector.class);
 
+    /** Enum to implement Mode */
     public enum Mode {
+        /** Agent mode */
         AGENT,
+        /** Standalone mode */
         STANDALONE
     }
 
@@ -103,10 +107,25 @@ public class JmxCollector implements MultiCollector {
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
+    /**
+     * Constructor
+     *
+     * @param in in
+     * @throws IOException IOException
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         this(in, null);
     }
 
+    /**
+     * Constructor
+     *
+     * @param in in
+     * @param mode mode
+     * @throws IOException IOException
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
         this.mode = mode;
@@ -115,20 +134,43 @@ public class JmxCollector implements MultiCollector {
         exitOnConfigError();
     }
 
+    /**
+     * Constructor
+     *
+     * @param yamlConfig yamlConfig
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
         config = loadConfig(new Yaml().load(yamlConfig));
         mode = null;
     }
 
+    /**
+     * Constructor
+     *
+     * @param inputStream inputStream
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
         config = loadConfig(new Yaml().load(inputStream));
         mode = null;
     }
 
+    /**
+     * Method to register the JmxCollector
+     *
+     * @return the JmxCollector
+     */
     public JmxCollector register() {
         return register(PrometheusRegistry.defaultRegistry);
     }
 
+    /**
+     * Method to register the JmxCollector
+     *
+     * @param prometheusRegistry prometheusRegistry
+     * @return the JmxCollector
+     */
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
         this.prometheusRegistry = prometheusRegistry;
 

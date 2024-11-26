@@ -40,6 +40,11 @@ public class Standalone {
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
+    /** Constructor */
+    private Standalone() {
+        // INTENTIONALLY BLANK
+    }
+
     /**
      * Main method
      *

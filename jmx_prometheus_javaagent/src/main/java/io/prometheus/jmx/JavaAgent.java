@@ -30,12 +30,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/** Class to implement JavaAgent */
 public class JavaAgent {
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
+
+    /** Constructor */
+    public JavaAgent() {
+        // INTENTIONALLY BLANK
+    }
 
     /**
      * Java agent main

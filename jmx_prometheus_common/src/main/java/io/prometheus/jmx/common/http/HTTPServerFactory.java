@@ -92,7 +92,7 @@ public class HTTPServerFactory {
 
     /** Constructor */
     public HTTPServerFactory() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -728,7 +728,7 @@ public class HTTPServerFactory {
                 try {
                     threadPoolExecutor.getQueue().put(runnable);
                 } catch (InterruptedException e) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
             }
         }

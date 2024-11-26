@@ -32,13 +32,14 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+/** Class to implement SSLContextFactory */
 public class SSLContextFactory {
 
     private static final String[] PROTOCOLS = {"TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
     /** Constructor */
     private SSLContextFactory() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -122,7 +123,7 @@ public class SSLContextFactory {
             try {
                 return SSLContext.getInstance(protocol);
             } catch (Throwable t) {
-                // DO NOTHING
+                // INTENTIONALLY BLANK
             }
         }
 

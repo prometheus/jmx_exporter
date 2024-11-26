@@ -49,7 +49,7 @@ public final class JavaDockerImages {
 
     /** Constructor */
     private JavaDockerImages() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -117,7 +117,7 @@ public final class JavaDockerImages {
                 try {
                     bufferedReader.close();
                 } catch (Throwable t) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
             }
 
@@ -125,7 +125,7 @@ public final class JavaDockerImages {
                 try {
                     inputStream.close();
                 } catch (Throwable t) {
-                    // DO NOTHING
+                    // INTENTIONALLY BLANK
                 }
             }
         }

@@ -469,7 +469,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                     break;
                 }
             } catch (Throwable t) {
-                // DO NOTHING
+                // INTENTIONALLY BLANK
             }
         }
 

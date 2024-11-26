@@ -11,9 +11,16 @@ public class ResourceSupport {
 
     /** Constructor */
     private ResourceSupport() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
+    /**
+     * Method to load a resource's content
+     *
+     * @param resource resource
+     * @return the resource content
+     * @throws IOException IOException
+     */
     public static String load(String resource) throws IOException {
         Precondition.notNull(resource, "resource is null");
 
