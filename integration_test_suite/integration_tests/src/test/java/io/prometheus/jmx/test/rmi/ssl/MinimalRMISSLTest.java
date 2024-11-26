@@ -55,7 +55,8 @@ public class MinimalRMISSLTest {
         return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
-                                exporterTestEnvironment.getName().contains("Standalone"))
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.Standalone)
                 .filter(
                         exporterTestEnvironment ->
                                 !exporterTestEnvironment
