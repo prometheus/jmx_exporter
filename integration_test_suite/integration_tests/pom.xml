@@ -32,6 +32,59 @@
         <verifyica.version>0.7.1</verifyica.version>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.verifyica</groupId>
+            <artifactId>verifyica-api</artifactId>
+            <version>${verifyica.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.verifyica</groupId>
+            <artifactId>verifyica-engine</artifactId>
+            <version>${verifyica.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus.jmx</groupId>
+            <artifactId>jmx_prometheus_common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-model</artifactId>
+            <version>${prometheus.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exposition-formats</artifactId>
+            <version>${prometheus.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.1.0-alpha1</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.20.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.26.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.3</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -112,58 +165,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.verifyica</groupId>
-            <artifactId>verifyica-api</artifactId>
-            <version>${verifyica.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.verifyica</groupId>
-            <artifactId>verifyica-engine</artifactId>
-            <version>${verifyica.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus.jmx</groupId>
-            <artifactId>jmx_prometheus_common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>prometheus-metrics-model</artifactId>
-            <version>${prometheus.metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>prometheus-metrics-exposition-formats</artifactId>
-            <version>${prometheus.metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.1.0-alpha1</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.20.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.26.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>2.3</version>
-        </dependency>
-    </dependencies>
 
 </project>
