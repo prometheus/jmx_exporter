@@ -29,7 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <prometheus.metrics.version>1.3.4</prometheus.metrics.version>
-        <verifyica.version>0.7.1</verifyica.version>
+        <verifyica.version>0.7.2</verifyica.version>
     </properties>
 
     <dependencies>
