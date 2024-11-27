@@ -38,7 +38,7 @@ import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
 /** Class to implement CombinedHttpOpenTelemetryTest */
-public class CombinedHttpOpenTelemetryTest {
+public class CombinedModeTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {

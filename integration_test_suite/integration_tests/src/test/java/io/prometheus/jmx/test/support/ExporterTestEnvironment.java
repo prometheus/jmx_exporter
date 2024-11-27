@@ -206,7 +206,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)
@@ -247,7 +247,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)
@@ -288,7 +288,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)

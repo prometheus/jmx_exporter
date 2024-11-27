@@ -7,6 +7,7 @@ import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
 import io.prometheus.jmx.test.support.throttle.Throttle;
@@ -25,8 +26,11 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement OpenTelemetryTest */
-public class OpenTelemetryTest {
+/** Class to implement OpenTelemetryBasicAuthenticationTest */
+public class BasicAuthenticationTest {
+
+    private static final String VALID_USER = "Prometheus";
+    private static final String VALUE_PASSWORD = "secret";
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
@@ -174,6 +178,10 @@ public class OpenTelemetryTest {
     protected HttpResponse sendRequest(
             OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path)
             throws IOException {
-        return HttpClient.sendRequest(openTelemetryTestEnvironment.getPrometheusUrl(path));
+        return HttpClient.sendRequest(
+                HttpRequest.builder()
+                        .url(openTelemetryTestEnvironment.getPrometheusUrl(path))
+                        .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                        .build());
     }
 }

@@ -2,7 +2,6 @@ package io.prometheus.jmx.test.support;
 
 import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.http.HttpClient;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -284,7 +283,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                                     String string =
                                             outputFrame.getUtf8StringWithoutLineEnding().trim();
                                     if (!string.isBlank()) {
-                                        System.out.println(string);
+                                        System.out.println("> " + string);
                                     }
                                 })
                         .withNetwork(network)
@@ -334,7 +333,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)
@@ -375,7 +374,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)
@@ -417,7 +416,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         outputFrame -> {
                             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
                             if (!string.isBlank()) {
-                                System.out.println(string);
+                                System.out.println("> " + string);
                             }
                         })
                 .withNetwork(network)
@@ -426,19 +425,6 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withStartupTimeout(Duration.ofMillis(30000))
                 .withWorkingDirectory("/temp")
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1));
-    }
-
-    /**
-     * Method to create a Prometheus HttpClient
-     *
-     * @param genericContainer genericContainer
-     * @param baseUrl baseUrl
-     * @return the return value
-     */
-    private static HttpClient createPrometheusHttpClient(
-            GenericContainer<?> genericContainer, String baseUrl, int mappedPort) {
-        return null; // return new HttpClient(baseUrl + ":" +
-        // genericContainer.getMappedPort(mappedPort));
     }
 
     /**
