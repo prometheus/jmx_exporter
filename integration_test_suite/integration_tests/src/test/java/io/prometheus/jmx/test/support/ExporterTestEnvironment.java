@@ -16,7 +16,6 @@
 
 package io.prometheus.jmx.test.support;
 
-import com.github.dockerjava.api.model.Ulimit;
 import java.time.Duration;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -28,8 +27,6 @@ import org.verifyica.api.Argument;
 /** Class to implement ExporterTestEnvironment */
 public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment> {
 
-    private static final long MEMORY_BYTES = 1073741824; // 1 GB
-    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
     private static final String BASE_URL = "http://localhost";
 
     private final String javaDockerImage;
@@ -188,27 +185,10 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         testClass.getName().replace(".", "/") + "/JavaAgent",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
@@ -229,27 +209,10 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
@@ -270,27 +233,10 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())

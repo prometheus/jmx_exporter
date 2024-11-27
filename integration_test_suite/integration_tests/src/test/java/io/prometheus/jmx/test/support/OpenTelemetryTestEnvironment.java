@@ -1,6 +1,5 @@
 package io.prometheus.jmx.test.support;
 
-import com.github.dockerjava.api.model.Ulimit;
 import io.prometheus.jmx.common.util.ResourceSupport;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -265,18 +264,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                                 BindMode.READ_ONLY)
                         .withWorkingDirectory("/prometheus")
                         .withCommand(commands.toArray(new String[0]))
-                        .withCreateContainerCmdModifier(
-                                c ->
-                                        c.getHostConfig()
-                                                .withMemory(MEMORY_BYTES)
-                                                .withMemorySwap(MEMORY_SWAP_BYTES))
-                        .withCreateContainerCmdModifier(
-                                c ->
-                                        c.getHostConfig()
-                                                .withUlimits(
-                                                        new Ulimit[] {
-                                                            new Ulimit("nofile", 65536L, 65536L)
-                                                        }))
+                        .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                         .withExposedPorts(9090)
                         .withLogConsumer(
                                 outputFrame -> {
@@ -315,27 +303,10 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         testClass.getName().replace(".", "/") + "/JavaAgent",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
@@ -356,27 +327,10 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
@@ -398,27 +352,10 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withMemory(MEMORY_BYTES)
-                                        .withMemorySwap(MEMORY_SWAP_BYTES))
-                .withCreateContainerCmdModifier(
-                        c ->
-                                c.getHostConfig()
-                                        .withUlimits(
-                                                new Ulimit[] {
-                                                    new Ulimit("nofile", 65536L, 65536L)
-                                                }))
+                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(
-                        outputFrame -> {
-                            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
-                            if (!string.isBlank()) {
-                                System.out.println("> " + string);
-                            }
-                        })
+                .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
