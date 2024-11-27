@@ -26,7 +26,7 @@ import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
 /** Class to implement OpenTelemetryTest */
-public class OpenTelemetryEnvironmentVariableTest {
+public class MixedConfigurationTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
