@@ -56,8 +56,6 @@ public class EnvironmentVariablesConfigurationTest {
         for (int i = 0; i < 10; i++) {
             HttpResponse httpResponse = sendPrometheusQuery(openTelemetryTestEnvironment, "up");
 
-            assertThat(httpResponse).isNotNull();
-
             if (httpResponse.statusCode() == 200) {
                 assertThat(httpResponse.body()).isNotNull();
                 assertThat(httpResponse.body().string()).isNotNull();
@@ -132,7 +130,6 @@ public class EnvironmentVariablesConfigurationTest {
             HttpResponse httpResponse =
                     sendPrometheusQuery(openTelemetryTestEnvironment, metricName);
 
-            assertThat(httpResponse).isNotNull();
             assertThat(httpResponse.statusCode()).isEqualTo(200);
             assertThat(httpResponse.body()).isNotNull();
             assertThat(httpResponse.body().string()).isNotNull();
