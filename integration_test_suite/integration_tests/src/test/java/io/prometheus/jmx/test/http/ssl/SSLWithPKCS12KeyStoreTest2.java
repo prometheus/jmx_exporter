@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.PKCS12KeyStoreExporterTestEnvironmentFilter;
@@ -56,7 +55,7 @@ public class SSLWithPKCS12KeyStoreTest2 {
     public static Stream<ExporterTestEnvironment> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
                 .map(exporterTestEnvironment -> exporterTestEnvironment.setBaseUrl(BASE_URL));
     }

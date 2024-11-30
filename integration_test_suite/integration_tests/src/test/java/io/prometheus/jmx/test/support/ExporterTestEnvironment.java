@@ -17,6 +17,9 @@
 package io.prometheus.jmx.test.support;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Stream;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -242,5 +245,26 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
                 .withStartupTimeout(Duration.ofMillis(30000))
                 .withWorkingDirectory("/temp");
+    }
+
+    /**
+     * Create the ExporterTestEnvironments
+     *
+     * @return a Stream of ExporterTestEnvironments
+     */
+    public static Stream<ExporterTestEnvironment> createExporterTestEnvironments() {
+        Collection<ExporterTestEnvironment> collection = new ArrayList<>();
+
+        JavaDockerImages.names()
+                .forEach(
+                        dockerImageName -> {
+                            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                                collection.add(
+                                        new ExporterTestEnvironment(
+                                                dockerImageName, jmxExporterMode));
+                            }
+                        });
+
+        return collection.stream();
     }
 }

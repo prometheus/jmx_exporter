@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.PBKDF2WithHmacExporterTestEnvironmentFilter;
@@ -59,7 +58,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA512Test {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter());
     }
 

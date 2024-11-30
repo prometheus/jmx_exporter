@@ -22,7 +22,6 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
@@ -45,7 +44,7 @@ public class CompositeKeyDataTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments();
+        return ExporterTestEnvironment.createExporterTestEnvironments();
     }
 
     @Verifyica.Prepare
