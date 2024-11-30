@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.TestSupport;
@@ -63,7 +62,7 @@ public class CompleteHttpServerConfigurationTest {
         // Filter eclipse-temurin:8 based Alpine images due to missing TLS cipher suites
         // https://github.com/adoptium/temurin-build/issues/3002
         // https://bugs.openjdk.org/browse/JDK-8306037
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
                                 !exporterTestEnvironment

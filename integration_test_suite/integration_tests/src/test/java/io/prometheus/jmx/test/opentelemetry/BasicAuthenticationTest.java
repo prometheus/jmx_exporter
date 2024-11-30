@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -34,7 +33,7 @@ public class BasicAuthenticationTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<OpenTelemetryTestEnvironment> arguments() {
-        return OpenTelemetryTestEnvironmentFactory.createOpenTelemetryTestEnvironments();
+        return OpenTelemetryTestEnvironment.createOpenTelemetryTestEnvironments();
     }
 
     @Verifyica.Prepare

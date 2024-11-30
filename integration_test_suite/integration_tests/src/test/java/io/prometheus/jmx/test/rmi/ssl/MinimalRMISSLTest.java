@@ -22,7 +22,6 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.TestSupport;
@@ -52,7 +51,7 @@ public class MinimalRMISSLTest {
         // 2. filter out the GraalVM 1.8 JVM - exception is that SunJSSE is not found
         // 3. filter out all ibmjava* JVMs - exception is that SunJSSE is not found
         //
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
                                 exporterTestEnvironment.getJmxExporterMode()
