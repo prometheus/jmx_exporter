@@ -23,9 +23,9 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.support.ExporterTestSupport;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.MetricsType;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -69,14 +69,14 @@ public class MinimalRMISSLTest {
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        ExporterTestSupport.getOrCreateNetwork(classContext);
+        TestSupport.getOrCreateNetwork(classContext);
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
-        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
-        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+        Network network = TestSupport.getOrCreateNetwork(argumentContext);
+        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
@@ -139,17 +139,15 @@ public class MinimalRMISSLTest {
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(
-                new Trap(
-                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) throws Throwable {
-        ExporterTestSupport.destroyNetwork(classContext);
+        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
     }
 
     private void assertMetricsResponse(
