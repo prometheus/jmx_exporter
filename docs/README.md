@@ -29,3 +29,7 @@ Getting started with the Standalone JMX Exporter...
 
 
 - **In particular, all the `jvm_*` metrics like `jvm_classes_loaded_total`, `jvm_threads_current`,`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be available when using the Standalone JMX Exporter**
+
+## Common Configuration
+
+See [COMMON_CONFIGURATION.md](COMMON_CONFIGURATION.md) for details.
