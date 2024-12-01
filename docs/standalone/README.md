@@ -1,7 +1,7 @@
 Standalone JMX Exporter
 ---
 
-The Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI.
+The Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI
 
 ## Collection Modes
 
