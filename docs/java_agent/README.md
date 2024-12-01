@@ -5,7 +5,7 @@ The JMX Exporter Java agent runs in your application as a Java agent.
 
 ## Collection Modes
 
-The JMX Exporter Java agent supports three modes of collection:
+The JMX Exporter Java agent supports three modes of collection.
 
 ### HTTP mode
 
