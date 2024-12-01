@@ -47,19 +47,15 @@ OpenTelemetry mode pushes metrics to an OpenTelemetry endpoint.
 
 Both HTTP Mode and OpenTelemetry Mode are enabled.
 
-### HTTP Mode Configuration
-
 <details>
-<summary>Click to expand!</summary>
+<summary>### HTTP Mode Configuration</summary>
 
 HTTP Mode Configuration TBD
 
 </details>
 
-### OpenTelemetry Mode Configuration
-
 <details>
-<summary>Click to expand!</summary>
+<summary>### OpenTelemetry Mode Configuration</summary>
 
 OpenTelemetry Mode Configuration TBD
 
