@@ -30,7 +30,7 @@ See [OPEN_TELEMETRY_MODE.md](OPEN_TELEMETRY_MODE.md)
   - "pull" model
 
 
-- OpenTelemetry - pushes metrics to an OpenTelemetry endpoint
+- OpenTelemetry
   - pushes metrics to an OpenTelemetry endpoint
   - "push" model
 
