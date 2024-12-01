@@ -5,7 +5,7 @@ The JMX Exporter allows collection of JMX MBean metrics.
 
 ## JMX Exporter Java agent
 
-The JMX Exporter Java agent runs as part of your application.
+The JMX Exporter Java agent runs as part of your application and collects JMX MBean metrics.
 
 Getting started with the JMX Exporter Java agent...
 
@@ -17,7 +17,7 @@ Getting started with the JMX Exporter Java agent...
 
 ## Standalone JMX Exporter
 
-The Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI. 
+The Standalone JMX Exporter runs as a separate application to your application and collects JMX MBean metrics via RMI. 
 
 Getting started with the Standalone JMX Exporter...
 
