@@ -5,7 +5,7 @@ The Standalone JMX Exporter runs as a separate application to your application, 
 
 ## Collection Modes
 
-The Standalone JMX Exporter supports three modes of collection:
+The Standalone JMX Exporter supports three modes of collection.
 
 ### HTTP mode
 
