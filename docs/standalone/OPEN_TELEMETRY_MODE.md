@@ -46,6 +46,4 @@ rules:
 
 ## Common Configuration
 
-See [COMMON_CONFIGURATION.md](../COMMON_CONFIGURATION.md) for details.
-
-
+See [Common Configuration](../COMMON_CONFIGURATION.md) for details.

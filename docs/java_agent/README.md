@@ -15,7 +15,7 @@ HTTP mode exposes metrics on an HTTP endpoint.
 
 #### Configuration
 
-- [HTTP_MODE.md](HTTP_MODE.md)
+- [HTTP mode](HTTP_MODE.md)
 
 ### OpenTelemetry mode
 
@@ -25,7 +25,7 @@ OpenTelemetry mode pushes metrics to an OpenTelemetry endpoint.
 
 #### Configuration
 
-- [OPEN_TELEMETRY_MODE.md](OPEN_TELEMETRY_MODE.md)
+- [OpenTelemetry mode](OPEN_TELEMETRY_MODE.md)
 
 ### Combined mode
 
@@ -40,8 +40,8 @@ OpenTelemetry mode pushes metrics to an OpenTelemetry endpoint.
 
 #### Configuration
 
-- [COMBINED_MODE.md](COMBINED_MODE.md)
+- [Combined mode](COMBINED_MODE.md)
 
 ## Common Configuration
 
-See [COMMON_CONFIGURATION.md](../COMMON_CONFIGURATION.md) for details.
+See [Common Configuration](../COMMON_CONFIGURATION.md) for details.
