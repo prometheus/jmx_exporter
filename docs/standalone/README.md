@@ -3,7 +3,7 @@ Standalone JMX Exporter
 
 The Standalone JMX Exporter runs as a separate application to your application and collects JMX MBean metrics via RMI
 
-## Required jar
+## Jar
 
 - jmx_prometheus_standalone-\<VERSION>.jar
 

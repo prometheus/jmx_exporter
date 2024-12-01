@@ -3,7 +3,7 @@ Standalone JMX Exporter / HTTP Mode
 
 HTTP mode exposes metrics on an HTTP endpoint.
 
-## Required jar
+## Jar
 
 - jmx_prometheus_standalone-\<VERSION>.jar
 
