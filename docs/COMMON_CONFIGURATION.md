@@ -30,9 +30,7 @@ and adjacent underscores are collapsed. There's no limitations on label values o
 A minimal config is `{}`, which will connect to the local JVM and collect everything in the default format.
 Note that the scraper always processes all mBeans, even if they're not exported.
 
-Example configurations for javaagents can be found at  https://github.com/prometheus/jmx_exporter/tree/master/example_configs
-
-**NOTE**
+**NOTES**
 
 Both `whitelistObjectNames` and `blacklistObjectNames` are still supported for backward compatibility, but should be considered deprecated.
 
