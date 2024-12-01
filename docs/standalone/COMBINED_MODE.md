@@ -19,6 +19,7 @@ Description:
 
 - The Standalone JMX Exporter runs as a separate application to your application and collects JMX MBean metrics via RMI 
 - `<PORT>` is required for HTTP mode
+- `<HOSTNAME>` is optional
 - Listens for metrics requests on all IP addresses on port `<PORT>`
 
 ## OpenTelemetry Configuration

@@ -19,6 +19,7 @@ Description:
 
 - The JMX Exporter Java agent runs as part of your application
 - `<PORT>` is required
+- `<HOSTNAME>` is optional 
 - Listens for metrics requests on all IP addresses on port `<PORT>`
 
 ## Common Configuration

@@ -18,7 +18,7 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<EXPORTER.YAML> -jar <YOU
 Description:
 
 - The JMX Exporter Java agent runs as part of your application
-- No port is provided
+- No hostname or port is provided
 
 ## OpenTelemetry Configuration
 
