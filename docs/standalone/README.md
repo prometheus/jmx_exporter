@@ -35,3 +35,7 @@ See [OPEN_TELEMETRY_MODE.md](OPEN_TELEMETRY_MODE.md)
   - "push" model
 
 See [COMBINED_MODE.md](COMBINED_MODE.md)
+
+## Common Configuration
+
+See [COMMON_CONFIGURATION.md](../COMMON_CONFIGURATION.md) for details.
