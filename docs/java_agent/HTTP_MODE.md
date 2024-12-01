@@ -17,7 +17,7 @@ java -javaagent:./jmx_prometheus_javaagent-<VERSION>.jar=12345:exporter.yaml -ja
 
 Description:
 
-- Runs the JMX Exporter Java agent as part of your application
+- The JMX Exporter Java agent runs as part of your application
 - Listens for metrics requests on all IP addresses on port `12345`
 
 ## Common Configuration

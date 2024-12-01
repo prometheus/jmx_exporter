@@ -17,7 +17,7 @@ java -jar jmx_prometheus_standalone-<VERSION>.jar <PORT> exporter.yaml
 
 Description:
 
-- Runs the Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI. 
+- The Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI. 
 - Port is used for HTTP mode.
 
 ## OpenTelemetry Configuration

@@ -17,7 +17,7 @@ java -javaagent:./jmx_prometheus_javaagent-<VERSION>.jar=exporter.yaml -jar YOUR
 
 Description:
 
-- Runs the JMX Exporter Java agent as part of your application
+- The JMX Exporter Java agent runs as part of your application
 - Port is used for HTTP mode.
 
 ## OpenTelemetry Configuration
