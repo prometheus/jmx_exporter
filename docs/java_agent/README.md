@@ -7,45 +7,57 @@ The JMX Exporter Java agent runs in your application as a Java agent.
 
 - jmx_prometheus_javaagent-\<VERSION>.jar
 
+## Installation
+
+Example:
+
+```shell
+java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
+```
+
+Description:
+
+- The JMX Exporter Java agent runs as part of your application
+- `<PORT>` is required
+- `<EXPORTER.YAML>` is required
+- `<HOSTNAME>` is optional
+  - if included, a colon (`:`) must be used to separate `<HOSTNAME>` and `<PORT>`
+
 ## Collection Modes
 
 The JMX Exporter Java agent supports three modes of collection.
 
-### HTTP mode
+- HTTP Mode
+- OpenTelemetry Mode
+- Combined Mode (HTTP Mode and OpenTelemetry Mode)
+
+### HTTP Mode
 
 HTTP mode exposes metrics on an HTTP endpoint.
 
 - "pull" model
 
-#### Configuration
-
-- [HTTP mode](HTTP_MODE.md)
-
-### OpenTelemetry mode
+### OpenTelemetry Mode
 
 OpenTelemetry mode pushes metrics to an OpenTelemetry endpoint.
 
 - "push" model
 
-#### Configuration
-
-- [OpenTelemetry mode](OPEN_TELEMETRY_MODE.md)
-
 ### Combined mode
 
-- HTTP
-  - exposes metrics on an HTTP endpoint
-  - "pull" model
+Both HTTP Mode and OpenTelemetry Mode are enabled.
 
+### HTTP Mode Configuration
 
-- OpenTelemetry
-  - pushes metrics to an OpenTelemetry endpoint
-  - "push" model
+<details>
+  <summary>Click to expand!</summary>
 
-#### Configuration
+HTTP Mode Configuration TBD
 
-- [Combined mode](COMBINED_MODE.md)
+### OpenTelemetry Mode Configuration
 
-## Common Configuration
+<details>
+  <summary>Click to expand!</summary>
 
-See [Common Configuration](../COMMON_CONFIGURATION.md) for details.
+OpenTelemetry Mode Configuration TBD
+
