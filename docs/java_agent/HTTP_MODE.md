@@ -1,4 +1,4 @@
-JMX Exporter / Java agent / HTTP Mode
+JMX Exporter Java agent / HTTP Mode
 ---
 
 HTTP mode exposes metrics on an HTTP endpoint.

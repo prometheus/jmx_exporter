@@ -1,4 +1,4 @@
-JMX Exporter / Java agent
+JMX Exporter Java agent
 ---
 
 The JMX Exporter Java agent runs in your application as a Java agent.

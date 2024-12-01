@@ -1,4 +1,4 @@
-JMX Exporter / Java agent / OpenTelemetry Mode
+JMX Exporter Java agent / OpenTelemetry Mode
 ---
 
 OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetry endpoint.

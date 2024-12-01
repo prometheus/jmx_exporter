@@ -1,4 +1,4 @@
-JMX Exporter / Java agent / Combined Mode
+JMX Exporter Java agent / Combined Mode
 ---
 
 Both HTTP mode and OpenTelemetry mode are enabled.
