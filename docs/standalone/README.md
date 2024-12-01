@@ -33,7 +33,7 @@ OpenTelemetry mode pushes metrics to an OpenTelemetry endpoint.
 
 ### Combined mode
 
-- HTTPS
+- HTTP
   - exposes metrics on an HTTP endpoint
   - "pull" model
 
