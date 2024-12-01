@@ -1,7 +1,7 @@
 Common Configuration
 ---
 
-These are the common configuration values which apply to both the Java agent JMX Exporter and standalone JMX Exporter.
+These are the common configuration values which apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
 
 Name     | Description
 ---------|------------
