@@ -12,7 +12,7 @@ OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetr
 Example:
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=exporter.yaml -jar YOUR_JAR.jar
+java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<EXPORTER.YAML> -jar YOUR_JAR.jar
 ```
 
 Description:

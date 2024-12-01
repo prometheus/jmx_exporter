@@ -12,7 +12,7 @@ HTTP mode exposes metrics on an HTTP endpoint.
 Example:
 
 ```shell
-java -jar jmx_prometheus_standalone-<VERSION>.jar <PORT> exporter.yaml
+java -jar jmx_prometheus_standalone-<VERSION>.jar <PORT> <EXPORTER.YAML>
 ```
 
 Description:

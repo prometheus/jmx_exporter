@@ -12,7 +12,7 @@ Both HTTP mode and OpenTelemetry mode are enabled.
 Example:
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<PORT>:exporter.yaml -jar YOUR_JAR.jar
+java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<PORT>:<EXPORTER.YAML> -jar YOUR_JAR.jar
 ```
 
 Description:
