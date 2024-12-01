@@ -7,7 +7,7 @@ The JMX Exporter is a collector to capture JMX MBean values running as either a 
 
 Getting started with the Java agent JMX Exporter...
 
-- [Java agent](docs/java_agent/README.md)
+- [Java agent](java_agent/README.md)
 
 **Notes**
 
@@ -17,7 +17,7 @@ Getting started with the Java agent JMX Exporter...
 
 Getting started with the Standalone JMX Exporter...
 
-- [Standalone](docs/standalone/README.md)
+- [Standalone](standalone/README.md)
 
 **Notes**
 
