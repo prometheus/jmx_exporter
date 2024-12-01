@@ -41,7 +41,7 @@ The Standalone JMX Exporter runs as a separate application to your application a
 - **The Standalone JMX Exporter has various disadvantages. It's harder to configure and unable to expose process metrics (e.g., memory and CPU usage)**
 
 
-- **All the `jvm_*` metrics like `jvm_classes_loaded_total`, `jvm_threads_current`,`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be available when using the Standalone JMX Exporter**
+- **All `jvm_*` metrics, like `jvm_classes_loaded_total`, `jvm_threads_current`,`jvm_threads_daemon` and `jvm_memory_bytes_used` won't be available when using the Standalone JMX Exporter**
 
 ## Common Configuration
 
