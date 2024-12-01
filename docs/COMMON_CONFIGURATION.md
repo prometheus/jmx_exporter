@@ -60,3 +60,9 @@ The default format will transform beans in a way that should produce sane metric
 domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanPropertyValue2", ...}: value
 ```
 If a given part isn't set, it'll be excluded.
+
+# Examples
+
+The integration tests provide various configuration examples.
+
+[/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)
