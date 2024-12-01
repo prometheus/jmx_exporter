@@ -1,7 +1,7 @@
 JMX Exporter / Java agent
 ---
 
-The JMX Exporter Java agent runs in your application via a Java agent.
+The JMX Exporter Java agent runs in your application as a Java agent.
 
 ## Collection Modes
 
