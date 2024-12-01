@@ -12,6 +12,12 @@ The project ships both a Java agent and standalone exporter:
 
 The JMX Exporter Java agent runs as part of your application and collects JMX MBean metrics.
 
+### Jar
+
+- jmx_prometheus_javaagent-\<VERSION>.jar
+
+### Documentation
+
 - [Java agent](java_agent/README.md)
 
 **Notes**
@@ -21,6 +27,12 @@ The JMX Exporter Java agent runs as part of your application and collects JMX MB
 ## Standalone
 
 The Standalone JMX Exporter runs as a separate application to your application and collects JMX MBean metrics via RMI. 
+
+### Jar
+
+- jmx_prometheus_standalone-\<VERSION>.jar
+
+### Documentation
 
 - [Standalone](standalone/README.md)
 
