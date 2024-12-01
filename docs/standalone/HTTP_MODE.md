@@ -1,0 +1,43 @@
+Standalone JMX Exporter / HTTP Mode
+---
+
+HTTP mode exposes metrics on an HTTP endpoint.
+
+## Required binary
+
+- `jmx_prometheus_standalone-<VERSION>.jar`
+
+## Installation
+
+Example:
+
+```shell
+java -jar jmx_prometheus_standalone-<VERSION>.jar <PORT> exporter.yaml
+```
+
+Description:
+
+- Runs the Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI.
+- Listens for metrics requests on all IP addresses on port `12345`
+
+## Common Configuration
+
+See [COMMON_CONFIGURATION.md](../COMMON_CONFIGURATION.md) for details.
+
+## Optional Configuration
+
+### HTTP Server Configuration 
+
+TBD
+
+### HTTP Authentication
+
+TBD
+
+### HTTPS Configuration
+
+TBD
+
+### Custom HTTP Authenticator Configuration
+
+TBD
