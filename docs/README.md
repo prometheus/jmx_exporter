@@ -1,7 +1,7 @@
 JMX Exporter
 ---
 
-The JMX Exporter allows collection of JMX MBean metrics.
+The JMX Exporter allows collection of JMX MBean metrics. The project ships both a Java agent and standalone exporter.
 
 ## Java agent
 
