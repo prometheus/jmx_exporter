@@ -12,13 +12,14 @@ Both HTTP mode and OpenTelemetry mode are enabled.
 Example:
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=exporter.yaml -jar YOUR_JAR.jar
+java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<PORT>:exporter.yaml -jar YOUR_JAR.jar
 ```
 
 Description:
 
 - The JMX Exporter Java agent runs as part of your application
-- `<Port>` is required for HTTP mode
+- `<PORT>` is required for HTTP mode
+- Listens for metrics requests on all IP addresses on port `<PORT>` 
 
 ## OpenTelemetry Configuration
 

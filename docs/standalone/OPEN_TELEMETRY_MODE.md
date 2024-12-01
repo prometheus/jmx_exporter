@@ -12,13 +12,13 @@ OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetr
 Example:
 
 ```shell
-java -jar jmx_prometheus_standalone-<VERSION>.jar <PORT> exporter.yaml
+java -jar jmx_prometheus_standalone-<VERSION>.jar exporter.yaml
 ```
 
 Description:
 
 - The Standalone JMX Exporter runs as a separate application to your application, and collects JMX MBean metrics via RMI
-- Port is not defined
+- No port is provided
 
 ## OpenTelemetry Configuration
 
