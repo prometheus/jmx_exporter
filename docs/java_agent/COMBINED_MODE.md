@@ -3,9 +3,9 @@ JMX Exporter Java agent / Combined Mode
 
 Both HTTP mode and OpenTelemetry mode are enabled.
 
-## Required binary
+## Required jar
 
-- `jmx_prometheus_javaagent-<VERSION>.jar`
+- jmx_prometheus_javaagent-\<VERSION>.jar
 
 ## Installation
 

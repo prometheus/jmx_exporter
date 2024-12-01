@@ -3,9 +3,9 @@ JMX Exporter Java agent / OpenTelemetry Mode
 
 OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetry endpoint.
 
-## Required binary
+## Required jar
 
-- `jmx_prometheus_javaagent-<VERSION>.jar`
+- jmx_prometheus_javaagent-\<VERSION>.jar
 
 ## Installation
 

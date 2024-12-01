@@ -3,9 +3,9 @@ Standalone JMX Exporter / Combined Mode
 
 Both HTTP mode and OpenTelemetry mode are enabled.
 
-## Required binary
+## Required jar
 
-- `jmx_prometheus_standalone-<VERSION>.jar`
+- jmx_prometheus_standalone-\<VERSION>.jar
 
 ## Installation
 

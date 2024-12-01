@@ -3,9 +3,9 @@ JMX Exporter Java agent / HTTP Mode
 
 HTTP mode exposes metrics on an HTTP endpoint.
 
-## Required binary
+## Required jar
 
-- `jmx_prometheus_javaagent-<VERSION>.jar`
+- jmx_prometheus_javaagent-\<VERSION>.jar
 
 ## Installation
 

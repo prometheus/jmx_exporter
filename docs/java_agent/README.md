@@ -3,6 +3,10 @@ JMX Exporter Java agent
 
 The JMX Exporter Java agent runs in your application as a Java agent.
 
+## Required jar
+
+- jmx_prometheus_javaagent-\<VERSION>.jar
+
 ## Collection Modes
 
 The JMX Exporter Java agent supports three modes of collection.

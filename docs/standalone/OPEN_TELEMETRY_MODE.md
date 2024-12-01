@@ -3,9 +3,9 @@ Standalone JMX Exporter / OpenTelemetry Mode
 
 OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetry endpoint.
 
-## Required binary
+## Required jar
 
-- `jmx_prometheus_standalone-<VERSION>.jar`
+- jmx_prometheus_standalone-\<VERSION>.jar
 
 ## Installation
 
