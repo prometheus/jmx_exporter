@@ -1,3 +1,3 @@
-Java Agent JMX Exporter HTTP Mode
+JMX Exporter / Java agent / HTTP Mode
 ---
 

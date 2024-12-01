@@ -1,3 +1,3 @@
-Java Agent JMX Exporter OpenTelemetry Mode
+JMX Exporter / Java agent / OpenTelemetry Mode
 ---
 

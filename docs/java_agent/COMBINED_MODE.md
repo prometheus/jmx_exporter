@@ -1,3 +1,3 @@
-Java Agent JMX Exporter Combined Mode
+JMX Exporter / Java agent / Combined Mode
 ---
 
