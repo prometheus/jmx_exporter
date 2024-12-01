@@ -1,7 +1,7 @@
 JMX Exporter
 ---
 
-The JMX Exporter is collector to capture JMX MBean values running as either a Java agent or a standalone application.
+The JMX Exporter is a collector to capture JMX MBean values running as either a Java agent or a standalone application.
 
 ## Java agent JMX Exporter
 
