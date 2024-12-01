@@ -31,7 +31,7 @@ OpenTelemetry must be configured in your exporter.yaml file...
 openTelemetry:
   endpoint: http://prometheus:9090/api/v1/otlp
   protocol: http/protobuf
-  interval: 1
+  interval: 60
 ```
 
 ### Working example
@@ -40,7 +40,7 @@ openTelemetry:
 openTelemetry:
   endpoint: http://prometheus:9090/api/v1/otlp
   protocol: http/protobuf
-  interval: 1
+  interval: 60
 rules:
   - pattern: ".*"
 ```
