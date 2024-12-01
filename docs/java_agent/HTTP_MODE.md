@@ -7,8 +7,6 @@ HTTP mode exposes metrics on an HTTP endpoint.
 
 - `jmx_prometheus_javaagent-<VERSION>.jar`
 
----
-
 ## Installation
 
 Example:
@@ -22,13 +20,9 @@ Description:
 - Runs the JMX Exporter Java agent as part of your application
 - Listens for metrics requests on all IP addresses on port `12345`
 
----
-
 ## Common Configuration
 
 See [COMMON_CONFIGURATION.md](../COMMON_CONFIGURATION.md) for details.
-
----
 
 ## Optional Configuration
 

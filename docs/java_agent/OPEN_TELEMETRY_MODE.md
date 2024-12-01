@@ -7,8 +7,6 @@ OpenTelemetry mode periodically polls metrics and pushes them to an OpenTelemetr
 
 - `jmx_prometheus_javaagent-<VERSION>.jar`
 
----
-
 ## Installation
 
 Example:
@@ -45,8 +43,6 @@ openTelemetry:
 rules:
   - pattern: ".*"
 ```
-
----
 
 ## Common Configuration
 
