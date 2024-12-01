@@ -50,14 +50,18 @@ Both HTTP Mode and OpenTelemetry Mode are enabled.
 ### HTTP Mode Configuration
 
 <details>
-  <summary>Click to expand!</summary>
+<summary>Click to expand!</summary>
 
 HTTP Mode Configuration TBD
+
+</details>
 
 ### OpenTelemetry Mode Configuration
 
 <details>
-  <summary>Click to expand!</summary>
+<summary>Click to expand!</summary>
 
 OpenTelemetry Mode Configuration TBD
+
+</details>
 
