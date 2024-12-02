@@ -9,7 +9,9 @@ The JMX Exporter Java agent jar provides access to JMX metrics running as a Java
 
 # Jar File
 
-The JMX Exporter Java agent is packaged in `jmx_prometheus_javaagent-<VERSION>.jar`
+The JMX Exporter Java agent jar file is published to Maven Central.
+
+- [jmx_prometheus_javaagent-1.1.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.1.0/jmx_prometheus_javaagent-1.1.0.jar)
 
 # Installation
 
