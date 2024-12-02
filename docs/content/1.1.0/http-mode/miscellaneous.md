@@ -1,5 +1,5 @@
 ---
-title: Misc
+title: Miscellaneous
 weight: 4
 ---
 
@@ -7,7 +7,7 @@ HTTP mode supports HTTP server thread pool tuning.
 
 **Notes**
 
-- By default, a maximum of 10 threads is used
+- By default, a maximum of 10 threads are used
 
 ### Configuration
 
