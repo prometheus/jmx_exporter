@@ -2,32 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://prometheus.github.io/java-agent/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/java-agent/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/rules/rules/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/rules/rules/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/java-agent/http-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/java-agent/http-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/standalone/http-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/standalone/http-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/standalone/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/standalone/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/rules/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/rules/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/java-agent/opentelementry-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/java-agent/opentelementry-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/standalone/opentelementry-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/standalone/opentelementry-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/java-agent/combined-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/java-agent/combined-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/standalone/combined-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/standalone/combined-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/java-agent/general-information/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/java-agent/general-information/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/standalone/general-information/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/standalone/general-information/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/tags/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/tags/</loc>
   </url>
 </urlset>

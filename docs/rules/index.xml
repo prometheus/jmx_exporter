@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>HTTP Mode Rules on JMX Exporter</title>
-    <link>https://prometheus.github.io/rules/</link>
+    <link>https://prometheus.github.io/jmx_exporter/rules/</link>
     <description>Recent content in HTTP Mode Rules on JMX Exporter</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://prometheus.github.io/rules/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://prometheus.github.io/jmx_exporter/rules/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Rules</title>
-      <link>https://prometheus.github.io/rules/rules/</link>
+      <link>https://prometheus.github.io/jmx_exporter/rules/rules/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/rules/rules/</guid>
+      <guid>https://prometheus.github.io/jmx_exporter/rules/rules/</guid>
       <description>HTTP Mode rules that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
 Name Description startDelaySeconds start delay before serving requests. Any requests within the delay period will result in an empty metrics set. lowercaseOutputName Lowercase the output metric name. Applies to default format and name. Defaults to false. lowercaseOutputLabelNames Lowercase the output metric label names. Applies to default format and labels. Defaults to false. includeObjectNames A list of ObjectNames to query.</description>
     </item>
