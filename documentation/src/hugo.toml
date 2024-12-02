@@ -1,0 +1,31 @@
+baseURL = "http://localhost"
+languageCode = 'en-us'
+title = "JMX Exporter"
+theme = "hugo-geekdoc"
+
+pluralizeListTitles = false
+relativeURLs = true
+
+# Geekdoc required configuration
+#pygmentsUseClasses = true
+pygmentsUseClasses = false
+pygmentsCodeFences = true
+disablePathToLower = true
+# geekdocFileTreeSortBy = "linkTitle"
+
+# Required if you want to render robots.txt template
+enableRobotsTXT = true
+
+# Needed for mermaid shortcodes
+[markup]
+  [markup.goldmark.renderer]
+    # Needed for mermaid shortcode
+    unsafe = true
+  [markup.tableOfContents]
+    startLevel = 1
+    endLevel = 9
+  [markup.highlight]
+    style = 'solarized-dark'
+
+[taxonomies]
+   tag = "tags"
