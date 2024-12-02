@@ -3,7 +3,7 @@ title: Java Agent
 weight: 1
 ---
 
-The JMX Exporter Java agent jar provides access to JMX metrics running as a Java agent within your application.
+The JMX Exporter Java agent runs as a Java agent within your application and collects JMX MBean values.
 
 **Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.**
 
