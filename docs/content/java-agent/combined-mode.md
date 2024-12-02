@@ -3,7 +3,7 @@ title: Combined Mode
 weight: 4
 ---
 
-Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collections methods.
+Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collection methods.
 
 ### HTTP Mode
 
