@@ -25,7 +25,7 @@ Integration tests use [Verifyica](https://github.com/verifyica-team/verifyica) f
 
 Code formatting is enforced using the [Maven Spotless Plugin](https://github.com/diffplug/spotless/tree/main/plugin-maven) along with [Google Java Format](https://github.com/google/google-java-format) as part of the build.
 
-### Branch Strategy
+### Branching Strategy
 
 [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow) is used for branching.
 
