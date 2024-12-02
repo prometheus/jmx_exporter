@@ -2,32 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://prometheus.github.io/jmx_exporter/java-agent/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/java-agent/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/rules/rules/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/rules/rules/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/java-agent/http-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/java-agent/http-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/standalone/http-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/standalone/http-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/standalone/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/standalone/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/rules/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/rules/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/java-agent/opentelementry-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/java-agent/opentelementry-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/standalone/opentelementry-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/standalone/opentelementry-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/java-agent/combined-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/java-agent/combined-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/standalone/combined-mode/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/standalone/combined-mode/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/java-agent/general-information/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/java-agent/general-information/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/standalone/general-information/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/standalone/general-information/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/</loc>
   </url><url>
-    <loc>https://prometheus.github.io/jmx_exporter/tags/</loc>
+    <loc>https://prometheus.github.io/jmx_exporter/docs/tags/</loc>
   </url>
 </urlset>
