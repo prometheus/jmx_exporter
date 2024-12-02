@@ -68,6 +68,10 @@ rules:
 - pattern: ".*"
 ```
 
+#### Application RMI Configuration
+
+Application RMI Configuration is complex. Reference Java documentation for configuration.
+
 # Advanced YAML Configuration
 
 Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.

@@ -48,9 +48,51 @@ openTelemetry:
   endpoint: http://prometheus:9090/api/v1/otlp
   protocol: http/protobuf
   interval: 60
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
 rules:
 - pattern: ".*"
 ```
+
+... or ...
+
+```yaml
+openTelemetry:
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 60
+jmxUrl: service:jmx:rmi:///jndi/rmi://<APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>/jmxrmi
+rules:
+- pattern: ".*"
+```
+
+### Additional RMI Configuration
+
+#### RMI SSL
+
+If your application's RMI server requires SSL you can add `ssl: true`
+
+```yaml
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
+ssl: true
+rules:
+- pattern: ".*"
+```
+
+#### RMI Username / Password
+
+If your application's RMI server requires authentication, you can add `username` and `password`
+
+```yaml
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
+username: <APPLICATION_RMI_USERNAME>
+password: <APPLICATION_RMI_PASSWORD>
+rules:
+- pattern: ".*"
+```
+
+#### Application RMI Configuration
+
+Application RMI Configuration is complex. Reference Java documentation for configuration.
 
 # Advanced YAML Configuration
 
