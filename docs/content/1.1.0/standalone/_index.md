@@ -3,7 +3,7 @@ title: Standalone
 weight: 2
 ---
 
-The Standalone JMX Exporter jar runs as a separate application that connects to your application using RMI and collects metrics.
+The Standalone JMX Exporter runs as a separate application that connects to your application using RMI and collects JMX MBean metrics.
 
 **Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.**
 

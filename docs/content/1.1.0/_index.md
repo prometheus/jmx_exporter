@@ -1,5 +1,5 @@
 ---
-title: "Version 1.1.0"
+title: "JMX Exporter 1.1.0"
 weight: 1
 ---
 

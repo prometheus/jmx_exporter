@@ -3,9 +3,9 @@ title: "Building / Testing"
 weight: 4
 ---
 
-The JMX Exporter requires Java 11+ to build and test the code.
+Java 11+ is required to build and unit test the code.
 
-Docker is required to run integration tests.
+Docker is required to run the integration test suite.
 
 ## Building (unit tests only)
 
@@ -41,12 +41,14 @@ cd jmx_exporter
 
 ## Integration Testing (smoke test containers)
 
-**Integration testing time using smoke test containers varies based on your machine specifications.**
-
-- **~7 minutes on an AMD Ryzen 9 7900 + NVMe**
-- **~20 minutes using a standard GitHub action runner**
+Integration tests use [Verifyica](https://github.com/verifyica-team/verifyica) for integration testing.
 
 Integration tests require Docker configuration changes due to parallel testing/the number of Docker networks used during testing.
+
+**Integration testing time using smoke test containers varies based on your machine specifications.**
+
+- **~7 minutes on an AMD Ryzen 9 7900 with an NVMe drive**
+- **~20 minutes using a standard GitHub action runner**
 
 **Notes**
 
@@ -88,9 +90,9 @@ cd jmx_exporter
 
 **Notes**
 
-The `smoke-test.sh` shell script can be used to build and run integration tests using smoke test containers.
-
-Output is captured and logged to `smoke-test.log`.
+- The `smoke-test.sh` shell script can be used to build and run the integration test suite using smoke test containers.
+  - `./smoke-test.sh`
+- Output is captured and logged to `smoke-test.log`.
 
 ### Example Output
 
@@ -131,13 +133,15 @@ Output is captured and logged to `smoke-test.log`.
 
 ## Integration Tests (all test containers)
 
-**Integration testing using all test containers requires SIGNIFICANT time and disk space.**
-
-- **~100 Docker containers (Java + Prometheus)**
-- **~2 hours on an AMD Ryzen 9 7900 + NVMe**
-- **3+ hours on a Dual Intel Xeon CPU E5-2680 v4**
+Integration tests use [Verifyica](https://github.com/verifyica-team/verifyica) for integration testing.
 
 Integration tests require Docker configuration changes due to parallel testing/the number of Docker networks used during testing.
+
+**Integration testing using all test containers requires SIGNIFICANT time and disk space.**
+
+- **~100 Docker containers (Java and Prometheus containers)**
+- **~2 hours on an AMD Ryzen 9 7900 + NVMe**
+- **3+ hours on a Dual Intel Xeon CPU E5-2680 v4**
 
 **Notes**
 
@@ -181,9 +185,9 @@ cd jmx_exporter
 
 **Notes**
 
-The `regression-test.sh` shell script can be used to build and run integration tests using all test containers.
-
-Output is captured and logged to `regression-test.log`.
+- The `regression-test.sh` shell script can be used to build and run the integration test suite using all test containers.
+  - `./regression-test.sh`
+- Output is captured and logged to `regression-test.log`.
 
 ### Output
 
