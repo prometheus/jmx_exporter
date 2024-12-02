@@ -72,9 +72,34 @@ httpServer:
 - `sha1sum`, `sha256sum`, and `sha512sum` can be used to generate the `passwordHash`
 - `openssl` can be used to generate a PBKDF2WithHmac based algorithm `passwordHash`
 
-# HTTP Authentication Plugin
+# Pluggable Authenticator
 
-TBD
+It is possible to use a customer pluggable authenticator (`com.sun.net.httpserver.Authenticator`) implementation for the **Java agent**.
+
+The custom pluggable authenticator class needs to be on the jvm classpath.
+
+The class name to load is provided through `authentication/plugin` configuration as follows:
+
+```yaml
+httpServer:
+  authentication:
+    plugin:
+       class: my.custom.AuthenticatorWithNoArgConstructor
+```
+
+If the custom pluggable authenticator needs to provide an authenticated Subject visible to the application, it can set a named attribute on the HttpExchange with that subject.
+
+The agent will arrange that subsequent calls occur in a `Subject.doAs()`.
+
+The name of the attribute must be provided through `subjectAttributeName` configuration as follows:
+
+```yaml
+httpServer:
+  authentication:
+    plugin:
+       class: my.custom.AuthenticatorWithNoArgConstructorThatSetsASubjectAttribute
+       subjectAttributeName: "custom.subject.for.doAs");
+```
 
 #  Complex YAML Configuration Examples
 
