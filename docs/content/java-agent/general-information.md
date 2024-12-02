@@ -15,6 +15,6 @@ The JMX Exporter Java agent is packaged in `jmx_prometheus_javaagent-<VERSION>.j
 
 Installation depends on which modes you want to support:
 
-- [HTTP Mode](http://localhost:1313/java-agent/http_mode/)
-- [OpenTelemetry Mode](http://localhost:1313/java-agent/opentelementry_mode/)
-- [Combined Mode](http://localhost:1313/java-agent/combined_mode/)
+- [HTTP Mode](/java-agent/http_mode/)
+- [OpenTelemetry Mode](/java-agent/opentelementry_mode/)
+- [Combined Mode](/java-agent/combined_mode/)

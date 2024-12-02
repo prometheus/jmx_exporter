@@ -34,7 +34,7 @@ rules:
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules](http://localhost:1313/rules/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
