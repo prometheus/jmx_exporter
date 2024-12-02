@@ -3,7 +3,7 @@ title: HTTP Mode
 weight: 2
 ---
 
-HTTP Mode collects metrics when accessed via HTTP and returns them as HTTP content. 
+HTTP Mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
 
 # Installation
 
