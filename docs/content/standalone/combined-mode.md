@@ -27,7 +27,7 @@ Pushes metrics to an OpenTelemetry endpoint.
 java -jar jmx_prometheus_standalone-<VERSION>.jar [HOSTNAME:]<PORT> <EXPORTER.YAML>
 ```
 
-**NOTES**
+ **Notes**
 
 - `<PORT>` is required
 - `[HOSTNAME]` is optional
@@ -96,7 +96,7 @@ Application RMI Configuration is complex. Reference Java documentation for confi
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP Mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 

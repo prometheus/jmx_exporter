@@ -19,7 +19,7 @@ OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelem
 java -javaagent:jmx_prometheus_javaagent-1.1.0.jar exporter.yaml
 ```
 
-**NOTES**
+ **Notes**
 
 - No `<HOSTNAME>` or `<PORT>` is used
 

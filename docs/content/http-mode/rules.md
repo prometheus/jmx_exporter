@@ -32,7 +32,7 @@ and adjacent underscores are collapsed. There's no limitations on label values o
 A minimal config is `{}`, which will connect to the local JVM and collect everything in the default format.
 Note that the scraper always processes all mBeans, even if they're not exported.
 
-**NOTES**
+ **Notes**
 
 Both `whitelistObjectNames` and `blacklistObjectNames` are still supported for backward compatibility, but should be considered deprecated.
 
@@ -61,8 +61,8 @@ domain_beanPropertyValue1_key1_key2_...keyN_attrName{beanpropertyName2="beanProp
 ```
 If a given part isn't set, it'll be excluded.
 
-# Examples
+#  Complex YAML Configuration Examples
 
-The integration tests provide various configuration examples.
+Integration tests  provide complex/concrete examples of application and YAML configuration files.
 
-[/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)
+- [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)

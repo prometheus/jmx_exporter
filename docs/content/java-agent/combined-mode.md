@@ -27,7 +27,7 @@ Pushes metrics to an OpenTelemetry endpoint.
 java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
 ```
 
-**NOTES**
+ **Notes**
 
 - `<PORT>` is required
 - `[HOSTNAME]` is optional
@@ -54,7 +54,7 @@ rules:
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP Mode [Rules](/http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 

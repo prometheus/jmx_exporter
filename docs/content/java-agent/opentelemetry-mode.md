@@ -19,7 +19,7 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<EXPORTER.YAML> -jar <YOU
 java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=exporter.yaml -jar <YOUR_APPLICATION.JAR>
 ```
 
-**NOTES**
+ **Notes**
 
 - No `<HOSTNAME>` or `<PORT>` is used
 
