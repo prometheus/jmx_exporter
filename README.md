@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml/badge.svg)](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml)
 
-The JMX Exporter is collector to capture JMX MBean values.
+The JMX Exporter is a collector to capture JMX MBean values.
 
 # Documentation
 
