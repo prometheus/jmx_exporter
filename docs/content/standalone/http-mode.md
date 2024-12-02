@@ -30,7 +30,7 @@ Your application **must** expose RMI.
 **exporter.yaml**
 
 ```yaml
-hostPort: <APPLICATION_HOSTNAME>:<APPLICATION_RMI_PORT>
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
 rules:
 - pattern: ".*"
 ```
@@ -38,7 +38,7 @@ rules:
 ... or ...
 
 ```yaml
-jmxUrl: service:jmx:rmi:///jndi/rmi://<APPLICATION_HOSTNAME>:<APPLICATION_RMI_PORT>/jmxrmi
+jmxUrl: service:jmx:rmi:///jndi/rmi://<APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>/jmxrmi
 rules:
 - pattern: ".*"
 ```
@@ -50,7 +50,7 @@ rules:
 If your application's RMI server requires SSL you can add `ssl: true`
 
 ```yaml
-hostPort: <APPLICATION_HOSTNAME>:<APPLICATION_RMI_PORT>
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
 ssl: true
 rules:
 - pattern: ".*"
@@ -61,7 +61,7 @@ rules:
 If your application's RMI server requires authentication, you can add `username` and `password`
 
 ```yaml
-hostPort: <APPLICATION_HOSTNAME>:<APPLICATION_RMI_PORT>
+hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
 username: <APPLICATION_RMI_USERNAME>
 password: <APPLICATION_RMI_PASSWORD>
 rules:

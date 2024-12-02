@@ -42,7 +42,7 @@ Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics c
 2. Access HTTP Mode metrics using a browser to view your metrics.
 
 ```
-http://<APPLICATION_HOSTNAME>:<PORT>/metrics
+http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics
 ```
 
 ```
