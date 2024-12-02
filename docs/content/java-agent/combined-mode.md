@@ -73,3 +73,9 @@ my_count_total{status="ok"} 2.0
 ```
 
 3. Access your OpenTelemetry platform to view OpenTelemetry metrics.
+
+#  Complex YAML Configuration Examples
+
+ Integration tests provide complex and concrete examples of application and YAML configuration files.
+
+- [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)
