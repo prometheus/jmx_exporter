@@ -1,4 +1,4 @@
-baseURL = "https://prometheus.github.io/jmx_exporter/"
+baseURL = "http://localhost:1313/"
 languageCode = 'en-us'
 title = "JMX Exporter"
 theme = "hugo-geekdoc"
