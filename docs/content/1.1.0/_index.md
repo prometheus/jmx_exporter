@@ -8,7 +8,7 @@ This is the documentation for the [Prometheus JMX Exporter](https://github.com/p
 The main new features of the 1.1.0 release are:
 
 * **OpenTelemetry** Push metrics in OTLP format to an OpenTelemetry endpoint
-* **Pluggable Authenticator** Ability to integration a custom pluggable authenticator
+* **Pluggable Authenticator** Ability to integrate a custom pluggable authenticator
 
 **Documentation and Examples**
 
