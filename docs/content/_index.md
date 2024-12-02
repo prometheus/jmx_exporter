@@ -3,7 +3,7 @@ title: "JMX Exporter"
 weight: 1
 ---
 
-The JMX Exporter is a pair collectors to capture JMX MBean metric values.
+The JMX Exporter is a collector to capture JMX MBean values.
 
 ### Java Agent
 
