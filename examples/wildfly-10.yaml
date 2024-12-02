@@ -1,0 +1,39 @@
+---
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames: 
+ # Whitelist objects to be collected, for performance reason
+ # see https://github.com/prometheus/jmx_exporter/issues/246#issuecomment-367573931
+ # Each object in the rules below has to be added to whitelistObjectNames too !
+ # note that rules use regex (like "foo.*", whereas the whitelist use globbing expressions (like "foo*")
+ - "jboss.as:subsystem=messaging-activemq,server=*,jms-queue=*"
+ - "jboss.as:subsystem=messaging-activemq,server=*,jms-topic=*"
+ - "jboss.as:subsystem=datasources,data-source=*,statistics=*"
+ - "jboss.as:subsystem=datasources,xa-data-source=*,statistics=*"
+ - "jboss.as:subsystem=transactions*"
+ - "jboss.as:subsystem=undertow,server=*,http-listener=*"
+ - "jboss.as:subsystem=undertow,server=*,https-listener=*"
+ # - "java.lang:*"
+rules:
+  - pattern: "^jboss.as<subsystem=messaging-activemq, server=.+, jms-(queue|topic)=(.+)><>(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_messaging_$3
+    labels:
+      $1: $2
+
+  - pattern: "^jboss.as<subsystem=datasources, (?:xa-)*data-source=(.+), statistics=(.+)><>(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_datasource_$2_$3
+    labels:
+      name: $1
+
+  - pattern: "^jboss.as<subsystem=transactions><>number_of_(.+):"
+    attrNameSnakeCase: true
+    name: wildfly_transaction_$1
+
+  - pattern: "^jboss.as<subsystem=undertow, server=(.+), (http[s]?-listener)=(.+)><>(bytes_.+|error_count|processing_time|request_count):"
+    attrNameSnakeCase: true
+    name: wildfly_undertow_$4
+    labels:
+      server: $1
+      listener: $3

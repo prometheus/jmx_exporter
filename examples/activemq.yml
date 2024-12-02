@@ -1,0 +1,35 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+blacklistObjectNames:
+  - "org.apache.activemq:clientId=*,*"
+whitelistObjectNames:
+  - "org.apache.activemq:destinationType=Queue,*"
+  - "org.apache.activemq:destinationType=Topic,*"
+  - "org.apache.activemq:type=Broker,brokerName=*"
+  - "org.apache.activemq:type=Topic,brokerName=*"
+
+rules:
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Queue, destinationName=(\S*)><>(\w+)
+  name: activemq_queue_$3
+  attrNameSnakeCase: true
+  labels:
+    destination: $2
+
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Topic, destinationName=(\S*)><>(\w+)
+  name: activemq_topic_$3
+  attrNameSnakeCase: true
+  labels:
+    destination: $2
+
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*)><>CurrentConnectionsCount
+  name: activemq_connections
+  type: GAUGE
+
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*)><>Total(.*)Count
+  name: activemq_$2_total
+  type: COUNTER
+
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*)><>(.*)PercentUsage
+  name: activemq_$2_usage_ratio
+  type: GAUGE
+  valueFactor: 0.01

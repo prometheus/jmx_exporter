@@ -1,0 +1,47 @@
+rules:
+  ## Job Manager ##
+  # Example: org.apache.flink.metrics<key0=127.0.0.1, key1=jobmanager, name=taskSlotsTotal><>Value
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=jobmanager, name=([a-z].*)><>Value
+    name: flink_jobmanager_$2
+
+  # Example: org.apache.flink.metrics<key0=127.0.0.1, key1=jobmanager, key2=My_Job, name=lastCheckpointDuration><>Value
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=jobmanager, key2=(.*), name=([a-z].*)><>Value
+    name: flink_jobmanager_$3
+    labels:
+      flink_job: $2
+
+  ## Task Manager ##
+  # Example: org.apache.flink.metrics<key0=debian-8, key1=taskmanager, key2=407401ecfef1f050d3dcc83af9cbfb74, key3=My_Job, key4=Map, key6=1, name=numRecordsIn><>Count
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=taskmanager, key2=(.*), key3=(.*), key4=(.*), key5=([0-9]*), name=([a-z].*)><>Count
+    name: flink_taskmanager_$6_total
+    labels:
+      flink_job: $3
+      operator: $4
+      partition: $5
+    type: COUNTER
+
+  # Example: org.apache.flink.metrics<key0=debian-8, key1=taskmanager, key2=407401ecfef1f050d3dcc83af9cbfb74, key3=My_Job, key4=fold_->_sink, key6=0, name=lastCheckpointSize><>Value
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=taskmanager, key2=(.*), key3=(.*), key4=(.*), key5=([0-9]*), name=([a-z].*)><>Value
+    name: flink_taskmanager_$6
+    labels:
+      flink_job: $3
+      operator: $4
+      partition: $5
+
+  # Example: org.apache.flink.metrics<key0=debian-8, key1=taskmanager, key2=407401ecfef1f050d3dcc83af9cbfb74, key3=My_Job, key4=Sink, key5=1, key6=KafkaProducer, name=batch-size-avg><>Value
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=taskmanager, key2=(.*), key3=(.*), key4=(.*), key5=([0-9]*), key6=KafkaProducer, name=([a-z].*)><>Value
+    name: flink_taskmanager_kafka_producer_$6
+    labels:
+      flink_job: $3
+      operator: $4
+      partition: $5
+
+  # Example: org.apache.flink.metrics<key0=debian-8, key1=taskmanager, key2=407401ecfef1f050d3dcc83af9cbfb74, key3=My_Job, key4=Source, key5=1, key6=KafkaConsumer, key7=committed-offsets, name=topic-name-1><>Value
+  - pattern: org.apache.flink.metrics<key0=(.*), key1=taskmanager, key2=(.*), key3=(.*), key4=(.*), key5=([0-9]*), key6=KafkaConsumer, key7=(.*), name=([a-z].*)><>Value
+    name: flink_taskmanager_kafka_consumer
+    labels:
+      flink_job: $3
+      operator: $4
+      partition: $5
+      offsets: $6
+      name: $7

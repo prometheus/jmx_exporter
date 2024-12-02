@@ -1,7 +1,9 @@
-Common Configuration
+---
+title: Rules
+weight: 1
 ---
 
-Common configuration values that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
+HTTP Mode rules that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
 
 Name     | Description
 ---------|------------

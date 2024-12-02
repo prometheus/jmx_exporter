@@ -1,0 +1,59 @@
+lowercaseOutputName: true
+rules:
+- pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-(\w+)"><>(Count)'
+  name: kafka_consumer_$1_$3_$4
+  labels:
+    thread: $2
+- pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)"><>(Count|Value)'
+  name: kafka_consumer_$1_$5_$6
+  labels:
+    hostport: $3:$4
+    thread: $2
+- name: kafka_consumer_$1_$7_$8
+  pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count|Value)'
+  labels:
+    hostport: $3:$4
+    partition: $6
+    thread: $2
+    topic: $5
+- pattern: '"kafka.server"<type="(FetcherStats)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)PerSec"><>Count'
+  name: kafka_server_$1_$5_total
+  labels:
+    hostport: $3:$4
+    thread: $2
+- pattern: '"kafka.server"<type="(FetcherLag.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count|Value)'
+  name: kafka_server_$1_$7_$8
+  labels:
+    hostport: $3:$4
+    partition: $6
+    thread: $2
+    topic: $5
+- name: kafka_cluster_$1_$4
+  pattern: '"kafka.cluster"<type="(.+)", name="(.+)-(\d+)-(\w+)"><>Value'
+  labels:
+    partition: $3
+    topic: $2
+- pattern: '"kafka.log"<type="Log", name="(.+)-(\d+)-(\w+)"><>Value'
+  name: kafka_log_$3
+  labels:
+    partition: $2
+    topic: $1
+- pattern: '"kafka.server"<type="(.+)", name="(.+)-(\w+)PerSec"><>Count'
+  name: kafka_server_$1_$3_total
+  labels:
+    topic: $2
+  type: COUNTER
+- pattern: '"kafka.server"<type="(.+)", name="(.+)-(\w+)"><>(Count|Value)'
+  name: kafka_server_$1_$3_$4
+  labels:
+    topic: $2
+- pattern: '"kafka.network"<type="(.+)", name="Processor-(\d+)-(.+)"><>Value'
+  name: kafka_network_$1_$3
+  labels:
+    processor: $2
+- pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)PerSec"><>Count'
+  name: kafka_$1_$2_$3_total
+  type: COUNTER
+- pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)"><>(Count|Value)'
+  name: kafka_$1_$2_$3_$4
+

@@ -1,48 +1,59 @@
-JMX Exporter
----
+Docs
+----
 
-The JMX Exporter allows collection of JMX MBean metrics.
+This directory contains [hugo](https://gohugo.io) documentation to be published in Github pages.
 
-The project ships both a Java agent and standalone exporter jar.
+Run Locally
+-----------
 
-- jmx_prometheus_javaagent-\<VERSION>.jar
-- jmx_prometheus_standalone-\<VERSION>.jar
+```
+hugo server -D
+```
 
-## Java agent
+This will serve the docs on [http://localhost:1313](http://localhost:1313).
 
-The JMX Exporter Java agent runs as part of your application and collects JMX MBean metrics.
+Deploy to Github Pages
+----------------------
 
-### Jar
+Changes to the `main` branch will be deployed automatically with Github actions.
 
-- jmx_prometheus_javaagent-\<VERSION>.jar
+Update Javadoc
+--------------
 
-### Documentation
+Javadoc are not checked-in to the Github repository.
+They are generated on the fly by Github actions when the docs are updated.
+To view locally, run the following:
 
-- [Java agent](java_agent/README.md)
+```
+# note that the 'compile' in the following command is necessary for Javadoc to detect the module structure
+./mvnw clean compile javadoc:javadoc javadoc:aggregate
+rm -r ./docs/static/api
+mv ./target/site/apidocs ./docs/static/api
+```
 
-**Notes**
+Github pages are in the `/jmx_exporter/` folder, so we link to `/jmx_exporter/api` rather than `/api`. 
+To make JavaDoc work locally, create a link:
 
-- **Strongly encouraged**
+```
+mkdir ./docs/static/jmx_exporter
+ln -s ../api ./docs/static/jmx_exporter/api
+```
 
-## Standalone
+Update Geekdocs
+---------------
 
-The Standalone JMX Exporter runs as a separate application to your application and collects JMX MBean metrics via RMI. 
+The docs use the [Geekdocs](https://geekdocs.de/) theme. The theme is checked in to Github in the `./docs/themes/hugo-geekdoc/` folder. To update [Geekdocs](https://geekdocs.de/), remove the current folder and create a new one with the latest [release](https://github.com/thegeeklab/hugo-geekdoc/releases). There are no local modifications in `./docs/themes/hugo-geekdoc/`.
 
-### Jar
+Notes
+-----
 
-- jmx_prometheus_standalone-\<VERSION>.jar
+Here's how the initial `docs/` folder was set up:
 
-### Documentation
+```
+hugo new site docs
+cd docs/
+mkdir -p themes/hugo-geekdoc/
+curl -L https://github.com/thegeeklab/hugo-geekdoc/releases/download/v0.41.1/hugo-geekdoc.tar.gz | tar -xz -C themes/hugo-geekdoc/ --strip-components=1
+```
 
-- [Standalone](standalone/README.md)
-
-**Notes**
-
-- **The Standalone JMX Exporter has various disadvantages. It's harder to configure and unable to expose process metrics (e.g., memory and CPU usage)**
-
-
-- **All `jvm_*` metrics, like `jvm_classes_loaded_total`, `jvm_threads_current`,`jvm_threads_daemon`, `jvm_memory_bytes_used`, etc. won't be available when using the Standalone JMX Exporter**
-
-## Common Configuration
-
-See [Common Configuration](COMMON_CONFIGURATION.md) for details.
+Create the initial `hugo.toml` file as described in [https://geekdocs.de/usage/getting-started/](https://geekdocs.de/usage/getting-started/).
