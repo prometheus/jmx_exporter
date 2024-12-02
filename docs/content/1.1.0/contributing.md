@@ -17,6 +17,10 @@ If you plan to do something more involved, first discuss your ideas on the [mail
 
 This will avoid unnecessary work and surely give you and us a good deal of inspiration.
 
+### Integration Tests
+
+Integration tests use [Verifyica](https://github.com/verifyica-team/verifyica) for integration testing and are required for code changes.
+
 ### Code Formatting
 
 Code formatting is enforced using the [Maven Spotless Plugin](https://github.com/diffplug/spotless/tree/main/plugin-maven) along with [Google Java Format](https://github.com/google/google-java-format) as part of the build.
