@@ -3,7 +3,7 @@ title: Misc
 weight: 4
 ---
 
-HTTP Mode supports thread pool tuning.
+HTTP Mode supports HTTP server thread pool tuning.
 
 **Notes**
 
