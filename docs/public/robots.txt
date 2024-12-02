@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /tags/*
+
+Sitemap: https://prometheus.github.io/jmx_exporter/sitemap.xml
