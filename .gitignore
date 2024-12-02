@@ -14,3 +14,4 @@ pom.xml.versionsBackup
 integration_test_suite/integration_tests/src/test/resources/common/**.jar
 smoke-test.log
 regression-test.log
+documentation/src/.hugo_build.lock
