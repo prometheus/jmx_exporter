@@ -2,26 +2,26 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>JMX Exporter</title>
-    <link>https://prometheus.github.io/jmx_exporter/docs/</link>
+    <link>https://prometheus.github.io/</link>
     <description>Recent content on JMX Exporter</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://prometheus.github.io/jmx_exporter/docs/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://prometheus.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Rules</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/rules/rules/</link>
+      <link>https://prometheus.github.io/rules/rules/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/rules/rules/</guid>
+      <guid>https://prometheus.github.io/rules/rules/</guid>
       <description>HTTP Mode rules that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
 Name Description startDelaySeconds start delay before serving requests. Any requests within the delay period will result in an empty metrics set. lowercaseOutputName Lowercase the output metric name. Applies to default format and name. Defaults to false. lowercaseOutputLabelNames Lowercase the output metric label names. Applies to default format and labels. Defaults to false. includeObjectNames A list of ObjectNames to query.</description>
     </item>
     
     <item>
       <title>HTTP Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/java-agent/http-mode/</link>
+      <link>https://prometheus.github.io/java-agent/http-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/java-agent/http-mode/</guid>
+      <guid>https://prometheus.github.io/java-agent/http-mode/</guid>
       <description>HTTP Mode collects metric when accessed via HTTP and returns them as HTTP content.
 Installation java -javaagent:jmx_prometheus_javaagent-&amp;lt;VERSION&amp;gt;.jar=[HOSTNAME:]&amp;lt;PORT&amp;gt;:&amp;lt;EXPORTER.YAML&amp;gt; -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; NOTES
 &amp;lt;PORT&amp;gt; is required [HOSTNAME] is optional if provided, must be separated from &amp;lt;PORT&amp;gt; using a colon (:) (e.g., myserver:12345) Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=12345:exporter.yaml -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; Basic YAML Configuration exporter.yaml
@@ -31,10 +31,10 @@ Metrics Run your application. Access HTTP Mode metrics using a browser to view y
     
     <item>
       <title>HTTP Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/http-mode/</link>
+      <link>https://prometheus.github.io/standalone/http-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/http-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/http-mode/</guid>
       <description>HTTP Mode collects metric when accessed via HTTP and returns them as HTTP content.
 Installation java -javaagent:jmx_prometheus_javaagent-&amp;lt;VERSION&amp;gt;.jar=[HOSTNAME:]&amp;lt;PORT&amp;gt;:&amp;lt;EXPORTER.YAML&amp;gt; -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; NOTES
 &amp;lt;PORT&amp;gt; is required [HOSTNAME] is optional if provided, must be separated from &amp;lt;PORT&amp;gt; using a colon (:) (e.g., myserver:12345) Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=12345:exporter.yaml -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; Basic YAML Configuration Your application must expose RMI.
@@ -45,10 +45,10 @@ jmxUrl: service:jmx:rmi:///jndi/rmi://&amp;lt;APPLICATION_HOSTNAME&amp;gt;:&amp;
     
     <item>
       <title>OpenTelemetry Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/java-agent/opentelementry-mode/</link>
+      <link>https://prometheus.github.io/java-agent/opentelementry-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/java-agent/opentelementry-mode/</guid>
+      <guid>https://prometheus.github.io/java-agent/opentelementry-mode/</guid>
       <description>OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
 Installation Example java -javaagent:jmx_prometheus_javaagent-&amp;lt;VERSION&amp;gt;.jar=&amp;lt;EXPORTER.YAML&amp;gt; -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=exporter.yaml -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; NOTES
 No &amp;lt;HOSTNAME&amp;gt; or &amp;lt;PORT&amp;gt; is used Basic YAML Configuration exporter.yaml
@@ -59,10 +59,10 @@ openTelemetry: # endpoint defined via environment variable &amp;#34;OTEL_EXPORTE
     
     <item>
       <title>OpenTelemetry Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/opentelementry-mode/</link>
+      <link>https://prometheus.github.io/standalone/opentelementry-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/opentelementry-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/opentelementry-mode/</guid>
       <description>OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
 Installation Example -jar jmx_prometheus_standalone-&amp;lt;VERSION&amp;gt;.jar exporter.yaml Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar exporter.yaml NOTES
 No &amp;lt;HOSTNAME&amp;gt; or &amp;lt;PORT&amp;gt; is used Basic YAML Configuration exporter.yaml
@@ -73,10 +73,10 @@ openTelemetry: # endpoint defined via environment variable &amp;#34;OTEL_EXPORTE
     
     <item>
       <title>Combined Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/java-agent/combined-mode/</link>
+      <link>https://prometheus.github.io/java-agent/combined-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/java-agent/combined-mode/</guid>
+      <guid>https://prometheus.github.io/java-agent/combined-mode/</guid>
       <description>Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collections methods.
 HTTP Mode Exposes metric using an HTTP endpoint.
 metrics are collected when the HTTP endpoint is accessed &amp;ldquo;pull&amp;rdquo; model OpenTelemtry Mode Pushes metrics to an OpenTelemetry endpoint.
@@ -86,10 +86,10 @@ metrics are periodically collected and pushed OpenTelemetry endpoint &amp;ldquo;
     
     <item>
       <title>Combined Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/combined-mode/</link>
+      <link>https://prometheus.github.io/standalone/combined-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/combined-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/combined-mode/</guid>
       <description>Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collections methods.
 HTTP Mode Exposes metric using an HTTP endpoint.
 metrics are collected when the HTTP endpoint is accessed &amp;ldquo;pull&amp;rdquo; model OpenTelemtry Mode Pushes metrics to an OpenTelemetry endpoint.
@@ -99,10 +99,10 @@ metrics are periodically collected and pushed OpenTelemetry endpoint &amp;ldquo;
     
     <item>
       <title>General Information</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/java-agent/general-information/</link>
+      <link>https://prometheus.github.io/java-agent/general-information/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/java-agent/general-information/</guid>
+      <guid>https://prometheus.github.io/java-agent/general-information/</guid>
       <description>The JMX Exporter Java agent jar provides access to JMX metrics running as a Java agent within your application.
 Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.
 Jar File The JMX Exporter Java agent is packaged in jmx_prometheus_javaagent-&amp;lt;VERSION&amp;gt;.jar
@@ -112,10 +112,10 @@ HTTP Mode OpenTelemetry Mode Combined Mode </description>
     
     <item>
       <title>General Information</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/general-information/</link>
+      <link>https://prometheus.github.io/standalone/general-information/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/general-information/</guid>
+      <guid>https://prometheus.github.io/standalone/general-information/</guid>
       <description>The Standalone JMX Exporter jar runs as a separate application that connects to your application using RMI and collects metrics.
 Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.
 Jar File The Standalone JMX Exporter is packaged in jmx_prometheus_standalone-&amp;lt;VERSION&amp;gt;.jar

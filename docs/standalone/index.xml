@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Standalone on JMX Exporter</title>
-    <link>https://prometheus.github.io/jmx_exporter/docs/standalone/</link>
+    <link>https://prometheus.github.io/standalone/</link>
     <description>Recent content in Standalone on JMX Exporter</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://prometheus.github.io/jmx_exporter/docs/standalone/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://prometheus.github.io/standalone/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>HTTP Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/http-mode/</link>
+      <link>https://prometheus.github.io/standalone/http-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/http-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/http-mode/</guid>
       <description>HTTP Mode collects metric when accessed via HTTP and returns them as HTTP content.
 Installation java -javaagent:jmx_prometheus_javaagent-&amp;lt;VERSION&amp;gt;.jar=[HOSTNAME:]&amp;lt;PORT&amp;gt;:&amp;lt;EXPORTER.YAML&amp;gt; -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; NOTES
 &amp;lt;PORT&amp;gt; is required [HOSTNAME] is optional if provided, must be separated from &amp;lt;PORT&amp;gt; using a colon (:) (e.g., myserver:12345) Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=12345:exporter.yaml -jar &amp;lt;YOUR_APPLICATION.JAR&amp;gt; Basic YAML Configuration Your application must expose RMI.
@@ -22,10 +22,10 @@ jmxUrl: service:jmx:rmi:///jndi/rmi://&amp;lt;APPLICATION_HOSTNAME&amp;gt;:&amp;
     
     <item>
       <title>OpenTelemetry Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/opentelementry-mode/</link>
+      <link>https://prometheus.github.io/standalone/opentelementry-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/opentelementry-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/opentelementry-mode/</guid>
       <description>OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
 Installation Example -jar jmx_prometheus_standalone-&amp;lt;VERSION&amp;gt;.jar exporter.yaml Concrete Example java -javaagent:jmx_prometheus_javaagent-1.1.0.jar exporter.yaml NOTES
 No &amp;lt;HOSTNAME&amp;gt; or &amp;lt;PORT&amp;gt; is used Basic YAML Configuration exporter.yaml
@@ -36,10 +36,10 @@ openTelemetry: # endpoint defined via environment variable &amp;#34;OTEL_EXPORTE
     
     <item>
       <title>Combined Mode</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/combined-mode/</link>
+      <link>https://prometheus.github.io/standalone/combined-mode/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/combined-mode/</guid>
+      <guid>https://prometheus.github.io/standalone/combined-mode/</guid>
       <description>Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collections methods.
 HTTP Mode Exposes metric using an HTTP endpoint.
 metrics are collected when the HTTP endpoint is accessed &amp;ldquo;pull&amp;rdquo; model OpenTelemtry Mode Pushes metrics to an OpenTelemetry endpoint.
@@ -49,10 +49,10 @@ metrics are periodically collected and pushed OpenTelemetry endpoint &amp;ldquo;
     
     <item>
       <title>General Information</title>
-      <link>https://prometheus.github.io/jmx_exporter/docs/standalone/general-information/</link>
+      <link>https://prometheus.github.io/standalone/general-information/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://prometheus.github.io/jmx_exporter/docs/standalone/general-information/</guid>
+      <guid>https://prometheus.github.io/standalone/general-information/</guid>
       <description>The Standalone JMX Exporter jar runs as a separate application that connects to your application using RMI and collects metrics.
 Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.
 Jar File The Standalone JMX Exporter is packaged in jmx_prometheus_standalone-&amp;lt;VERSION&amp;gt;.jar

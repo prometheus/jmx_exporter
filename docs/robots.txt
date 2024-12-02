@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: /tags/*
 
-Sitemap: https://prometheus.github.io/jmx_exporter/docs/sitemap.xml
+Sitemap: https://prometheus.github.io/sitemap.xml
