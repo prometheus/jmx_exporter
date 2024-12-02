@@ -3,7 +3,7 @@ title: Authentication
 weight: 2
 ---
 
-HTTP Mode supports configuring HTTP BASIC authentication as well as use of a custom authenticator plugin.
+HTTP mode supports configuring HTTP BASIC authentication as well as use of a custom authenticator plugin.
 
 ## HTTP BASIC Authentication
 

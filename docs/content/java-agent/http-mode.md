@@ -1,9 +1,9 @@
 ---
-title: HTTP Mode
+title: HTTP mode
 weight: 2
 ---
 
-HTTP Mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
+HTTP mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
 
 # Installation
 
@@ -34,12 +34,12 @@ rules:
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
 1. Run your application.
-2. Access HTTP Mode metrics using a browser to view your metrics.
+2. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
 http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics

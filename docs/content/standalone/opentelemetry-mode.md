@@ -1,9 +1,9 @@
 ---
-title: OpenTelemetry Mode
+title: OpenTelemetry mode
 weight: 3
 ---
 
-OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
+OpenTelemetry mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
 
 # Installation
 
@@ -38,7 +38,7 @@ rules:
 
 # Advanced YAML Configuration
 
-OpenTelemetry Mode also supports the use of `OTEL` environment variables.
+OpenTelemetry mode also supports the use of `OTEL` environment variables.
 
 **exporter.yaml**
 

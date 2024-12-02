@@ -3,7 +3,7 @@ title: SSL
 weight: 3
 ---
 
-HTTP Mode supports configuring SSL (HTTPS) access using either a JKS or PKCS12 format keystore.
+HTTP mode supports configuring SSL (HTTPS) access using either a JKS or PKCS12 format keystore.
 
 **Notes**
 

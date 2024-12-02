@@ -1,9 +1,9 @@
 ---
-title: HTTP Mode
+title: HTTP mode
 weight: 2
 ---
 
-HTTP Mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
+HTTP mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
 
 # Installation
 
@@ -74,13 +74,13 @@ Application RMI Configuration is complex. Reference Java documentation for confi
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
 1. Run your application.
 2. Run the Standalone JMX Exporter application.
-3. Access HTTP Mode metrics using a browser to view your metrics.
+3. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
 http://<STANDALONE_JMX_EXPORTER_HOSTNAME>:<PORT>/metrics

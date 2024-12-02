@@ -3,7 +3,7 @@ title: Rules
 weight: 1
 ---
 
-HTTP Mode rules that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
+HTTP mode rules that apply to both the JMX Exporter Java agent and Standalone JMX Exporter.
 
 Name     | Description
 ---------|------------

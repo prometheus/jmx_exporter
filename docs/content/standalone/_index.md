@@ -15,6 +15,6 @@ The Standalone JMX Exporter is packaged in `jmx_prometheus_standalone-<VERSION>.
 
 Installation depends on which modes you want to support:
 
-- [HTTP Mode](/java-agent/http-mode/)
-- [OpenTelemetry Mode](/java-agent/opentelemetry-mode/)
-- [Combined Mode](/java-agent/combined-mode/)
+- [HTTP mode](/java-agent/http-mode/)
+- [OpenTelemetry mode](/java-agent/opentelemetry-mode/)
+- [Combined mode](/java-agent/combined-mode/)

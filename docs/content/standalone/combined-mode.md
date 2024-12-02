@@ -1,18 +1,18 @@
 ---
-title: Combined Mode
+title: Combined mode
 weight: 4
 ---
 
-Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collection methods.
+Combined mode allows for both HTTP mode and OpenTelemetry mode metrics collection methods.
 
-### HTTP Mode
+### HTTP mode
 
 Exposes metric using an HTTP endpoint.
 
 - metrics are collected when the HTTP endpoint is accessed
 - "pull" model
 
-### OpenTelemetry Mode
+### OpenTelemetry mode
 
 Pushes metrics to an OpenTelemetry endpoint.
 
@@ -21,7 +21,7 @@ Pushes metrics to an OpenTelemetry endpoint.
 
 **Notes**
 
--  Due to the indepenent collection methods, HTTP Mode metrics most likely  will not match OpenTelemetry Mode metrics exactly
+-  Due to the indepenent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
 
 # Installation
 
@@ -100,12 +100,12 @@ Application RMI Configuration is complex. Reference Java documentation for confi
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
 1. Run your application.
-2. Access HTTP Mode metrics using a browser to view your metrics.
+2. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
 http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics
