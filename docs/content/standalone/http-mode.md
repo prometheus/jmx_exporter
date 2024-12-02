@@ -1,9 +1,9 @@
 ---
-title: HTTP Mode
+title: HTTP mode
 weight: 2
 ---
 
-HTTP Mode collects metric when accessed via HTTP and returns them as HTTP content. 
+HTTP mode collects metrics when accessed via HTTP, and returning them as HTTP content. 
 
 # Installation
 
@@ -11,11 +11,11 @@ HTTP Mode collects metric when accessed via HTTP and returns them as HTTP conten
 java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
 ```
 
-**NOTES**
+ **Notes**
 
 - `<PORT>` is required
 - `[HOSTNAME]` is optional
-  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `myserver:12345`)
+  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `server:12345`)
 
 ### Concrete Example
 
@@ -68,15 +68,19 @@ rules:
 - pattern: ".*"
 ```
 
+#### Application RMI Configuration
+
+Application RMI Configuration is complex. Reference Java documentation for configuration.
+
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules]( /http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
 1. Run your application.
 2. Run the Standalone JMX Exporter application.
-3. Access HTTP Mode metrics using a browser to view your metrics.
+3. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
 http://<STANDALONE_JMX_EXPORTER_HOSTNAME>:<PORT>/metrics
@@ -88,3 +92,9 @@ http://<STANDALONE_JMX_EXPORTER_HOSTNAME>:<PORT>/metrics
 my_count_total{status="error"} 1.0
 my_count_total{status="ok"} 2.0
 ```
+
+#  Complex YAML Configuration Examples
+
+ Integration tests  provide complex/concrete examples of application and YAML configuration files.
+
+- [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)

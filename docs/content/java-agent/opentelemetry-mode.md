@@ -1,9 +1,9 @@
 ---
-title: OpenTelemetry Mode
+title: OpenTelemetry mode
 weight: 3
 ---
 
-OpenTelemetry Mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
+OpenTelemetry mode periodically collects metrics and pushes them to an OpenTelemetry endpoint.
 
 # Installation
 
@@ -19,7 +19,7 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<EXPORTER.YAML> -jar <YOU
 java -javaagent:jmx_prometheus_javaagent-1.1.0.jar=exporter.yaml -jar <YOUR_APPLICATION.JAR>
 ```
 
-**NOTES**
+ **Notes**
 
 - No `<HOSTNAME>` or `<PORT>` is used
 
@@ -38,7 +38,7 @@ rules:
 
 # Advanced YAML Configuration
 
-OpenTelemetry Mode also supports the use of `OTEL` environment variables.
+OpenTelemetry mode also supports the use of `OTEL` environment variables.
 
 **exporter.yaml**
 
@@ -56,3 +56,9 @@ rules:
 Run your application.
 
 Access OpenTelemetry metrics using your OpenTelemetry platform.
+
+#  Complex YAML Configuration Examples
+
+ Integration tests  provide complex/concrete examples of application and YAML configuration files.
+
+- [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)

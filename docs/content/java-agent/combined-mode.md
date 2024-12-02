@@ -1,23 +1,27 @@
 ---
-title: Combined Mode
+title: Combined mode
 weight: 4
 ---
 
-Combined Mode allows for both HTTP Mode and OpenTelemetry mode metrics collections methods.
+Combined mode allows for both HTTP mode and OpenTelemetry mode metrics collection methods.
 
-### HTTP Mode
+### HTTP mode
 
 Exposes metric using an HTTP endpoint.
 
 - metrics are collected when the HTTP endpoint is accessed
 - "pull" model
 
-### OpenTelemtry Mode
+### OpenTelemetry mode
 
 Pushes metrics to an OpenTelemetry endpoint.
 
 - metrics are periodically collected and pushed OpenTelemetry endpoint
 - "push" model
+
+**Notes**
+
+-  Due to the indepenent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
 
 # Installation
 
@@ -27,11 +31,11 @@ Pushes metrics to an OpenTelemetry endpoint.
 java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
 ```
 
-**NOTES**
+ **Notes**
 
 - `<PORT>` is required
 - `[HOSTNAME]` is optional
-  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `myserver:12345`)
+  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `server:12345`)
 
 ### Concrete Example
 
@@ -54,12 +58,12 @@ rules:
 
 # Advanced YAML Configuration
 
-Reference HTTP Mode [Rules](/rules/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules](/http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
 1. Run your application.
-2. Access HTTP Mode metrics using a browser to view your metrics.
+2. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
 http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics
@@ -73,3 +77,9 @@ my_count_total{status="ok"} 2.0
 ```
 
 3. Access your OpenTelemetry platform to view OpenTelemetry metrics.
+
+#  Complex YAML Configuration Examples
+
+ Integration tests  provide complex/concrete examples of application and YAML configuration files.
+
+- [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)
