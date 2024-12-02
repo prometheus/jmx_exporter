@@ -14,6 +14,6 @@ Community provided example YAML configuration files:
 
 - [examples](https://github.com/prometheus/jmx_exporter/tree/main/examples)
 
-Integration tests also provide complex and concrete examples of application and YAML configuration files:
+Integration tests also provide  complex/concrete examples of application and YAML configuration files:
 
 - [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)
