@@ -1,6 +1,0 @@
----
-header:
-  - name: GitHub
-    ref: https://github.com/prometheus/jmx_exporter
-    icon: gdoc_github
-    external: true
