@@ -6,19 +6,7 @@ The JMX Exporter is collector to capture JMX MBean values.
 
 # Documentation
 
-**Documentation is specific to a release.**
-
-[main](http://prometheus.github.io/jmx_exporter/)
-
-[1.0.1](https://github.com/prometheus/jmx_exporter/tree/release-1.0.1/docs)
-
-[0.20.0](https://github.com/prometheus/jmx_exporter/tree/release-0.20.0)
-
-[0.19.0](https://github.com/prometheus/jmx_exporter/tree/release-0.19.0)
-
-[0.18.0](https://github.com/prometheus/jmx_exporter/tree/release-0.18.0)
-
-[0.17.2](https://github.com/prometheus/jmx_exporter/tree/release-0.17.2)
+Documentation can be found at [http://prometheus.github.io/jmx_exporter/](http://prometheus.github.io/jmx_exporter)
 
 # Contributing and community
 

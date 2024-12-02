@@ -1,12 +1,14 @@
 ---
-title: "JMX Exporter"
+title: "Version 1.1.0"
+weight: 1
 ---
 
-This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.1.0 and higher.
+This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.1.0.
 
 The main new features of the 1.1.0 release are:
 
-* **OpenTelemetry Exporter:** Push metrics in OTLP format to an OpenTelemetry endpoint.
+* **OpenTelemetry** Push metrics in OTLP format to an OpenTelemetry endpoint
+* **Pluggable Authenticator** Ability to integration a custom pluggable authenticator
 
 **Documentation and Examples**
 
