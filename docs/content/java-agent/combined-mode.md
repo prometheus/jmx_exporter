@@ -35,7 +35,7 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORT
 
 - `<PORT>` is required
 - `[HOSTNAME]` is optional
-  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `myserver:12345`)
+  - if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `server:12345`)
 
 ### Concrete Example
 
