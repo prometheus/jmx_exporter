@@ -12,7 +12,7 @@ Exposes metric using an HTTP endpoint.
 - metrics are collected when the HTTP endpoint is accessed
 - "pull" model
 
-### OpenTelemtry Mode
+### OpenTelemetry Mode
 
 Pushes metrics to an OpenTelemetry endpoint.
 
