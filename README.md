@@ -8,7 +8,7 @@ The JMX Exporter is collector to capture JMX MBean values.
 
 **Documentation is specific to a release.**
 
-[main](docs)
+[main](http://prometheus.github.io/jmx_exporter/)
 
 [1.0.1](https://github.com/prometheus/jmx_exporter/tree/release-1.0.1/docs)
 
