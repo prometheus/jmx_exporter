@@ -19,6 +19,10 @@ Pushes metrics to an OpenTelemetry endpoint.
 - metrics are periodically collected and pushed OpenTelemetry endpoint
 - "push" model
 
+**Notes**
+
+- Due to different collection methods, HTTP Mode metrics most likely will not match OpenTelemetry metrics exactly
+
 # Installation
 
 ### Example
