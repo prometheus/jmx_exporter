@@ -4,8 +4,6 @@ title = "JMX Exporter"
 theme = "hugo-geekdoc"
 
 pluralizeListTitles = false
-relativeURLs = true
-canonifyURLs = false
 
 # Geekdoc required configuration
 #pygmentsUseClasses = true
