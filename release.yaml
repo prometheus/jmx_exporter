@@ -1,0 +1,56 @@
+pipeline:
+  name: release
+  jobs:
+    - name: release
+      enabled: true
+      steps:
+        - name: change version
+          run: |
+            ./mvnw -B versions:set -DnewVersion="${{ release }}" -DprocessAllModules >> /dev/null
+            rm -Rf $(find . -name "*versionsBackup")
+        - name: build & verify
+          run: ./mvnw clean verify
+        - name: create / clean RELEASE directory
+          run: |
+            mkdir -p RELEASE
+            rm -Rf RELEASE/*
+        - name: copy artifacts
+          run: |
+            cp jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-${{ release }}.jar RELEASE/.
+            cp jmx_prometheus_standalone/target/jmx_prometheus_standalone-${{ release }}.jar RELEASE/.
+        - name: create signature & checksums
+          working-directory: RELEASE
+          run: |
+            for FILE in *.jar; do gpg --armor --detach-sign "$FILE"; done
+            for FILE in *.jar; do sha256sum "$FILE" > "$FILE".sha256; done
+        - name: commit version
+          enabled: false
+          run: |
+            git add -u
+            git commit -s -m "release-${{ release }}"
+        - name: tag version
+          enabled: false
+          run: |
+            git tag "${{ release }}"
+            git push --tags
+        - name: checkout & push release branch
+          enabled: false
+          run: |
+            git checkout -b "release-${{ release }}"
+            git push --set-upstream origin "release-${{ release }}"
+        - name: checkout main
+          enabled: false
+          run: git checkout main
+        - name: change version
+          enabled: false
+          run: |
+            ./mvnw -B versions:set -DnewVersion="${{ release }}-post" -DprocessAllModules >> /dev/null
+            rm -Rf $(find . -name "*versionsBackup")
+        - name: commit version
+          enabled: false
+          run: |
+            git add -u
+            git commit -s -m "Prepare for development"
+        - name: git push
+          enabled: false
+          run: git push

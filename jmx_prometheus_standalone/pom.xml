@@ -149,6 +149,8 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- .deb has been deprecated, keeping the configuration in the scenario we want to reintroduce it -->
+            <!--
             <plugin>
                 <artifactId>jdeb</artifactId>
                 <groupId>org.vafer</groupId>
@@ -192,6 +194,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
             <plugin>
                 <groupId>com.coderplus.maven.plugins</groupId>
                 <artifactId>copy-rename-maven-plugin</artifactId>
