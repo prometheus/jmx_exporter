@@ -1,98 +1,35 @@
 # Maintainer Notes
 
-Shell scripts to build and release are located int the `tools` directory.
+## Release
 
-## Build a pre-release
-___
+Verifyica [Pipeliner](https://github.com/verifyica-team/pipeliner) is used to run the release pipeline.
 
-**Pre-release builds are not source controlled (no branch, no tag)**
+- builds & runs integration tests using smoke test containers
+- creates & copies release artifacts
+- generates signatures and checksums for release artifacts
+- creates the release branch
+- tags the release
+- updates the `main` branch for development
 
-Command
+**Notes**
 
-```shell
-./tools/build-and-copy.sh <version> <destination directory>
-```
+- `gpg` is required
+- `sha256sum` is required
 
-Example
-
-```shell
-./tools/build-and-copy.sh 0.20.0-ALPHA-1 "/tmp/"
-```
-
-The jars will be located in `/tmp`
-
-## Build and stage 
-___
-
-Release builds are source controlled.
-
-- Creates a `release-<version>` branch
-- Creates a `<version>` tag
-- Pushes the branch and tag to GitHub
-- Stages the release to Maven Central
-
-### Step 1
-
-Command
+### Example:
 
 ```shell
-./tools/build-and-stage.sh <version>
+./pipeliner -Prelease=<RELEASE VERSION> release.yaml
 ```
 
-Example
+### Concrete Example:
 
 ```shell
-./tools/build-and-stage.sh 0.20.0
+./pipeliner -Prelease=1.1.0 release.yaml
 ```
 
-### Step 2
+## Release Artifacts
 
-Download the staged artifacts from Maven Central and run the integration test suite.
+Release artifacts will be located in the `RELEASE` directory.
 
-```
-https://oss.sonatype.org/#stagingRepositories
-```
-
-Example
-
-```shell
-/home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar
-/home/dhoard/Downloads/jmx_prometheus_standalone-0.20.0.jar
-```
-
-Command
-
-```shell
-./tools/patch-and-run-integration-test-suite.sh <javaagent.jar> <standalone.jar>
-```
-
-Example
-
-```shell
-./tools/patch-and-run-integration-test-suite.sh /home/dhoard/Downloads/jmx_prometheus_javaagent-0.20.0.jar /home/dhoard/Downloads/jmx_prometheus_standalone-0.20.0.jar
-```
-
-### Step 3
-
-If the integration test suite in Step 2 passes, on Maven Central...
-
-- Click `Close` to trigger Sonatype's verification
-- Once closed, click `Release`
-
-
-### Step 4
-
-Verify the files are available via Maven Central (Maven)
-
-Create a GitHub release
-
-### Step 5
-
-Checkout the `main` branch and increment the version
-
-```shell
-git checkout main
-./tools/change-version.sh 1.0.0
-git add -u
-git commit -m "prepare for next development iteration"
-```
+Attach all files to the GitHub release.
