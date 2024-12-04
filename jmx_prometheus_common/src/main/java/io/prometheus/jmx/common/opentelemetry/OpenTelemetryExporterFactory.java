@@ -45,8 +45,6 @@ public class OpenTelemetryExporterFactory {
             throw new IllegalArgumentException("exporterYamlFile is null");
         }
 
-        OpenTelemetryExporter openTelemetryExporter = null;
-
         try {
             try (Reader reader = new FileReader(exporterYamlFile)) {
                 Map<Object, Object> yamlMap = new Yaml().load(reader);
@@ -161,14 +159,12 @@ public class OpenTelemetryExporterFactory {
                             });
                 }
 
-                openTelemetryExporter = openTelemetryExporterBuilder.buildAndStart();
+                return openTelemetryExporterBuilder.buildAndStart();
             }
         } catch (IOException e) {
             throw new ConfigurationException(
                     format("Exception loading file [%s]", exporterYamlFile), e);
         }
-
-        return openTelemetryExporter;
     }
 
     /**

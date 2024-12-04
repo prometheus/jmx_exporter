@@ -1,7 +1,7 @@
 Docs
 ----
 
-This directory contains [hugo](https://gohugo.io) documentation to be published in Github pages.
+This directory contains [hugo](https://gohugo.io) documentation to be published in GitHub pages.
 
 Run Locally
 -----------
@@ -12,15 +12,15 @@ hugo server -D
 
 This will serve the docs on [http://localhost:1313](http://localhost:1313).
 
-Deploy to Github Pages
+Deploy to GitHub Pages
 ----------------------
 
-Changes to the `main` branch will be deployed automatically with Github actions.
+Changes to the `main` branch will be deployed automatically with GitHub actions.
 
 Update Geekdocs
 ---------------
 
-The docs use the [Geekdocs](https://geekdocs.de/) theme. The theme is checked in to Github in the `./docs/themes/hugo-geekdoc/` folder. To update [Geekdocs](https://geekdocs.de/), remove the current folder and create a new one with the latest [release](https://github.com/thegeeklab/hugo-geekdoc/releases). There are no local modifications in `./docs/themes/hugo-geekdoc/`.
+The docs use the [Geekdocs](https://geekdocs.de/) theme. The theme is checked in to GitHub in the `./docs/themes/hugo-geekdoc/` folder. To update [Geekdocs](https://geekdocs.de/), remove the current folder and create a new one with the latest [release](https://github.com/thegeeklab/hugo-geekdoc/releases). There are no local modifications in `./docs/themes/hugo-geekdoc/`.
 
 Notes
 -----

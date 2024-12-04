@@ -45,7 +45,7 @@ public class RMIRegistrySSLDisabledTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
-        // Filter the arguments..
+        // Filter the arguments ...
         //
         // 1. only run the Standalone exporter
         // 2. filter out the GraalVM 1.8 JVM - exception is that SunJSSE is not found

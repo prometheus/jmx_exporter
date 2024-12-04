@@ -20,9 +20,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface BoolMBean {
-    public boolean getTrue();
 
-    public boolean getFalse();
+    boolean getTrue();
+
+    boolean getFalse();
 }
 
 class Bool implements BoolMBean {

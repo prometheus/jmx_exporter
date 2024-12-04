@@ -20,7 +20,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface BeanWithEnumMBean {
-    public State getState();
+
+    State getState();
 }
 
 class BeanWithEnum implements BeanWithEnumMBean {

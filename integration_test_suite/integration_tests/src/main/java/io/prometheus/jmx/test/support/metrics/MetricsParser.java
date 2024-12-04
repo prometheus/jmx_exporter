@@ -235,7 +235,7 @@ public class MetricsParser {
      * @param typeLine typeLine
      * @param help help
      * @param metricLine metricLine
-     * @return
+     * @return a Metric
      */
     private static Metric createMetric(String typeLine, String help, String metricLine) {
         String name;

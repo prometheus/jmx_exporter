@@ -230,7 +230,7 @@ public class YamlMapAccessorTest {
         assertTrue(optional.get() instanceof Map);
         map = (Map<Object, Object>) optional.get();
         assertTrue(map.get("value") instanceof Integer);
-        assertTrue(((Integer) map.get("value")) == 1);
+        assertEquals(1, (int) ((Integer) map.get("value")));
     }
 
     @Test

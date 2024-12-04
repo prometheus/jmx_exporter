@@ -22,7 +22,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface HadoopDataNodeMXBean {
-    public Map<String, Map<String, Long>> getDatanodeNetworkCounts();
+
+    Map<String, Map<String, Long>> getDatanodeNetworkCounts();
 }
 
 class HadoopDataNode implements HadoopDataNodeMXBean {

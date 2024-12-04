@@ -20,7 +20,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface TomcatServletMBean {
-    public int getRequestCount();
+
+    int getRequestCount();
 }
 
 class TomcatServlet implements TomcatServletMBean {

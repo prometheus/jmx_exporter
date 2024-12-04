@@ -165,8 +165,8 @@ public class JmxMBeanPropertyCacheTest {
         keepSet.add(mBean3);
         testCache.onlyKeepMBeans(keepSet);
         assertEquals(2, testCache.getKeyPropertiesPerBean().size());
-        assertTrue(testCache.getKeyPropertiesPerBean().keySet().contains(mBean2));
-        assertTrue(testCache.getKeyPropertiesPerBean().keySet().contains(mBean3));
+        assertTrue(testCache.getKeyPropertiesPerBean().containsKey(mBean2));
+        assertTrue(testCache.getKeyPropertiesPerBean().containsKey(mBean3));
     }
 
     @Test
@@ -174,7 +174,7 @@ public class JmxMBeanPropertyCacheTest {
         JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
         testCache.onlyKeepMBeans(Collections.emptySet());
         testCache.onlyKeepMBeans(Collections.emptySet());
-        assertEquals(testCache.getKeyPropertiesPerBean().size(), 0);
+        assertEquals(0, testCache.getKeyPropertiesPerBean().size());
     }
 
     private void assertSameElementsAndOrder(LinkedHashMap<?, ?> actual, Object... expected) {

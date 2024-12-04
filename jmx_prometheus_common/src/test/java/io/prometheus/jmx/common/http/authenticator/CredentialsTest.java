@@ -16,8 +16,8 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class CredentialsTest {
         Credentials credentials1 = new Credentials(username, password);
         Credentials credentials2 = new Credentials(username, password);
 
-        assertTrue(credentials1.equals(credentials2));
+        assertEquals(credentials1, credentials2);
     }
 
     @Test
@@ -42,6 +42,6 @@ public class CredentialsTest {
         Credentials credentials1 = new Credentials(username, password);
         Credentials credentials2 = new Credentials(username, password + "X");
 
-        assertFalse(credentials1.equals(credentials2));
+        assertNotEquals(credentials1, credentials2);
     }
 }
