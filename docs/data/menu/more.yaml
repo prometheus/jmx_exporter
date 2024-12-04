@@ -4,7 +4,7 @@ more:
     ref: "https://github.com/prometheus/jmx_exporter/releases"
     external: true
     icon: "gdoc_download"
-  - name: Github
+  - name: GitHub
     ref: "https://github.com/prometheus/jmx_exporter"
     external: true
     icon: "gdoc_github"

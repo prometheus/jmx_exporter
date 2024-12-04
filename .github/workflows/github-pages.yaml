@@ -1,4 +1,4 @@
-name: Deploy Documentation to Github Pages
+name: Deploy Documentation to GitHub Pages
 
 on:
   # Runs on pushes targeting the 1.0.x branch

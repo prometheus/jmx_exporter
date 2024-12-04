@@ -94,10 +94,9 @@ public class JmxCollector implements MultiCollector {
         MatchedRulesCache rulesCache;
     }
 
-    private PrometheusRegistry prometheusRegistry;
     private Config config;
     private File configFile;
-    private long createTimeNanoSecs = System.nanoTime();
+    private final long createTimeNanoSecs = System.nanoTime();
 
     private Counter configReloadSuccess;
     private Counter configReloadFailure;
@@ -172,8 +171,6 @@ public class JmxCollector implements MultiCollector {
      * @return the JmxCollector
      */
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
-        this.prometheusRegistry = prometheusRegistry;
-
         configReloadSuccess =
                 Counter.builder()
                         .name("jmx_config_reload_success_total")
@@ -514,7 +511,7 @@ public class JmxCollector implements MultiCollector {
                 String type) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
-            if (beanProperties.size() > 0) {
+            if (!beanProperties.isEmpty()) {
                 name.append(SEP);
                 name.append(beanProperties.values().iterator().next());
             }

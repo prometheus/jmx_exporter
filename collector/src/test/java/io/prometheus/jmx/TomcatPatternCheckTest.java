@@ -31,7 +31,8 @@ import org.junit.Test;
  *
  * See <a
  * href="http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html</a>
- * } or
+ *
+ * <p>or
  *
  * <p><a
  * href="http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java">http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java</a>
@@ -40,6 +41,7 @@ public class TomcatPatternCheckTest {
 
     private static final Pattern VALID_TOMCAT_PATH =
             Pattern.compile("//([-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+
     private static final Pattern VALID_SERVLET_NAME = Pattern.compile("([-a-zA-Z0-9+/$%~_-|!.]*)");
 
     private static final Pattern VALID_WEBMODULE =

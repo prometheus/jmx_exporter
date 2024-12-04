@@ -135,9 +135,9 @@ class JmxScraper {
         } else {
             Map<String, Object> environment = new HashMap<>();
             if (username != null
-                    && username.length() != 0
+                    && !username.isEmpty()
                     && password != null
-                    && password.length() != 0) {
+                    && !password.isEmpty()) {
                 String[] credent = new String[] {username, password};
                 environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
             }

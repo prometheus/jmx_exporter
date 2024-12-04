@@ -23,7 +23,8 @@ public interface CassandraMetricsMBean {
     // This how yammer's metrics
     // http://www.javacodegeeks.com/2012/12/yammer-metrics-a-new-way-to-monitor-your-application.html
     // look through JMX.
-    public float getValue();
+
+    float getValue();
 }
 
 class CassandraMetrics implements CassandraMetricsMBean {

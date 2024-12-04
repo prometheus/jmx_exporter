@@ -18,8 +18,8 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Test;
@@ -71,9 +71,9 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
     }
 
     private static String hash(String algorithm, String value, String salt)
-            throws NoSuchAlgorithmException, UnsupportedEncodingException {
+            throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
-        byte[] hashedBytes = digest.digest((salt + ":" + value).getBytes("UTF-8"));
+        byte[] hashedBytes = digest.digest((salt + ":" + value).getBytes(StandardCharsets.UTF_8));
         BigInteger number = new BigInteger(1, hashedBytes);
         return number.toString(16).toLowerCase();
     }
