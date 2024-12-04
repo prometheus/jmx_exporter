@@ -9,9 +9,9 @@ The JMX Exporter Java agent runs as a Java agent within your application and col
 
 # Jar File
 
-The JMX Exporter Java agent jar file is published to Maven Central.
+The JMX Exporter Java agent jar file is published via GitHub Releases.
 
-- [jmx_prometheus_javaagent-1.1.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.1.0/jmx_prometheus_javaagent-1.1.0.jar)
+- [jmx_prometheus_javaagent-1.1.0.jar](https://github.com/prometheus/jmx_exporter/releases/download/1.1.0/jmx_prometheus_javaagent-1.1.0.jar)
 
 # Installation
 

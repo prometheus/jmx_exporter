@@ -9,9 +9,9 @@ The Standalone JMX Exporter runs as a separate application that connects to your
 
 # Jar File
 
-The Standalone JMX Exporter jar file is published to Maven Central.
+The Standalone JMX Exporter jar file is published via GitHub Releases.
 
-- [jmx_prometheus_standalone-1.1.0.jar](https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_standalone/1.1.0/jmx_prometheus_standalone-1.1.0.jar)
+- [jmx_prometheus_standalone-1.1.0.jar](https://github.com/prometheus/jmx_exporter/releases/download/1.1.0/jmx_prometheus_standalone-1.1.0.jar)
 
 # Installation
 
