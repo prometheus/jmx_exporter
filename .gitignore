@@ -13,6 +13,7 @@ dependency-reduced-pom.xml
 pom.xml.versionsBackup
 integration_test_suite/integration_tests/src/test/resources/common/**.jar
 **/.hugo_build.lock
+quick-test.log
 smoke-test.log
 regression-test.log
 RELEASE
