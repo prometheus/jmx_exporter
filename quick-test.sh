@@ -17,12 +17,13 @@
 #
 
 #
-# Bash script to build, package, and run the smoke tests (smoke test Docker containers)
+# Bash script to build, package, and run the tests (single Docker container)
 #
 
 (
-  unset JAVA_DOCKER_IMAGES
-  unset PROMETHEUS_DOCKER_IMAGES
-  ./integration_test_suite/pull-smoke-test-docker-images.sh
+  export JAVA_DOCKER_IMAGES="eclipse-temurin:21-alpine"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.0.1"
+  docker pull "$JAVA_DOCKER_IMAGES"
+  docker pull "$PROMETHEUS_DOCKER_IMAGES"
   ./mvnw clean verify
-) 2>&1 | tee smoke-test.log
+) 2>&1 | tee quick-test.log

@@ -17,8 +17,7 @@
 #
 
 #
-# Bash script to build, package, and run the integration
-# test suite continuously until there is a failure
+# Bash script to build, package, and run the regression tests (all Docker containers)
 #
 
 (
