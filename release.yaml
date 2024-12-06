@@ -11,7 +11,7 @@ pipeline:
             rm -Rf $(find . -name "*versionsBackup")
         - name: build & verify
           enabled: true
-          run: ./mvnw clean verify
+          run: ./mvnw -s ~/.m2/prometheus.settings.xml -P release clean deploy
         - name: create / clean RELEASE directory
           enabled: true
           run: |
