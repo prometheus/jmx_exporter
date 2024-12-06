@@ -9,6 +9,7 @@ amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:21
 amazoncorretto:22
+amazoncorretto:23
 antublue/openlogic-openjdk:8
 antublue/openlogic-openjdk:11
 antublue/openlogic-openjdk:17
@@ -91,3 +92,4 @@ sapmachine:11
 sapmachine:17
 sapmachine:21
 sapmachine:22
+sapmachine:23
