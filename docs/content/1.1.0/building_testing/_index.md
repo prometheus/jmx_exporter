@@ -3,7 +3,7 @@ title: "Building / Testing"
 weight: 4
 ---
 
-Java 11+ is required to build and unit test the code.
+Java 11+ is required to build and test the code.
 
 Docker is required to run the integration test suite.
 
