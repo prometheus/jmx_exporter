@@ -41,7 +41,8 @@ public class Assertions {
         assertThat(httpResponse).isNotNull();
         assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
-        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).contains("text/plain");
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
+                .contains("text/plain");
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().string()).isNotBlank();
         assertThat(httpResponse.body().string()).contains("Exporter is healthy.");

@@ -23,11 +23,23 @@ import java.util.Locale;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+/** Class to implement JmxExampleApplication */
 public class JmxExampleApplication {
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd | HH:mm:ss.SSS", Locale.getDefault());
 
+    /** Constructor */
+    private JmxExampleApplication() {
+        // INTENTIONALLY BLANK
+    }
+
+    /**
+     * Main method
+     *
+     * @param args args
+     * @throws Exception Exception
+     */
     public static void main(String[] args) throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
@@ -54,6 +66,6 @@ public class JmxExampleApplication {
                 JmxExampleApplication.class.getName(),
                 "Running");
 
-        Thread.currentThread().join(); // wait forever
+        Thread.currentThread().join();
     }
 }
