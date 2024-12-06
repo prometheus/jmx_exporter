@@ -23,13 +23,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -122,7 +122,8 @@ public class BasicAuthenticationSHA1Test {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
                 }
             }
         }
@@ -146,8 +147,8 @@ public class BasicAuthenticationSHA1Test {
                                 .url(url)
                                 .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        MetricsType.OPEN_METRICS_TEXT_METRICS)
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -155,7 +156,10 @@ public class BasicAuthenticationSHA1Test {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
                 }
             }
         }
@@ -179,8 +183,8 @@ public class BasicAuthenticationSHA1Test {
                                 .url(url)
                                 .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        MetricsType.PROMETHEUS_TEXT_METRICS)
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -188,7 +192,10 @@ public class BasicAuthenticationSHA1Test {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
                 }
             }
         }
@@ -212,10 +219,8 @@ public class BasicAuthenticationSHA1Test {
                                 .url(url)
                                 .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        "application/vnd.google.protobuf;"
-                                                + " proto=io.prometheus.client.MetricFamily;"
-                                                + " encoding=delimited")
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -223,7 +228,10 @@ public class BasicAuthenticationSHA1Test {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
                 }
             }
         }
@@ -245,8 +253,10 @@ public class BasicAuthenticationSHA1Test {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertCommonMetricsResponse(httpResponse);
+            ExporterTestEnvironment exporterTestEnvironment,
+            HttpResponse httpResponse,
+            MetricsContentType metricsContentType) {
+        assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 

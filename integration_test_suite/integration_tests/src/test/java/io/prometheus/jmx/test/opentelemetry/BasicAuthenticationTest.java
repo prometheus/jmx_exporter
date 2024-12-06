@@ -25,7 +25,7 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement OpenTelemetryBasicAuthenticationTest */
+/** Class to implement BasicAuthenticationTest */
 public class BasicAuthenticationTest {
 
     private static final String VALID_USER = "Prometheus";

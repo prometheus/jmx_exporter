@@ -22,12 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public class IncludeObjectNamesTest {
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
@@ -87,9 +87,14 @@ public class IncludeObjectNamesTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -99,9 +104,12 @@ public class IncludeObjectNamesTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -111,9 +119,14 @@ public class IncludeObjectNamesTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
@@ -132,8 +145,10 @@ public class IncludeObjectNamesTest {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertCommonMetricsResponse(httpResponse);
+            ExporterTestEnvironment exporterTestEnvironment,
+            HttpResponse httpResponse,
+            MetricsContentType metricsContentType) {
+        assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 

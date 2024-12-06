@@ -18,13 +18,21 @@ package io.prometheus.jmx;
 
 import java.util.Optional;
 
+/** Class to implement OptionalValueMBean */
 public interface OptionalValueMBean {
 
+    /**
+     * Method to get the optional value
+     *
+     * @return the optional value
+     */
     Optional<Integer> getValue();
 }
 
+/** Class to implement OptionalValue */
 class OptionalValue implements OptionalValueMBean {
 
+    /** Constructor */
     public OptionalValue() {
         // INTENTIONALLY BLANK
     }

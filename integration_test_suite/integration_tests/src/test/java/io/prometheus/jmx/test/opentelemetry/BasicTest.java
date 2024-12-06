@@ -24,7 +24,7 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement OpenTelemetryTest */
+/** Class to implement BasicTest */
 public class BasicTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
