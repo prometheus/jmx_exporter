@@ -18,6 +18,7 @@ package io.prometheus.jmx.test.support.metrics;
 
 import static java.lang.String.format;
 
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_28_3.Metrics;
 import java.io.BufferedReader;
@@ -64,9 +65,12 @@ public class MetricsParser {
      * @return a Collection of Metrics
      */
     public static Collection<Metric> parseCollection(HttpResponse httpResponse) {
-        Objects.requireNonNull(httpResponse.headers().get("CONTENT-TYPE"));
+        if (httpResponse.headers().get(HttpHeader.CONTENT_TYPE) == null) {
+            throw new MetricsParserException(
+                    format("Exception parsing metrics. No %s header", HttpHeader.CONTENT_TYPE));
+        }
 
-        String contentType = httpResponse.headers().get("CONTENT-TYPE").get(0);
+        String contentType = httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0);
 
         if (contentType.contains("text/plain")) {
             return parseTextMetrics(httpResponse.body().string());
@@ -76,7 +80,7 @@ public class MetricsParser {
             return parseProtobufMetrics(httpResponse.body().bytes());
         } else {
             throw new MetricsParserException(
-                    format("Exception parsing text metrics. No parser for [%s]", contentType));
+                    format("Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]", contentType));
         }
     }
 
