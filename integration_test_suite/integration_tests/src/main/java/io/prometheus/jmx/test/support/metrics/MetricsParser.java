@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -80,7 +79,9 @@ public class MetricsParser {
             return parseProtobufMetrics(httpResponse.body().bytes());
         } else {
             throw new MetricsParserException(
-                    format("Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]", contentType));
+                    format(
+                            "Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]",
+                            contentType));
         }
     }
 
