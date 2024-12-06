@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseBody;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 
 /** Class to implement Assertions */
 public class Assertions {
@@ -47,8 +48,10 @@ public class Assertions {
      * Assert common metrics response
      *
      * @param httpResponse httpResponse
+     * @param metricsContentType metricsType
      */
-    public static void assertCommonMetricsResponse(HttpResponse httpResponse) {
+    public static void assertCommonMetricsResponse(
+            HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertThat(httpResponse).isNotNull();
 
         int statusCode = httpResponse.statusCode();
@@ -67,6 +70,8 @@ public class Assertions {
 
         assertThat(httpResponse.headers()).isNotNull();
         assertThat(httpResponse.headers().get("CONTENT-TYPE")).hasSize(1);
+        assertThat(httpResponse.headers().get("CONTENT-TYPE").get(0))
+                .isEqualTo(metricsContentType.toString());
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().bytes()).isNotNull();
         assertThat(httpResponse.body().bytes().length).isGreaterThan(0);

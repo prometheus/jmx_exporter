@@ -7,13 +7,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.MetricsType;
 import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
 import io.prometheus.jmx.test.support.throttle.Throttle;
@@ -36,7 +36,7 @@ import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement CombinedHttpOpenTelemetryTest */
+/** Class to implement CombinedModeTest */
 public class CombinedModeTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
@@ -75,7 +75,8 @@ public class CombinedModeTest {
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(openTelemetryTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                openTelemetryTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
@@ -86,9 +87,14 @@ public class CombinedModeTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(openTelemetryTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                openTelemetryTestEnvironment,
+                httpResponse,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -99,9 +105,14 @@ public class CombinedModeTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(openTelemetryTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                openTelemetryTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -112,9 +123,14 @@ public class CombinedModeTest {
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(openTelemetryTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                openTelemetryTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     /** Method to test that Prometheus is up */
@@ -186,8 +202,10 @@ public class CombinedModeTest {
     }
 
     private void assertMetricsResponse(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, HttpResponse httpResponse) {
-        assertCommonMetricsResponse(httpResponse);
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment,
+            HttpResponse httpResponse,
+            MetricsContentType metricsContentType) {
+        assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 

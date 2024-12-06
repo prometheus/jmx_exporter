@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test.support.metrics;
 
+import static java.lang.String.format;
+
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_28_3.Metrics;
 import java.io.BufferedReader;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -61,13 +64,133 @@ public class MetricsParser {
      * @return a Collection of Metrics
      */
     public static Collection<Metric> parseCollection(HttpResponse httpResponse) {
-        if (Objects.requireNonNull(httpResponse.headers().get("CONTENT-TYPE"))
-                .contains(
-                        "application/vnd.google.protobuf;"
-                                + " proto=io.prometheus.client.MetricFamily;")) {
+        Objects.requireNonNull(httpResponse.headers().get("CONTENT-TYPE"));
+
+        String contentType = httpResponse.headers().get("CONTENT-TYPE").get(0);
+
+        if (contentType.contains("text/plain")) {
+            return parseTextMetrics(httpResponse.body().string());
+        } else if (contentType.contains("application/openmetrics-text")) {
+            return parseOpenMetricsTextMetrics(httpResponse.body().string());
+        } else if (contentType.contains("application/vnd.google.protobuf")) {
             return parseProtobufMetrics(httpResponse.body().bytes());
         } else {
-            return parseTextMetrics(httpResponse.body().string());
+            throw new MetricsParserException(
+                    format("Exception parsing text metrics. No parser for [%s]", contentType));
+        }
+    }
+
+    /**
+     * Method to parse test Metrics
+     *
+     * @param body body
+     * @return a Collection of Metrics
+     */
+    private static Collection<Metric> parseTextMetrics(String body) {
+        // System.out.println("DEBUG parseTextMetrics()");
+
+        Collection<Metric> metrics = new ArrayList<>();
+
+        try (LineReader lineReader = new LineReader(new StringReader(body))) {
+            String typeLine;
+            String helpLine;
+
+            while (true) {
+                helpLine = readHelpLine(lineReader);
+                if (helpLine == null) {
+                    break;
+                }
+
+                typeLine = readTypeLine(lineReader);
+
+                while (true) {
+                    String metricLine = readMetricLine(lineReader);
+                    if (metricLine == null) {
+                        break;
+                    }
+                    metrics.add(createMetric(typeLine, helpLine, metricLine));
+                }
+            }
+
+            return metrics;
+        } catch (Throwable t) {
+            throw new MetricsParserException("Exception parsing text metrics", t);
+        }
+    }
+
+    private static Collection<Metric> parseOpenMetricsTextMetrics(String body) {
+        // System.out.println("DEBUG parseOpenMetricsTextMetrics()");
+
+        Collection<Metric> metrics = new ArrayList<>();
+
+        String line;
+
+        try (LineReader lineReader = new LineReader(new StringReader(body))) {
+            while (true) {
+                String type = null;
+                String help = null;
+
+                while (true) {
+                    line = lineReader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+
+                    // System.out.printf("LINE > %s%n", line);
+
+                    if (line.startsWith("# EOF")) {
+                        break;
+                    }
+
+                    if (line.startsWith("# TYPE")) {
+                        type = line.substring(line.lastIndexOf(" ")).trim().toUpperCase(Locale.US);
+                    } else if (line.startsWith("# UNIT")) {
+                        // INTENTIONALLY BLANK
+                    } else if (line.startsWith("# HELP")) {
+                        help = line.substring("# HELP".length()).trim();
+                        ;
+                        break;
+                    }
+                }
+
+                if (line == null) {
+                    break;
+                }
+
+                while (true) {
+                    line = lineReader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+
+                    if (line.startsWith("# EOF")) {
+                        break;
+                    } else if (line.startsWith("#")) {
+                        lineReader.unreadLine(line);
+                        break;
+                    } else {
+                        // System.out.printf("LINE > %s%n", line);
+                        /*
+                        System.out.println("CREATE METRIC");
+                        System.out.printf("  > %s%n", typeLine);
+                        System.out.printf("  > %s%n", helpLine);
+                        System.out.printf("  > %s%n", line);
+                        */
+
+                        if (type.equals("INFO")) {
+                            type = "GAUGE";
+                        }
+
+                        Metric metric = createMetric(type, help, line);
+                        // System.out.printf("    > %s%n", metric);
+                        metrics.add(metric);
+                    }
+                }
+            }
+
+            return metrics;
+        } catch (Throwable t) {
+            throw new MetricsParserException("Exception parsing OpenMetrics text metrics", t);
         }
     }
 
@@ -78,6 +201,8 @@ public class MetricsParser {
      * @return a Collection of metrics
      */
     private static Collection<Metric> parseProtobufMetrics(byte[] bytes) {
+        // System.out.println("DEBUG parseProtobufMetrics()");
+
         Collection<Metric> collection = new ArrayList<>();
 
         try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
@@ -151,42 +276,6 @@ public class MetricsParser {
     }
 
     /**
-     * Method to parse test Metrics
-     *
-     * @param body body
-     * @return a Collection of Metrics
-     */
-    private static Collection<Metric> parseTextMetrics(String body) {
-        Collection<Metric> metrics = new ArrayList<>();
-
-        try (LineReader lineReader = new LineReader(new StringReader(body))) {
-            String typeLine;
-            String helpLine;
-
-            while (true) {
-                helpLine = readHelpLine(lineReader);
-                if (helpLine == null) {
-                    break;
-                }
-
-                typeLine = readTypeLine(lineReader);
-
-                while (true) {
-                    String metricLine = readMetricLine(lineReader);
-                    if (metricLine == null) {
-                        break;
-                    }
-                    metrics.add(createMetric(typeLine, helpLine, metricLine));
-                }
-            }
-
-            return metrics;
-        } catch (Throwable t) {
-            throw new MetricsParserException("Exception parsing text metrics", t);
-        }
-    }
-
-    /**
      * Method to read the HELP line
      *
      * @param lineReader lineReader
@@ -232,12 +321,12 @@ public class MetricsParser {
     /**
      * Method to create a Metric
      *
-     * @param typeLine typeLine
+     * @param type type
      * @param help help
      * @param metricLine metricLine
      * @return a Metric
      */
-    private static Metric createMetric(String typeLine, String help, String metricLine) {
+    private static Metric createMetric(String type, String help, String metricLine) {
         String name;
         TreeMap<String, String> labels = new TreeMap<>();
 
@@ -253,9 +342,9 @@ public class MetricsParser {
 
         double value = Double.parseDouble(metricLine.substring(metricLine.lastIndexOf(" ")));
 
-        if (typeLine.equalsIgnoreCase("COUNTER")) {
+        if (type.equalsIgnoreCase("COUNTER")) {
             return new Metric(Metric.Type.COUNTER, help, name, labels, value);
-        } else if (typeLine.equalsIgnoreCase("GAUGE")) {
+        } else if (type.equalsIgnoreCase("GAUGE")) {
             return new Metric(Metric.Type.GAUGE, help, name, labels, value);
         } else {
             return new Metric(Metric.Type.UNTYPED, help, name, labels, value);
