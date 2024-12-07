@@ -78,11 +78,10 @@ public class PrometheusRegistryUtils {
                                         .findFirst()
                                         .ifPresent(
                                                 (Consumer<DataPointSnapshot>)
-                                                        dataPointSnapshot -> {
-                                                            values.add(
-                                                                    getDataPointSnapshotValue(
-                                                                            dataPointSnapshot));
-                                                        }));
+                                                        dataPointSnapshot ->
+                                                                values.add(
+                                                                        getDataPointSnapshotValue(
+                                                                                dataPointSnapshot))));
 
         if (!values.isEmpty()) {
             return values.get(0);

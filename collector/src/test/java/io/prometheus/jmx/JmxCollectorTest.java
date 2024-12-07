@@ -273,8 +273,12 @@ public class JmxCollectorTest {
     @Test
     public void testIncludeObjectNames() throws Exception {
         new JmxCollector(
-                        "\n---\nincludeObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*"
-                                .replace('`', '"'))
+                        "\n"
+                                + "---\n"
+                                + "includeObjectNames:\n"
+                                + "- java.lang:*\n"
+                                + "- java.lang:*\n"
+                                + "- org.apache.cassandra.concurrent:*")
                 .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
@@ -305,8 +309,12 @@ public class JmxCollectorTest {
     public void testWhitelist() throws Exception {
         JmxCollector jc =
                 new JmxCollector(
-                                "\n---\nwhitelistObjectNames:\n- java.lang:*\n- java.lang:*\n- org.apache.cassandra.concurrent:*"
-                                        .replace('`', '"'))
+                                "\n"
+                                        + "---\n"
+                                        + "whitelistObjectNames:\n"
+                                        + "- java.lang:*\n"
+                                        + "- java.lang:*\n"
+                                        + "- org.apache.cassandra.concurrent:*")
                         .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
@@ -337,8 +345,13 @@ public class JmxCollectorTest {
     public void testExcludeObjectNames() throws Exception {
         JmxCollector jc =
                 new JmxCollector(
-                                "\n---\nincludeObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nexcludeObjectNames:\n- org.apache.cassandra.concurrent:*"
-                                        .replace('`', '"'))
+                                "\n"
+                                        + "---\n"
+                                        + "includeObjectNames:\n"
+                                        + "- java.lang:*\n"
+                                        + "- org.apache.cassandra.concurrent:*\n"
+                                        + "excludeObjectNames:\n"
+                                        + "- org.apache.cassandra.concurrent:*")
                         .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
@@ -369,8 +382,13 @@ public class JmxCollectorTest {
     public void testBlacklist() throws Exception {
         JmxCollector jc =
                 new JmxCollector(
-                                "\n---\nwhitelistObjectNames:\n- java.lang:*\n- org.apache.cassandra.concurrent:*\nblacklistObjectNames:\n- org.apache.cassandra.concurrent:*"
-                                        .replace('`', '"'))
+                                "\n"
+                                        + "---\n"
+                                        + "whitelistObjectNames:\n"
+                                        + "- java.lang:*\n"
+                                        + "- org.apache.cassandra.concurrent:*\n"
+                                        + "blacklistObjectNames:\n"
+                                        + "- org.apache.cassandra.concurrent:*")
                         .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.

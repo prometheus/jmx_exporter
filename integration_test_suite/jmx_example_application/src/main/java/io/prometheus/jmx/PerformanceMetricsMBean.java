@@ -65,11 +65,12 @@ class PerformanceMetrics implements PerformanceMetricsMBean {
 
         String[] names = {"ActiveSessions", "Bootstraps", "BootstrapsDeferred"};
         String[] descriptions = {"ActiveSessions", "Bootstraps", "BootstrapsDeferred"};
-        OpenType[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
+        OpenType<?>[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
 
         CompositeType compositeType =
                 new CompositeType(
                         "PerformanceMetrics", "Example composite data", names, descriptions, types);
+
         return new CompositeDataSupport(compositeType, data);
     }
 }
