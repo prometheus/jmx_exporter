@@ -1,6 +1,7 @@
 ---
 title: "JMX Exporter 1.1.0"
 weight: 1
+geekdocCollapseSection: true
 ---
 
 This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.1.0.
