@@ -1,6 +1,7 @@
 ---
-title: Java Agent
+title: Java Agent exporter
 weight: 1
+geekdocCollapseSection: true
 ---
 
 The JMX Exporter Java agent runs as a Java agent within your application and collects JMX MBean values.

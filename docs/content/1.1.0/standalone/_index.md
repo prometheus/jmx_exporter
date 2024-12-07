@@ -1,6 +1,7 @@
 ---
-title: Standalone
+title: Standalone exporter
 weight: 2
+geekdocCollapseSection: true
 ---
 
 The Standalone JMX Exporter runs as a separate application that connects to your application using RMI and collects JMX MBean values.
