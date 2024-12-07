@@ -9,9 +9,12 @@ pipeline:
           run: |
             ./mvnw -B versions:set -DnewVersion="${{ release }}" -DprocessAllModules >> /dev/null
             rm -Rf $(find . -name "*versionsBackup")
-        - name: build & verify
+        - name: build & verify 
           enabled: true
           run: ./mvnw clean verify
+        - name: deploy
+          enabled: true
+          run: ./mvnw ~/.m2/prometheus.settings.xml -P release clean deploy
         - name: create / clean RELEASE directory
           enabled: true
           run: |
