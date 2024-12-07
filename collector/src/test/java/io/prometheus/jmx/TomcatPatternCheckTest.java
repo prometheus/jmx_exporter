@@ -61,7 +61,7 @@ public class TomcatPatternCheckTest {
     }
 
     @Test
-    public void testSerlvetName() throws Exception {
+    public void testSerlvetName() {
         assertTrue(validateServletName("C"));
         assertTrue(validateServletName("Cc"));
         assertTrue(validateServletName("C$c"));
@@ -73,7 +73,7 @@ public class TomcatPatternCheckTest {
     }
 
     @Test
-    public void validateTomcatPath() throws Exception {
+    public void validateTomcatPath() {
         assertTrue(validateTomcatPath("//localhost/"));
         assertTrue(validateTomcatPath("//localhost/docs/"));
         assertTrue(validateTomcatPath("//www.example.com/prom-metric/"));
@@ -85,7 +85,7 @@ public class TomcatPatternCheckTest {
     }
 
     @Test
-    public void testWebModule() throws Exception {
+    public void testWebModule() {
         assertTrue(
                 validateWebModule(
                         "Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none"));

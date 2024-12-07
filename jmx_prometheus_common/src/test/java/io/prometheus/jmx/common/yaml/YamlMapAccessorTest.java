@@ -145,7 +145,7 @@ public class YamlMapAccessorTest {
         assertNotNull(optional);
         assertFalse(optional.isPresent());
 
-        optional = yamlMapAccessor.getOrCreate("/foo", () -> new LinkedHashMap<>());
+        optional = yamlMapAccessor.getOrCreate("/foo", LinkedHashMap::new);
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
@@ -210,7 +210,7 @@ public class YamlMapAccessorTest {
         Map<Object, Object> map = (Map<Object, Object>) optional.get();
         assertTrue(map.isEmpty());
 
-        optional = yamlMapAccessor.getOrCreate("/foo", () -> new LinkedHashMap<>());
+        optional = yamlMapAccessor.getOrCreate("/foo", LinkedHashMap::new);
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertTrue(optional.get() instanceof Map);

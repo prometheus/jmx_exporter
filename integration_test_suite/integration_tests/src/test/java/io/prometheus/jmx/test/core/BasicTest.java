@@ -77,7 +77,7 @@ public class BasicTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException, InterruptedException {
+            throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-PWD="$PWD"
 function exit_trap() {
   cd "${PWD}"
   echo $?

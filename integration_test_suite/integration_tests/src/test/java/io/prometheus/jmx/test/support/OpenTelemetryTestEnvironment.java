@@ -384,14 +384,9 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
             try (BufferedReader bufferedReader =
                     new BufferedReader(
                             new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-                while (true) {
-                    String line = bufferedReader.readLine();
-                    if (line == null) {
-                        break;
-                    }
-
+                String line = bufferedReader.readLine();
+                if (line != null) {
                     hasResource = true;
-                    break;
                 }
             } catch (Throwable t) {
                 // INTENTIONALLY BLANK

@@ -75,9 +75,8 @@ public class YamlMapAccessor {
      *
      * @param reader reader
      * @return this YamlMapAccessor
-     * @throws IOException IOException
      */
-    public YamlMapAccessor load(Reader reader) throws IOException {
+    public YamlMapAccessor load(Reader reader) {
         map.putAll(new Yaml().load(reader));
         return this;
     }

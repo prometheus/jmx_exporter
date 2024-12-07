@@ -153,7 +153,6 @@ public class MetricsParser {
                         // INTENTIONALLY BLANK
                     } else if (line.startsWith("# HELP")) {
                         help = line.substring("# HELP".length()).trim();
-                        ;
                         break;
                     }
                 }

@@ -85,10 +85,10 @@ public class JmxCollector implements MultiCollector {
         boolean ssl = false;
         boolean lowercaseOutputName;
         boolean lowercaseOutputLabelNames;
-        List<ObjectName> includeObjectNames = new ArrayList<>();
-        List<ObjectName> excludeObjectNames = new ArrayList<>();
+        final List<ObjectName> includeObjectNames = new ArrayList<>();
+        final List<ObjectName> excludeObjectNames = new ArrayList<>();
         ObjectNameAttributeFilter objectNameAttributeFilter;
-        List<Rule> rules = new ArrayList<>();
+        final List<Rule> rules = new ArrayList<>();
         long lastUpdate = 0L;
 
         MatchedRulesCache rulesCache;
@@ -227,23 +227,13 @@ public class JmxCollector implements MultiCollector {
     }
 
     private void reloadConfig() {
-        try {
-            FileReader fr = new FileReader(configFile);
-
-            try {
-                Map<String, Object> newYamlConfig = new Yaml().load(fr);
-                config = loadConfig(newYamlConfig);
-                config.lastUpdate = configFile.lastModified();
-                configReloadSuccess.inc();
-            } catch (Exception e) {
-                LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
-                configReloadFailure.inc();
-            } finally {
-                fr.close();
-            }
-
-        } catch (IOException e) {
-            LOGGER.log(SEVERE, "Configuration reload failed: %s", e);
+        try (FileReader fr = new FileReader(configFile)) {
+            Map<String, Object> newYamlConfig = new Yaml().load(fr);
+            config = loadConfig(newYamlConfig);
+            config.lastUpdate = configFile.lastModified();
+            configReloadSuccess.inc();
+        } catch (Exception e) {
+            LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
             configReloadFailure.inc();
         }
     }
@@ -338,8 +328,7 @@ public class JmxCollector implements MultiCollector {
         if (yamlConfig.containsKey("rules")) {
             List<Map<String, Object>> configRules =
                     (List<Map<String, Object>>) yamlConfig.get("rules");
-            for (Map<String, Object> ruleObject : configRules) {
-                Map<String, Object> yamlRule = ruleObject;
+            for (Map<String, Object> yamlRule : configRules) {
                 Rule rule = new Rule();
                 cfg.rules.add(rule);
                 if (yamlRule.containsKey("pattern")) {
@@ -448,7 +437,7 @@ public class JmxCollector implements MultiCollector {
             boolean isUnsafeChar = !JmxCollector.isLegalCharacter(nameChar);
             if ((isUnsafeChar || nameChar == '_')) {
                 if (prevCharIsUnderscore) {
-                    continue;
+                    // INTENTIONALLY BLANK
                 } else {
                     safeNameBuilder.append("_");
                     prevCharIsUnderscore = true;
@@ -472,10 +461,10 @@ public class JmxCollector implements MultiCollector {
 
     static class Receiver implements JmxScraper.MBeanReceiver {
 
-        List<MatchedRule> matchedRules = new ArrayList<>();
+        final List<MatchedRule> matchedRules = new ArrayList<>();
 
-        Config config;
-        MatchedRulesCache.StalenessTracker stalenessTracker;
+        final Config config;
+        final MatchedRulesCache.StalenessTracker stalenessTracker;
 
         private static final char SEP = '_';
 
