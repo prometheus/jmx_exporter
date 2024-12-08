@@ -207,22 +207,22 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     /** Method to destroy the test environment */
     public void destroy() {
         if (javaAgentApplicationContainer != null) {
-            javaAgentApplicationContainer.close();
+            javaAgentApplicationContainer.stop();
             javaAgentApplicationContainer = null;
         }
 
         if (standaloneExporterContainer != null) {
-            standaloneExporterContainer.close();
+            standaloneExporterContainer.stop();
             standaloneExporterContainer = null;
         }
 
         if (standaloneApplicationContainer != null) {
-            standaloneApplicationContainer.close();
+            standaloneApplicationContainer.stop();
             standaloneApplicationContainer = null;
         }
 
         if (prometheusContainer != null) {
-            prometheusContainer.close();
+            prometheusContainer.stop();
             prometheusContainer = null;
         }
     }
