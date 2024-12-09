@@ -123,6 +123,24 @@ public class OpenTelemetryExporterFactory {
                         .ifPresent(openTelemetryExporterBuilder::intervalSeconds);
 
                 openTelemetryYamlMapAccessor
+                        .get("/timeoutSeconds")
+                        .map(
+                                new ConvertToInteger(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/timeoutSeconds"
+                                                        + " must be an integer")))
+                        .map(
+                                new ValidateIntegerInRange(
+                                        1,
+                                        Integer.MAX_VALUE,
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/timeoutSeconds must be"
+                                                        + " an integer greater than 0")))
+                        .ifPresent(openTelemetryExporterBuilder::timeoutSeconds);
+
+                openTelemetryYamlMapAccessor
                         .get("/headers")
                         .map(
                                 new ConvertToMap(
@@ -135,11 +153,26 @@ public class OpenTelemetryExporterFactory {
                                                 "Invalid configuration for /openTelemetry/headers"
                                                     + " must contains valid string keys/values")))
                         .ifPresent(
+                                headers -> headers.forEach(openTelemetryExporterBuilder::header));
+
+                openTelemetryYamlMapAccessor
+                        .get("/resourceAttributes")
+                        .map(
+                                new ConvertToMap(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /openTelemetry/resourceAttributes must be a"
+                                                    + " map")))
+                        .map(
+                                new ValidateMapValues(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/resourceAttributes must"
+                                                        + " contains valid string keys/values")))
+                        .ifPresent(
                                 headers ->
                                         headers.forEach(
-                                                (key, value) ->
-                                                        openTelemetryExporterBuilder.header(
-                                                                key.trim(), value.trim())));
+                                                openTelemetryExporterBuilder::resourceAttribute));
 
                 openTelemetryYamlMapAccessor
                         .get("/serviceInstanceId")

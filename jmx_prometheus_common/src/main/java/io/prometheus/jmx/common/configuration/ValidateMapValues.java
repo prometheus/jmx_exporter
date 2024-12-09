@@ -6,7 +6,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Class to validate a Maps keys/values, throwing a RuntimeException from the Supplier if any key/value is null or empty
+ * Class to validate a Maps keys/values, throwing a RuntimeException from the Supplier if any
+ * key/value is null or empty
  */
 public class ValidateMapValues implements Function<Map<String, String>, Map<String, String>> {
 
