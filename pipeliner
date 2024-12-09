@@ -2,14 +2,15 @@
 
 CURRENT_DIR="$(pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_NAME="$(basename "$0")"
 export PIPELINER_HOME="${SCRIPT_DIR}"
+export PIPELINER="$PIPELINER_HOME/$SCRIPT_NAME"
 
 cd "$SCRIPT_DIR" || exit 1
 
 if [ $# -eq 0 ]; then
     echo "Usage: $(basename "$0") <pipeline.yaml> [pipeline2.yaml...]"
-    cd "$CURRENT_DIR"
-    exit 1
+    cd "$CURRENT_DIR" || exit 1
 fi
 
 JAR_PATH="target/verifyica-pipeliner.jar"
@@ -37,7 +38,8 @@ if [ ! -f "$JAR_PATH" ]; then
 fi
 
 JAR_PATH=$(realpath "$JAR_PATH")
-cd "$CURRENT_DIR"
+cd "$CURRENT_DIR" || exit 1
 export PIPELINER_WORKING_DIRECTORY="$CURRENT_DIR"
 
 java -jar "${JAR_PATH}" "$@"
+
