@@ -48,7 +48,11 @@ public class ConvertToString implements Function<Object, String> {
         }
 
         try {
-            return (String) value;
+            if (value instanceof String) {
+                return (String) value;
+            } else {
+                return value.toString();
+            }
         } catch (Throwable t) {
             throw supplier.get();
         }

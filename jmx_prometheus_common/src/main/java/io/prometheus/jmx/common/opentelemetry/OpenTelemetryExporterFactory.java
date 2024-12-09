@@ -8,6 +8,7 @@ import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
 import io.prometheus.jmx.common.configuration.ValidateIntegerInRange;
 import io.prometheus.jmx.common.configuration.ValidateIsURL;
+import io.prometheus.jmx.common.configuration.ValidateMapValues;
 import io.prometheus.jmx.common.configuration.ValidateStringIsNotBlank;
 import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
@@ -60,104 +61,182 @@ public class OpenTelemetryExporterFactory {
                                                                 + " /openTelemetry must be a map")))
                                 .orElse(new YamlMapAccessor());
 
-                String endpoint =
-                        openTelemetryYamlMapAccessor
-                                .get("/endpoint")
-                                .map(
-                                        new ConvertToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/endpoint"
-                                                                + " must be a string")))
-                                .map(
-                                        new ValidateStringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/endpoint"
-                                                                + " must not be blank")))
-                                .map(
-                                        new ValidateIsURL(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/endpoint"
-                                                                + " must be a URL")))
-                                .orElse(null);
-
-                String protocol =
-                        openTelemetryYamlMapAccessor
-                                .get("/protocol")
-                                .map(
-                                        new ConvertToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/protocol"
-                                                                + " must be a string")))
-                                .map(
-                                        new ValidateStringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/protocol"
-                                                                + " must not be blank")))
-                                .orElse(null);
-
-                int interval =
-                        openTelemetryYamlMapAccessor
-                                .get("/interval")
-                                .map(
-                                        new ConvertToInteger(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/interval"
-                                                                + " must be an integer")))
-                                .map(
-                                        new ValidateIntegerInRange(
-                                                1,
-                                                Integer.MAX_VALUE,
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/interval must be"
-                                                                + " an integer greater than 0")))
-                                .orElse(NO_INTERVAL);
-
-                Map<String, String> headers =
-                        openTelemetryYamlMapAccessor
-                                .get("/headers")
-                                .map(
-                                        new ConvertToMap(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /openTelemetry/headers"
-                                                                + " must be a map")))
-                                .orElse(null);
-
                 OpenTelemetryExporter.Builder openTelemetryExporterBuilder =
                         OpenTelemetryExporter.builder();
 
                 openTelemetryExporterBuilder.registry(prometheusRegistry);
 
-                if (endpoint != null) {
-                    openTelemetryExporterBuilder.endpoint(endpoint);
-                }
+                openTelemetryYamlMapAccessor
+                        .get("/endpoint")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/endpoint"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/endpoint"
+                                                        + " must not be blank")))
+                        .map(
+                                new ValidateIsURL(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/endpoint"
+                                                        + " must be a URL")))
+                        .ifPresent(openTelemetryExporterBuilder::endpoint);
 
-                if (protocol != null) {
-                    openTelemetryExporterBuilder.protocol(protocol);
-                }
+                openTelemetryYamlMapAccessor
+                        .get("/protocol")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/protocol"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/protocol"
+                                                        + " must not be blank")))
+                        .ifPresent(openTelemetryExporterBuilder::protocol);
 
-                if (interval != NO_INTERVAL) {
-                    openTelemetryExporterBuilder.intervalSeconds(interval);
-                }
+                openTelemetryYamlMapAccessor
+                        .get("/interval")
+                        .map(
+                                new ConvertToInteger(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/interval"
+                                                        + " must be an integer")))
+                        .map(
+                                new ValidateIntegerInRange(
+                                        1,
+                                        Integer.MAX_VALUE,
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/interval must be"
+                                                        + " an integer greater than 0")))
+                        .ifPresent(openTelemetryExporterBuilder::intervalSeconds);
 
-                if (headers != null) {
-                    headers.forEach(
-                            (name, value) -> {
-                                if (name != null
-                                        && !name.trim().isEmpty()
-                                        && value != null
-                                        && !value.trim().isEmpty()) {
-                                    openTelemetryExporterBuilder.header(name.trim(), value.trim());
-                                }
-                            });
-                }
+                openTelemetryYamlMapAccessor
+                        .get("/timeoutSeconds")
+                        .map(
+                                new ConvertToInteger(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/timeoutSeconds"
+                                                        + " must be an integer")))
+                        .map(
+                                new ValidateIntegerInRange(
+                                        1,
+                                        Integer.MAX_VALUE,
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/timeoutSeconds must be"
+                                                        + " an integer greater than 0")))
+                        .ifPresent(openTelemetryExporterBuilder::timeoutSeconds);
+
+                openTelemetryYamlMapAccessor
+                        .get("/headers")
+                        .map(
+                                new ConvertToMap(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for /openTelemetry/headers"
+                                                        + " must be a map")))
+                        .map(
+                                new ValidateMapValues(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for /openTelemetry/headers"
+                                                    + " must contains valid string keys/values")))
+                        .ifPresent(
+                                headers -> headers.forEach(openTelemetryExporterBuilder::header));
+
+                openTelemetryYamlMapAccessor
+                        .get("/resourceAttributes")
+                        .map(
+                                new ConvertToMap(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                    + " /openTelemetry/resourceAttributes must be a"
+                                                    + " map")))
+                        .map(
+                                new ValidateMapValues(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/resourceAttributes must"
+                                                        + " contains valid string keys/values")))
+                        .ifPresent(
+                                headers ->
+                                        headers.forEach(
+                                                openTelemetryExporterBuilder::resourceAttribute));
+
+                openTelemetryYamlMapAccessor
+                        .get("/serviceInstanceId")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceInstanceId"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceInstanceId"
+                                                        + " must not be blank")))
+                        .ifPresent(openTelemetryExporterBuilder::serviceInstanceId);
+
+                openTelemetryYamlMapAccessor
+                        .get("/serviceNamespace")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceNamespace"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceNamespace"
+                                                        + " must not be blank")))
+                        .ifPresent(openTelemetryExporterBuilder::serviceNamespace);
+
+                openTelemetryYamlMapAccessor
+                        .get("/serviceName")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceName"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceName"
+                                                        + " must not be blank")))
+                        .ifPresent(openTelemetryExporterBuilder::serviceName);
+
+                openTelemetryYamlMapAccessor
+                        .get("/serviceVersion")
+                        .map(
+                                new ConvertToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceVersion"
+                                                        + " must be a string")))
+                        .map(
+                                new ValidateStringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /openTelemetry/serviceVersion"
+                                                        + " must not be blank")))
+                        .ifPresent(openTelemetryExporterBuilder::serviceVersion);
 
                 return openTelemetryExporterBuilder.buildAndStart();
             }
