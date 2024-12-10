@@ -36,6 +36,11 @@ public class AuthenticatorPlugin extends Authenticator {
     private static final String USERNAME = "Prometheus";
     private static final String PASSWORD = "secret";
 
+    /** Constructor */
+    public AuthenticatorPlugin() {
+        // INTENTIONALLY BLANK
+    }
+
     @Override
     public Result authenticate(HttpExchange httpExchange) {
         // nothing too custom, so the test works, just to demonstrate that it is plug-able

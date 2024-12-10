@@ -1,0 +1,8 @@
+openTelemetry:
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 1
+  headers:
+    Authorization: "Basic UHJvbWV0aGV1czpzZWNyZXQ="
+rules:
+  - pattern: ".*"

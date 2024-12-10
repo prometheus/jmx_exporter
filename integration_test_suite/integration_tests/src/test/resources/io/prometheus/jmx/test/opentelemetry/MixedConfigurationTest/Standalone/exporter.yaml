@@ -1,0 +1,7 @@
+openTelemetry:
+  # endpoint configuration via environment variable
+  protocol: http/protobuf
+  interval: 1
+hostPort: application:9999
+rules:
+  - pattern: ".*"

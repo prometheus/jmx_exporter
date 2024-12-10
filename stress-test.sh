@@ -24,18 +24,21 @@
 (
   while true;
   do
-    DATE=`date`
+    DATE=$(date)
     echo "STRESS-TEST-START    ${DATE}"
+
+    export JAVA_DOCKER_IMAGES=all
+    export PROMETHEUS_DOCKER_IMAGES=all
 
     ./mvnw clean verify
     if [[ "$?" -ne 0 ]];
     then
-      DATE=`date`
+      DATE=$(date)
       echo "STRESS-TEST-FAILED   ${DATE}"
       break
     fi
 
-    DATE=`date`
+    DATE=$(date)
     echo "STRESS-TEST-FINISHED ${DATE}"
   done
 ) 2>&1 | tee stress-test.log

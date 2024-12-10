@@ -20,16 +20,15 @@ import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsRespo
 import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,18 +43,19 @@ import org.verifyica.api.Verifyica;
 
 public class RMIRegistrySSLDisabledTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
-        // Filter the arguments..
+        // Filter the arguments ...
         //
         // 1. only run the Standalone exporter
         // 2. filter out the GraalVM 1.8 JVM - exception is that SunJSSE is not found
         // 3. filter out all ibmjava* JVMs - exception is that SunJSSE is not found
         //
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
-                                exporterTestEnvironment.getName().contains("Standalone"))
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.Standalone)
                 .filter(
                         exporterTestEnvironment ->
                                 !exporterTestEnvironment
@@ -68,20 +68,21 @@ public class RMIRegistrySSLDisabledTest {
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        ExporterTestSupport.getOrCreateNetwork(classContext);
+        TestSupport.getOrCreateNetwork(classContext);
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
-        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
-        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+        Network network = TestSupport.getOrCreateNetwork(argumentContext);
+        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertHealthyResponse(httpResponse);
@@ -91,64 +92,81 @@ public class RMIRegistrySSLDisabledTest {
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.OPEN_METRICS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_TEXT_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
-                        url, HttpHeader.CONTENT_TYPE, MetricsType.PROMETHEUS_PROTOBUF_METRICS);
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse);
+        assertMetricsResponse(
+                exporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(
-                new Trap(
-                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) throws Throwable {
-        ExporterTestSupport.destroyNetwork(classContext);
+        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertCommonMetricsResponse(httpResponse);
+            ExporterTestEnvironment exporterTestEnvironment,
+            HttpResponse httpResponse,
+            MetricsContentType metricsContentType) {
+        assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
@@ -156,9 +174,7 @@ public class RMIRegistrySSLDisabledTest {
                 exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                isJmxExporterModeJavaAgent
-                        ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

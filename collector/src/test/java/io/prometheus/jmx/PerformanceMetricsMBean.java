@@ -30,7 +30,7 @@ import javax.management.openmbean.SimpleType;
 
 public interface PerformanceMetricsMBean {
 
-    CompositeData getPerformanceMetrics() throws OpenDataException;
+    CompositeData getPerformanceMetrics();
 }
 
 class PerformanceMetrics implements PerformanceMetricsMBean {

@@ -1,0 +1,8 @@
+hostPort: application:9999
+includeObjectNames: ["java.lang:type=Threading"]
+includeObjectNameAttributes:
+  "java.lang:type=Threading":
+    - "ThreadCount"
+    - "TotalStartedThreadCount"
+rules:
+  - pattern: ".*"

@@ -18,10 +18,21 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
-import io.prometheus.metrics.model.snapshots.*;
-import java.util.*;
+import io.prometheus.metrics.model.snapshots.CounterSnapshot;
+import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
+import io.prometheus.metrics.model.snapshots.Labels;
+import io.prometheus.metrics.model.snapshots.MetricSnapshot;
+import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
+/** Class to implement MatchedRuleToMetricSnapshotsConverter */
 public class MatchedRuleToMetricSnapshotsConverter {
 
     private static final Logger LOGGER =
@@ -29,6 +40,17 @@ public class MatchedRuleToMetricSnapshotsConverter {
 
     private static final String OBJECTNAME = "_objectname";
 
+    /** Constructor */
+    public MatchedRuleToMetricSnapshotsConverter() {
+        // INTENTIONALLY BLANK
+    }
+
+    /**
+     * Method to convert a List of MatchedRules to MetricSnapshots
+     *
+     * @param matchedRules matchedRules
+     * @return a MetricSnapshots
+     */
     public static MetricSnapshots convert(List<MatchedRule> matchedRules) {
         Map<String, List<MatchedRule>> rulesByPrometheusMetricName = new HashMap<>();
 

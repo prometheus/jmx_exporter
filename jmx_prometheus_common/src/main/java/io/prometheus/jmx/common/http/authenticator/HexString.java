@@ -23,13 +23,14 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
+/** Class to implement HexString */
 public class HexString {
 
     private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
 
     /** Constructor */
     private HexString() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**

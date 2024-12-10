@@ -1,0 +1,3 @@
+autoExcludeObjectNameAttributes: false
+rules:
+  - pattern: ".*"

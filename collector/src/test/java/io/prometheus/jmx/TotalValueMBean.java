@@ -27,7 +27,7 @@ public interface TotalValueMBean {
 class TotalValue implements TotalValueMBean {
 
     public TotalValue() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     @Override

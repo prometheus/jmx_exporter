@@ -20,7 +20,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface CassandraMBean {
-    public int getActiveCount();
+
+    int getActiveCount();
 }
 
 class Cassandra implements CassandraMBean {

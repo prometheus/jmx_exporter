@@ -48,13 +48,17 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
 
+/** Class to implement JmxCollector */
 @SuppressWarnings("unchecked")
 public class JmxCollector implements MultiCollector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxCollector.class);
 
+    /** Enum to implement Mode */
     public enum Mode {
+        /** Agent mode */
         AGENT,
+        /** Standalone mode */
         STANDALONE
     }
 
@@ -91,19 +95,18 @@ public class JmxCollector implements MultiCollector {
         boolean ssl = false;
         boolean lowercaseOutputName;
         boolean lowercaseOutputLabelNames;
-        List<ObjectName> includeObjectNames = new ArrayList<>();
-        List<ObjectName> excludeObjectNames = new ArrayList<>();
+        final List<ObjectName> includeObjectNames = new ArrayList<>();
+        final List<ObjectName> excludeObjectNames = new ArrayList<>();
         ObjectNameAttributeFilter objectNameAttributeFilter;
-        List<Rule> rules = new ArrayList<>();
+        final List<Rule> rules = new ArrayList<>();
         long lastUpdate = 0L;
         List<MetricCustomizer> metricCustomizers = new ArrayList<>();
         MatchedRulesCache rulesCache;
     }
 
-    private PrometheusRegistry prometheusRegistry;
     private Config config;
     private File configFile;
-    private long createTimeNanoSecs = System.nanoTime();
+    private final long createTimeNanoSecs = System.nanoTime();
 
     private Counter configReloadSuccess;
     private Counter configReloadFailure;
@@ -113,10 +116,25 @@ public class JmxCollector implements MultiCollector {
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
 
+    /**
+     * Constructor
+     *
+     * @param in in
+     * @throws IOException IOException
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         this(in, null);
     }
 
+    /**
+     * Constructor
+     *
+     * @param in in
+     * @param mode mode
+     * @throws IOException IOException
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
         this.mode = mode;
@@ -125,23 +143,44 @@ public class JmxCollector implements MultiCollector {
         exitOnConfigError();
     }
 
+    /**
+     * Constructor
+     *
+     * @param yamlConfig yamlConfig
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
         config = loadConfig(new Yaml().load(yamlConfig));
         mode = null;
     }
 
+    /**
+     * Constructor
+     *
+     * @param inputStream inputStream
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
         config = loadConfig(new Yaml().load(inputStream));
         mode = null;
     }
 
+    /**
+     * Method to register the JmxCollector
+     *
+     * @return the JmxCollector
+     */
     public JmxCollector register() {
         return register(PrometheusRegistry.defaultRegistry);
     }
 
+    /**
+     * Method to register the JmxCollector
+     *
+     * @param prometheusRegistry prometheusRegistry
+     * @return the JmxCollector
+     */
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
-        this.prometheusRegistry = prometheusRegistry;
-
         configReloadSuccess =
                 Counter.builder()
                         .name("jmx_config_reload_success_total")
@@ -191,30 +230,20 @@ public class JmxCollector implements MultiCollector {
             LOGGER.log(
                     SEVERE,
                     "Configuration error: When running jmx_exporter in standalone mode (using"
-                            + " jmx_prometheus_httpserver-*.jar) you must configure 'jmxUrl' or"
+                            + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
                             + " 'hostPort'.");
             System.exit(-1);
         }
     }
 
     private void reloadConfig() {
-        try {
-            FileReader fr = new FileReader(configFile);
-
-            try {
-                Map<String, Object> newYamlConfig = new Yaml().load(fr);
-                config = loadConfig(newYamlConfig);
-                config.lastUpdate = configFile.lastModified();
-                configReloadSuccess.inc();
-            } catch (Exception e) {
-                LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
-                configReloadFailure.inc();
-            } finally {
-                fr.close();
-            }
-
-        } catch (IOException e) {
-            LOGGER.log(SEVERE, "Configuration reload failed: %s", e);
+        try (FileReader fr = new FileReader(configFile)) {
+            Map<String, Object> newYamlConfig = new Yaml().load(fr);
+            config = loadConfig(newYamlConfig);
+            config.lastUpdate = configFile.lastModified();
+            configReloadSuccess.inc();
+        } catch (Exception e) {
+            LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
             configReloadFailure.inc();
         }
     }
@@ -332,8 +361,7 @@ public class JmxCollector implements MultiCollector {
         if (yamlConfig.containsKey("rules")) {
             List<Map<String, Object>> configRules =
                     (List<Map<String, Object>>) yamlConfig.get("rules");
-            for (Map<String, Object> ruleObject : configRules) {
-                Map<String, Object> yamlRule = ruleObject;
+            for (Map<String, Object> yamlRule : configRules) {
                 Rule rule = new Rule();
                 cfg.rules.add(rule);
                 if (yamlRule.containsKey("pattern")) {
@@ -442,7 +470,7 @@ public class JmxCollector implements MultiCollector {
             boolean isUnsafeChar = !JmxCollector.isLegalCharacter(nameChar);
             if ((isUnsafeChar || nameChar == '_')) {
                 if (prevCharIsUnderscore) {
-                    continue;
+                    // INTENTIONALLY BLANK
                 } else {
                     safeNameBuilder.append("_");
                     prevCharIsUnderscore = true;
@@ -466,10 +494,10 @@ public class JmxCollector implements MultiCollector {
 
     static class Receiver implements JmxScraper.MBeanReceiver {
 
-        List<MatchedRule> matchedRules = new ArrayList<>();
+        final List<MatchedRule> matchedRules = new ArrayList<>();
 
-        Config config;
-        MatchedRulesCache.StalenessTracker stalenessTracker;
+        final Config config;
+        final MatchedRulesCache.StalenessTracker stalenessTracker;
 
         private static final char SEP = '_';
 
@@ -506,7 +534,7 @@ public class JmxCollector implements MultiCollector {
                 Map<String, String> attributesAsLabelsWithValues) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
-            if (beanProperties.size() > 0) {
+            if (!beanProperties.isEmpty()) {
                 name.append(SEP);
                 name.append(beanProperties.values().iterator().next());
             }

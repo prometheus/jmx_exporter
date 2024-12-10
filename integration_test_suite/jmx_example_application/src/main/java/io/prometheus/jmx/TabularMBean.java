@@ -59,6 +59,11 @@ public class TabularMBean implements DynamicMBean {
     private final MBeanInfo mBeanInfo;
     private final Map<String, TabularDataSupport> data;
 
+    /**
+     * Constructor
+     *
+     * @throws OpenDataException OpenDataException
+     */
     public TabularMBean() throws OpenDataException {
 
         String[] columnNames = {"source", "target", "size", "used", "avail", "pcent"};

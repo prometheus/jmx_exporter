@@ -1,4 +1,0 @@
-hostPort: application:9999
-autoExcludeObjectNameAttributes: false
-rules:
-  - pattern: ".*"

@@ -27,8 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/** Class to get a sample value from a PrometheusRegistery */
-@SuppressWarnings("unchecked")
+/** Class to get a sample value from a PrometheusRegistry */
 public class PrometheusRegistryUtils {
 
     private final PrometheusRegistry prometheusRegistry;
@@ -79,11 +78,10 @@ public class PrometheusRegistryUtils {
                                         .findFirst()
                                         .ifPresent(
                                                 (Consumer<DataPointSnapshot>)
-                                                        dataPointSnapshot -> {
-                                                            values.add(
-                                                                    getDataPointSnapshotValue(
-                                                                            dataPointSnapshot));
-                                                        }));
+                                                        dataPointSnapshot ->
+                                                                values.add(
+                                                                        getDataPointSnapshotValue(
+                                                                                dataPointSnapshot))));
 
         if (!values.isEmpty()) {
             return values.get(0);

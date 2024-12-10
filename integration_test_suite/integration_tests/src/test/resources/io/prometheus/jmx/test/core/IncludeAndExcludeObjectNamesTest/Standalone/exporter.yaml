@@ -1,0 +1,5 @@
+hostPort: application:9999
+includeObjectNames: ["java.lang:*", "io.prometheus.jmx:*"]
+excludeObjectNames: ["java.lang:*"]
+rules:
+  - pattern: ".*"

@@ -58,7 +58,7 @@ public class ExponentialBackoffThrottle implements Throttle {
         try {
             Thread.sleep(throttleMilliseconds);
         } catch (InterruptedException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         throttleMilliseconds = throttleMilliseconds * 2;

@@ -18,15 +18,23 @@ package io.prometheus.jmx;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/** Interfacte to implement AutoIncrementingMBean */
 public interface AutoIncrementingMBean {
 
+    /**
+     * Method to get the value
+     *
+     * @return the value
+     */
     int getValue();
 }
 
+/** Class to implement AutoIncrementing */
 class AutoIncrementing implements AutoIncrementingMBean {
 
     private final AtomicInteger atomicInteger;
 
+    /** Constructor */
     public AutoIncrementing() {
         atomicInteger = new AtomicInteger(0);
     }

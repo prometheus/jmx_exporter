@@ -20,6 +20,7 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/** Class to implement ConvertToString */
 public class ConvertToString implements Function<Object, String> {
 
     private final Supplier<? extends RuntimeException> supplier;
@@ -47,7 +48,11 @@ public class ConvertToString implements Function<Object, String> {
         }
 
         try {
-            return (String) value;
+            if (value instanceof String) {
+                return (String) value;
+            } else {
+                return value.toString();
+            }
         } catch (Throwable t) {
             throw supplier.get();
         }

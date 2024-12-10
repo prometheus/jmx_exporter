@@ -51,11 +51,25 @@ import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+/** Class to implement JmxScraper */
 class JmxScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
 
+    /** Interface to implement MBeanReceiver */
     public interface MBeanReceiver {
+
+        /**
+         * Method to create a bean
+         *
+         * @param domain domain
+         * @param beanProperties beanProperties
+         * @param attrKeys attrKeys
+         * @param attrName attrName
+         * @param attrType attrType
+         * @param attrDescription attrDescription
+         * @param value value
+         */
         void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
@@ -77,6 +91,19 @@ class JmxScraper {
     private final ObjectNameAttributeFilter objectNameAttributeFilter;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
+    /**
+     * Constructor
+     *
+     * @param jmxUrl jmxUrl
+     * @param username username
+     * @param password password
+     * @param ssl ssl
+     * @param includeObjectNames includeObjectNames
+     * @param excludeObjectNames excludeObjectNames
+     * @param objectNameAttributeFilter objectNameAttributeFilter
+     * @param receiver receiver
+     * @param jmxMBeanPropertyCache jmxMBeanPropertyCache
+     */
     public JmxScraper(
             String jmxUrl,
             String username,
@@ -113,9 +140,9 @@ class JmxScraper {
         } else {
             Map<String, Object> environment = new HashMap<>();
             if (username != null
-                    && username.length() != 0
+                    && !username.isEmpty()
                     && password != null
-                    && password.length() != 0) {
+                    && !password.isEmpty()) {
                 String[] credent = new String[] {username, password};
                 environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
             }
@@ -192,7 +219,14 @@ class JmxScraper {
                 continue;
             }
 
-            name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+            if (objectNameAttributeFilter.includeObjectNameAttributesIsEmpty()) {
+                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+                continue;
+            }
+
+            if (objectNameAttributeFilter.include(mBeanName, mBeanAttributeInfo.getName())) {
+                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+            }
         }
 
         if (name2MBeanAttributeInfo.isEmpty()) {

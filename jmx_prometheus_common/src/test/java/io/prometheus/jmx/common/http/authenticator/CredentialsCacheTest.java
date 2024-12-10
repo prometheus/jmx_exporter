@@ -111,14 +111,13 @@ public class CredentialsCacheTest {
         String password = "secret";
         Credentials credentials = new Credentials(username, password);
         int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
-        int maximumCacheSizeBytes = credentialSizeBytes;
 
-        CredentialsCache credentialsCache = new CredentialsCache(maximumCacheSizeBytes);
+        CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes);
 
         credentialsCache.add(credentials);
 
         assertThat(credentialsCache.contains(credentials)).isTrue();
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(maximumCacheSizeBytes);
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
 
         credentials = new Credentials(username + "012345678", password);
 

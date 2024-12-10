@@ -16,10 +16,14 @@
 
 package io.prometheus.jmx.common.util;
 
+import static java.lang.String.format;
+
+/** Class to implement Precondition */
 public class Precondition {
 
+    /** Constructor */
     private Precondition() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -49,7 +53,7 @@ public class Precondition {
      * @param string string
      */
     public static void notNullOrEmpty(String string) {
-        notNullOrEmpty(string, String.format("string [%s] is null or empty", string));
+        notNullOrEmpty(string, format("string [%s] is null or empty", string));
     }
 
     /**
@@ -74,7 +78,7 @@ public class Precondition {
         isGreaterThanOrEqualTo(
                 value,
                 minimumValue,
-                String.format("value [%s] is less than minimum value [%s]", value, minimumValue));
+                format("value [%s] is less than minimum value [%s]", value, minimumValue));
     }
 
     /**

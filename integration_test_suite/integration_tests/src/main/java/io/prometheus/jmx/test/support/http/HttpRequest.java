@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test.support.http;
 
+import static java.lang.String.format;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -183,10 +185,10 @@ public class HttpRequest {
          * @param credential credential
          * @return the Builder
          */
-        public Builder authorization(String principal, String credential) {
+        public Builder basicAuthentication(String principal, String credential) {
             return header(
                     "AUTHORIZATION",
-                    String.format(
+                    format(
                             "Basic %s",
                             Base64.getEncoder()
                                     .encodeToString(

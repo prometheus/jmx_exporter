@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.common.http.ssl;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,13 +32,14 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+/** Class to implement SSLContextFactory */
 public class SSLContextFactory {
 
     private static final String[] PROTOCOLS = {"TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
     /** Constructor */
     private SSLContextFactory() {
-        // DO NOTHING
+        // INTENTIONALLY BLANK
     }
 
     /**
@@ -79,7 +82,7 @@ public class SSLContextFactory {
             // Validate the keystore contains the certificate alias that is requested
             if (!keyStore.containsAlias(certificateAlias)) {
                 throw new GeneralSecurityException(
-                        String.format(
+                        format(
                                 "certificate alias [%s] not found in keystore [%s]",
                                 certificateAlias, keyStoreFilename));
             }
@@ -120,7 +123,7 @@ public class SSLContextFactory {
             try {
                 return SSLContext.getInstance(protocol);
             } catch (Throwable t) {
-                // DO NOTHING
+                // INTENTIONALLY BLANK
             }
         }
 

@@ -1,0 +1,6 @@
+openTelemetry:
+  # endpoint configuration via environment variable
+  protocol: http/protobuf
+  interval: 1
+rules:
+  - pattern: ".*"

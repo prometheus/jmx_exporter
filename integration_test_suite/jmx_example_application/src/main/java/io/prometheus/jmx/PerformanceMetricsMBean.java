@@ -25,19 +25,33 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
+/** Interface to implement PerformanceMetricsMBean */
 public interface PerformanceMetricsMBean {
 
+    /**
+     * Method to get the performance metrics
+     *
+     * @return the performance metrics
+     * @throws OpenDataException OpenDataException
+     */
     CompositeData getPerformanceMetrics() throws OpenDataException;
 }
 
+/** Class to implement PerformanceMetrics */
 class PerformanceMetrics implements PerformanceMetricsMBean {
 
     private final CompositeData compositeData;
 
+    /**
+     * Constructor
+     *
+     * @throws OpenDataException OpenDataException
+     */
     public PerformanceMetrics() throws OpenDataException {
         compositeData = build();
     }
 
+    @Override
     public CompositeData getPerformanceMetrics() {
         return compositeData;
     }
@@ -51,11 +65,12 @@ class PerformanceMetrics implements PerformanceMetricsMBean {
 
         String[] names = {"ActiveSessions", "Bootstraps", "BootstrapsDeferred"};
         String[] descriptions = {"ActiveSessions", "Bootstraps", "BootstrapsDeferred"};
-        OpenType[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
+        OpenType<?>[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
 
         CompositeType compositeType =
                 new CompositeType(
                         "PerformanceMetrics", "Example composite data", names, descriptions, types);
+
         return new CompositeDataSupport(compositeType, data);
     }
 }

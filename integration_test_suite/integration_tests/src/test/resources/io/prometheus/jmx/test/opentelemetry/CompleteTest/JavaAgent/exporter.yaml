@@ -1,0 +1,15 @@
+openTelemetry:
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 1
+  timeoutSeconds: 60
+  serviceName: service-name
+  serviceInstanceId: service-instance-id
+  serviceNamespace: service-namespace
+  serviceVersion: 1
+  headers:
+    test.header: "test.value"
+  resourceAttributes:
+    deployment.environment: "test"
+rules:
+  - pattern: ".*"

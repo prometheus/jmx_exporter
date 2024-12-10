@@ -49,6 +49,18 @@ public class MatchedRule {
         this.valueFactor = 1.0;
     }
 
+    /**
+     * Constructor
+     *
+     * @param name name
+     * @param matchName matchName
+     * @param type type
+     * @param help help
+     * @param labelNames labelNames
+     * @param labelValues labelValues
+     * @param value value
+     * @param valueFactor valueFactor
+     */
     public MatchedRule(
             final String name,
             final String matchName,
@@ -68,6 +80,12 @@ public class MatchedRule {
         this.valueFactor = valueFactor;
     }
 
+    /**
+     * Method to create a MatchedRule with a value
+     *
+     * @param value value
+     * @return a MatchedRule with a value
+     */
     public MatchedRule withValue(double value) {
         return new MatchedRule(
                 PrometheusNaming.sanitizeMetricName(this.name),
@@ -91,10 +109,20 @@ public class MatchedRule {
         return _unmatched;
     }
 
+    /**
+     * Method to return if the rule is unmatched
+     *
+     * @return true if unmatched, else false
+     */
     public boolean isUnmatched() {
         return this == _unmatched;
     }
 
+    /**
+     * Method to return if the rule is matched
+     *
+     * @return true if matched, else false
+     */
     public boolean isMatched() {
         return !isUnmatched();
     }

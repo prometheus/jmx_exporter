@@ -19,8 +19,10 @@ package io.prometheus.jmx.test.support;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseBody;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 
 /** Class to implement Assertions */
 public class Assertions {
@@ -38,6 +40,9 @@ public class Assertions {
     public static void assertHealthyResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();
         assertThat(httpResponse.statusCode()).isEqualTo(200);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
+                .contains("text/plain");
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().string()).isNotBlank();
         assertThat(httpResponse.body().string()).contains("Exporter is healthy.");
@@ -47,8 +52,10 @@ public class Assertions {
      * Assert common metrics response
      *
      * @param httpResponse httpResponse
+     * @param metricsContentType metricsContentType
      */
-    public static void assertCommonMetricsResponse(HttpResponse httpResponse) {
+    public static void assertCommonMetricsResponse(
+            HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertThat(httpResponse).isNotNull();
 
         int statusCode = httpResponse.statusCode();
@@ -66,7 +73,9 @@ public class Assertions {
         }
 
         assertThat(httpResponse.headers()).isNotNull();
-        assertThat(httpResponse.headers().get("CONTENT-TYPE")).hasSize(1);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
+                .isEqualTo(metricsContentType.toString());
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().bytes()).isNotNull();
         assertThat(httpResponse.body().bytes().length).isGreaterThan(0);

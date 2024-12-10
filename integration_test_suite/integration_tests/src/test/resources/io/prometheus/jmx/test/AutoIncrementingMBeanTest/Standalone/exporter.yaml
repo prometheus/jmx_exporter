@@ -1,3 +1,0 @@
-hostPort: application:9999
-rules:
-  - pattern: ".*"

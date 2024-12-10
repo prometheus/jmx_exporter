@@ -20,7 +20,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public interface HadoopMBean {
-    public int getreplaceBlockOpMinTime();
+
+    int getreplaceBlockOpMinTime();
 }
 
 class Hadoop implements HadoopMBean {

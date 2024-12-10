@@ -1,4 +1,0 @@
-hostPort: application:9999
-blacklistObjectNames: ["java.lang:*"]
-rules:
-  - pattern: ".*"

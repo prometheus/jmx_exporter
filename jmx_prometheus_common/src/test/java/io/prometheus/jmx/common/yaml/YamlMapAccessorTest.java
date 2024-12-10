@@ -112,28 +112,28 @@ public class YamlMapAccessorTest {
             yamlMapAccessor.get("");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("//");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("foo");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
 
         try {
             yamlMapAccessor.get("/foo/");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            // DO NOTHING
+            // INTENTIONALLY BLANK
         }
     }
 
@@ -145,7 +145,7 @@ public class YamlMapAccessorTest {
         assertNotNull(optional);
         assertFalse(optional.isPresent());
 
-        optional = yamlMapAccessor.getOrCreate("/foo", () -> new LinkedHashMap<>());
+        optional = yamlMapAccessor.getOrCreate("/foo", LinkedHashMap::new);
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
@@ -210,7 +210,7 @@ public class YamlMapAccessorTest {
         Map<Object, Object> map = (Map<Object, Object>) optional.get();
         assertTrue(map.isEmpty());
 
-        optional = yamlMapAccessor.getOrCreate("/foo", () -> new LinkedHashMap<>());
+        optional = yamlMapAccessor.getOrCreate("/foo", LinkedHashMap::new);
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertTrue(optional.get() instanceof Map);
@@ -230,7 +230,7 @@ public class YamlMapAccessorTest {
         assertTrue(optional.get() instanceof Map);
         map = (Map<Object, Object>) optional.get();
         assertTrue(map.get("value") instanceof Integer);
-        assertTrue(((Integer) map.get("value")) == 1);
+        assertEquals(1, (int) ((Integer) map.get("value")));
     }
 
     @Test

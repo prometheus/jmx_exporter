@@ -1,0 +1,4 @@
+includeObjectNames: ["java.lang:*"]
+excludeObjectNames: ["java.lang:*"]
+rules:
+  - pattern: ".*"

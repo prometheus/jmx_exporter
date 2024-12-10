@@ -2,30 +2,11 @@
 
 [![Build Status](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml/badge.svg)](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml)
 
-JMX to Prometheus exporter: a collector that can configurable scrape and
-expose MBeans of a JMX target.
-
-This exporter is intended to be run as a Java Agent, exposing a HTTP server
-and serving metrics of the local JVM. It can be also run as a standalone
-HTTP server and scrape remote JMX targets, but this has various
-disadvantages, such as being harder to configure and being unable to expose
-process metrics (e.g., memory and CPU usage).
-
-**Running the exporter as a Java agent is strongly encouraged.**
+The JMX Exporter is a collector to capture JMX MBean values.
 
 # Documentation
 
-**Documentation is specific to a release.**
-
-[1.0.1](https://github.com/prometheus/jmx_exporter/tree/release-1.0.1/docs)
-
-[0.20.0](https://github.com/prometheus/jmx_exporter/tree/release-0.20.0)
-
-[0.19.0](https://github.com/prometheus/jmx_exporter/tree/release-0.19.0)
-
-[0.18.0](https://github.com/prometheus/jmx_exporter/tree/release-0.18.0)
-
-[0.17.2](https://github.com/prometheus/jmx_exporter/tree/release-0.17.2)
+Documentation can be found at [http://prometheus.github.io/jmx_exporter/](http://prometheus.github.io/jmx_exporter)
 
 # Contributing and community
 

@@ -20,17 +20,16 @@ import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsRespo
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.common.ExporterPath;
-import io.prometheus.jmx.test.common.ExporterTestEnvironment;
-import io.prometheus.jmx.test.common.ExporterTestEnvironmentFactory;
-import io.prometheus.jmx.test.common.ExporterTestSupport;
-import io.prometheus.jmx.test.common.MetricsType;
+import io.prometheus.jmx.test.support.ExporterPath;
+import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,9 +55,9 @@ public class AuthenticatorPluginTest {
     private final String[] TEST_PASSWORDS =
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = 4)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironmentFactory.createExporterTestEnvironments()
+        return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
                                 exporterTestEnvironment.getJmxExporterMode()
@@ -67,20 +66,20 @@ public class AuthenticatorPluginTest {
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) {
-        ExporterTestSupport.getOrCreateNetwork(classContext);
+        TestSupport.getOrCreateNetwork(classContext);
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
-        Network network = ExporterTestSupport.getOrCreateNetwork(argumentContext);
-        ExporterTestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+        Network network = TestSupport.getOrCreateNetwork(argumentContext);
+        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getBaseUrl() + ExporterPath.HEALTHY;
+        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -91,7 +90,10 @@ public class AuthenticatorPluginTest {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -114,14 +116,18 @@ public class AuthenticatorPluginTest {
                 }
 
                 HttpRequest httpRequest =
-                        HttpRequest.builder().url(url).authorization(username, password).build();
+                        HttpRequest.builder()
+                                .url(url)
+                                .basicAuthentication(username, password)
+                                .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
                 }
             }
         }
@@ -143,10 +149,10 @@ public class AuthenticatorPluginTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        MetricsType.OPEN_METRICS_TEXT_METRICS)
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -154,7 +160,10 @@ public class AuthenticatorPluginTest {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
                 }
             }
         }
@@ -176,10 +185,10 @@ public class AuthenticatorPluginTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        MetricsType.PROMETHEUS_TEXT_METRICS)
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -187,7 +196,10 @@ public class AuthenticatorPluginTest {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
                 }
             }
         }
@@ -209,12 +221,10 @@ public class AuthenticatorPluginTest {
                 HttpRequest httpRequest =
                         HttpRequest.builder()
                                 .url(url)
-                                .authorization(username, password)
+                                .basicAuthentication(username, password)
                                 .header(
-                                        HttpHeader.CONTENT_TYPE,
-                                        "application/vnd.google.protobuf;"
-                                                + " proto=io.prometheus.client.MetricFamily;"
-                                                + " encoding=delimited")
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
                                 .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
@@ -222,7 +232,10 @@ public class AuthenticatorPluginTest {
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(exporterTestEnvironment, httpResponse);
+                    assertMetricsResponse(
+                            exporterTestEnvironment,
+                            httpResponse,
+                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
                 }
             }
         }
@@ -232,22 +245,22 @@ public class AuthenticatorPluginTest {
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(
-                new Trap(
-                        () -> ExporterTestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> ExporterTestSupport.destroyNetwork(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
     }
 
     @Verifyica.Conclude
     public static void conclude(ClassContext classContext) throws Throwable {
-        ExporterTestSupport.destroyNetwork(classContext);
+        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment, HttpResponse httpResponse) {
-        assertCommonMetricsResponse(httpResponse);
+            ExporterTestEnvironment exporterTestEnvironment,
+            HttpResponse httpResponse,
+            MetricsContentType metricsContentType) {
+        assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 
@@ -255,9 +268,7 @@ public class AuthenticatorPluginTest {
                 exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                isJmxExporterModeJavaAgent
-                        ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_httpserver";
+                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

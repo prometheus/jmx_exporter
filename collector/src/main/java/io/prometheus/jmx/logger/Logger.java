@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.logger;
 
+import static java.lang.String.format;
+
 import java.util.logging.Level;
 
 /** Class to implement a Logger */
@@ -55,13 +57,11 @@ public class Logger {
      */
     public void log(Level level, String message, Object... objects) {
         if (LOGGER.isLoggable(level)) {
-            LOGGER.log(level, String.format(message, objects));
+            LOGGER.log(level, format(message, objects));
         }
 
         if (JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG) {
-            System.out
-                    .format("[%s] %s %s", level, LOGGER.getName(), String.format(message, objects))
-                    .println();
+            System.out.printf("[%s] %s %s%n", level, LOGGER.getName(), format(message, objects));
         }
     }
 }

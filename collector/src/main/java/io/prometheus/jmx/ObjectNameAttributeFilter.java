@@ -34,8 +34,11 @@ public class ObjectNameAttributeFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectNameAttributeFilter.class);
 
-    /** Configuration constant to define a mapping of ObjectNames to attribute names */
+    /** Configuration constant to define a mapping of ObjectNames to attribute names to exclude */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES = "excludeObjectNameAttributes";
+
+    /** Configuration constant to define a mapping of ObjectNames to attribute names to include */
+    public static final String INCLUDE_OBJECT_NAME_ATTRIBUTES = "includeObjectNameAttributes";
 
     /** Configuration constant to enable auto ObjectName attributes filtering */
     public static final String AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES =
@@ -43,6 +46,7 @@ public class ObjectNameAttributeFilter {
 
     private final Map<ObjectName, Set<String>> configExcludeObjectNameAttributesMap;
     private final Map<ObjectName, Set<String>> dynamicExcludeObjectNameAttributesMap;
+    private final Map<ObjectName, Set<String>> includeObjectNameAttributesMap;
 
     private boolean autoExcludeObjectNameAttributes;
 
@@ -50,6 +54,7 @@ public class ObjectNameAttributeFilter {
     private ObjectNameAttributeFilter() {
         configExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
         dynamicExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
+        includeObjectNameAttributesMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -61,23 +66,10 @@ public class ObjectNameAttributeFilter {
      */
     private ObjectNameAttributeFilter initialize(Map<String, Object> yamlConfig)
             throws MalformedObjectNameException {
-        if (yamlConfig.containsKey(EXCLUDE_OBJECT_NAME_ATTRIBUTES)) {
-            Map<Object, Object> objectNameAttributeMap =
-                    (Map<Object, Object>) yamlConfig.get(EXCLUDE_OBJECT_NAME_ATTRIBUTES);
-
-            for (Map.Entry<Object, Object> entry : objectNameAttributeMap.entrySet()) {
-                ObjectName objectName = new ObjectName((String) entry.getKey());
-
-                List<String> attributeNames = (List<String>) entry.getValue();
-
-                Set<String> attributeNameSet =
-                        configExcludeObjectNameAttributesMap.computeIfAbsent(
-                                objectName, o -> Collections.synchronizedSet(new HashSet<>()));
-
-                attributeNameSet.addAll(attributeNames);
-            }
-        }
-
+        initializeObjectNameAttributes(
+                yamlConfig, EXCLUDE_OBJECT_NAME_ATTRIBUTES, configExcludeObjectNameAttributesMap);
+        initializeObjectNameAttributes(
+                yamlConfig, INCLUDE_OBJECT_NAME_ATTRIBUTES, includeObjectNameAttributesMap);
         if (yamlConfig.containsKey(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES)) {
             autoExcludeObjectNameAttributes =
                     (Boolean) yamlConfig.get(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES);
@@ -88,6 +80,34 @@ public class ObjectNameAttributeFilter {
         LOGGER.log(Level.FINE, "dynamicExclusion [%b]", autoExcludeObjectNameAttributes);
 
         return this;
+    }
+
+    /**
+     * Method to initialize the configExcludeObjectNameAttributesMap and
+     * includeObjectNameAttributesMap
+     *
+     * @throws MalformedObjectNameException MalformedObjectNameException
+     */
+    private void initializeObjectNameAttributes(
+            Map<String, Object> yamlConfig,
+            String key,
+            Map<ObjectName, Set<String>> objectNameAttributesMap)
+            throws MalformedObjectNameException {
+        if (yamlConfig.containsKey(key)) {
+            Map<Object, Object> objectNameAttributeMap = (Map<Object, Object>) yamlConfig.get(key);
+
+            for (Map.Entry<Object, Object> entry : objectNameAttributeMap.entrySet()) {
+                ObjectName objectName = new ObjectName((String) entry.getKey());
+
+                List<String> attributeNames = (List<String>) entry.getValue();
+
+                Set<String> attributeNameSet =
+                        objectNameAttributesMap.computeIfAbsent(
+                                objectName, o -> Collections.synchronizedSet(new HashSet<>()));
+
+                attributeNameSet.addAll(attributeNames);
+            }
+        }
     }
 
     /**
@@ -151,6 +171,33 @@ public class ObjectNameAttributeFilter {
             }
         }
         return result;
+    }
+
+    /**
+     * Method to return whether an attribute should be included
+     *
+     * @param objectName objectName
+     * @param attributeName attributeName
+     * @return true if the attribute should be included, else false
+     */
+    public boolean include(ObjectName objectName, String attributeName) {
+        boolean result = false;
+
+        Set<String> attributeNameSet = includeObjectNameAttributesMap.get(objectName);
+        if (attributeNameSet != null) {
+            result = attributeNameSet.contains(attributeName);
+        }
+
+        return result;
+    }
+
+    /**
+     * Method to return whether any attributes are included
+     *
+     * @return true if empty, else false
+     */
+    public boolean includeObjectNameAttributesIsEmpty() {
+        return includeObjectNameAttributesMap.isEmpty();
     }
 
     /**

@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test.support.metrics;
 
+import static java.lang.String.format;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
@@ -90,7 +92,7 @@ public class MapMetricAssertion {
     public MapMetricAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
-                    String.format("Label name [%s] or value [%s] is null", name, value));
+                    format("Label name [%s] or value [%s] is null", name, value));
         }
         if (labels == null) {
             labels = new TreeMap<>();
@@ -131,7 +133,7 @@ public class MapMetricAssertion {
         if (condition) {
             if (metrics == null) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
                                         + " present",
                                 type, help, name, labels, value));
@@ -158,13 +160,13 @@ public class MapMetricAssertion {
         if (condition) {
             if (subMetrics.size() > 1) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
                                         + " matches multiple metrics",
                                 type, help, name, labels, value));
             } else if (subMetrics.isEmpty()) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
                                         + " present",
                                 type, help, name, labels, value));
@@ -172,7 +174,7 @@ public class MapMetricAssertion {
         } else {
             if (!subMetrics.isEmpty()) {
                 throw new AssertionFailedError(
-                        String.format(
+                        format(
                                 "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
                                         + " present",
                                 type, help, name, labels, value));

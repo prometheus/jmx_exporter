@@ -1,0 +1,56 @@
+hostPort: application:9999
+excludeObjectNames: ["java.lang:type=ObjectName"]
+excludeObjectNameAttributes:
+  "java.lang:name=Survivor Space,type=MemoryPool":
+    - "ObjectName"
+  "java.lang:type=OperatingSystem":
+    - "ObjectName"
+  "java.lang:type=Threading":
+    - "ObjectName"
+  "java.nio:name=direct,type=BufferPool":
+    - "ObjectName"
+  "java.lang:type=Compilation":
+    - "ObjectName"
+  "java.lang:name=Tenured Gen,type=MemoryPool":
+    - "ObjectName"
+  "java.lang:name=CodeCacheManager,type=MemoryManager":
+    - "ObjectName"
+  "java.util.logging:type=Logging":
+    - "ObjectName"
+  "java.lang:type=ClassLoading":
+    - "ObjectName"
+  "java.lang:name=Metaspace Manager,type=MemoryManager":
+    - "ObjectName"
+  "java.lang:name=Metaspace,type=MemoryPool":
+    - "ObjectName"
+  "java.lang:name=Eden Space,type=MemoryPool":
+    - "ObjectName"
+  "java.lang:name=CodeHeap 'profiled nmethods',type=MemoryPool":
+    - "ObjectName"
+  "java.lang:name=Copy,type=GarbageCollector":
+    - "ObjectName"
+  "java.lang:name=MarkSweepCompact,type=GarbageCollector":
+    - "ObjectName"
+  "java.nio:name=mapped - 'non-volatile memory',type=BufferPool":
+    - "ObjectName"
+  "java.lang:name=CodeHeap 'non-nmethods',type=MemoryPool":
+    - "ObjectName"
+  "java.lang:name=Compressed Class Space,type=MemoryPool":
+    - "ObjectName"
+  "java.nio:name=mapped,type=BufferPool":
+    - "ObjectName"
+  "java.lang:type=Memory":
+    - "ObjectName"
+    - "NonHeapMemoryUsage"
+    - "Verbose"
+    - "ObjectPendingFinalizationCount"
+  "java.lang:name=CodeHeap 'non-profiled nmethods',type=MemoryPool":
+    - "ObjectName"
+  "com.sun.management:type=HotSpotDiagnostic":
+    - "ObjectName"
+  "java.lang:type=Runtime":
+    - "ObjectName"
+    - "ClassPath"
+    - "SystemProperties"
+rules:
+  - pattern: ".*"

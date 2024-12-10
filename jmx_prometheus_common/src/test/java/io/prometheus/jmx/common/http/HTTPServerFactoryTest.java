@@ -106,8 +106,7 @@ public class HTTPServerFactoryTest {
 
     private void verifyExpectedResponse(HTTPServer httpServer, String expectedResponseSubString)
             throws Exception {
-        Socket socket = new Socket();
-        try {
+        try (Socket socket = new Socket()) {
             socket.setSoTimeout(1000);
             socket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
             socket.getOutputStream()
@@ -123,8 +122,6 @@ public class HTTPServerFactoryTest {
                 actualResponse = new String(resp, 0, read);
             }
             assertTrue(actualResponse.contains(expectedResponseSubString));
-        } finally {
-            socket.close();
         }
     }
 
