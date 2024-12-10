@@ -230,9 +230,7 @@ public class CombinedModeTest {
                 openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                isJmxExporterModeJavaAgent
-                        ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_standalone";
+                TestSupport.getBuildInfoName(openTelemetryTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

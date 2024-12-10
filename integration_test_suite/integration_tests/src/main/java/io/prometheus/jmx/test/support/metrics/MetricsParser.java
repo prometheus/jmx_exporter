@@ -92,8 +92,6 @@ public class MetricsParser {
      * @return a Collection of Metrics
      */
     private static Collection<Metric> parseTextMetrics(String body) {
-        // System.out.println("DEBUG parseTextMetrics()");
-
         Collection<Metric> metrics = new ArrayList<>();
 
         try (LineReader lineReader = new LineReader(new StringReader(body))) {
@@ -124,8 +122,6 @@ public class MetricsParser {
     }
 
     private static Collection<Metric> parseOpenMetricsTextMetrics(String body) {
-        // System.out.println("DEBUG parseOpenMetricsTextMetrics()");
-
         Collection<Metric> metrics = new ArrayList<>();
 
         String line;
@@ -140,8 +136,6 @@ public class MetricsParser {
                     if (line == null) {
                         break;
                     }
-
-                    // System.out.printf("LINE > %s%n", line);
 
                     if (line.startsWith("# EOF")) {
                         break;
@@ -173,21 +167,11 @@ public class MetricsParser {
                         lineReader.unreadLine(line);
                         break;
                     } else {
-                        // System.out.printf("LINE > %s%n", line);
-                        /*
-                        System.out.println("CREATE METRIC");
-                        System.out.printf("  > %s%n", typeLine);
-                        System.out.printf("  > %s%n", helpLine);
-                        System.out.printf("  > %s%n", line);
-                        */
-
                         if (type.equals("INFO")) {
                             type = "GAUGE";
                         }
 
-                        Metric metric = createMetric(type, help, line);
-                        // System.out.printf("    > %s%n", metric);
-                        metrics.add(metric);
+                        metrics.add(createMetric(type, help, line));
                     }
                 }
             }
@@ -205,8 +189,6 @@ public class MetricsParser {
      * @return a Collection of metrics
      */
     private static Collection<Metric> parseProtobufMetrics(byte[] bytes) {
-        // System.out.println("DEBUG parseProtobufMetrics()");
-
         Collection<Metric> collection = new ArrayList<>();
 
         try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
@@ -265,15 +247,26 @@ public class MetricsParser {
 
                                 break;
                             }
+                        case SUMMARY:
+                            {
+                                // TODO refactor to support Summary metrics
+                                break;
+                            }
                         default:
                             {
-                                // TODO ignore?
+                                throw new MetricsParserException(
+                                        format(
+                                                "Exception parsing Protobuf metrics. MetricsParser"
+                                                        + " doesn't support metric type [%s]",
+                                                metricType));
                             }
                     }
                 }
             }
 
             return collection;
+        } catch (MetricsParserException e) {
+            throw e;
         } catch (Throwable t) {
             throw new MetricsParserException("Exception parsing Protobuf metrics", t);
         }

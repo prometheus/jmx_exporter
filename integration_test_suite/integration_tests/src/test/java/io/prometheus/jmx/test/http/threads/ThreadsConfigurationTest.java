@@ -157,9 +157,7 @@ public class ThreadsConfigurationTest {
                 exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                isJmxExporterModeJavaAgent
-                        ? "jmx_prometheus_javaagent"
-                        : "jmx_prometheus_standalone";
+                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

@@ -11,6 +11,10 @@ public class TestSupport {
     /** Network configuration constant */
     public static final String NETWORK = "network";
 
+    private static final String BUILD_INFO_JAVAAGENT = "jmx_prometheus_javaagent";
+
+    private static final String BUILD_INFO_STANDALONE = "jmx_prometheus_standalone";
+
     /** Constructor */
     private TestSupport() {
         // INTENTIONALLY BLANK
@@ -123,5 +127,17 @@ public class TestSupport {
     public static void destroyNetwork(ClassContext classContext) {
         Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
+    }
+
+    /**
+     * Method to get the build info name based on the JMX exporter mode
+     *
+     * @param jmxExporterMode jmxExporterMode
+     * @return the build info name
+     */
+    public static String getBuildInfoName(JmxExporterMode jmxExporterMode) {
+        return jmxExporterMode == JmxExporterMode.JavaAgent
+                ? BUILD_INFO_JAVAAGENT
+                : BUILD_INFO_STANDALONE;
     }
 }

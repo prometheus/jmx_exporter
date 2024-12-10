@@ -1,6 +1,6 @@
 ---
 title: "Versions < 1.1.0"
-weight: 2
+weight: 100
 ---
 
 Documentation for previous JMX Exporter versions can be found in associated release branches.
