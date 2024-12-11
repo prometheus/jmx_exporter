@@ -41,5 +41,13 @@ JAR_PATH=$(realpath "$JAR_PATH")
 cd "$CURRENT_DIR" || exit 1
 export PIPELINER_WORKING_DIRECTORY="$CURRENT_DIR"
 
+if [ -f ".pipeliner.env" ]; then
+  source .pipeliner.env
+fi
+
+if [ -f "pipeliner.env" ]; then
+  source pipeliner.env
+fi
+
 java -jar "${JAR_PATH}" "$@"
 
