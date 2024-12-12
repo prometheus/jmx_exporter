@@ -81,6 +81,7 @@ openjdk:21
 openjdk:22
 openjdk:23
 openjdk:24
+openjdk:25
 container-registry.oracle.com/graalvm/jdk-community:23
 registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
