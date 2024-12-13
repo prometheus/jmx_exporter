@@ -581,7 +581,7 @@ public class JmxCollector implements MultiCollector {
                     attributeName = attrName;
                 }
 
-                String matchName = beanName + attributeName + ": " + matchBeanValue;
+                String matchName = (beanName + attributeName + ": " + matchBeanValue).intern();
 
                 if (rule.cache) {
                     MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
