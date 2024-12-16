@@ -14,7 +14,7 @@ pipeline:
           run: ./mvnw -B clean verify
         - name: deploy
           enabled: true
-          run: ./mvnw -B -s ~/.m2/prometheus.settings.xml -P release clean deploy
+          run: ./mvnw -s ~/.m2/prometheus.settings.xml -P release clean deploy
         - name: create / clean RELEASE directory
           enabled: true
           run: |
