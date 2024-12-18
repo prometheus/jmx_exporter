@@ -80,7 +80,7 @@ public class IncludeObjectNameAttributesTest {
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
@@ -94,10 +94,7 @@ public class IncludeObjectNameAttributesTest {
                         HttpHeader.ACCEPT,
                         MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -111,8 +108,7 @@ public class IncludeObjectNameAttributesTest {
                         HttpHeader.ACCEPT,
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -126,10 +122,7 @@ public class IncludeObjectNameAttributesTest {
                         HttpHeader.ACCEPT,
                         MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
@@ -148,9 +141,7 @@ public class IncludeObjectNameAttributesTest {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment,
-            HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+            HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
