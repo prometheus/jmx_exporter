@@ -26,15 +26,15 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.InetAddress;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /** Class to implement JavaAgent */
 public class JavaAgent {
 
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
@@ -111,7 +111,7 @@ public class JavaAgent {
     private static void info(String format, Object... objects) {
         System.out.printf(
                 "%s | %s | INFO | %s | %s%n",
-                SIMPLE_DATE_FORMAT.format(new Date()),
+                LocalDateTime.now().format(DATE_TIME_FORMATTER),
                 Thread.currentThread().getName(),
                 JavaAgent.class.getName(),
                 format(format, objects));
