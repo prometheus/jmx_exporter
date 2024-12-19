@@ -18,7 +18,7 @@ package io.prometheus.jmx.common.configuration;
 
 import io.prometheus.jmx.common.util.Precondition;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -53,7 +53,7 @@ public class ValidateIsURL implements Function<String, String> {
         }
 
         try {
-            new URL(value);
+            URI.create(value).toURL();
             return value;
         } catch (MalformedURLException e) {
             throw supplier.get();

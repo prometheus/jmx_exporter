@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -120,7 +121,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(
             HttpRequest httpRequest, int connectTimeout, int readTimeout) throws IOException {
-        URL url = new URL(httpRequest.url());
+        URL url = URI.create(httpRequest.url()).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         connection.setConnectTimeout(connectTimeout);
