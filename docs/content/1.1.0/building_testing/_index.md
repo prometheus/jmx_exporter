@@ -183,11 +183,15 @@ cd jmx_exporter
 ./mvnw clean verify
 ```
 
-**Notes**
+### Scripts
 
-- The `regression-test.sh` shell script can be used to build and run the integration test suite using all test containers.
-  - `./regression-test.sh`
-- Output is captured and logged to `regression-test.log`.
+Test scripts are available to build and run various integration test suite scenarios
+
+- [run-quick-test.sh](https://github.com/prometheus/jmx_exporter/blob/main/run-quick-test.sh)
+- [run-smoke-test.sh](https://github.com/prometheus/jmx_exporter/blob/main/run-smoke-test.sh)
+- [run-regression-test.sh](https://github.com/prometheus/jmx_exporter/blob/main/run-regression-test.sh)
+- [run-targeted-test.sh](https://github.com/prometheus/jmx_exporter/blob/main/run-targeted-test.sh)
+- [run-stress-test.sh](https://github.com/prometheus/jmx_exporter/blob/main/run-stress-test.sh)
 
 ### Output
 
