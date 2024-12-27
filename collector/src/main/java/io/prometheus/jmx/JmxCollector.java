@@ -205,6 +205,8 @@ public class JmxCollector implements MultiCollector {
 
             try {
                 Map<String, Object> newYamlConfig = new Yaml().load(fr);
+                // TODO: call config.Close() on the old config. But need to make sure that it's
+                // not used by other threads.
                 config = loadConfig(newYamlConfig);
                 config.lastUpdate = configFile.lastModified();
                 configReloadSuccess.inc();

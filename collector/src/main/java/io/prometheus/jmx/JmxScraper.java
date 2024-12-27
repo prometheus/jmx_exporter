@@ -22,7 +22,6 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.ref.Cleaner;
 import java.util.*;
 import javax.management.*;
 import javax.management.openmbean.CompositeData;
@@ -37,10 +36,9 @@ import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
-class JmxScraper {
+class JmxScraper implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
-    private static final Cleaner CLEANER = Cleaner.create();
 
     public interface MBeanReceiver {
         void recordBean(
@@ -62,7 +60,9 @@ class JmxScraper {
     private final ObjectNameAttributeFilter defaultObjectNameAttributeFilter;
 
     // Values cached per connection.
-    private MBeanServerConnection _beanConn;
+    private MBeanServerConnection cachedBeanConn;
+    private JMXConnector jmxc;
+    private NotificationListener beanListener;
     private Cache cache;
     private boolean cacheIsStale = false;
 
@@ -98,6 +98,26 @@ class JmxScraper {
         this.defaultObjectNameAttributeFilter = objectNameAttributeFilter;
     }
 
+    @Override
+    public synchronized void close() throws Exception {
+        if (cachedBeanConn != null && beanListener != null) {
+            // This one needs to be explicitly removed because in the case of a
+            // in-process JMX connection MBeanServerConnection is a singleton
+            // and all listeners are added to the same object.
+            cachedBeanConn.removeNotificationListener(
+                    MBeanServerDelegate.DELEGATE_NAME, beanListener);
+        }
+        cachedBeanConn = null;
+        beanListener = null;
+
+        if (jmxc != null) {
+            jmxc.close();
+        }
+        jmxc = null;
+
+        cache = null;
+    }
+
     private MBeanServerConnection connectToMBeanServer() throws Exception {
         if (jmxUrl.isEmpty()) {
             return ManagementFactory.getPlatformMBeanServer();
@@ -121,28 +141,16 @@ class JmxScraper {
                 environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
             }
         }
-        JMXConnector jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
-        CLEANER.register(
-                this,
-                () -> {
-                    try {
-                        jmxc.close();
-                    } catch (IOException e) {
-                        LOGGER.log(FINE, "Failed to close JMX connection", e);
-                    }
-                });
+        jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
         return jmxc.getMBeanServerConnection();
     }
 
     private synchronized MBeanServerConnection getMBeanServerConnection() throws Exception {
-        if (_beanConn == null) {
+        if (cachedBeanConn == null) {
             cacheIsStale = true;
-            _beanConn = connectToMBeanServer();
+            cachedBeanConn = connectToMBeanServer();
             // Subscribe to MBeans register/unregister events to invalidate cache
-            MBeanServerNotificationFilter filter = new MBeanServerNotificationFilter();
-            filter.enableAllObjectNames();
-            _beanConn.addNotificationListener(
-                    MBeanServerDelegate.DELEGATE_NAME,
+            beanListener =
                     (notification, handback) -> {
                         String type = notification.getType();
                         if (MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(type)
@@ -155,15 +163,17 @@ class JmxScraper {
                                 cacheIsStale = true;
                             }
                         }
-                    },
-                    filter,
-                    null);
+                    };
+            MBeanServerNotificationFilter filter = new MBeanServerNotificationFilter();
+            filter.enableAllObjectNames();
+            cachedBeanConn.addNotificationListener(
+                    MBeanServerDelegate.DELEGATE_NAME, beanListener, filter, null);
         }
         if (cacheIsStale) {
-            cache = fetchCache(_beanConn);
+            cache = fetchCache(cachedBeanConn);
             cacheIsStale = false;
         }
-        return _beanConn;
+        return cachedBeanConn;
     }
 
     private Cache fetchCache(MBeanServerConnection beanConn) throws Exception {
@@ -207,7 +217,7 @@ class JmxScraper {
         } finally {
             // reconnect to resolve connection issues
             // TODO: should it make a single retry with a new connection?
-            _beanConn = null;
+            close();
         }
     }
 
