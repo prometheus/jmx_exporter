@@ -229,8 +229,9 @@ public class JmxCollector implements MultiCollector {
     private void reloadConfig() {
         try (FileReader fr = new FileReader(configFile)) {
             Map<String, Object> newYamlConfig = new Yaml().load(fr);
-            config = loadConfig(newYamlConfig);
-            config.lastUpdate = configFile.lastModified();
+            Config newConfig = loadConfig(newYamlConfig);
+            newConfig.lastUpdate = configFile.lastModified();
+            config = newConfig;
             configReloadSuccess.inc();
         } catch (Exception e) {
             LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
@@ -240,8 +241,8 @@ public class JmxCollector implements MultiCollector {
 
     private synchronized Config getLatestConfig() {
         if (configFile != null) {
-            long mtime = configFile.lastModified();
-            if (mtime > config.lastUpdate) {
+            long lastModified = configFile.lastModified();
+            if (lastModified > config.lastUpdate) {
                 LOGGER.log(FINE, "Configuration file changed, reloading...");
                 reloadConfig();
             }
