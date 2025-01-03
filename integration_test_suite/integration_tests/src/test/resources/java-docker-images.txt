@@ -61,6 +61,7 @@ ibm-semeru-runtimes:open-11-jdk-focal
 ibm-semeru-runtimes:open-17-jdk-focal
 ibm-semeru-runtimes:open-21-jdk-focal
 ibm-semeru-runtimes:open-22-jdk-focal
+ibm-semeru-runtimes:open-23-jdk-focal
 konajdk/konajdk:8
 konajdk/konajdk:11
 konajdk/konajdk:17-tlinux
