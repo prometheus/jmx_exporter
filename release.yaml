@@ -4,6 +4,8 @@ pipeline:
     - name: release
       enabled: true
       steps:
+        - name: check for release property
+          run: if [ -z "${{ release }}" ]; then echo "release property is required, exiting" && exit 1; fi
         - name: change version
           enabled: true
           run: |
