@@ -499,7 +499,12 @@ public class JmxCollector implements MultiCollector {
                 Double value,
                 double valueFactor,
                 String type) {
-            StringBuilder name = new StringBuilder();
+            // avoid having to grow the StringBuilder incrementally, by calculating its capacity up-front
+            int estimatedSize = domain.length() +
+                    (beanProperties.isEmpty() ? 0 : 1 + beanProperties.values().iterator().next().length()) +
+                    (attrKeys.stream().map(k -> k.length() + 1).reduce(0, Integer::sum)) +
+                    attrName.length() + 1;
+            StringBuilder name = new StringBuilder(estimatedSize);
             name.append(domain);
             if (!beanProperties.isEmpty()) {
                 name.append(SEP);
