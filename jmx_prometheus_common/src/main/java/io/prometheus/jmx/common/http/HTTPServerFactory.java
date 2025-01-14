@@ -20,6 +20,8 @@ import static java.lang.String.format;
 
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import io.prometheus.jmx.common.configuration.ConvertToBoolean;
 import io.prometheus.jmx.common.configuration.ConvertToInteger;
 import io.prometheus.jmx.common.configuration.ConvertToMapAccessor;
 import io.prometheus.jmx.common.configuration.ConvertToString;
@@ -38,6 +40,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.InetAddress;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,6 +53,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLParameters;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -68,6 +72,10 @@ public class HTTPServerFactory {
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
     private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
     private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
+    private static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
+    private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
+    private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD =
+            "javax.net.ssl.trustStorePassword";
 
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
 
@@ -632,6 +640,23 @@ public class HTTPServerFactory {
                                                             + " must not be blank")))
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
 
+                String keyStoreType =
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/keyStore/type")
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                                + " /httpServer/ssl/keyStore/type"
+                                                                + " must be a string")))
+                                .map(
+                                        new ValidateStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                                + " /httpServer/ssl/keyStore/type"
+                                                                + " must not be blank")))
+                                .orElse(KeyStore.getDefaultType());
+
                 String keyStorePassword =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/keyStore/password")
@@ -669,10 +694,103 @@ public class HTTPServerFactory {
                                                 "/httpServer/ssl/certificate/alias is a required"
                                                         + " string"));
 
+                String trustStoreFilename = null;
+                String trustStoreType = null;
+                String trustStorePassword = null;
+                final boolean mutualTLS =
+                        rootYamlMapAccessor
+                                .get("/httpServer/ssl/mutualTLS")
+                                .map(
+                                        new ConvertToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                                + " /httpServer/ssl/mutualTLS"
+                                                                + " must be a boolean")))
+                                .map(
+                                        new ValidateStringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                                + " /httpServer/ssl/mutualTLS"
+                                                                + " must not be blank")))
+                                .map(
+                                        new ConvertToBoolean(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                                + " /httpServer/ssl/mutualTLS"
+                                                                + " must be a boolean")))
+                                .orElse(false);
+
+                if (mutualTLS) {
+                    trustStoreFilename =
+                            rootYamlMapAccessor
+                                    .get("/httpServer/ssl/trustStore/filename")
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/filename"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/filename"
+                                                                + " must not be blank")))
+                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE));
+
+                    trustStoreType =
+                            rootYamlMapAccessor
+                                    .get("/httpServer/ssl/trustStore/type")
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/type"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/type"
+                                                                + " must not be blank")))
+                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_TYPE));
+
+                    trustStorePassword =
+                            rootYamlMapAccessor
+                                    .get("/httpServer/ssl/trustStore/password")
+                                    .map(
+                                            new ConvertToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/password"
+                                                                + " must be a string")))
+                                    .map(
+                                            new ValidateStringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/ssl/trustStore/password"
+                                                                + " must not be blank")))
+                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
+                }
+
                 httpServerBuilder.httpsConfigurator(
                         new HttpsConfigurator(
                                 SSLContextFactory.createSSLContext(
-                                        keyStoreFilename, keyStorePassword, certificateAlias)));
+                                        keyStoreType,
+                                        keyStoreFilename,
+                                        keyStorePassword,
+                                        certificateAlias,
+                                        trustStoreType,
+                                        trustStoreFilename,
+                                        trustStorePassword)) {
+                            @Override
+                            public void configure(HttpsParameters params) {
+                                SSLParameters sslParameters =
+                                        getSSLContext().getDefaultSSLParameters();
+                                sslParameters.setNeedClientAuth(mutualTLS);
+                                params.setSSLParameters(sslParameters);
+                            }
+                        });
             } catch (GeneralSecurityException | IOException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
