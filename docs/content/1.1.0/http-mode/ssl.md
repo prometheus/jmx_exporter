@@ -26,6 +26,24 @@ httpServer:
 
 2. Create a keystore and add your certificate
 
+If you need to verify a clients certificate, you set needClientAuth and configure the trustStore parameters
+
+```yaml
+httpServer:
+  ssl:
+    needClientAuth: true
+    trustStore:
+      filename: ca.jks
+      type: JKS
+      password: changeit
+    keyStore:
+      filename: localhost.jks
+      password: changeit
+    certificate:
+      alias: localhost
+```
+
+
 ### Configuration (using System properties)
 
 1. Add configuration to your exporter YAML file
