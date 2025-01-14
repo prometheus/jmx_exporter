@@ -4,8 +4,14 @@ httpServer:
     maximum: 10
     keepAliveTime: 120 # seconds
   ssl:
+    needClientAuth: false
     keyStore:
       filename: localhost.jks
+      type: JKS
+      password: changeit
+    trustStore:
+      filename: localhost.jks
+      type: JKS
       password: changeit
     certificate:
       alias: localhost
