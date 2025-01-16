@@ -1,13 +1,43 @@
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
-whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
 
-blacklistObjectNames:
-  # ColumnFamily is an alias for Table metrics
-  - "org.apache.cassandra.metrics:type=ColumnFamily,*"
-  # TotalDiskSpaceUsed and EstimatedPartitionCount slow down scraping significantly
-  - "org.apache.cassandra.metrics:*,name=TotalDiskSpaceUsed"
-  - "org.apache.cassandra.metrics:*,name=EstimatedPartitionCount"
+# Cassandra has a lot of metrics, and some of them are quite slow to query.
+# Fetching all available metrics causes a lot of Cassandra CPU usage and will
+# likely exceed your scrape timeout, so it's recommended to use a whitelist
+# approach. An example whitelist is provided here.
+#
+# You can run `jmxtool dump` on a Cassandra node to list all available metrics,
+# and there is some documentation available here:
+# https://cassandra.apache.org/doc/5.0/cassandra/managing/operating/metrics.html
+whitelistObjectNames:
+  - "org.apache.cassandra.metrics:type=Client,*"
+  - "org.apache.cassandra.metrics:type=Compaction,*"
+  - "org.apache.cassandra.metrics:type=Connection,name=Timeouts,*"
+  - "org.apache.cassandra.metrics:type=DroppedMessage,name=Dropped,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=AllMemtablesLiveDataSize,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=AllMemtablesOffHeapDataSize,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=AllMemtablesOnHeapDataSize,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=AntiCompactionTime,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=BloomFilterFalsePositives,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=BloomFilterFalseRatio,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=BytesValidated,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=ReadLatency,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=ReadTotalLatency,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=RepairedDataInconsistenciesConfirmed,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=RepairJobsCompleted,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=RepairJobsStarted,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=RepairTime,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=WriteLatency,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=WriteTotalLatency,*"
+  - "org.apache.cassandra.metrics:type=Keyspace,name=PendingCompactions,*"
+  - "org.apache.cassandra.metrics:type=ReadRepair,*"
+  - "org.apache.cassandra.metrics:type=Storage,name=Exceptions,*"
+  - "org.apache.cassandra.metrics:type=Storage,name=Load,*"
+  - "org.apache.cassandra.metrics:type=Storage,name=RepairExceptions,*"
+  - "org.apache.cassandra.metrics:type=Storage,name=TotalHints,*"
+  - "org.apache.cassandra.metrics:type=ThreadPools,*"
+  - "org.apache.cassandra.metrics:type=ColumnFamily,*,name=LiveSSTableCount"
+  - "org.apache.cassandra.metrics:type=ColumnFamily,*,name=BytesUnrepaired"
   
 rules:
 # Generic gauges with 0-2 labels
