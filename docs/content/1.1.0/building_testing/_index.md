@@ -22,7 +22,7 @@ cd jmx_exporter
 ```shell
 ...
 [INFO] Reactor Summary for Prometheus JMX Exporter <VERSION>:
-[INFO] 
+[INFO]
 [INFO] Prometheus JMX Exporter ............................ SUCCESS [  1.049 s]
 [INFO] Prometheus JMX Exporter - Collector ................ SUCCESS [ 12.947 s]
 [INFO] Prometheus JMX Exporter - Common ................... SUCCESS [  3.792 s]
@@ -103,7 +103,7 @@ cd jmx_exporter
 [INFO] Test classes   :   40 Passed :   40 Failed : 0 Skipped : 0
 [INFO] Test arguments :  506 Passed :  506 Failed : 0 Skipped : 0
 [INFO] Test methods   : 2302 Passed : 2302 Failed : 0 Skipped : 0
-[INFO] 
+[INFO]
 [INFO] ------------------------------------------------------------------------
 [INFO] TESTS PASSED
 [INFO] ------------------------------------------------------------------------
@@ -114,7 +114,7 @@ cd jmx_exporter
 [INFO] ------------------------------------------------------------------------
 [INFO] ------------------------------------------------------------------------
 [INFO] Reactor Summary for Prometheus JMX Exporter <VERSION>>:
-[INFO] 
+[INFO]
 [INFO] Prometheus JMX Exporter ............................ SUCCESS [  0.755 s]
 [INFO] Prometheus JMX Exporter - Collector ................ SUCCESS [  9.543 s]
 [INFO] Prometheus JMX Exporter - Common ................... SUCCESS [  3.092 s]
@@ -195,4 +195,4 @@ Test scripts are available to build and run various integration test suite scena
 
 ### Output
 
-Output is similar to integration testing using smoke test containers. 
+Output is similar to integration testing using smoke test containers.

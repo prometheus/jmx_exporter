@@ -1,7 +1,7 @@
 ---
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-whitelistObjectNames: 
+whitelistObjectNames:
  # Whitelist objects to be collected, for performance reason
  # see https://github.com/prometheus/jmx_exporter/issues/246#issuecomment-367573931
  # Each object in the rules below has to be added to whitelistObjectNames too !
