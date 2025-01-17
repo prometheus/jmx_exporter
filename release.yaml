@@ -11,7 +11,7 @@ pipeline:
           run: |
             ./mvnw -B versions:set -DnewVersion="${{ release }}" -DprocessAllModules >> /dev/null
             rm -Rf $(find . -name "*versionsBackup")
-        - name: build & verify 
+        - name: build & verify
           enabled: true
           run: ./mvnw -B clean verify
         - name: deploy
