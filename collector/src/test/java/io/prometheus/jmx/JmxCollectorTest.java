@@ -57,6 +57,7 @@ public class JmxCollectorTest {
         Bool.registerBean(mbs);
         Camel.registerBean(mbs);
         CustomValue.registerBean(mbs);
+        StringValue.registerBean(mbs);
     }
 
     @Before
@@ -174,6 +175,36 @@ public class JmxCollectorTest {
                 345,
                 getSampleValue(
                         "io_prometheus_jmx_customValue_Value",
+                        new String[] {"Text"},
+                        new String[] {"value"}),
+                .001);
+    }
+
+    @Test
+    public void testMetricCustomizersExtraMetrics() throws Exception {
+        new JmxCollector(
+                        "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=stringValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: stringValue\n     extraMetrics:\n        - name: isActive\n          value: true\n          description: This is a boolean value indicating if the scenario is still active or is completed."
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+        assertEquals(
+                1.0,
+                getSampleValue(
+                        "io_prometheus_jmx_stringValue_isActive",
+                        new String[] {},
+                        new String[] {}),
+                .001);
+    }
+
+    @Test
+    public void testMetricCustomizersAttributesAsLabelsExtraMetrics() throws Exception {
+        new JmxCollector(
+                        "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=stringValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: stringValue\n     attributesAsLabels:\n        - Text\n     extraMetrics:\n        - name: isActive\n          value: true\n          description: This is a boolean value indicating if the scenario is still active or is completed."
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+        assertEquals(
+                1.0,
+                getSampleValue(
+                        "io_prometheus_jmx_stringValue_isActive",
                         new String[] {"Text"},
                         new String[] {"value"}),
                 .001);

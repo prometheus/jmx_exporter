@@ -64,6 +64,12 @@ public class JmxCollector implements MultiCollector {
 
     private final Mode mode;
 
+    static class ExtraMetric {
+        String name;
+        Object value;
+        String description;
+    }
+
     static class Rule {
         Pattern pattern;
         String name;
@@ -80,6 +86,7 @@ public class JmxCollector implements MultiCollector {
     public static class MetricCustomizer {
         MBeanFilter mbeanFilter;
         List<String> attributesAsLabels;
+        List<ExtraMetric> extraMetrics;
     }
 
     public static class MBeanFilter {
@@ -355,15 +362,37 @@ public class JmxCollector implements MultiCollector {
                     }
                     mbeanFilter.properties = (Map<String, String>) mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
 
-                    List<String> attributesAsLabels =
+                    List<String> attributesAsLabelsYaml =
                             (List<String>) metricCustomizerYaml.get("attributesAsLabels");
-                    if (attributesAsLabels == null) {
+                    List<Map<String, Object>> extraMetricsYaml =
+                            (List<Map<String, Object>>) metricCustomizerYaml.get("extraMetrics");
+                    if (attributesAsLabelsYaml == null && extraMetricsYaml == null) {
                         throw new IllegalArgumentException(
-                                "Must provide attributesAsLabels, if metricCustomizers is given: " + metricCustomizersYaml);
+                                "Must provide attributesAsLabels or extraMetrics, if metricCustomizers is given: " + metricCustomizersYaml);
                     }
                     MetricCustomizer metricCustomizer = new MetricCustomizer();
                     metricCustomizer.mbeanFilter = mbeanFilter;
-                    metricCustomizer.attributesAsLabels = attributesAsLabels;
+                    metricCustomizer.attributesAsLabels = attributesAsLabelsYaml;
+
+                    if (extraMetricsYaml != null) {
+                        List<ExtraMetric> extraMetrics = new ArrayList<>();
+                        for (Map<String, Object> extraMetricYaml : extraMetricsYaml) {
+                            ExtraMetric extraMetric = new ExtraMetric();
+                            extraMetric.name = (String) extraMetricYaml.get("name");
+                            if (extraMetric.name == null) {
+                                throw new IllegalArgumentException(
+                                        "Must provide name, if extraMetric is given: " + extraMetricsYaml);
+                            }
+                            extraMetric.value = extraMetricYaml.get("value");
+                            if (extraMetric.value == null) {
+                                throw new IllegalArgumentException(
+                                        "Must provide value, if extraMetric is given: " + extraMetricsYaml);
+                            }
+                            extraMetric.description = (String) extraMetricYaml.get("description");
+                            extraMetrics.add(extraMetric);
+                        }
+                        metricCustomizer.extraMetrics = extraMetrics;
+                    }
                     cfg.metricCustomizers.add(metricCustomizer);
                 }
             } else {
