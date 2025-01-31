@@ -1,0 +1,9 @@
+hostPort: application:9999
+includeObjectNames: ["io.prometheus.jmx:type=customValue"]
+metricCustomizers:
+  - mbeanFilter:
+      domain: io.prometheus.jmx
+      properties:
+        type: customValue
+    attributesAsLabels:
+      - Text

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.JMException;
@@ -72,6 +73,7 @@ class JmxScraper {
         void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
                 LinkedList<String> attrKeys,
                 String attrName,
                 String attrType,
@@ -85,6 +87,7 @@ class JmxScraper {
     private final String password;
     private final boolean ssl;
     private final List<ObjectName> includeObjectNames, excludeObjectNames;
+    private final List<JmxCollector.MetricCustomizer> metricCustomizers;
     private final ObjectNameAttributeFilter objectNameAttributeFilter;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
 
@@ -109,6 +112,7 @@ class JmxScraper {
             List<ObjectName> includeObjectNames,
             List<ObjectName> excludeObjectNames,
             ObjectNameAttributeFilter objectNameAttributeFilter,
+            List<JmxCollector.MetricCustomizer> metricCustomizers,
             MBeanReceiver receiver,
             JmxMBeanPropertyCache jmxMBeanPropertyCache) {
         this.jmxUrl = jmxUrl;
@@ -118,6 +122,7 @@ class JmxScraper {
         this.ssl = ssl;
         this.includeObjectNames = includeObjectNames;
         this.excludeObjectNames = excludeObjectNames;
+        this.metricCustomizers = metricCustomizers;
         this.objectNameAttributeFilter = objectNameAttributeFilter;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
     }
@@ -253,6 +258,12 @@ class JmxScraper {
 
         final String mBeanNameString = mBeanName.toString();
         final String mBeanDomain = mBeanName.getDomain();
+        JmxCollector.MetricCustomizer metricCustomizer = getMetricCustomizer(mBeanName);
+        Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
+        if (metricCustomizer != null) {
+            attributesAsLabelsWithValues =
+                    getAttributesAsLabelsWithValues(metricCustomizer, attributes);
+        }
 
         for (Object object : attributes) {
             // The contents of an AttributeList should all be Attribute instances, but we'll verify
@@ -280,6 +291,7 @@ class JmxScraper {
                         mBeanName,
                         mBeanDomain,
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        attributesAsLabelsWithValues,
                         new LinkedList<>(),
                         mBeanAttributeInfo.getName(),
                         mBeanAttributeInfo.getType(),
@@ -300,6 +312,35 @@ class JmxScraper {
         }
     }
 
+    private Map<String, String> getAttributesAsLabelsWithValues(JmxCollector.MetricCustomizer metricCustomizer, AttributeList attributes) {
+        Map<String, Object> attributeMap = attributes.asList().stream()
+                        .collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+        Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
+        for (String attributeAsLabel : metricCustomizer.attributesAsLabels) {
+            Object attrValue = attributeMap.get(attributeAsLabel);
+            if (attrValue != null) {
+                attributesAsLabelsWithValues.put(attributeAsLabel, attrValue.toString());
+            }
+        }
+        return attributesAsLabelsWithValues;
+    }
+
+    private JmxCollector.MetricCustomizer getMetricCustomizer(ObjectName mBeanName) {
+        if (!metricCustomizers.isEmpty()) {
+            for (JmxCollector.MetricCustomizer metricCustomizer : metricCustomizers) {
+                if (filterMbeanByDomainAndProperties(mBeanName, metricCustomizer)) {
+                    return metricCustomizer;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean filterMbeanByDomainAndProperties(ObjectName mBeanName, JmxCollector.MetricCustomizer metricCustomizer) {
+        return metricCustomizer.mbeanFilter.domain.equals(mBeanName.getDomain()) &&
+                mBeanName.getKeyPropertyList().entrySet().containsAll(metricCustomizer.mbeanFilter.properties.entrySet());
+    }
+
     private void processAttributesOneByOne(
             MBeanServerConnection beanConn,
             ObjectName mbeanName,
@@ -318,6 +359,7 @@ class JmxScraper {
                     mbeanName,
                     mbeanName.getDomain(),
                     jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
+                    new HashMap<>(),
                     new LinkedList<>(),
                     attr.getName(),
                     attr.getType(),
@@ -335,6 +377,7 @@ class JmxScraper {
             ObjectName objectName,
             String domain,
             LinkedHashMap<String, String> beanProperties,
+            Map<String, String> attributesAsLabelsWithValues,
             LinkedList<String> attrKeys,
             String attrName,
             String attrType,
@@ -352,7 +395,7 @@ class JmxScraper {
             }
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             this.receiver.recordBean(
-                    domain, beanProperties, attrKeys, attrName, attrType, attrDescription, value);
+                    domain, beanProperties, attributesAsLabelsWithValues, attrKeys, attrName, attrType, attrDescription, value);
         } else if (value instanceof CompositeData) {
             LOGGER.log(FINE, "%s%s%s scrape: compositedata", domain, beanProperties, attrName);
             CompositeData composite = (CompositeData) value;
@@ -366,6 +409,7 @@ class JmxScraper {
                         objectName,
                         domain,
                         beanProperties,
+                        attributesAsLabelsWithValues,
                         attrKeys,
                         key,
                         typ,
@@ -432,6 +476,7 @@ class JmxScraper {
                                 objectName,
                                 domain,
                                 l2s,
+                                attributesAsLabelsWithValues,
                                 attrNames,
                                 name,
                                 typ,
@@ -452,6 +497,7 @@ class JmxScraper {
                         objectName,
                         domain,
                         beanProperties,
+                        attributesAsLabelsWithValues,
                         attrKeys,
                         attrName,
                         attrType,
@@ -464,6 +510,7 @@ class JmxScraper {
                     objectName,
                     domain,
                     beanProperties,
+                    attributesAsLabelsWithValues,
                     attrKeys,
                     attrName,
                     attrType,
@@ -479,6 +526,7 @@ class JmxScraper {
         public void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
                 LinkedList<String> attrKeys,
                 String attrName,
                 String attrType,
@@ -503,6 +551,7 @@ class JmxScraper {
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,
+                            new LinkedList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -515,6 +564,7 @@ class JmxScraper {
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,
+                            new LinkedList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -527,6 +577,7 @@ class JmxScraper {
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,
+                            new LinkedList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
