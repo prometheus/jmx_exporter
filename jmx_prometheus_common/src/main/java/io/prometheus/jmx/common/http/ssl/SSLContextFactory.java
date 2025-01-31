@@ -45,21 +45,33 @@ public class SSLContextFactory {
     /**
      * Method to create an SSLContext
      *
+     * @param keyStoreType keyStoreType
      * @param keyStoreFilename keyStoreFilename
      * @param keyStorePassword keyStorePassword
      * @param certificateAlias certificateAlias
+     * @param trustStoreType trustStoreType
+     * @param trustStoreFilename trustStoreFilename
+     * @param trustStorePassword trustStorePassword
      * @return the return value
      * @throws GeneralSecurityException GeneralSecurityException
      * @throws IOException IOException
      */
     public static SSLContext createSSLContext(
-            String keyStoreFilename, String keyStorePassword, String certificateAlias)
+            String keyStoreType,
+            String keyStoreFilename,
+            String keyStorePassword,
+            String certificateAlias,
+            String trustStoreType,
+            String trustStoreFilename,
+            String trustStorePassword)
             throws GeneralSecurityException, IOException {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+        KeyStore trustStore = null;
 
         try (InputStream inputStream = Files.newInputStream(Paths.get(keyStoreFilename))) {
             // Load the keystore
-            keyStore.load(inputStream, keyStorePassword.toCharArray());
+            keyStore.load(
+                    inputStream, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
 
             // Loop through the certificate aliases in the keystore
             // building a set of certificate aliases that don't match
@@ -86,28 +98,38 @@ public class SSLContextFactory {
                                 "certificate alias [%s] not found in keystore [%s]",
                                 certificateAlias, keyStoreFilename));
             }
-
-            // Create and initialize an SSLContext
-
-            KeyManagerFactory keyManagerFactory =
-                    KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-
-            keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
-
-            TrustManagerFactory trustManagerFactory =
-                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-
-            trustManagerFactory.init(keyStore);
-
-            SSLContext sslContext = createSSLContext();
-
-            sslContext.init(
-                    keyManagerFactory.getKeyManagers(),
-                    trustManagerFactory.getTrustManagers(),
-                    new SecureRandom());
-
-            return sslContext;
         }
+
+        if (trustStoreFilename != null) {
+            trustStore = KeyStore.getInstance(trustStoreType);
+            try (InputStream inputStream = Files.newInputStream(Paths.get(trustStoreFilename))) {
+                trustStore.load(
+                        inputStream,
+                        trustStorePassword != null ? trustStorePassword.toCharArray() : null);
+            }
+        }
+
+        // Create and initialize an SSLContext
+
+        KeyManagerFactory keyManagerFactory =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+        keyManagerFactory.init(
+                keyStore, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
+
+        TrustManagerFactory trustManagerFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+        trustManagerFactory.init(trustStore == null ? keyStore : trustStore);
+
+        SSLContext sslContext = createSSLContext();
+
+        sslContext.init(
+                keyManagerFactory.getKeyManagers(),
+                trustManagerFactory.getTrustManagers(),
+                new SecureRandom());
+
+        return sslContext;
     }
 
     /**
