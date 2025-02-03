@@ -339,23 +339,36 @@ public class JmxCollector implements MultiCollector {
         if (yamlConfig.containsKey("metricCustomizers")) {
             List<Map<String, Object>> metricCustomizersYaml =
                     (List<Map<String, Object>>) yamlConfig.get("metricCustomizers");
-            for (Map<String, Object> metricCustomizerYaml : metricCustomizersYaml) {
-                Map<String, Object> mbeanFilterYaml =
-                        (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
-                MBeanFilter mbeanFilter = new MBeanFilter();
-                mbeanFilter.domain = (String) mbeanFilterYaml.get("domain");
-                mbeanFilter.properties = (Map<String, String>) mbeanFilterYaml.get("properties");
+            if (metricCustomizersYaml != null) {
+                for (Map<String, Object> metricCustomizerYaml : metricCustomizersYaml) {
+                    Map<String, Object> mbeanFilterYaml =
+                            (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
+                    if (mbeanFilterYaml == null) {
+                        throw new IllegalArgumentException(
+                                "Must provide mbeanFilter, if metricCustomizers is given: " + metricCustomizersYaml);
+                    }
+                    MBeanFilter mbeanFilter = new MBeanFilter();
+                    mbeanFilter.domain = (String) mbeanFilterYaml.get("domain");
+                    if (mbeanFilter.domain == null) {
+                        throw new IllegalArgumentException(
+                                "Must provide domain, if metricCustomizers is given: " + metricCustomizersYaml);
+                    }
+                    mbeanFilter.properties = (Map<String, String>) mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
 
-                List<String> attributesAsLabels =
-                        (List<String>) metricCustomizerYaml.get("attributesAsLabels");
-                if (attributesAsLabels == null) {
-                    attributesAsLabels = new ArrayList<>();
+                    List<String> attributesAsLabels =
+                            (List<String>) metricCustomizerYaml.get("attributesAsLabels");
+                    if (attributesAsLabels == null) {
+                        throw new IllegalArgumentException(
+                                "Must provide attributesAsLabels, if metricCustomizers is given: " + metricCustomizersYaml);
+                    }
+                    MetricCustomizer metricCustomizer = new MetricCustomizer();
+                    metricCustomizer.mbeanFilter = mbeanFilter;
+                    metricCustomizer.attributesAsLabels = attributesAsLabels;
+                    cfg.metricCustomizers.add(metricCustomizer);
                 }
-
-                MetricCustomizer metricCustomizer = new MetricCustomizer();
-                metricCustomizer.mbeanFilter = mbeanFilter;
-                metricCustomizer.attributesAsLabels = attributesAsLabels;
-                cfg.metricCustomizers.add(metricCustomizer);
+            } else {
+                throw new IllegalArgumentException(
+                        "Must provide mbeanFilter, if metricCustomizers is given ");
             }
         }
 
