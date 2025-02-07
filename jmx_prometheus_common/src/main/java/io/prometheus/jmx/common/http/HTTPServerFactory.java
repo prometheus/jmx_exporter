@@ -61,6 +61,19 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class HTTPServerFactory {
 
+    private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
+    private static final String JAVAX_NET_SSL_KEY_STORE_TYPE = "javax.net.ssl.keyStoreType";
+    private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
+
+    private static final String DEFAULT_KEYSTORE_TYPE;
+
+    private static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
+    private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
+    private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD =
+            "javax.net.ssl.trustStorePassword";
+
+    private static final String DEFAULT_TRUST_STORE_TYPE;
+
     private static final int DEFAULT_MINIMUM_THREADS = 1;
     private static final int DEFAULT_MAXIMUM_THREADS = 10;
     private static final int DEFAULT_KEEP_ALIVE_TIME_SECONDS = 120;
@@ -70,16 +83,29 @@ public class HTTPServerFactory {
     private static final Set<String> SHA_ALGORITHMS;
     private static final Set<String> PBKDF2_ALGORITHMS;
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
-    private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
-    private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
-    private static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
-    private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
-    private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD =
-            "javax.net.ssl.trustStorePassword";
-
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
 
     static {
+        // Get the keystore type system property
+        String keyStoreType = System.getProperty(JAVAX_NET_SSL_KEY_STORE_TYPE);
+        if (keyStoreType == null) {
+            // If the keystore type system property is not set, use the default keystore type
+            keyStoreType = KeyStore.getDefaultType();
+        }
+
+        // Set the default keystore type
+        DEFAULT_KEYSTORE_TYPE = keyStoreType;
+
+        // Get the truststore type system property
+        String trustStoreType = System.getProperty(JAVAX_NET_SSL_TRUST_STORE_TYPE);
+        if (trustStoreType == null) {
+            // If the truststore type system property is not set, use the default truststore type
+            trustStoreType = KeyStore.getDefaultType();
+        }
+
+        // Set the default truststore type
+        DEFAULT_TRUST_STORE_TYPE = trustStoreType;
+
         SHA_ALGORITHMS = new HashSet<>();
         SHA_ALGORITHMS.add("SHA-1");
         SHA_ALGORITHMS.add("SHA-256");
@@ -655,7 +681,7 @@ public class HTTPServerFactory {
                                                         "Invalid configuration for"
                                                                 + " /httpServer/ssl/keyStore/type"
                                                                 + " must not be blank")))
-                                .orElse(KeyStore.getDefaultType());
+                                .orElse(DEFAULT_KEYSTORE_TYPE);
 
                 String keyStorePassword =
                         rootYamlMapAccessor
@@ -697,6 +723,7 @@ public class HTTPServerFactory {
                 String trustStoreFilename = null;
                 String trustStoreType = null;
                 String trustStorePassword = null;
+
                 final boolean mutualTLS =
                         rootYamlMapAccessor
                                 .get("/httpServer/ssl/mutualTLS")
@@ -753,7 +780,7 @@ public class HTTPServerFactory {
                                                             "Invalid configuration for"
                                                                 + " /httpServer/ssl/trustStore/type"
                                                                 + " must not be blank")))
-                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_TYPE));
+                                    .orElse(DEFAULT_TRUST_STORE_TYPE);
 
                     trustStorePassword =
                             rootYamlMapAccessor
