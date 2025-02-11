@@ -1,0 +1,12 @@
+includeObjectNames: ["io.prometheus.jmx:type=stringValue"]
+metricCustomizers:
+  - mbeanFilter:
+      domain: io.prometheus.jmx
+      properties:
+        type: stringValue
+    attributesAsLabels:
+      - Text
+    extraMetrics:
+      - name: isActive
+        value: true
+        description: This is a boolean value indicating if the scenario is still active or is completed.
