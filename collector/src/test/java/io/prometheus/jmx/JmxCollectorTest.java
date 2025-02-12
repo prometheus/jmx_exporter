@@ -56,6 +56,7 @@ public class JmxCollectorTest {
         TomcatServlet.registerBean(mbs);
         Bool.registerBean(mbs);
         Camel.registerBean(mbs);
+        CustomValue.registerBean(mbs);
     }
 
     @Before
@@ -160,6 +161,21 @@ public class JmxCollectorTest {
                         "hadoop_service_DataNode_",
                         new String[] {"hadoop_service_DataNode_"},
                         new String[] {"hadoop<service=DataNode, "}),
+                .001);
+    }
+
+    @Test
+    public void testMetricCustomizers() throws Exception {
+        new JmxCollector(
+                        "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=customValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: customValue\n     attributesAsLabels:\n        - Text"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+        assertEquals(
+                345,
+                getSampleValue(
+                        "io_prometheus_jmx_customValue_Value",
+                        new String[] {"Text"},
+                        new String[] {"value"}),
                 .001);
     }
 
