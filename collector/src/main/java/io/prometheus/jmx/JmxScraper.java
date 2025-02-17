@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -259,7 +260,7 @@ class JmxScraper {
         final String mBeanNameString = mBeanName.toString();
         final String mBeanDomain = mBeanName.getDomain();
         JmxCollector.MetricCustomizer metricCustomizer = getMetricCustomizer(mBeanName);
-        Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
+        Map<String, String> attributesAsLabelsWithValues = Collections.emptyMap();
         if (metricCustomizer != null) {
             attributesAsLabelsWithValues =
                     getAttributesAsLabelsWithValues(metricCustomizer, attributes);
