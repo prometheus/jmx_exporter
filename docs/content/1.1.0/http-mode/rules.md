@@ -25,6 +25,11 @@ labels            | A map of label name to label value pairs. Capture groups fro
 help              | Help text for the metric. Capture groups from `pattern` can be used. `name` must be set to use this. Defaults to the mBean attribute description, domain, and name of the attribute.
 cache             | Whether to cache bean name expressions to rule computation (match and mismatch). Not recommended for rules matching on bean value, as only the value from the first scrape will be cached and re-used. This can increase performance when collecting a lot of mbeans. Defaults to `false`.
 type              | The type of the metric, can be `GAUGE`, `COUNTER` or `UNTYPED`. `name` must be set to use this. Defaults to `UNTYPED`.
+metricCustomizers | A list of objects that contain `mbeanFilter` and `attributesAsLabels`. For those mBeans that match the filter, the items in the `attributesAsLabels` list will be added as attributes to the existing metrics.
+mbeanFilter | A map of the criteria by which mBeans are filtered. It contains `domain` and `properties`.
+domain | Domain of an mBean. Mandatory if `metricCustomizers` defined.
+properties | Properties of an mBean. Optional
+attributesAsLabels | List of elements to be added as attributes to existing metrics. Mandatory if `metricCustomizers` defined.
 
 Metric names and label names are sanitized. All characters other than `[a-zA-Z0-9:_]` are replaced with underscores,
 and adjacent underscores are collapsed. There's no limitations on label values or the help text.
