@@ -62,6 +62,9 @@ public class JmxExampleApplication {
         mBeanServer.registerMBean(
                 new CustomValue(), new ObjectName("io.prometheus.jmx:type=customValue"));
 
+        mBeanServer.registerMBean(
+                new StringValue(), new ObjectName("io.prometheus.jmx:type=stringValue"));
+
         System.out.printf(
                 "%s | %s | INFO | %s | %s%n",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),

@@ -262,8 +262,22 @@ class JmxScraper {
         JmxCollector.MetricCustomizer metricCustomizer = getMetricCustomizer(mBeanName);
         Map<String, String> attributesAsLabelsWithValues = Collections.emptyMap();
         if (metricCustomizer != null) {
-            attributesAsLabelsWithValues =
-                    getAttributesAsLabelsWithValues(metricCustomizer, attributes);
+             if (metricCustomizer.attributesAsLabels != null) {
+                 attributesAsLabelsWithValues =
+                         getAttributesAsLabelsWithValues(metricCustomizer, attributes);
+             }
+            for (JmxCollector.ExtraMetric extraMetric : getExtraMetrics(metricCustomizer)) {
+                processBeanValue(
+                        mBeanName,
+                        mBeanDomain,
+                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        attributesAsLabelsWithValues,
+                        new LinkedList<>(),
+                        extraMetric.name,
+                        "UNKNOWN",
+                        extraMetric.description,
+                        extraMetric.value);
+            }
         }
 
         for (Object object : attributes) {
@@ -311,6 +325,13 @@ class JmxScraper {
                         object.getClass().getName());
             }
         }
+    }
+
+    private List<JmxCollector.ExtraMetric> getExtraMetrics(
+            JmxCollector.MetricCustomizer metricCustomizer) {
+        return metricCustomizer.extraMetrics != null
+                ? metricCustomizer.extraMetrics
+                : Collections.emptyList();
     }
 
     private Map<String, String> getAttributesAsLabelsWithValues(JmxCollector.MetricCustomizer metricCustomizer, AttributeList attributes) {
