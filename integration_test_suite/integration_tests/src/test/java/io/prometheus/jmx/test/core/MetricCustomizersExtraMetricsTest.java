@@ -29,11 +29,9 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
-
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
@@ -61,8 +59,7 @@ public class MetricCustomizersExtraMetricsTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws
-            IOException {
+    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -109,8 +106,7 @@ public class MetricCustomizersExtraMetricsTest {
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                exporterTestEnvironment, httpResponse,
-                MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -158,9 +154,6 @@ public class MetricCustomizersExtraMetricsTest {
          */
         metrics.stream()
                 .filter(metric -> metric.name().equals("io_prometheus_jmx_stringValue_isActive"))
-                .forEach(
-                        metric ->
-                                assertThat(metric.value())
-                                        .isEqualTo(1));
+                .forEach(metric -> assertThat(metric.value()).isEqualTo(1));
     }
 }

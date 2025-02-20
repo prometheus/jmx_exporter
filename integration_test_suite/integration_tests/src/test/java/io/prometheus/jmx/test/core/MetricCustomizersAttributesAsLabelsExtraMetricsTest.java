@@ -16,6 +16,10 @@
 
 package io.prometheus.jmx.test.core;
 
+import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
+import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.TestSupport;
@@ -25,19 +29,14 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
-
-import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
-import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
 
@@ -60,8 +59,7 @@ public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws
-            IOException {
+    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
         String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -108,8 +106,7 @@ public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                exporterTestEnvironment, httpResponse,
-                MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -156,10 +153,8 @@ public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
                 .filter(metric -> metric.name().equals("io_prometheus_jmx_stringValue_isActive"))
                 .forEach(
                         metric -> {
-                            assertThat(metric.value())
-                                    .isEqualTo(1);
-                            assertThat(metric.labels())
-                                    .containsEntry("Text", "value");
+                            assertThat(metric.value()).isEqualTo(1);
+                            assertThat(metric.labels()).containsEntry("Text", "value");
                         });
     }
 }

@@ -22,6 +22,7 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Collections;
 import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -262,10 +262,10 @@ class JmxScraper {
         JmxCollector.MetricCustomizer metricCustomizer = getMetricCustomizer(mBeanName);
         Map<String, String> attributesAsLabelsWithValues = Collections.emptyMap();
         if (metricCustomizer != null) {
-             if (metricCustomizer.attributesAsLabels != null) {
-                 attributesAsLabelsWithValues =
-                         getAttributesAsLabelsWithValues(metricCustomizer, attributes);
-             }
+            if (metricCustomizer.attributesAsLabels != null) {
+                attributesAsLabelsWithValues =
+                        getAttributesAsLabelsWithValues(metricCustomizer, attributes);
+            }
             for (JmxCollector.ExtraMetric extraMetric : getExtraMetrics(metricCustomizer)) {
                 processBeanValue(
                         mBeanName,
@@ -334,8 +334,10 @@ class JmxScraper {
                 : Collections.emptyList();
     }
 
-    private Map<String, String> getAttributesAsLabelsWithValues(JmxCollector.MetricCustomizer metricCustomizer, AttributeList attributes) {
-        Map<String, Object> attributeMap = attributes.asList().stream()
+    private Map<String, String> getAttributesAsLabelsWithValues(
+            JmxCollector.MetricCustomizer metricCustomizer, AttributeList attributes) {
+        Map<String, Object> attributeMap =
+                attributes.asList().stream()
                         .collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
         Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
         for (String attributeAsLabel : metricCustomizer.attributesAsLabels) {
@@ -358,9 +360,13 @@ class JmxScraper {
         return null;
     }
 
-    private boolean filterMbeanByDomainAndProperties(ObjectName mBeanName, JmxCollector.MetricCustomizer metricCustomizer) {
-        return metricCustomizer.mbeanFilter.domain.equals(mBeanName.getDomain()) &&
-                mBeanName.getKeyPropertyList().entrySet().containsAll(metricCustomizer.mbeanFilter.properties.entrySet());
+    private boolean filterMbeanByDomainAndProperties(
+            ObjectName mBeanName, JmxCollector.MetricCustomizer metricCustomizer) {
+        return metricCustomizer.mbeanFilter.domain.equals(mBeanName.getDomain())
+                && mBeanName
+                        .getKeyPropertyList()
+                        .entrySet()
+                        .containsAll(metricCustomizer.mbeanFilter.properties.entrySet());
     }
 
     private void processAttributesOneByOne(
@@ -417,7 +423,14 @@ class JmxScraper {
             }
             LOGGER.log(FINE, "%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             this.receiver.recordBean(
-                    domain, beanProperties, attributesAsLabelsWithValues, attrKeys, attrName, attrType, attrDescription, value);
+                    domain,
+                    beanProperties,
+                    attributesAsLabelsWithValues,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    value);
         } else if (value instanceof CompositeData) {
             LOGGER.log(FINE, "%s%s%s scrape: compositedata", domain, beanProperties, attrName);
             CompositeData composite = (CompositeData) value;

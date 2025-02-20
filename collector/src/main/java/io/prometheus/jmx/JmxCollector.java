@@ -352,15 +352,19 @@ public class JmxCollector implements MultiCollector {
                             (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
                     if (mbeanFilterYaml == null) {
                         throw new IllegalArgumentException(
-                                "Must provide mbeanFilter, if metricCustomizers is given: " + metricCustomizersYaml);
+                                "Must provide mbeanFilter, if metricCustomizers is given: "
+                                        + metricCustomizersYaml);
                     }
                     MBeanFilter mbeanFilter = new MBeanFilter();
                     mbeanFilter.domain = (String) mbeanFilterYaml.get("domain");
                     if (mbeanFilter.domain == null) {
                         throw new IllegalArgumentException(
-                                "Must provide domain, if metricCustomizers is given: " + metricCustomizersYaml);
+                                "Must provide domain, if metricCustomizers is given: "
+                                        + metricCustomizersYaml);
                     }
-                    mbeanFilter.properties = (Map<String, String>) mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
+                    mbeanFilter.properties =
+                            (Map<String, String>)
+                                    mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
 
                     List<String> attributesAsLabelsYaml =
                             (List<String>) metricCustomizerYaml.get("attributesAsLabels");
@@ -368,7 +372,9 @@ public class JmxCollector implements MultiCollector {
                             (List<Map<String, Object>>) metricCustomizerYaml.get("extraMetrics");
                     if (attributesAsLabelsYaml == null && extraMetricsYaml == null) {
                         throw new IllegalArgumentException(
-                                "Must provide attributesAsLabels or extraMetrics, if metricCustomizers is given: " + metricCustomizersYaml);
+                                "Must provide attributesAsLabels or extraMetrics, if"
+                                        + " metricCustomizers is given: "
+                                        + metricCustomizersYaml);
                     }
                     MetricCustomizer metricCustomizer = new MetricCustomizer();
                     metricCustomizer.mbeanFilter = mbeanFilter;
@@ -381,12 +387,14 @@ public class JmxCollector implements MultiCollector {
                             extraMetric.name = (String) extraMetricYaml.get("name");
                             if (extraMetric.name == null) {
                                 throw new IllegalArgumentException(
-                                        "Must provide name, if extraMetric is given: " + extraMetricsYaml);
+                                        "Must provide name, if extraMetric is given: "
+                                                + extraMetricsYaml);
                             }
                             extraMetric.value = extraMetricYaml.get("value");
                             if (extraMetric.value == null) {
                                 throw new IllegalArgumentException(
-                                        "Must provide value, if extraMetric is given: " + extraMetricsYaml);
+                                        "Must provide value, if extraMetric is given: "
+                                                + extraMetricsYaml);
                             }
                             extraMetric.description = (String) extraMetricYaml.get("description");
                             extraMetrics.add(extraMetric);
@@ -609,7 +617,8 @@ public class JmxCollector implements MultiCollector {
                     labelValues.add(entry.getValue());
                 }
             }
-            addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
+            addAttributesAsLabelsWithValuesToLabels(
+                    config, attributesAsLabelsWithValues, labelNames, labelValues);
 
             return new MatchedRule(
                     fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
@@ -739,7 +748,8 @@ public class JmxCollector implements MultiCollector {
                 // Set the labels.
                 ArrayList<String> labelNames = new ArrayList<>();
                 ArrayList<String> labelValues = new ArrayList<>();
-                addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
+                addAttributesAsLabelsWithValuesToLabels(
+                        config, attributesAsLabelsWithValues, labelNames, labelValues);
                 if (rule.labelNames != null) {
                     for (int i = 0; i < rule.labelNames.size(); i++) {
                         final String unsafeLabelName = rule.labelNames.get(i);
@@ -814,7 +824,11 @@ public class JmxCollector implements MultiCollector {
         }
     }
 
-    private static void addAttributesAsLabelsWithValuesToLabels(Config config, Map<String, String> attributesAsLabelsWithValues, List<String> labelNames, List<String> labelValues) {
+    private static void addAttributesAsLabelsWithValuesToLabels(
+            Config config,
+            Map<String, String> attributesAsLabelsWithValues,
+            List<String> labelNames,
+            List<String> labelValues) {
         attributesAsLabelsWithValues.forEach(
                 (attributeAsLabelName, attributeValue) -> {
                     String labelName = safeName(attributeAsLabelName);
