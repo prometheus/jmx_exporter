@@ -154,9 +154,6 @@ public class MetricCustomizersTest {
          */
         metrics.stream()
                 .filter(metric -> metric.name().contains("io_prometheus_jmx_customValue_Value"))
-                .forEach(
-                        metric ->
-                                assertThat(metric.labels())
-                                        .containsEntry("Text", "value"));
+                .forEach(metric -> assertThat(metric.labels()).containsEntry("Text", "value"));
     }
 }

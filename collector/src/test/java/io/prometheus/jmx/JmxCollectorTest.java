@@ -189,9 +189,7 @@ public class JmxCollectorTest {
         assertEquals(
                 1.0,
                 getSampleValue(
-                        "io_prometheus_jmx_stringValue_isActive",
-                        new String[] {},
-                        new String[] {}),
+                        "io_prometheus_jmx_stringValue_isActive", new String[] {}, new String[] {}),
                 .001);
     }
 
