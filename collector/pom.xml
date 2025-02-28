@@ -42,36 +42,6 @@
         <prometheus.metrics.version>1.3.6</prometheus.metrics.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-core</artifactId>
-                <version>${prometheus.metrics.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-model</artifactId>
-                <version>${prometheus.metrics.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
-                <version>${prometheus.metrics.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
-                <version>${prometheus.metrics.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-exporter-opentelemetry</artifactId>
-                <version>${prometheus.metrics.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>io.prometheus</groupId>
@@ -81,11 +51,6 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>prometheus-metrics-model</artifactId>
-            <version>${prometheus.metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>prometheus-metrics-exposition-formats</artifactId>
             <version>${prometheus.metrics.version}</version>
         </dependency>
         <dependency>
@@ -103,11 +68,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.27.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
