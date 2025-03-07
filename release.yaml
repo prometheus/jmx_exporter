@@ -6,6 +6,8 @@ pipeline:
       steps:
         - name: check for release property
           run: if [ -z "${{ release }}" ]; then echo "release property is required, exiting" && exit 1; fi
+        - name: check for ~/.m2/prometheus.settings.xml
+          run: if [ -f "~/.m2/prometheus.settings.xml" ]; then echo "~/.m2/prometheus.settings.xml required, exiting" && exit 1; fi
         - name: change version
           enabled: true
           run: |
