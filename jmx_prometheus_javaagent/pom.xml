@@ -122,6 +122,7 @@
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/versions/**</exclude>
                                         <exclude>lib/opentelemetry**</exclude>
                                     </excludes>
                                 </filter>
