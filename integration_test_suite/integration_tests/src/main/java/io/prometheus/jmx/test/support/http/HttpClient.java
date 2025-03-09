@@ -41,10 +41,10 @@ import javax.net.ssl.X509TrustManager;
 public class HttpClient {
 
     /** Default connect timeout */
-    public static final int CONNECT_TIMEOUT = 30000;
+    public static final int CONNECT_TIMEOUT = 60000;
 
     /** Default read timeout */
-    public static final int READ_TIMEOUT = 30000;
+    public static final int READ_TIMEOUT = 60000;
 
     static {
         try {

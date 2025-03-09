@@ -279,7 +279,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                         .withNetwork(network)
                         .withNetworkAliases("prometheus")
                         .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                        .withStartupTimeout(Duration.ofMillis(30000))
+                        .withStartupTimeout(Duration.ofMillis(60000))
                         .waitingFor(
                                 Wait.forLogMessage(
                                         ".*Server is ready to receive web requests.*", 1));
@@ -312,7 +312,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp");
     }
 
@@ -336,7 +336,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp")
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1));
     }
@@ -361,7 +361,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp")
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1));
     }
