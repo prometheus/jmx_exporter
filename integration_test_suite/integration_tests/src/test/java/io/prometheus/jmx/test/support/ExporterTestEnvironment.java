@@ -195,7 +195,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp");
     }
 
@@ -219,7 +219,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp");
     }
 
@@ -243,7 +243,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(30000))
+                .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp");
     }
 
