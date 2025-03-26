@@ -9,7 +9,7 @@ amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:21
 amazoncorretto:22
-amazoncorretto:23
+amazoncorretto:24
 antublue/openjdk:25-ea-3
 antublue/openlogic-openjdk:8
 antublue/openlogic-openjdk:11
@@ -21,7 +21,7 @@ azul/zulu-openjdk:11
 azul/zulu-openjdk:17
 azul/zulu-openjdk:21
 azul/zulu-openjdk:22
-azul/zulu-openjdk:23
+azul/zulu-openjdk:24
 azul/prime:8
 azul/prime:11
 azul/prime:17
@@ -31,7 +31,7 @@ bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
 bellsoft/liberica-openjdk-debian:21
 bellsoft/liberica-openjdk-debian:22
-bellsoft/liberica-openjdk-debian:23
+bellsoft/liberica-openjdk-debian:24
 bitnami/java:1.8
 bitnami/java:11
 bitnami/java:17
@@ -42,13 +42,13 @@ eclipse-temurin:11
 eclipse-temurin:17
 eclipse-temurin:21
 eclipse-temurin:22
-eclipse-temurin:23
+eclipse-temurin:24
 eclipse-temurin:8-alpine
 eclipse-temurin:11-alpine
 eclipse-temurin:17-alpine
 eclipse-temurin:21-alpine
 eclipse-temurin:22-alpine
-eclipse-temurin:23-alpine
+eclipse-temurin:24-alpine
 ghcr.io/graalvm/jdk:java8
 ghcr.io/graalvm/jdk:java11
 ghcr.io/graalvm/jdk:java17
@@ -79,11 +79,9 @@ openjdk:8
 openjdk:11
 openjdk:17
 openjdk:21
-openjdk:22
-openjdk:23
 openjdk:24
 openjdk:25
-container-registry.oracle.com/graalvm/jdk-community:23
+container-registry.oracle.com/graalvm/jdk-community:24
 registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-17-runtime:latest
@@ -95,4 +93,4 @@ sapmachine:11
 sapmachine:17
 sapmachine:21
 sapmachine:22
-sapmachine:23
+sapmachine:24
