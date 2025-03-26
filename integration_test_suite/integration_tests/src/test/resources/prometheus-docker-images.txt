@@ -4,7 +4,7 @@ prom/prometheus:v2.49.1
 prom/prometheus:v2.50.1
 prom/prometheus:v2.51.2
 prom/prometheus:v2.52.0
-prom/prometheus:v2.53.3
+prom/prometheus:v2.53.4
 prom/prometheus:v2.54.1
 prom/prometheus:v2.55.1
 prom/prometheus:v3.0.1
