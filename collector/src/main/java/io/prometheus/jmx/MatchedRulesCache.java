@@ -16,11 +16,7 @@
 
 package io.prometheus.jmx;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -30,42 +26,31 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MatchedRulesCache {
 
-    private final Map<JmxCollector.Rule, Map<String, MatchedRule>> cachedRules;
+    private final Map<CacheKey, MatchedRule> cache;
 
-    /**
-     * Constructor
-     *
-     * @param rules rules
-     */
-    public MatchedRulesCache(Collection<JmxCollector.Rule> rules) {
-        this.cachedRules = new HashMap<>(rules.size());
-        for (JmxCollector.Rule rule : rules) {
-            this.cachedRules.put(rule, new ConcurrentHashMap<>());
-        }
+    /** Constructs an empty cache */
+    public MatchedRulesCache() {
+        this.cache = new ConcurrentHashMap<>();
     }
 
     /**
-     * Method to put a matched rule in the cache
+     * Adds a rule match to the cache
      *
-     * @param rule rule
-     * @param cacheKey cacheKey
-     * @param matchedRule matchedRule
+     * @param key
+     * @param matchedRule
      */
-    public void put(
-            final JmxCollector.Rule rule, final String cacheKey, final MatchedRule matchedRule) {
-        Map<String, MatchedRule> cachedRulesForRule = cachedRules.get(rule);
-        cachedRulesForRule.put(cacheKey, matchedRule);
+    public void put(final CacheKey key, final MatchedRule matchedRule) {
+        cache.put(key, matchedRule);
     }
 
     /**
-     * Method to get a MatchedRule from the cache
+     * Retrieves the cached MatchedRule
      *
-     * @param rule rule
-     * @param cacheKey cacheKey
-     * @return the MatchedRule
+     * @param key
+     * @return a MatchedRule from cache or null
      */
-    public MatchedRule get(final JmxCollector.Rule rule, final String cacheKey) {
-        return cachedRules.get(rule).get(cacheKey);
+    public MatchedRule get(final CacheKey key) {
+        return cache.get(key);
     }
 
     /**
@@ -75,65 +60,77 @@ public class MatchedRulesCache {
      * @param stalenessTracker stalenessTracker
      */
     public void evictStaleEntries(final StalenessTracker stalenessTracker) {
-        for (Map.Entry<JmxCollector.Rule, Map<String, MatchedRule>> entry :
-                cachedRules.entrySet()) {
-            JmxCollector.Rule rule = entry.getKey();
-            Map<String, MatchedRule> cachedRulesForRule = entry.getValue();
-
-            for (String cacheKey : cachedRulesForRule.keySet()) {
-                if (!stalenessTracker.contains(rule, cacheKey)) {
-                    cachedRulesForRule.remove(cacheKey);
-                }
+        for (CacheKey key : cache.keySet()) {
+            if (!stalenessTracker.isFresh(key)) {
+                cache.remove(key);
             }
         }
     }
 
-    /** Class to implement StalenessTracker */
+    /**
+     * Tracks which cache entries were touched during current scrape, so that all that were not can
+     * be evicted from the cache
+     */
     public static class StalenessTracker {
 
-        private final Map<JmxCollector.Rule, Set<String>> lastCachedEntries = new HashMap<>();
+        private final Set<CacheKey> freshEntries;
 
         /** Constructor */
         public StalenessTracker() {
-            // INTENTIONALLY BLANK
+            this.freshEntries = new HashSet<>();
+        }
+
+        /** Marks a cache key as fresh (not stale) */
+        public void markAsFresh(final CacheKey key) {
+            freshEntries.add(key);
+        }
+
+        /** Returns true if {@link #markAsFresh(CacheKey)) was called for that key */
+        boolean isFresh(final CacheKey key) {
+            return freshEntries.contains(key);
         }
 
         /**
-         * Method to add a Rule
+         * Returns the number of fresh rules
          *
-         * @param rule rule
-         * @param cacheKey cacheKey
+         * @return the number of fresh rules
          */
-        public void add(final JmxCollector.Rule rule, final String cacheKey) {
-            Set<String> lastCachedEntriesForRule =
-                    lastCachedEntries.computeIfAbsent(rule, k -> new HashSet<>());
-            lastCachedEntriesForRule.add(cacheKey);
+        public long freshCount() {
+            return freshEntries.size();
+        }
+    }
+
+    public static class CacheKey {
+        private final String domain;
+        private final LinkedHashMap<String, String> beanProperties;
+        private final LinkedList<String> attrKeys;
+        private final String attrName;
+
+        public CacheKey(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                LinkedList<String> attrKeys,
+                String attrName) {
+            this.domain = domain;
+            this.beanProperties = beanProperties;
+            this.attrKeys = attrKeys;
+            this.attrName = attrName;
         }
 
-        /**
-         * Method to return if a Rule is stale
-         *
-         * @param rule rule
-         * @param cacheKey cacheKey
-         * @return true if the stale, else false
-         */
-        public boolean contains(final JmxCollector.Rule rule, final String cacheKey) {
-            Set<String> lastCachedEntriesForRule = lastCachedEntries.get(rule);
-            return (lastCachedEntriesForRule != null)
-                    && lastCachedEntriesForRule.contains(cacheKey);
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CacheKey cacheKey = (CacheKey) o;
+            return Objects.equals(domain, cacheKey.domain)
+                    && Objects.equals(beanProperties, cacheKey.beanProperties)
+                    && Objects.equals(attrKeys, cacheKey.attrKeys)
+                    && Objects.equals(attrName, cacheKey.attrName);
         }
 
-        /**
-         * Method to get the count of stale rules
-         *
-         * @return the count of stale rules
-         */
-        public long cachedCount() {
-            long count = 0;
-            for (Set<String> cacheKeys : lastCachedEntries.values()) {
-                count += cacheKeys.size();
-            }
-            return count;
+        @Override
+        public int hashCode() {
+            return Objects.hash(domain, beanProperties, attrKeys, attrName);
         }
     }
 }
