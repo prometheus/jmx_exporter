@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.SEVERE;
 
+import io.prometheus.jmx.MatchedRulesCache.CacheKey;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.core.metrics.Counter;
@@ -475,7 +476,15 @@ public class JmxCollector implements MultiCollector {
             cfg.rules.add(new Rule());
         }
 
-        cfg.rulesCache = new MatchedRulesCache(cfg.rules);
+        boolean hasCachedRules = false;
+        for (Rule rule : cfg.rules) {
+            hasCachedRules |= rule.cache;
+        }
+
+        // Avoid all costs related to maintaining the cache if there are no cached rules
+        if (hasCachedRules) {
+            cfg.rulesCache = new MatchedRulesCache();
+        }
         cfg.objectNameAttributeFilter = ObjectNameAttributeFilter.create(yamlConfig);
 
         return cfg;
@@ -563,12 +572,10 @@ public class JmxCollector implements MultiCollector {
         }
 
         // Add the matched rule to the cached rules and tag it as not stale
-        // if the rule is configured to be cached
-        private void addToCache(
-                final Rule rule, final String cacheKey, final MatchedRule matchedRule) {
-            if (rule.cache) {
-                config.rulesCache.put(rule, cacheKey, matchedRule);
-                stalenessTracker.add(rule, cacheKey);
+        private void addToCache(final CacheKey cacheKey, final MatchedRule matchedRule) {
+            if (config.rulesCache != null && cacheKey != null) {
+                config.rulesCache.put(cacheKey, matchedRule);
+                stalenessTracker.markAsFresh(cacheKey);
             }
         }
 
@@ -634,161 +641,173 @@ public class JmxCollector implements MultiCollector {
                 String attrDescription,
                 Object beanValue) {
 
-            String beanName =
-                    domain
-                            + angleBrackets(beanProperties.toString())
-                            + angleBrackets(attrKeys.toString());
-
-            // Build the HELP string from the bean metadata.
-            String help =
-                    domain
-                            + ":name="
-                            + beanProperties.get("name")
-                            + ",type="
-                            + beanProperties.get("type")
-                            + ",attribute="
-                            + attrName;
-            // Add the attrDescription to the HELP if it exists and is useful.
-            if (attrDescription != null && !attrDescription.equals(attrName)) {
-                help = attrDescription + " " + help;
-            }
-
             MatchedRule matchedRule = MatchedRule.unmatched();
 
-            for (Rule rule : config.rules) {
-                // Rules with bean values cannot be properly cached (only the value from the first
-                // scrape will be cached).
-                // If caching for the rule is enabled, replace the value with a dummy <cache> to
-                // avoid caching different values at different times.
-                Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
+            CacheKey cacheKey = null;
+            MatchedRule cachedRule = null;
 
-                String attributeName;
-                if (rule.attrNameSnakeCase) {
-                    attributeName = toSnakeAndLowerCase(attrName);
-                } else {
-                    attributeName = attrName;
+            if (config.rulesCache != null) {
+                cacheKey = new CacheKey(domain, beanProperties, attrKeys, attrName);
+                cachedRule = config.rulesCache.get(cacheKey);
+                if (cachedRule != null) {
+                    stalenessTracker.markAsFresh(cacheKey);
+                    matchedRule = cachedRule;
                 }
-
-                String matchName = (beanName + attributeName + ": " + matchBeanValue).intern();
-
-                if (rule.cache) {
-                    MatchedRule cachedRule = config.rulesCache.get(rule, matchName);
-                    if (cachedRule != null) {
-                        stalenessTracker.add(rule, matchName);
-                        if (cachedRule.isMatched()) {
-                            matchedRule = cachedRule;
-                            break;
-                        }
-
-                        // The bean was cached earlier, but did not match the current rule.
-                        // Skip it to avoid matching against the same pattern again
-                        continue;
-                    }
-                }
-
-                Matcher matcher = null;
-                if (rule.pattern != null) {
-                    matcher = rule.pattern.matcher(matchName);
-                    if (!matcher.matches()) {
-                        addToCache(rule, matchName, MatchedRule.unmatched());
-                        continue;
-                    }
-                }
-
-                Double value = null;
-                if (rule.value != null && !rule.value.isEmpty()) {
-                    String val = matcher.replaceAll(rule.value);
-                    try {
-                        value = Double.valueOf(val);
-                    } catch (NumberFormatException e) {
-                        LOGGER.log(
-                                FINE,
-                                "Unable to parse configured value '%s' to number for bean: %s%s:"
-                                        + " %s",
-                                val,
-                                beanName,
-                                attrName,
-                                beanValue);
-                        return;
-                    }
-                }
-
-                // If there's no name provided, use default export format.
-                if (rule.name == null) {
-                    matchedRule =
-                            defaultExport(
-                                    matchName,
-                                    domain,
-                                    beanProperties,
-                                    attrKeys,
-                                    attributeName,
-                                    help,
-                                    value,
-                                    rule.valueFactor,
-                                    rule.type,
-                                    attributesAsLabelsWithValues);
-                    addToCache(rule, matchName, matchedRule);
-                    break;
-                }
-
-                // Matcher is set below here due to validation in the constructor.
-                String name = safeName(matcher.replaceAll(rule.name));
-                if (name.isEmpty()) {
-                    return;
-                }
-                if (config.lowercaseOutputName) {
-                    name = name.toLowerCase();
-                }
-
-                // Set the help.
-                if (rule.help != null) {
-                    help = matcher.replaceAll(rule.help);
-                }
-
-                // Set the labels.
-                ArrayList<String> labelNames = new ArrayList<>();
-                ArrayList<String> labelValues = new ArrayList<>();
-                addAttributesAsLabelsWithValuesToLabels(
-                        config, attributesAsLabelsWithValues, labelNames, labelValues);
-                if (rule.labelNames != null) {
-                    for (int i = 0; i < rule.labelNames.size(); i++) {
-                        final String unsafeLabelName = rule.labelNames.get(i);
-                        final String labelValReplacement = rule.labelValues.get(i);
-                        try {
-                            String labelName = safeName(matcher.replaceAll(unsafeLabelName));
-                            String labelValue = matcher.replaceAll(labelValReplacement);
-                            if (config.lowercaseOutputLabelNames) {
-                                labelName = labelName.toLowerCase();
-                            }
-                            if (!labelName.isEmpty() && !labelValue.isEmpty()) {
-                                labelNames.add(labelName);
-                                labelValues.add(labelValue);
-                            }
-                        } catch (Exception e) {
-                            throw new RuntimeException(
-                                    format(
-                                            "Matcher '%s' unable to use: '%s' value: '%s'",
-                                            matcher, unsafeLabelName, labelValReplacement),
-                                    e);
-                        }
-                    }
-                }
-
-                matchedRule =
-                        new MatchedRule(
-                                name,
-                                matchName,
-                                rule.type,
-                                help,
-                                labelNames,
-                                labelValues,
-                                value,
-                                rule.valueFactor);
-                addToCache(rule, matchName, matchedRule);
-                break;
             }
 
             if (matchedRule.isUnmatched()) {
+
+                String beanName =
+                        domain
+                                + angleBrackets(beanProperties.toString())
+                                + angleBrackets(attrKeys.toString());
+
+                // Build the HELP string from the bean metadata.
+                String help =
+                        domain
+                                + ":name="
+                                + beanProperties.get("name")
+                                + ",type="
+                                + beanProperties.get("type")
+                                + ",attribute="
+                                + attrName;
+                // Add the attrDescription to the HELP if it exists and is useful.
+                if (attrDescription != null && !attrDescription.equals(attrName)) {
+                    help = attrDescription + " " + help;
+                }
+
+                for (Rule rule : config.rules) {
+
+                    // If we cache that rule, and we found a cache entry for this bean/attribute,
+                    // then what's left to do is to check all uncached rules
+                    if (rule.cache && cachedRule != null) {
+                        continue;
+                    }
+
+                    // Rules with bean values cannot be properly cached (only the value from the
+                    // first
+                    // scrape will be cached).
+                    // If caching for the rule is enabled, replace the value with a dummy <cache> to
+                    // avoid caching different values at different times.
+                    Object matchBeanValue = rule.cache ? "<cache>" : beanValue;
+
+                    String attributeName;
+                    if (rule.attrNameSnakeCase) {
+                        attributeName = toSnakeAndLowerCase(attrName);
+                    } else {
+                        attributeName = attrName;
+                    }
+
+                    String matchName = beanName + attributeName + ": " + matchBeanValue;
+
+                    Matcher matcher = null;
+                    if (rule.pattern != null) {
+                        matcher = rule.pattern.matcher(matchName);
+                        if (!matcher.matches()) {
+                            continue;
+                        }
+                    }
+
+                    Double value = null;
+                    if (rule.value != null && !rule.value.isEmpty()) {
+                        String val = matcher.replaceAll(rule.value);
+                        try {
+                            value = Double.valueOf(val);
+                        } catch (NumberFormatException e) {
+                            LOGGER.log(
+                                    FINE,
+                                    "Unable to parse configured value '%s' to number for bean:"
+                                            + " %s%s: %s",
+                                    val,
+                                    beanName,
+                                    attrName,
+                                    beanValue);
+                            return;
+                        }
+                    }
+
+                    // If there's no name provided, use default export format.
+                    if (rule.name == null) {
+                        matchedRule =
+                                defaultExport(
+                                        matchName,
+                                        domain,
+                                        beanProperties,
+                                        attrKeys,
+                                        attributeName,
+                                        help,
+                                        value,
+                                        rule.valueFactor,
+                                        rule.type,
+                                        attributesAsLabelsWithValues);
+                        if (rule.cache) {
+                            addToCache(cacheKey, matchedRule);
+                        }
+                        break;
+                    }
+
+                    // Matcher is set below here due to validation in the constructor.
+                    String name = safeName(matcher.replaceAll(rule.name));
+                    if (name.isEmpty()) {
+                        return;
+                    }
+                    if (config.lowercaseOutputName) {
+                        name = name.toLowerCase();
+                    }
+
+                    // Set the help.
+                    if (rule.help != null) {
+                        help = matcher.replaceAll(rule.help);
+                    }
+
+                    // Set the labels.
+                    ArrayList<String> labelNames = new ArrayList<>();
+                    ArrayList<String> labelValues = new ArrayList<>();
+                    addAttributesAsLabelsWithValuesToLabels(
+                            config, attributesAsLabelsWithValues, labelNames, labelValues);
+                    if (rule.labelNames != null) {
+                        for (int i = 0; i < rule.labelNames.size(); i++) {
+                            final String unsafeLabelName = rule.labelNames.get(i);
+                            final String labelValReplacement = rule.labelValues.get(i);
+                            try {
+                                String labelName = safeName(matcher.replaceAll(unsafeLabelName));
+                                String labelValue = matcher.replaceAll(labelValReplacement);
+                                if (config.lowercaseOutputLabelNames) {
+                                    labelName = labelName.toLowerCase();
+                                }
+                                if (!labelName.isEmpty() && !labelValue.isEmpty()) {
+                                    labelNames.add(labelName);
+                                    labelValues.add(labelValue);
+                                }
+                            } catch (Exception e) {
+                                throw new RuntimeException(
+                                        format(
+                                                "Matcher '%s' unable to use: '%s' value: '%s'",
+                                                matcher, unsafeLabelName, labelValReplacement),
+                                        e);
+                            }
+                        }
+                    }
+
+                    matchedRule =
+                            new MatchedRule(
+                                    name,
+                                    matchName,
+                                    rule.type,
+                                    help,
+                                    labelNames,
+                                    labelValues,
+                                    value,
+                                    rule.valueFactor);
+                    if (rule.cache) {
+                        addToCache(cacheKey, matchedRule);
+                    }
+                    break;
+                }
+            }
+
+            if (matchedRule.isUnmatched()) {
+                addToCache(cacheKey, matchedRule);
                 return;
             }
 
@@ -804,8 +823,10 @@ public class JmxCollector implements MultiCollector {
             } else {
                 LOGGER.log(
                         FINE,
-                        "Ignoring unsupported bean: %s%s: %s ",
-                        beanName,
+                        "Ignoring unsupported bean: %s%s%s%s: %s ",
+                        domain,
+                        angleBrackets(beanProperties.toString()),
+                        angleBrackets(attrKeys.toString()),
                         attrName,
                         beanValue);
                 return;
@@ -880,11 +901,13 @@ public class JmxCollector implements MultiCollector {
             LOGGER.log(SEVERE, "JMX scrape failed: %s", sw);
         }
 
-        config.rulesCache.evictStaleEntries(stalenessTracker);
+        if (config.rulesCache != null) {
+            config.rulesCache.evictStaleEntries(stalenessTracker);
+        }
 
         jmxScrapeDurationSeconds.set((System.nanoTime() - start) / 1.0E9);
         jmxScrapeError.set(error);
-        jmxScrapeCachedBeans.set(stalenessTracker.cachedCount());
+        jmxScrapeCachedBeans.set(stalenessTracker.freshCount());
 
         return MatchedRuleToMetricSnapshotsConverter.convert(receiver.matchedRules);
     }
