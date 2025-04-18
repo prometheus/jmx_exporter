@@ -835,10 +835,9 @@ public class JmxCollector implements MultiCollector {
             // Add to samples.
             LOGGER.log(
                     FINE,
-                    "add metric sample: %s %s %s %s",
+                    "add metric sample: %s %s %s",
                     matchedRule.name,
-                    matchedRule.labelNames,
-                    matchedRule.labelValues,
+                    matchedRule.labels,
                     value.doubleValue());
 
             matchedRules.add(matchedRule.withValue(value.doubleValue()));
