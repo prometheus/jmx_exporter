@@ -58,7 +58,7 @@ rules:
 
 # Advanced YAML Configuration
 
-Reference HTTP mode [Rules](/http-mode/rules/) for various `exporter.yaml` metrics configuration options.
+Reference HTTP mode [Rules](../../http-mode/rules/) for various `exporter.yaml` metrics configuration options.
 
 # Metrics
 
