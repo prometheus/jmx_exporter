@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 import java.util.List;
 import java.util.Objects;
@@ -31,8 +32,7 @@ public class MatchedRule {
     final String matchName;
     final String type;
     final String help;
-    final List<String> labelNames;
-    final List<String> labelValues;
+    final Labels labels;
     final Double value;
     final double valueFactor;
 
@@ -43,8 +43,7 @@ public class MatchedRule {
         this.matchName = null;
         this.type = null;
         this.help = null;
-        this.labelNames = null;
-        this.labelValues = null;
+        this.labels = null;
         this.value = null;
         this.valueFactor = 1.0;
     }
@@ -70,12 +69,39 @@ public class MatchedRule {
             final List<String> labelValues,
             final Double value,
             double valueFactor) {
+        this.name = PrometheusNaming.sanitizeMetricName(name);
+        this.matchName = matchName;
+        this.type = type;
+        this.help = help;
+        this.labels = Labels.of(labelNames, labelValues);
+        this.value = value;
+        this.valueFactor = valueFactor;
+    }
+
+    /**
+     * Constructor
+     *
+     * @param name name - has to be already sanitized (we ensure this by keeping the constructor private)
+     * @param matchName matchName
+     * @param type type
+     * @param help help
+     * @param labels labels
+     * @param value value
+     * @param valueFactor valueFactor
+     */
+    private MatchedRule(
+      final String name,
+      final String matchName,
+      final String type,
+      final String help,
+      final Labels labels,
+      final Double value,
+      double valueFactor) {
         this.name = name;
         this.matchName = matchName;
         this.type = type;
         this.help = help;
-        this.labelNames = labelNames;
-        this.labelValues = labelValues;
+        this.labels = labels;
         this.value = value;
         this.valueFactor = valueFactor;
     }
@@ -88,12 +114,11 @@ public class MatchedRule {
      */
     public MatchedRule withValue(double value) {
         return new MatchedRule(
-                PrometheusNaming.sanitizeMetricName(this.name),
+                this.name,
                 this.matchName,
                 this.type,
                 this.help,
-                this.labelNames,
-                this.labelValues,
+                this.labels,
                 value,
                 this.valueFactor);
     }
@@ -142,10 +167,8 @@ public class MatchedRule {
                 + ", help='"
                 + help
                 + '\''
-                + ", labelNames="
-                + labelNames
-                + ", labelValues="
-                + labelValues
+                + ", labels="
+                + labels
                 + ", value="
                 + value
                 + ", valueFactor="
@@ -163,14 +186,13 @@ public class MatchedRule {
                 && Objects.equals(matchName, that.matchName)
                 && Objects.equals(type, that.type)
                 && Objects.equals(help, that.help)
-                && Objects.equals(labelNames, that.labelNames)
-                && Objects.equals(labelValues, that.labelValues)
+                && Objects.equals(labels, that.labels)
                 && Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                name, matchName, type, help, labelNames, labelValues, value, valueFactor);
+                name, matchName, type, help, labels, value, valueFactor);
     }
 }

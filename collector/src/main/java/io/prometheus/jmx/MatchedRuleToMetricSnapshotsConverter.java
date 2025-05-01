@@ -90,7 +90,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                                 .name(rulesWithSameName.get(0).name)
                                 .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
-                    Labels labels = Labels.of(rule.labelNames, rule.labelValues);
+                    Labels labels = rule.labels;
                     if (!labelsUnique) {
                         labels =
                                 labels.merge(
@@ -112,7 +112,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                                 .name(rulesWithSameName.get(0).name)
                                 .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
-                    Labels labels = Labels.of(rule.labelNames, rule.labelValues);
+                    Labels labels = rule.labels;
                     if (!labelsUnique) {
                         labels =
                                 labels.merge(
@@ -134,7 +134,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                                 .name(rulesWithSameName.get(0).name)
                                 .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
-                    Labels labels = Labels.of(rule.labelNames, rule.labelValues);
+                    Labels labels = rule.labels;
                     if (!labelsUnique) {
                         labels =
                                 labels.merge(
@@ -164,7 +164,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
     private static boolean isLabelsUnique(List<MatchedRule> rulesWithSameName) {
         Set<Labels> labelsSet = new HashSet<>(rulesWithSameName.size());
         for (MatchedRule matchedRule : rulesWithSameName) {
-            Labels labels = Labels.of(matchedRule.labelNames, matchedRule.labelValues);
+            Labels labels = matchedRule.labels;
             if (labelsSet.contains(labels)) {
                 return false;
             }
