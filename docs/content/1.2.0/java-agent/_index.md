@@ -18,6 +18,6 @@ The JMX Exporter Java agent jar file is published via GitHub Releases.
 
 Installation depends on which modes you want to support:
 
-- [HTTP mode](/java-agent/http-mode/)
-- [OpenTelemetry mode](/java-agent/opentelemetry-mode/)
-- [Combined mode](/java-agent/combined-mode/)
+- [HTTP mode](./http-mode/)
+- [OpenTelemetry mode](./opentelemetry-mode/)
+- [Combined mode](./combined-mode/)
