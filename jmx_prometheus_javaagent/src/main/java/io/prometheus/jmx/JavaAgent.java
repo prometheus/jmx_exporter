@@ -21,6 +21,8 @@ import static java.lang.String.format;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -46,8 +48,8 @@ public class JavaAgent {
     /**
      * Java agent main
      *
-     * @param agentArgument agentArgument
-     * @param instrumentation instrumentation
+     * @param agentArgument the agent argument
+     * @param instrumentation the instrumentation
      */
     public static void agentmain(String agentArgument, Instrumentation instrumentation) {
         premain(agentArgument, instrumentation);
@@ -56,11 +58,14 @@ public class JavaAgent {
     /**
      * Java agent premain
      *
-     * @param agentArgument agentArgument
-     * @param instrumentation instrumentation
+     * @param agentArgument the agent argument
+     * @param instrumentation the instrumentation
      */
     public static void premain(String agentArgument, Instrumentation instrumentation) {
         info("Starting ...");
+
+        HTTPServer httpServer = null;
+        OpenTelemetryExporter openTelemetryExporter = null;
 
         try {
             Arguments arguments = Arguments.parse(agentArgument);
@@ -77,20 +82,41 @@ public class JavaAgent {
             if (httpEnabled) {
                 info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
             }
-            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
-                new HTTPServerFactory()
-                        .createHTTPServer(
-                                InetAddress.getByName(arguments.getHostname()),
-                                arguments.getPort(),
-                                PrometheusRegistry.defaultRegistry,
-                                file);
+                info("Starting HTTPServer ...");
+
+                // Create and start the HTTP server
+                httpServer =
+                        new HTTPServerFactory()
+                                .createHTTPServer(
+                                        InetAddress.getByName(arguments.getHostname()),
+                                        arguments.getPort(),
+                                        PrometheusRegistry.defaultRegistry,
+                                        file);
+
+                info("HTTPServer started");
+
+                // Add shutdown hook
+                Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(httpServer));
             }
 
+            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
+
             if (openTelemetryEnabled) {
-                OpenTelemetryExporterFactory.getInstance()
-                        .createOpenTelemetryExporter(PrometheusRegistry.defaultRegistry, file);
+                info("Starting OpenTelemetry ...");
+
+                // Create and start the OpenTelemetry exporter
+                openTelemetryExporter =
+                        OpenTelemetryExporterFactory.getInstance()
+                                .createOpenTelemetryExporter(
+                                        PrometheusRegistry.defaultRegistry, file);
+
+                info("OpenTelemetry started");
+
+                // Add shutdown hook
+                Runtime.getRuntime()
+                        .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
             info("Running ...");
@@ -104,10 +130,34 @@ public class JavaAgent {
                 System.err.flush();
             }
 
+            close(openTelemetryExporter);
+            close(httpServer);
+
             System.exit(1);
         }
     }
 
+    /**
+     * Close the given AutoCloseable resource.
+     *
+     * @param autoCloseable The AutoCloseable resource to close
+     */
+    private static void close(AutoCloseable autoCloseable) {
+        if (autoCloseable != null) {
+            try {
+                autoCloseable.close();
+            } catch (Throwable t) {
+                // INTENTIONALLY BLANK
+            }
+        }
+    }
+
+    /**
+     * Log a message at the INFO level.
+     *
+     * @param format the format string
+     * @param objects the arguments to format the message
+     */
     private static void info(String format, Object... objects) {
         System.out.printf(
                 "%s | %s | INFO | %s | %s%n",
