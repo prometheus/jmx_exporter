@@ -81,7 +81,8 @@ public class MatchedRule {
     /**
      * Constructor
      *
-     * @param name name - has to be already sanitized (we ensure this by keeping the constructor private)
+     * @param name name - has to be already sanitized (we ensure this by keeping the constructor
+     *     private)
      * @param matchName matchName
      * @param type type
      * @param help help
@@ -90,13 +91,13 @@ public class MatchedRule {
      * @param valueFactor valueFactor
      */
     private MatchedRule(
-      final String name,
-      final String matchName,
-      final String type,
-      final String help,
-      final Labels labels,
-      final Double value,
-      double valueFactor) {
+            final String name,
+            final String matchName,
+            final String type,
+            final String help,
+            final Labels labels,
+            final Double value,
+            double valueFactor) {
         this.name = name;
         this.matchName = matchName;
         this.type = type;
@@ -192,7 +193,6 @@ public class MatchedRule {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                name, matchName, type, help, labels, value, valueFactor);
+        return Objects.hash(name, matchName, type, help, labels, value, valueFactor);
     }
 }
