@@ -71,6 +71,21 @@ public class TestSupport {
     }
 
     /**
+     * Initializes the IsolatorExporterTestEnvironment
+     *
+     * @param argumentContext argumentContext
+     * @param network network
+     * @param testClass testClass
+     */
+    public static void initializeIsolatorExporterTestEnvironment(
+            ArgumentContext argumentContext, Network network, Class<?> testClass) {
+        argumentContext
+                .testArgument(IsolatorExporterTestEnvironment.class)
+                .payload()
+                .initialize(testClass, network);
+    }
+
+    /**
      * Initializes the OpenTelemetryTestEnvironment
      *
      * @param argumentContext argumentContext
@@ -92,6 +107,18 @@ public class TestSupport {
      */
     public static void destroyExporterTestEnvironment(ArgumentContext argumentContext) {
         Optional.ofNullable(argumentContext.testArgument(ExporterTestEnvironment.class))
+                .ifPresent(
+                        exporterTestEnvironmentArgument ->
+                                exporterTestEnvironmentArgument.payload().destroy());
+    }
+
+    /**
+     * Destroys the IsolatorExporterTestEnvironment
+     *
+     * @param argumentContext argumentContext
+     */
+    public static void destroyIsolatorExporterTestEnvironment(ArgumentContext argumentContext) {
+        Optional.ofNullable(argumentContext.testArgument(IsolatorExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
                                 exporterTestEnvironmentArgument.payload().destroy());

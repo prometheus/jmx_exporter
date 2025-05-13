@@ -1,0 +1,7 @@
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

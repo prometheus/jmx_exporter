@@ -28,6 +28,7 @@ pipeline:
           enabled: true
           run: |
             cp jmx_prometheus_javaagent/target/jmx_prometheus_javaagent-${{ release }}.jar RELEASE/.
+            cp jmx_prometheus_isolator_javaagent/target/jmx_prometheus_isolator_javaagent-${{ release }}.jar RELEASE/.
             cp jmx_prometheus_standalone/target/jmx_prometheus_standalone-${{ release }}.jar RELEASE/.
         - name: create signature & checksums
           enabled: true
