@@ -18,7 +18,6 @@ package io.prometheus.jmx;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.common.http.ConfigurationException;
 import io.prometheus.jmx.common.http.HTTPServerFactory;
 import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.ResourceSupport;
@@ -76,43 +75,45 @@ public class Standalone {
             boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
 
             info("HTTP enabled [%b]", httpEnabled);
-            if (httpEnabled) {
-                info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
-            }
-            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (httpEnabled) {
+                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
+                info("Starting HTTPServer ...");
+
                 httpServer =
                         new HTTPServerFactory()
                                 .createHTTPServer(
-                                        InetAddress.getByName(arguments.getHost()),
+                                        InetAddress.getByName(arguments.getHostname()),
                                         arguments.getPort(),
                                         PrometheusRegistry.defaultRegistry,
                                         file);
+
+                info("HTTPServer started");
+
+                // Add shutdown hook
+                Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(httpServer));
             }
 
+            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
+
             if (openTelemetryEnabled) {
+                info("Starting OpenTelemetry ...");
+
                 openTelemetryExporter =
                         OpenTelemetryExporterFactory.getInstance()
                                 .createOpenTelemetryExporter(
                                         PrometheusRegistry.defaultRegistry, file);
             }
 
+            info("OpenTelemetry started");
+
+            // Add shutdown hook
+            Runtime.getRuntime()
+                    .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
+
             info("Running ...");
 
             Thread.currentThread().join();
-        } catch (ConfigurationException e) {
-            synchronized (System.err) {
-                System.err.println(
-                        "Failed to start Prometheus JMX Exporter (Configuration exception) ...");
-                System.err.println();
-                e.printStackTrace(System.err);
-                System.err.println();
-                System.err.println("Prometheus JMX Exporter exiting");
-                System.err.flush();
-            }
-
-            System.exit(1);
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter ...");
@@ -123,10 +124,10 @@ public class Standalone {
                 System.err.flush();
             }
 
-            System.exit(1);
-        } finally {
             close(openTelemetryExporter);
             close(httpServer);
+
+            System.exit(1);
         }
     }
 

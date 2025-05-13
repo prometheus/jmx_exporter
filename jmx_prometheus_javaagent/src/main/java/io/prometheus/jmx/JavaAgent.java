@@ -79,11 +79,9 @@ public class JavaAgent {
             new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
             info("HTTP enabled [%b]", httpEnabled);
-            if (httpEnabled) {
-                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
-            }
 
             if (httpEnabled) {
+                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
                 info("Starting HTTPServer ...");
 
                 // Create and start the HTTP server
