@@ -38,10 +38,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.opentest4j.AssertionFailedError;
 import org.testcontainers.containers.Network;
-import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
@@ -283,21 +284,27 @@ public class AutoIncrementingMBeanTest {
      * @return the auto incrementing MBean value
      */
     private double collect(String url) throws IOException {
-        final AtomicDouble value = new AtomicDouble();
-
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertCommonMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
-        metrics.stream()
-                .filter(metric -> metric.name().startsWith("io_prometheus_jmx_autoIncrementing"))
-                .map(Metric::value)
-                .limit(1)
-                .findFirst()
-                .ifPresent(value::set);
+        Optional<Double> optionalValue =
+                metrics.stream()
+                        .filter(
+                                metric ->
+                                        metric.name()
+                                                .startsWith("io_prometheus_jmx_autoIncrementing"))
+                        .map(Metric::value)
+                        .limit(1)
+                        .findFirst();
 
-        return value.doubleValue();
+        if (optionalValue.isPresent()) {
+            return optionalValue.get();
+        }
+
+        throw new AssertionFailedError(
+                "Metric name [io_prometheus_jmx_autoIncrementing] s not present");
     }
 }
