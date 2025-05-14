@@ -33,7 +33,6 @@
     </properties>
 
     <modules>
-        <!-- <module>tools</module> -->
         <module>collector</module>
         <module>jmx_prometheus_common</module>
         <module>jmx_prometheus_javaagent</module>
