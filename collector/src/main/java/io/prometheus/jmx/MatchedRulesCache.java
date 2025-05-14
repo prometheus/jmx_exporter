@@ -36,8 +36,8 @@ public class MatchedRulesCache {
     /**
      * Adds a rule match to the cache
      *
-     * @param key
-     * @param matchedRule
+     * @param key the cache key
+     * @param matchedRule the matched rule
      */
     public void put(final CacheKey key, final MatchedRule matchedRule) {
         cache.put(key, matchedRule);
@@ -46,7 +46,7 @@ public class MatchedRulesCache {
     /**
      * Retrieves the cached MatchedRule
      *
-     * @param key
+     * @param key the cache key
      * @return a MatchedRule from cache or null
      */
     public MatchedRule get(final CacheKey key) {
@@ -80,12 +80,20 @@ public class MatchedRulesCache {
             this.freshEntries = new HashSet<>();
         }
 
-        /** Marks a cache key as fresh (not stale) */
+        /**
+         * Marks a cache key as fresh (not stale)
+         *
+         * @param key the cache key
+         */
         public void markAsFresh(final CacheKey key) {
             freshEntries.add(key);
         }
 
-        /** Returns true if {@link #markAsFresh(CacheKey)) was called for that key */
+        /**
+         * Returns true if {@link #markAsFresh(CacheKey)) was called for that key
+         *
+         * @param key the cache key
+         */
         boolean isFresh(final CacheKey key) {
             return freshEntries.contains(key);
         }
@@ -100,12 +108,24 @@ public class MatchedRulesCache {
         }
     }
 
+    /**
+     * CacheKey is a key for the cache. It contains the domain, bean properties, attribute keys and
+     * attribute name.
+     */
     public static class CacheKey {
         private final String domain;
         private final LinkedHashMap<String, String> beanProperties;
         private final LinkedList<String> attrKeys;
         private final String attrName;
 
+        /**
+         * Constructor
+         *
+         * @param domain the domain
+         * @param beanProperties the bean properties
+         * @param attrKeys the attribute keys
+         * @param attrName the attribute name
+         */
         public CacheKey(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
