@@ -8,6 +8,14 @@
     <name>Prometheus JMX Exporter</name>
     <description>See https://github.com/prometheus/jmx_exporter/blob/main/README.md</description>
     <url>https://github.com/prometheus/jmx_exporter</url>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.6.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
     <packaging>pom</packaging>
 
     <licenses>
@@ -21,10 +29,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <prometheus.metrics.version>1.3.6</prometheus.metrics.version>
+        <prometheus.metrics.version>1.3.7</prometheus.metrics.version>
     </properties>
 
     <modules>
+        <!-- <module>tools</module> -->
         <module>collector</module>
         <module>jmx_prometheus_common</module>
         <module>jmx_prometheus_javaagent</module>
