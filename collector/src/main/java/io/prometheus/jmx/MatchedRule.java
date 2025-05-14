@@ -38,6 +38,7 @@ public class MatchedRule {
 
     private static final MatchedRule _unmatched = new MatchedRule();
 
+    /** Constructor */
     private MatchedRule() {
         this.name = null;
         this.matchName = null;

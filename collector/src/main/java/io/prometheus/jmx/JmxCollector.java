@@ -65,12 +65,14 @@ public class JmxCollector implements MultiCollector {
 
     private final Mode mode;
 
+    /** Class to implement ExtraMetric */
     static class ExtraMetric {
         String name;
         Object value;
         String description;
     }
 
+    /** Class to implement Rule */
     static class Rule {
         Pattern pattern;
         String name;
@@ -84,17 +86,30 @@ public class JmxCollector implements MultiCollector {
         ArrayList<String> labelValues;
     }
 
+    /** Class to implement MetricCustomizer */
     public static class MetricCustomizer {
         MBeanFilter mbeanFilter;
         List<String> attributesAsLabels;
         List<ExtraMetric> extraMetrics;
+
+        /** Constructor */
+        public MetricCustomizer() {
+            // INTENTIONALLY BLANK
+        }
     }
 
+    /** Class to implement MBeanFilter */
     public static class MBeanFilter {
         String domain;
         Map<String, String> properties;
+
+        /** Constructor */
+        public MBeanFilter() {
+            // INTENTIONALLY BLANK
+        }
     }
 
+    /** Class to implement Config */
     private static class Config {
         Integer startDelaySeconds = 0;
         String jmxUrl = "";
