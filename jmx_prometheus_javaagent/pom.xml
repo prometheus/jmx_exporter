@@ -221,7 +221,6 @@
                                         <exclude>lib/opentelemetry**</exclude>
                                         <exclude>module-info.java</exclude>
                                         <exclude>module-info.class</exclude>
-                                        <exclude>org/vafer/**</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>
@@ -272,8 +271,6 @@
                                 <!-- Use a custom transformer to correctly handled shaded resources -->
                                 <transformer implementation="io.prometheus.jmx.common.tools.CustomServiceTransformer"/>
                             </transformers>
-                            <createSourcesJar>true</createSourcesJar>
-                            <shadeSourcesContent>true</shadeSourcesContent>
                         </configuration>
                     </execution>
                 </executions>
