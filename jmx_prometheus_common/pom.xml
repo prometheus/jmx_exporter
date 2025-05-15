@@ -82,19 +82,18 @@
                 <version>2.44.4</version>
                 <configuration>
                     <java>
-                        <googleJavaFormat>
-                            <version>1.24.0</version>
-                            <style>AOSP</style>
-                            <reflowLongStrings>true</reflowLongStrings>
-                        </googleJavaFormat>
+                        <palantirJavaFormat>
+                            <version>2.66.0</version>
+                            <style>PALANTIR</style>
+                        </palantirJavaFormat>
                     </java>
                 </configuration>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>apply</goal>
                         </goals>
-                        <phase>compile</phase>
                     </execution>
                 </executions>
             </plugin>
