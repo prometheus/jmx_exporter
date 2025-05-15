@@ -109,6 +109,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -116,85 +117,25 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- Exclude entire dependencies -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.maven.plugins:maven-shade-plugin</exclude>
+                                    <exclude>org.codehaus.plexus:plexus-utils</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
+                                    <exclude>org.ow2.asm:asm</exclude>
+                                    <exclude>org.ow2.asm:asm-commons</exclude>
+                                    <exclude>org.ow2.asm:asm-tree</exclude>
+                                    <exclude>org.jdom:jdom2</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>commons-codec:commons-codec</exclude>
+                                    <exclude>org.apache.commons:commons-lang3</exclude>
+                                    <exclude>commons-io:commons-io</exclude>
+                                    <exclude>org.vafer:jdependency</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <!-- Exclude files from all included dependencies -->
                             <filters>
-                                <filter>
-                                    <artifact>org.apache.maven.plugins:maven-shade-plugin</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.codehaus.plexus:plexus-utils</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.slf4j:slf4j-api</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.ow2.asm:asm</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.ow2.asm:asm</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.ow2.asm:asm-commons</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.ow2.asm:asm-tree</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.jdom:jdom2</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.apache.commons:commons-compress</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>commons-codec:commons-codec</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.apache.commons:commons-lang3</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>commons-io:commons-io</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                <artifact>org.vafer:jdependency</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
@@ -222,12 +163,14 @@
                                         <exclude>module-info.class</exclude>
                                     </excludes>
                                 </filter>
+                                <!-- Exclude specific files from OpenTelemetry -->
                                 <filter>
                                     <artifact>io.opentelemetry.instrumentation:opentelemetry-resources</artifact>
                                     <excludes>
                                         <exclude>META-INF/services/**</exclude>
                                     </excludes>
                                 </filter>
+                                <!-- Retain service metadata for prometheus exporter -->
                                 <filter>
                                     <artifact>io.prometheus:prometheus-metrics-exporter-opentelemetry</artifact>
                                     <includes>
@@ -235,6 +178,7 @@
                                     </includes>
                                 </filter>
                             </filters>
+                            <!-- Relocate packages -->
                             <relocations>
                                 <relocation>
                                     <shadedPattern>jmx_prometheus_javaagent.</shadedPattern>
@@ -258,6 +202,7 @@
                                     <shadedPattern>jmx_prometheus_javaagent.io.prometheus.metrics.shaded</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <!-- Transform resources -->
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
@@ -273,6 +218,7 @@
                         </configuration>
                     </execution>
                 </executions>
+                <!-- Add local project dependency -->
                 <dependencies>
                     <dependency>
                         <groupId>io.prometheus.jmx</groupId>
