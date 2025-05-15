@@ -103,13 +103,13 @@ public class Standalone {
                         OpenTelemetryExporterFactory.getInstance()
                                 .createOpenTelemetryExporter(
                                         PrometheusRegistry.defaultRegistry, file);
+
+                info("OpenTelemetry started");
+
+                // Add shutdown hook
+                Runtime.getRuntime()
+                        .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
-
-            info("OpenTelemetry started");
-
-            // Add shutdown hook
-            Runtime.getRuntime()
-                    .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
 
             info("Running ...");
 
@@ -131,6 +131,11 @@ public class Standalone {
         }
     }
 
+    /**
+     * Close the given AutoCloseable resource.
+     *
+     * @param autoCloseable The AutoCloseable resource to close
+     */
     private static void close(AutoCloseable autoCloseable) {
         if (autoCloseable != null) {
             try {
@@ -141,6 +146,12 @@ public class Standalone {
         }
     }
 
+    /**
+     * Log a message at the INFO level.
+     *
+     * @param format the format string
+     * @param objects the arguments to format the message
+     */
     private static void info(String format, Object... objects) {
         System.out.printf(
                 "%s | %s | INFO | %s | %s%n",
