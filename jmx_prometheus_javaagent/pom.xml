@@ -119,27 +119,137 @@
                         <configuration>
                             <filters>
                                 <filter>
+                                    <artifact>org.apache.maven.plugins:maven-shade-plugin</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.codehaus.plexus:plexus-utils</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.slf4j:slf4j-api</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.ow2.asm:asm</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.ow2.asm:asm-commons</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.ow2.asm:asm-tree</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.jdom:jdom2</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.apache.commons:commons-compress</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>commons-codec:commons-codec</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.apache.commons:commons-lang3</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>commons-io:commons-io</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                <artifact>org.vafer:jdependency</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>META-INF/LICENSE</exclude>
+                                        <exclude>META-INF/LICENSE.txt</exclude>
+                                        <exclude>META-INF/**/*-LICENSE</exclude>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/NOTICE</exclude>
+                                        <exclude>META-INF/NOTICE.txt</exclude>
+                                        <exclude>META-INF/**/*-NOTICE</exclude>
+                                        <exclude>META-INF/jdom-info.xml</exclude>
+                                        <exclude>META-INF/maven/**</exclude>
+                                        <exclude>META-INF/native-image/**</exclude>
+                                        <exclude>META-INF/okio.kotlin_module</exclude>
+                                        <exclude>META-INF/proguard/**</exclude>
+                                        <exclude>META-INF/sisu/**</exclude>
                                         <exclude>META-INF/versions/**</exclude>
+                                        <exclude>commonMain/**</exclude>
+                                        <exclude>**/*.kt</exclude>
+                                        <exclude>**/*kotlin_module</exclude>
+                                        <exclude>licenses/**</exclude>
                                         <exclude>lib/opentelemetry**</exclude>
+                                        <exclude>module-info.java</exclude>
+                                        <exclude>module-info.class</exclude>
                                     </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.opentelemetry.instrumentation:opentelemetry-resources</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/services/**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.prometheus:prometheus-metrics-exporter-opentelemetry</artifact>
+                                    <includes>
+                                        <include>META-INF/services/**</include>
+                                    </includes>
                                 </filter>
                             </filters>
                             <relocations>
                                 <relocation>
                                     <shadedPattern>jmx_prometheus_javaagent.</shadedPattern>
                                     <includes>
-                                        <include>org.yaml.**</include>
-                                        <include>io.prometheus.metrics.**</include>
-                                        <include>io.prometheus.otelagent.**</include>
-                                        <include>io.prometheus.jmx.**</include>
-                                        <include>io.opentelemetry.**</include>
-                                        <include>google.protobuf.**</include>
-                                        <include>com.google.protobuf.**</include>
+                                        <include>com.**</include>
+                                        <include>google.**</include>
+                                        <include>io.**</include>
+                                        <include>kotlin.**</include>
+                                        <include>okhttp3.**</include>
+                                        <include>okio.**</include>
+                                        <include>org.**</include>
                                     </includes>
                                     <excludes>
+                                        <exclude>com.sun.**</exclude>
                                         <exclude>io.prometheus.metrics.shaded.**</exclude>
                                         <exclude>io.prometheus.jmx.JavaAgent</exclude>
                                     </excludes>
@@ -158,13 +268,19 @@
                                         <Implementation-Title>${project.artifactId}</Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <!-- Use a custom transformer to correctly handled shaded resources -->
+                                <transformer implementation="io.prometheus.jmx.common.tools.CustomServiceTransformer"/>
                             </transformers>
-                            <createSourcesJar>true</createSourcesJar>
-                            <shadeSourcesContent>true</shadeSourcesContent>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>io.prometheus.jmx</groupId>
+                        <artifactId>jmx_prometheus_common</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
