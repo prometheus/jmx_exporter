@@ -24,8 +24,12 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-/** Class to implement a username / salted message digest password BasicAuthenticator */
+/** Class to implement a username / salted message digest password authenticator */
 public class PBKDF2Authenticator extends BasicAuthenticator {
+
+    private static final char[] HEXADECIMAL_CHARACTERS = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
 
     private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
     private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
@@ -97,6 +101,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         }
 
         Credentials credentials = new Credentials(username, password);
+
         if (validCredentialsCache.contains(credentials)) {
             return true;
         } else if (invalidCredentialsCache.contains(credentials)) {
@@ -108,6 +113,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
                         && this.passwordHash.equals(
                                 generatePasswordHash(
                                         algorithm, salt, iterations, keyLength, password));
+
         if (isValid) {
             validCredentialsCache.add(credentials);
         } else {
@@ -138,9 +144,29 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
                             keyLength * 8);
             SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithm);
             byte[] secretKeyBytes = secretKeyFactory.generateSecret(pbeKeySpec).getEncoded();
-            return HexString.toHex(secretKeyBytes);
+
+            return toLowerCaseHexadecimal(secretKeyBytes);
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Method to convert a byte array to a lowercase hexadecimal string
+     *
+     * @param bytes the byte array to convert
+     * @return the lowercase hexadecimal string representation of the byte array
+     */
+    private static String toLowerCaseHexadecimal(byte[] bytes) {
+        int len = bytes.length;
+        char[] result = new char[len * 2];
+
+        for (int i = 0, j = 0; i < len; i++) {
+            int v = bytes[i] & 0xFF;
+            result[j++] = HEXADECIMAL_CHARACTERS[v >>> 4];
+            result[j++] = HEXADECIMAL_CHARACTERS[v & 0x0F];
+        }
+
+        return new String(result);
     }
 }
