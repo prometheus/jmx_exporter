@@ -31,12 +31,12 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 
 /**
- * CustomServiceTransformer is a ResourceTransformer that modifies the META-INF/services files to
- * add a prefix to service file names and entries
+ * ResourceTransformer that modifies the META-INF/services files to add a prefix to service file
+ * names and entries
  */
 public class CustomServiceTransformer implements ResourceTransformer {
 
-    private static final String PREFIX = "jmx_prometheus_javaagent.";
+    private static final String PREFIX = "e1723a08afd7bca35570fd31a7656f59.";
     private static final String SERVICES_DIR = "META-INF/services/";
 
     private final Map<String, List<String>> serviceEntries = new HashMap<>();

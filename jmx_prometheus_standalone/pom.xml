@@ -169,7 +169,7 @@
                             <!-- Relocate packages -->
                             <relocations>
                                 <relocation>
-                                    <shadedPattern>jmx_prometheus_javaagent.</shadedPattern>
+                                    <shadedPattern>e1723a08afd7bca35570fd31a7656f59.</shadedPattern>
                                     <includes>
                                         <include>com.**</include>
                                         <include>google.**</include>
@@ -187,7 +187,7 @@
                                 </relocation>
                                 <relocation>
                                     <pattern>io.prometheus.metrics.shaded</pattern>
-                                    <shadedPattern>jmx_prometheus_javaagent.io.prometheus.metrics.shaded</shadedPattern>
+                                    <shadedPattern>e1723a08afd7bca35570fd31a7656f59.io.prometheus.metrics.shaded</shadedPattern>
                                 </relocation>
                             </relocations>
                             <!-- Transform resources -->

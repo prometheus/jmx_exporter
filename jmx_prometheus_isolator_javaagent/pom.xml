@@ -27,14 +27,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.snakeyaml</groupId>
-            <artifactId>snakeyaml-engine</artifactId>
-            <version>2.9</version>
-        </dependency>
-    </dependencies>
-
     <build>
         <finalName>jmx_prometheus_isolator_javaagent-${project.version}</finalName>
         <plugins>
@@ -136,32 +128,23 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <filters>
-                                <!-- Exclude files from all included dependencies -->
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/LICENSE</exclude>
-                                        <exclude>META-INF/LICENSE.txt</exclude>
-                                        <exclude>META-INF/MANIFEST.MF</exclude>
-                                        <exclude>META-INF/NOTICE</exclude>
-                                        <exclude>META-INF/NOTICE.txt</exclude>
-                                        <exclude>META-INF/versions/**</exclude>
-                                        <exclude>META-INF/maven/**</exclude>
-                                        <exclude>META-INF/org/snakeyaml/**</exclude>
-                                        <exclude>module-info.class</exclude>./mv
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <!-- Relocate packages -->
-                            <relocations>
-                                <relocation>
-                                    <shadedPattern>jmx_prometheus_isolator_javaagent.</shadedPattern>
-                                    <includes>
-                                        <include>org.snakeyaml.**</include>
-                                    </includes>
-                                </relocation>
-                            </relocations>
+                            <!-- Exclude entire dependencies -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.maven.plugins:maven-shade-plugin</exclude>
+                                    <exclude>org.codehaus.plexus:plexus-utils</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
+                                    <exclude>org.ow2.asm:asm</exclude>
+                                    <exclude>org.ow2.asm:asm-commons</exclude>
+                                    <exclude>org.ow2.asm:asm-tree</exclude>
+                                    <exclude>org.jdom:jdom2</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>commons-codec:commons-codec</exclude>
+                                    <exclude>org.apache.commons:commons-lang3</exclude>
+                                    <exclude>commons-io:commons-io</exclude>
+                                    <exclude>org.vafer:jdependency</exclude>
+                                </excludes>
+                            </artifactSet>
                             <!-- Transform resources -->
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

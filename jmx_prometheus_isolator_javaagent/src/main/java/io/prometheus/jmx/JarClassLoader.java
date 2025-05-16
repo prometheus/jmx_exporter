@@ -155,7 +155,7 @@ public class JarClassLoader extends ClassLoader {
                 String title = null;
                 String version = null;
 
-                if (className.startsWith("jmx_prometheus_javaagent")) {
+                if (className.startsWith("e1723a08afd7bca35570fd31a7656f59")) {
                     title = manifestMap.get(IMPLEMENTATION_TITLE);
                     version = manifestMap.get(IMPLEMENTATION_VERSION);
                 }
