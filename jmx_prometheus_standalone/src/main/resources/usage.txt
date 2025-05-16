@@ -11,7 +11,7 @@ Prometheus (HTTP) mode
 
 Usage:
 
-  java -jar jmx_prometheus_standalone-<VERSION>.jar [HOSTNAME:]<PORT> <YAML configuration file>
+  java -jar jmx_prometheus_standalone-<VERSION>.jar [HOST:]<PORT> <YAML configuration file>
 
 Example:
 
