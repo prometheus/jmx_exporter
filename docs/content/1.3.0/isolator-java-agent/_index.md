@@ -1,5 +1,5 @@
 ---
-title: Isolator Java Agent (BETA)
+title: Isolator Java Agent
 weight: 2
 geekdocCollapseSection: true
 ---

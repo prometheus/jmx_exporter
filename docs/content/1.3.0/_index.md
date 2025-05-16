@@ -9,7 +9,10 @@ This is the documentation for the [Prometheus JMX Exporter](https://github.com/p
 The main new features of the 1.3.0 release are:
 
 * **Isolator Java Agent**: A new Java agent that allows running multiple isolated and independent JMX Exporter instances in the same JVM.
-* ** **: 
+
+
+* **Mutual TLS Authentication**: Support for mutual TLS authentication HTTP server authentication.
+
 
 **Documentation and Examples**
 
