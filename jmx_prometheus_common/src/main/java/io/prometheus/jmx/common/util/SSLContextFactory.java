@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.http.ssl;
+package io.prometheus.jmx.common.util;
 
 import static java.lang.String.format;
 

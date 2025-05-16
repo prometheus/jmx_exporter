@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Class to validate a String is not blank, throwing a RuntimeException from the Supplier if there
- * is a ClassCastException
- */
-public class ValidateIsURL implements Function<String, String> {
+/** Function to convert an Object to an Integer */
+public class ToInteger implements Function<Object, Integer> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -35,27 +30,20 @@ public class ValidateIsURL implements Function<String, String> {
      *
      * @param supplier supplier
      */
-    public ValidateIsURL(Supplier<? extends RuntimeException> supplier) {
+    public ToInteger(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
-    public String apply(String value) {
-        if (value.trim().isEmpty()) {
-            throw supplier.get();
+    public Integer apply(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
         }
 
         try {
-            URI.create(value).toURL();
-            return value;
-        } catch (MalformedURLException e) {
+            return Integer.parseInt(value.toString());
+        } catch (Throwable t) {
             throw supplier.get();
         }
     }

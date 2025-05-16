@@ -18,6 +18,7 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import static org.junit.Assert.assertEquals;
 
+import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Class to implement ConvertToString */
-public class ConvertToString implements Function<Object, String> {
+/** Function to convert an Object to a String */
+public class ToString implements Function<Object, String> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -30,17 +30,11 @@ public class ConvertToString implements Function<Object, String> {
      *
      * @param supplier supplier
      */
-    public ConvertToString(Supplier<? extends RuntimeException> supplier) {
+    public ToString(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
     public String apply(Object value) {
         if (value == null) {

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Class to implement ConvertToInteger */
-public class ConvertToInteger implements Function<Object, Integer> {
+/** Function to validate a String is not blank */
+public class StringIsNotBlank implements Function<String, String> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -30,7 +30,7 @@ public class ConvertToInteger implements Function<Object, Integer> {
      *
      * @param supplier supplier
      */
-    public ConvertToInteger(Supplier<? extends RuntimeException> supplier) {
+    public StringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
@@ -42,15 +42,11 @@ public class ConvertToInteger implements Function<Object, Integer> {
      * @return the return value
      */
     @Override
-    public Integer apply(Object value) {
-        if (value == null) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            return Integer.parseInt(value.toString());
-        } catch (Throwable t) {
+    public String apply(String value) {
+        if (value.trim().isEmpty()) {
             throw supplier.get();
         }
+
+        return value;
     }
 }

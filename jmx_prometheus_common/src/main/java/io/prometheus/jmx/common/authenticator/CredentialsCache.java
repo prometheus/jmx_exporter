@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.http.authenticator;
+package io.prometheus.jmx.common.authenticator;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;

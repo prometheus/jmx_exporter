@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.http.authenticator;
+package io.prometheus.jmx.common.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;

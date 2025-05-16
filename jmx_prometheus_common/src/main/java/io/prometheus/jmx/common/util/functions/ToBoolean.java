@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
-import io.prometheus.jmx.common.yaml.YamlMapAccessor;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Class to convert an Object to a Map, throwing a RuntimeException from the Supplier if there is a
- * ClassCastException
- */
-@SuppressWarnings("unchecked")
-public class ConvertToMapAccessor implements Function<Object, YamlMapAccessor> {
+/** Function to convert an Object to a Boolean */
+public class ToBoolean implements Function<Object, Boolean> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -36,22 +30,24 @@ public class ConvertToMapAccessor implements Function<Object, YamlMapAccessor> {
      *
      * @param supplier supplier
      */
-    public ConvertToMapAccessor(Supplier<? extends RuntimeException> supplier) {
+    public ToBoolean(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
-    public YamlMapAccessor apply(Object value) {
+    public Boolean apply(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+
         try {
-            return new YamlMapAccessor((Map<Object, Object>) value);
-        } catch (ClassCastException e) {
+            if (value instanceof Boolean) {
+                return (Boolean) value;
+            } else {
+                return Boolean.valueOf(value.toString());
+            }
+        } catch (Throwable t) {
             throw supplier.get();
         }
     }

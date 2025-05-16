@@ -18,7 +18,7 @@ package io.prometheus.jmx;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.common.http.ConfigurationException;
+import io.prometheus.jmx.common.ConfigurationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

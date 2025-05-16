@@ -14,39 +14,36 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Class to validate a String is not blank, throwing a RuntimeException from the Supplier if there
- * is a ClassCastException
- */
-public class ValidateStringIsNotBlank implements Function<String, String> {
+/** Function to validate an Integer is in a range */
+public class IntegerInRange implements Function<Integer, Integer> {
 
+    private final int minimum;
+    private final int maximum;
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor
      *
+     * @param minimum minimum
+     * @param maximum maximum
      * @param supplier supplier
      */
-    public ValidateStringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
+    public IntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
+        this.minimum = minimum;
+        this.maximum = maximum;
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
-    public String apply(String value) {
-        if (value.trim().isEmpty()) {
+    public Integer apply(Integer value) {
+        if (value < minimum || value > maximum) {
             throw supplier.get();
         }
 
