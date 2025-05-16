@@ -14,9 +14,16 @@ The Isolator Java agent jar file is published via GitHub Releases.
 
 - [jmx_prometheus_isolator_javaagent-1.3.0.jar](https://github.com/prometheus/jmx_exporter/releases/download/1.3.0/jmx_prometheus_isolator_javaagent-1.3.0.jar)
 
-The Isolator Java agent requires a Prometheus JMX Exporter Java agent jar.
+The Isolator Java agent requires (a) Prometheus JMX Exporter Java agent jar(s).
 
 - [jmx_prometheus_javaagent-1.3.0.jar](https://github.com/prometheus/jmx_exporter/releases/download/1.3.0/jmx_prometheus_javaagent-1.3.0.jar)
+
+**Notes**
+
+- Mixed versions of the Prometheus JMX Exporter Java agent jars are supported.
+
+
+- The Isolator Java agent has been tested with the Prometheus JMX Exporter Java agent version 0.20.0 and later.
 
 # Installation
 
