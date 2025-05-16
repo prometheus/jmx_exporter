@@ -82,13 +82,13 @@ public class JavaAgent {
             info("HTTP enabled [%b]", httpEnabled);
 
             if (httpEnabled) {
-                info("HTTP host:port [%s:%d]", arguments.getHostname(), arguments.getPort());
+                info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
                 info("Starting HTTPServer ...");
 
                 // Create and start the HTTP server
                 httpServer =
                         HTTPServerFactory.createHTTPServer(
-                                InetAddress.getByName(arguments.getHostname()),
+                                InetAddress.getByName(arguments.getHost()),
                                 arguments.getPort(),
                                 PrometheusRegistry.defaultRegistry,
                                 file);

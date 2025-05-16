@@ -302,7 +302,7 @@ public class ArgumentsTest {
             if (validConfiguration) {
                 Arguments arguments = Arguments.parse(argument);
                 assertThat(arguments.isHttpEnabled()).isEqualTo(httpEnabled);
-                assertThat(arguments.getHostname()).isEqualTo(host);
+                assertThat(arguments.getHost()).isEqualTo(host);
                 assertThat(arguments.getPort()).isEqualTo(port);
                 assertThat(arguments.getFilename()).isEqualTo(filename);
             } else {
