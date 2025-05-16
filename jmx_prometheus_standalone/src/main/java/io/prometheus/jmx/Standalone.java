@@ -18,10 +18,11 @@ package io.prometheus.jmx;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.common.http.HTTPServerFactory;
-import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.HTTPServerFactory;
+import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -70,9 +71,9 @@ public class Standalone {
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
             new JmxCollector(file, JmxCollector.Mode.STANDALONE).register(DEFAULT_REGISTRY);
 
-            YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
+            MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
             boolean httpEnabled = arguments.isHttpEnabled();
-            boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
+            boolean openTelemetryEnabled = mapAccessor.contains("/openTelemetry");
 
             info("HTTP enabled [%b]", httpEnabled);
 
@@ -81,12 +82,11 @@ public class Standalone {
                 info("Starting HTTPServer ...");
 
                 httpServer =
-                        new HTTPServerFactory()
-                                .createHTTPServer(
-                                        InetAddress.getByName(arguments.getHostname()),
-                                        arguments.getPort(),
-                                        PrometheusRegistry.defaultRegistry,
-                                        file);
+                        HTTPServerFactory.createHTTPServer(
+                                InetAddress.getByName(arguments.getHostname()),
+                                arguments.getPort(),
+                                PrometheusRegistry.defaultRegistry,
+                                file);
 
                 info("HTTPServer started");
 
@@ -100,9 +100,8 @@ public class Standalone {
                 info("Starting OpenTelemetry ...");
 
                 openTelemetryExporter =
-                        OpenTelemetryExporterFactory.getInstance()
-                                .createOpenTelemetryExporter(
-                                        PrometheusRegistry.defaultRegistry, file);
+                        OpenTelemetryExporterFactory.createOpenTelemetryExporter(
+                                PrometheusRegistry.defaultRegistry, file);
 
                 info("OpenTelemetry started");
 

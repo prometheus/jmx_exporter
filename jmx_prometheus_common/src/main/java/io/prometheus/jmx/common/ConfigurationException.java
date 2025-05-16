@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.http;
+package io.prometheus.jmx.common;
 
 import java.util.function.Supplier;
 

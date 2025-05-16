@@ -18,6 +18,7 @@ package io.prometheus.jmx.common.http.authenticator;
 
 import static org.junit.Assert.assertEquals;
 
+import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import org.junit.Test;
 
 public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {

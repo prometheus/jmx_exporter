@@ -19,6 +19,7 @@ package io.prometheus.jmx.common.http.authenticator;
 import static org.junit.Assert.assertEquals;
 
 import com.sun.net.httpserver.BasicAuthenticator;
+import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
 import org.junit.Test;
 
 public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {

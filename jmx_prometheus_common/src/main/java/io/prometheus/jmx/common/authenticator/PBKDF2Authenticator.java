@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.http.authenticator;
+package io.prometheus.jmx.common.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
@@ -24,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-/** Class to implement a username / salted message digest password authenticator */
+/** Class to implement a username / salted message digest password BasicAuthenticator */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
     private static final char[] HEXADECIMAL_CHARACTERS = {

@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Class to convert an Object to a Map, throwing a RuntimeException from the Supplier if there is a
- * ClassCastException
- */
-@SuppressWarnings("unchecked")
-public class ConvertToMap implements Function<Object, Map<String, String>> {
+/** Function to validate a map contains valid keys and values */
+public class ValidMap implements Function<Map<String, String>, Map<String, String>> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -36,22 +31,22 @@ public class ConvertToMap implements Function<Object, Map<String, String>> {
      *
      * @param supplier supplier
      */
-    public ConvertToMap(Supplier<? extends RuntimeException> supplier) {
+    public ValidMap(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
 
     @Override
-    public Map<String, String> apply(Object o) {
-        try {
-            Map<String, String> result = new LinkedHashMap<>();
-            Map<Object, Object> map = (Map<Object, Object>) o;
+    public Map<String, String> apply(Map<String, String> map) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
 
-            map.forEach((o1, o2) -> result.put(o1.toString().trim(), o2.toString().trim()));
-
-            return result;
-        } catch (Throwable t) {
-            throw supplier.get();
+            if (key == null || key.trim().isEmpty() || value == null || value.isEmpty()) {
+                throw supplier.get();
+            }
         }
+
+        return map;
     }
 }

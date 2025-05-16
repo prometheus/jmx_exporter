@@ -18,9 +18,10 @@ package io.prometheus.jmx;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.common.http.HTTPServerFactory;
-import io.prometheus.jmx.common.opentelemetry.OpenTelemetryExporterFactory;
-import io.prometheus.jmx.common.yaml.YamlMapAccessor;
+import io.prometheus.jmx.common.HTTPServerFactory;
+import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.util.MapAccessor;
+import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
@@ -70,9 +71,9 @@ public class JavaAgent {
         try {
             Arguments arguments = Arguments.parse(agentArgument);
             File file = new File(arguments.getFilename());
-            YamlMapAccessor yamlMapAccessor = new YamlMapAccessor().load(file);
+            MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
             boolean httpEnabled = arguments.isHttpEnabled();
-            boolean openTelemetryEnabled = yamlMapAccessor.containsPath("/openTelemetry");
+            boolean openTelemetryEnabled = mapAccessor.contains("/openTelemetry");
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
             JvmMetrics.builder().register(DEFAULT_REGISTRY);
@@ -86,12 +87,11 @@ public class JavaAgent {
 
                 // Create and start the HTTP server
                 httpServer =
-                        new HTTPServerFactory()
-                                .createHTTPServer(
-                                        InetAddress.getByName(arguments.getHostname()),
-                                        arguments.getPort(),
-                                        PrometheusRegistry.defaultRegistry,
-                                        file);
+                        HTTPServerFactory.createHTTPServer(
+                                InetAddress.getByName(arguments.getHostname()),
+                                arguments.getPort(),
+                                PrometheusRegistry.defaultRegistry,
+                                file);
 
                 info("HTTPServer started");
 
@@ -106,9 +106,8 @@ public class JavaAgent {
 
                 // Create and start the OpenTelemetry exporter
                 openTelemetryExporter =
-                        OpenTelemetryExporterFactory.getInstance()
-                                .createOpenTelemetryExporter(
-                                        PrometheusRegistry.defaultRegistry, file);
+                        OpenTelemetryExporterFactory.createOpenTelemetryExporter(
+                                PrometheusRegistry.defaultRegistry, file);
 
                 info("OpenTelemetry started");
 

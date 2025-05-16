@@ -14,46 +14,40 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
 import io.prometheus.jmx.common.util.Precondition;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Class to implement ValidateIntegerInRange */
-public class ValidateIntegerInRange implements Function<Integer, Integer> {
+/** Function to validate a String is a URL */
+public class IsURL implements Function<String, String> {
 
-    private final int minimum;
-    private final int maximum;
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
      * Constructor
      *
-     * @param minimum minimum
-     * @param maximum maximum
      * @param supplier supplier
      */
-    public ValidateIntegerInRange(
-            int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
+    public IsURL(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
-        this.minimum = minimum;
-        this.maximum = maximum;
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
-    public Integer apply(Integer value) {
-        if (value < minimum || value > maximum) {
+    public String apply(String value) {
+        if (value.trim().isEmpty()) {
             throw supplier.get();
         }
 
-        return value;
+        try {
+            URI.create(value).toURL();
+            return value;
+        } catch (MalformedURLException e) {
+            throw supplier.get();
+        }
     }
 }

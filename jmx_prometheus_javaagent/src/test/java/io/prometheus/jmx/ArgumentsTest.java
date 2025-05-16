@@ -19,7 +19,7 @@ package io.prometheus.jmx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import io.prometheus.jmx.common.http.ConfigurationException;
+import io.prometheus.jmx.common.ConfigurationException;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;

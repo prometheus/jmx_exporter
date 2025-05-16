@@ -18,7 +18,7 @@ package io.prometheus.jmx;
 
 import static java.lang.String.format;
 
-import io.prometheus.jmx.common.http.ConfigurationException;
+import io.prometheus.jmx.common.ConfigurationException;
 
 /** Class to implement Arguments */
 public class Arguments {

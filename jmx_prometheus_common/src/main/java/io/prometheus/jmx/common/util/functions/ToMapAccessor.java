@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.configuration;
+package io.prometheus.jmx.common.util.functions;
 
+import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.Precondition;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Class to implement ConvertToBoolean */
-public class ConvertToBoolean implements Function<Object, Boolean> {
+/** Function to create a MapAccessor from an Object */
+@SuppressWarnings("unchecked")
+public class ToMapAccessor implements Function<Object, MapAccessor> {
 
     private final Supplier<? extends RuntimeException> supplier;
 
@@ -30,30 +33,16 @@ public class ConvertToBoolean implements Function<Object, Boolean> {
      *
      * @param supplier supplier
      */
-    public ConvertToBoolean(Supplier<? extends RuntimeException> supplier) {
+    public ToMapAccessor(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
 
-    /**
-     * Method to apply a function
-     *
-     * @param value value
-     * @return the return value
-     */
     @Override
-    public Boolean apply(Object value) {
-        if (value == null) {
-            throw new IllegalArgumentException();
-        }
-
+    public MapAccessor apply(Object value) {
         try {
-            if (value instanceof Boolean) {
-                return (Boolean) value;
-            } else {
-                return Boolean.valueOf(value.toString());
-            }
-        } catch (Throwable t) {
+            return MapAccessor.of((Map<Object, Object>) value);
+        } catch (ClassCastException e) {
             throw supplier.get();
         }
     }
