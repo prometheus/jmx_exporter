@@ -101,6 +101,49 @@ public class MapAccessorTest {
         assertNotNull(optional.get());
         assertTrue(optional.get() instanceof Integer);
         assertEquals(120, ((Integer) optional.get()).intValue());
+
+        /*
+
+        key:
+          subkey:
+        key2:
+          subkey2:
+            foo: bar
+        key3: bar
+
+         */
+
+        optional = mapAccessor.get("/key");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertNotNull(optional.get());
+        assertTrue(optional.get() instanceof Map);
+
+        optional = mapAccessor.get("/key/subkey");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertTrue(optional.get() instanceof Map);
+
+        optional = mapAccessor.get("/key2");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertNotNull(optional.get());
+
+        optional = mapAccessor.get("/key2/subkey2");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertNotNull(optional.get());
+        assertTrue(optional.get() instanceof Map);
+
+        optional = mapAccessor.get("/key2/subkey2/foo");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertNotNull(optional.get());
+        assertTrue(optional.get() instanceof String);
+
+        optional = mapAccessor.get("/key2/subkey2/foo/bar");
+        assertNotNull(optional);
+        assertFalse(optional.isPresent());
     }
 
     @Test
@@ -165,7 +208,7 @@ public class MapAccessorTest {
 
         assertTrue(mapAccessor.contains("/key"));
         assertTrue(mapAccessor.contains("/key/subkey"));
-        assertFalse(mapAccessor.get("/key/subkey").isPresent());
+        assertTrue(mapAccessor.get("/key/subkey").isPresent());
 
         assertTrue(mapAccessor.contains("/key2"));
         assertTrue(mapAccessor.contains("/key2/subkey2"));
