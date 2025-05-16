@@ -21,3 +21,4 @@ key:
 key2:
   subkey2:
     foo: bar
+key3: bar

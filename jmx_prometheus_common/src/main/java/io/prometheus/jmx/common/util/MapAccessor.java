@@ -19,14 +19,17 @@ package io.prometheus.jmx.common.util;
 import static java.lang.String.format;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /** MapAccessor to work with Maps using a path style syntax for value access */
 @SuppressWarnings("unchecked")
 public class MapAccessor {
+
+    private static final Map<Object, Object> EMPTY_MAP =
+            Collections.unmodifiableMap(new HashMap<>());
 
     private final Map<Object, Object> map;
 
@@ -51,30 +54,32 @@ public class MapAccessor {
         }
 
         path = validate(path);
-        if (path.equals("/")) {
+        if ("/".equals(path)) {
             return true;
         }
 
-        String[] pathTokens = path.split(Pattern.quote("/"));
-        Map<Object, Object> subMap = map;
+        String[] tokens = path.split("/");
+        Object current = map;
 
-        for (int i = 1; i < pathTokens.length; i++) {
-            try {
-                if (subMap.containsKey(pathTokens[i])) {
-                    subMap = (Map<Object, Object>) subMap.get(pathTokens[i]);
-                } else {
-                    return false;
-                }
-            } catch (NullPointerException | ClassCastException e) {
+        for (int i = 1; i < tokens.length; i++) {
+            if (!(current instanceof Map)) {
                 return false;
             }
+
+            Map<?, ?> currentMap = (Map<?, ?>) current;
+
+            if (!currentMap.containsKey(tokens[i])) {
+                return false;
+            }
+
+            current = currentMap.get(tokens[i]);
         }
 
         return true;
     }
 
     /**
-     * Method to get a path value
+     * Method to get a path Object
      *
      * @param path the path
      * @return an Optional containing the path Object or an empty Optional if the path doesn't exist
@@ -84,23 +89,29 @@ public class MapAccessor {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
+        if (!contains(path)) {
+            return Optional.empty();
+        }
+
         path = validate(path);
-        if (path.equals("/")) {
+        if ("/".equals(path)) {
             return Optional.of(map);
         }
 
-        String[] pathTokens = path.split(Pattern.quote("/"));
-        Object object = map;
+        String[] tokens = path.split("/");
+        Object current = map;
 
-        for (int i = 1; i < pathTokens.length; i++) {
-            try {
-                object = resolve(pathTokens[i], object);
-            } catch (NullPointerException e) {
+        for (int i = 1; i < tokens.length; i++) {
+            Map<?, ?> currentMap = (Map<?, ?>) current;
+
+            if (!currentMap.containsKey(tokens[i])) {
                 return Optional.empty();
             }
+
+            current = currentMap.get(tokens[i]);
         }
 
-        return Optional.ofNullable(object);
+        return current != null ? Optional.of(current) : Optional.of(EMPTY_MAP);
     }
 
     /**
@@ -155,22 +166,5 @@ public class MapAccessor {
         }
 
         return path;
-    }
-
-    /**
-     * Method to resolve a path to a value
-     *
-     * @param path the path
-     * @param object the object
-     * @return the return value
-     * @param <T> the return type
-     */
-    private <T> T resolve(String path, Object object) {
-        try {
-            return (T) ((Map<Object, Object>) object).get(path);
-        } catch (ClassCastException e) {
-            throw new IllegalArgumentException(
-                    format("path [%s] is not of type [%s]", path, Map.class.getName()), e);
-        }
     }
 }
