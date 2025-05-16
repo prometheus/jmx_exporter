@@ -73,7 +73,7 @@ public class JavaAgent {
             File file = new File(arguments.getFilename());
             MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
             boolean httpEnabled = arguments.isHttpEnabled();
-            boolean openTelemetryEnabled = mapAccessor.contains("/openTelemetry");
+            boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
             JvmMetrics.builder().register(DEFAULT_REGISTRY);

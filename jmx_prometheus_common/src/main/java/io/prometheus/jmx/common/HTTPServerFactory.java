@@ -168,7 +168,7 @@ public class HTTPServerFactory {
         int maximum = DEFAULT_MAXIMUM_THREADS;
         int keepAliveTime = DEFAULT_KEEP_ALIVE_TIME_SECONDS;
 
-        if (rootMapAccessor.contains("/httpServer/threads")) {
+        if (rootMapAccessor.containsPath("/httpServer/threads")) {
             MapAccessor httpServerThreadsMapAccessor =
                     rootMapAccessor
                             .get("/httpServer/threads")
@@ -269,7 +269,7 @@ public class HTTPServerFactory {
             MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         Authenticator authenticator;
 
-        if (rootMapAccessor.contains("/httpServer/authentication")) {
+        if (rootMapAccessor.containsPath("/httpServer/authentication")) {
             Optional<Object> authenticatorClassAttribute =
                     rootMapAccessor.get("/httpServer/authentication/plugin");
 
@@ -632,7 +632,7 @@ public class HTTPServerFactory {
      */
     public static void configureSSL(
             MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
-        if (rootMapAccessor.contains("/httpServer/ssl")) {
+        if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
                 String keyStoreFilename =
                         rootMapAccessor

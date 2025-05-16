@@ -18,18 +18,19 @@ package io.prometheus.jmx.common.util;
 
 import static java.lang.String.format;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** MapAccessor to work with Maps using a path style syntax for value access */
 @SuppressWarnings("unchecked")
 public class MapAccessor {
-
-    private static final Map<Object, Object> EMPTY_MAP =
-            Collections.unmodifiableMap(new HashMap<>());
 
     private final Map<Object, Object> map;
 
@@ -39,21 +40,25 @@ public class MapAccessor {
      * @param map the map
      */
     private MapAccessor(Map<Object, Object> map) {
-        this.map = new LinkedHashMap<>(Collections.unmodifiableMap(map));
+        if (map == null) {
+            throw new IllegalArgumentException("map is null");
+        }
+
+        this.map = (Map<Object, Object>) createUnmodifiable(map);
     }
 
     /**
-     * Method to determine if a path exists
+     * Method to determine if a path exists. A path can be valid even if the value is null.
      *
      * @param path the path
-     * @return true if the path exists (but could be null), false otherwise
+     * @return true if the path exists, else false
      */
-    public boolean contains(String path) {
+    public boolean containsPath(String path) {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
-        path = validate(path);
+        path = validatePath(path);
         if ("/".equals(path)) {
             return true;
         }
@@ -79,21 +84,22 @@ public class MapAccessor {
     }
 
     /**
-     * Method to get a path Object
+     * Method to get a value by path
      *
      * @param path the path
      * @return an Optional containing the path Object or an empty Optional if the path doesn't exist
+     *     or value is null
      */
     public Optional<Object> get(String path) {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
-        if (!contains(path)) {
+        if (!containsPath(path)) {
             return Optional.empty();
         }
 
-        path = validate(path);
+        path = validatePath(path);
         if ("/".equals(path)) {
             return Optional.of(map);
         }
@@ -111,7 +117,7 @@ public class MapAccessor {
             current = currentMap.get(tokens[i]);
         }
 
-        return current != null ? Optional.of(current) : Optional.of(EMPTY_MAP);
+        return Optional.ofNullable(current);
     }
 
     /**
@@ -134,7 +140,7 @@ public class MapAccessor {
      * @param path the path
      * @return the return value
      */
-    private String validate(String path) {
+    private String validatePath(String path) {
         if (path == null) {
             throw new IllegalArgumentException("path is null");
         }
@@ -161,10 +167,50 @@ public class MapAccessor {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
-        if (path.matches(".*\\/(\\s*)\\/.*")) {
+        if (path.matches(".*/(\\s*)/.*")) {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         return path;
+    }
+
+    /**
+     * Method to create an unmodifiable version of the value
+     *
+     * @param value the value
+     * @return the unmodifiable value
+     */
+    private Object createUnmodifiable(Object value) {
+        if (value instanceof Map) {
+            Map<Object, Object> result = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                result.put(entry.getKey(), createUnmodifiable(entry.getValue()));
+            }
+
+            return Collections.unmodifiableMap(result);
+        } else if (value instanceof List) {
+            List<Object> result = new ArrayList<>();
+            for (Object item : (List<?>) value) {
+                result.add(createUnmodifiable(item));
+            }
+
+            return Collections.unmodifiableList(result);
+        } else if (value instanceof Set) {
+            Set<Object> result = new LinkedHashSet<>();
+            for (Object item : (Set<?>) value) {
+                result.add(createUnmodifiable(item));
+            }
+
+            return Collections.unmodifiableSet(result);
+        } else if (value instanceof Collection) {
+            Collection<Object> result = new ArrayList<>();
+            for (Object item : (Collection<?>) value) {
+                result.add(createUnmodifiable(item));
+            }
+
+            return Collections.unmodifiableCollection(result);
+        } else {
+            return value;
+        }
     }
 }

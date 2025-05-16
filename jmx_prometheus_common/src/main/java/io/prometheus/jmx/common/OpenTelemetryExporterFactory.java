@@ -59,7 +59,7 @@ public class OpenTelemetryExporterFactory {
         try {
             MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
 
-            if (rootMapAccessor.contains("/openTelemetry")) {
+            if (rootMapAccessor.containsPath("/openTelemetry")) {
                 MapAccessor openTelemetryMapAccessor =
                         rootMapAccessor
                                 .get("/openTelemetry")

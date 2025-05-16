@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx.common.util;
 
+import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,19 +24,42 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.Before;
 import org.junit.Test;
 
 @SuppressWarnings("unchecked")
 public class MapAccessorTest {
 
-    @Test
-    public void testValidPaths() throws IOException {
-        MapAccessor mapAccessor =
-                MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
+    private MapAccessor mapAccessor;
 
+    @Before
+    public void setUp() throws IOException {
+        mapAccessor =
+                MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
+    }
+
+    @Test
+    public void testContainsPath() {
+        assertTrue(mapAccessor.containsPath("/"));
+
+        assertTrue(mapAccessor.containsPath("/key"));
+        assertTrue(mapAccessor.containsPath("/key/subkey"));
+        assertFalse(mapAccessor.get("/key/subkey").isPresent());
+
+        assertTrue(mapAccessor.containsPath("/key2"));
+        assertTrue(mapAccessor.containsPath("/key2/subkey2"));
+        assertTrue(mapAccessor.get("/key2/subkey2").isPresent());
+
+        assertFalse(mapAccessor.containsPath("/key/foo"));
+    }
+
+    @Test
+    public void testGet() {
         Optional<Object> optional = mapAccessor.get("/");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
@@ -102,17 +126,6 @@ public class MapAccessorTest {
         assertTrue(optional.get() instanceof Integer);
         assertEquals(120, ((Integer) optional.get()).intValue());
 
-        /*
-
-        key:
-          subkey:
-        key2:
-          subkey2:
-            foo: bar
-        key3: bar
-
-         */
-
         optional = mapAccessor.get("/key");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
@@ -121,14 +134,14 @@ public class MapAccessorTest {
 
         optional = mapAccessor.get("/key/subkey");
         assertNotNull(optional);
-        assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof Map);
+        assertFalse(optional.isPresent());
 
         optional = mapAccessor.get("/key2");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
 
+        assertTrue(mapAccessor.containsPath("/key2/subkey2"));
         optional = mapAccessor.get("/key2/subkey2");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
@@ -144,45 +157,53 @@ public class MapAccessorTest {
         optional = mapAccessor.get("/key2/subkey2/foo/bar");
         assertNotNull(optional);
         assertFalse(optional.isPresent());
+
+        optional = mapAccessor.get("/key3");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertTrue(optional.get() instanceof String);
+
+        assertTrue(mapAccessor.containsPath("/key4"));
+        optional = mapAccessor.get("/key4");
+        assertNotNull(optional);
+        assertFalse(optional.isPresent());
+
+        assertFalse(mapAccessor.containsPath("/key5"));
     }
 
     @Test
-    public void testInvalidPaths() throws IOException {
-        MapAccessor mapAccessor =
-                MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
+    public void testInvalidPaths() {
+        String[] paths =
+                new String[] {
+                    null,
+                    "",
+                    " ",
+                    "foo",
+                    "//",
+                    "/ /",
+                    " /",
+                    "/ ",
+                    "/foo/",
+                    "/ foo/",
+                    "/ foo / ",
+                    "/foo /",
+                    "/foo/ /",
+                };
 
-        try {
-            mapAccessor.get("");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // INTENTIONALLY BLANK
-        }
-
-        try {
-            mapAccessor.get("//");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // INTENTIONALLY BLANK
-        }
-
-        try {
-            mapAccessor.get("foo");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // INTENTIONALLY BLANK
-        }
-
-        try {
-            mapAccessor.get("/foo/");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // INTENTIONALLY BLANK
+        for (String path : paths) {
+            try {
+                mapAccessor.get(path);
+                fail(format("Expected IllegalArgumentException for path [%s]", path));
+            } catch (IllegalArgumentException e) {
+                // INTENTIONALLY BLANK
+            }
         }
     }
 
     @Test
     public void testEmpty() {
         MapAccessor mapAccessor = MapAccessor.of(new LinkedHashMap<>());
+
         Optional<Object> optional = mapAccessor.get("/");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
@@ -200,20 +221,52 @@ public class MapAccessorTest {
     }
 
     @Test
-    public void testContains() throws IOException {
-        MapAccessor mapAccessor =
-                MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
+    public void testUnmodifiable() {
+        Optional<Object> optional = mapAccessor.get("/");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertTrue(optional.get() instanceof Map);
 
-        assertTrue(mapAccessor.contains("/"));
+        Map<Object, Object> map = (Map<Object, Object>) optional.get();
 
-        assertTrue(mapAccessor.contains("/key"));
-        assertTrue(mapAccessor.contains("/key/subkey"));
-        assertTrue(mapAccessor.get("/key/subkey").isPresent());
+        try {
+            map.put("abc", "123");
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // INTENTIONALLY BLANK
+        }
 
-        assertTrue(mapAccessor.contains("/key2"));
-        assertTrue(mapAccessor.contains("/key2/subkey2"));
-        assertTrue(mapAccessor.get("/key2/subkey2").isPresent());
+        optional = mapAccessor.get("/key");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertTrue(optional.get() instanceof Map);
 
-        assertFalse(mapAccessor.contains("/key/foo"));
+        try {
+            map.put("abc", "123");
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // INTENTIONALLY BLANK
+        }
+
+        List<String> list = new ArrayList<>();
+        list.add("abc");
+
+        Map<Object, Object> map2 = new LinkedHashMap<>();
+        map2.put("list", list);
+
+        MapAccessor mapAccessor2 = MapAccessor.of(map2);
+        optional = mapAccessor2.get("/list");
+        assertNotNull(optional);
+        assertTrue(optional.isPresent());
+        assertTrue(optional.get() instanceof List);
+
+        List<String> list2 = (List<String>) optional.get();
+        assertFalse(list2.isEmpty());
+        try {
+            list2.add("123");
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // INTENTIONALLY BLANK
+        }
     }
 }
