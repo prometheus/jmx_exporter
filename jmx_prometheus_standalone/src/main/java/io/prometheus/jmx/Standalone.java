@@ -73,7 +73,7 @@ public class Standalone {
 
             MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
             boolean httpEnabled = arguments.isHttpEnabled();
-            boolean openTelemetryEnabled = mapAccessor.contains("/openTelemetry");
+            boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
             info("HTTP enabled [%b]", httpEnabled);
 
