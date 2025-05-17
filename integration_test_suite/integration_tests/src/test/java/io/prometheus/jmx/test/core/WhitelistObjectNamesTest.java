@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -155,17 +154,9 @@ public class WhitelistObjectNamesTest {
          * ... because they are registered directly and are not MBeans
          */
         metrics.stream()
-                .filter(
-                        metric ->
-                                !metric.name()
-                                        .toLowerCase()
-                                        .startsWith("jmx_exporter"))
-                .filter(
-                        metric ->
-                                !metric.name().toLowerCase().startsWith("jmx_config"))
-                .filter(
-                        metric ->
-                                !metric.name().toLowerCase().startsWith("jmx_scrape"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_exporter"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_config"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_scrape"))
                 .filter(metric -> !metric.name().toLowerCase().startsWith("jvm_"))
                 .filter(metric -> !metric.name().toLowerCase().startsWith("process_"))
                 .forEach(
