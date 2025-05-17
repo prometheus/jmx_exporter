@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -169,31 +168,11 @@ public class IncludeObjectNameAttributesTest {
          */
         Set<Metric> includeMetrics =
                 metrics.stream()
-                        .filter(
-                                metric ->
-                                        !metric.name()
-                                                .toLowerCase()
-                                                .startsWith("jmx_exporter"))
-                        .filter(
-                                metric ->
-                                        !metric.name()
-                                                .toLowerCase()
-                                                .startsWith("jmx_config"))
-                        .filter(
-                                metric ->
-                                        !metric.name()
-                                                .toLowerCase()
-                                                .startsWith("jmx_scrape"))
-                        .filter(
-                                metric ->
-                                        !metric.name()
-                                                .toLowerCase()
-                                                .startsWith("jvm_"))
-                        .filter(
-                                metric ->
-                                        !metric.name()
-                                                .toLowerCase()
-                                                .startsWith("process_"))
+                        .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_exporter"))
+                        .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_config"))
+                        .filter(metric -> !metric.name().toLowerCase().startsWith("jmx_scrape"))
+                        .filter(metric -> !metric.name().toLowerCase().startsWith("jvm_"))
+                        .filter(metric -> !metric.name().toLowerCase().startsWith("process_"))
                         .collect(Collectors.toSet());
 
         assertThat(includeMetrics).hasSize(includeJavaLangThreadingAttributeSet.size());

@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -149,8 +148,6 @@ public class WhitelistAndBlacklistObjectNamesTest {
          * name = java_lang*
          */
         metrics.forEach(
-                metric ->
-                        assertThat(metric.name().toLowerCase())
-                                .doesNotStartWith("java_lang"));
+                metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
     }
 }
