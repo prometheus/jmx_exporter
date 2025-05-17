@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.prometheus.jmx;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 /** Interface to implement ExistDbMXBean */
 public interface ExistDbMXBean {
@@ -151,24 +151,5 @@ public interface ExistDbMXBean {
         public long getElapsedTime() {
             return System.currentTimeMillis() - startedAtTime;
         }
-    }
-}
-
-/** Class to implement ExitDb */
-class ExistDb implements ExistDbMXBean {
-
-    @Override
-    public Map<QueryKey, RunningQuery> getRunningQueries() {
-        final Map<QueryKey, RunningQuery> queries = new TreeMap<>();
-
-        final RunningQuery runningQuery1 =
-                new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
-        final RunningQuery runningQuery2 =
-                new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
-
-        queries.put(new QueryKey(runningQuery1.getId(), runningQuery1.getPath()), runningQuery1);
-        queries.put(new QueryKey(runningQuery2.getId(), runningQuery2.getPath()), runningQuery2);
-
-        return queries;
     }
 }

@@ -28,17 +28,3 @@ public interface OptionalValueMBean {
      */
     Optional<Integer> getValue();
 }
-
-/** Class to implement OptionalValue */
-class OptionalValue implements OptionalValueMBean {
-
-    /** Constructor */
-    public OptionalValue() {
-        // INTENTIONALLY BLANK
-    }
-
-    @Override
-    public Optional<Integer> getValue() {
-        return Optional.of(345);
-    }
-}
