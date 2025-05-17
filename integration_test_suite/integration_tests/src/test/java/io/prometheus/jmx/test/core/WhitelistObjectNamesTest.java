@@ -158,16 +158,16 @@ public class WhitelistObjectNamesTest {
                 .filter(
                         metric ->
                                 !metric.name()
-                                        .toLowerCase(Locale.ENGLISH)
+                                        .toLowerCase()
                                         .startsWith("jmx_exporter"))
                 .filter(
                         metric ->
-                                !metric.name().toLowerCase(Locale.ENGLISH).startsWith("jmx_config"))
+                                !metric.name().toLowerCase().startsWith("jmx_config"))
                 .filter(
                         metric ->
-                                !metric.name().toLowerCase(Locale.ENGLISH).startsWith("jmx_scrape"))
-                .filter(metric -> !metric.name().toLowerCase(Locale.ENGLISH).startsWith("jvm_"))
-                .filter(metric -> !metric.name().toLowerCase(Locale.ENGLISH).startsWith("process_"))
+                                !metric.name().toLowerCase().startsWith("jmx_scrape"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("jvm_"))
+                .filter(metric -> !metric.name().toLowerCase().startsWith("process_"))
                 .forEach(
                         metric -> {
                             String name = metric.name();
