@@ -359,6 +359,21 @@ public class JmxCollector implements MultiCollector {
             }
         }
 
+        // Default ObjectNames to exclude if excludeJvmMetrics is true
+        if (yamlConfig.containsKey("excludeJvmMetrics")) {
+            Boolean excludeJvmMetrics = (Boolean) yamlConfig.get("excludeJvmMetrics");
+            if (excludeJvmMetrics != null && excludeJvmMetrics) {
+                cfg.excludeObjectNames.add(new ObjectName("com.sun.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.lang:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.nio:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.util.logging:*"));
+                cfg.excludeObjectNames.add(new ObjectName("javax.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.internal:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.management.jfr:*"));
+            }
+        }
+
         if (yamlConfig.containsKey("metricCustomizers")) {
             List<Map<String, Object>> metricCustomizersYaml =
                     (List<Map<String, Object>>) yamlConfig.get("metricCustomizers");

@@ -1,12 +1,12 @@
 ---
-title: "JMX Exporter 1.3.0"
-weight: 2
+title: "JMX Exporter 1.3.0-post"
+weight: 1
 geekdocCollapseSection: true
 ---
 
-This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.3.0.
+This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.3.0-post.
 
-The main new features of the 1.3.0 release are:
+The main new features of the 1.3.0-post release are:
 
 * **Isolator Java Agent**: A new Java agent that allows running multiple isolated and independent JMX Exporter instances in the same JVM.
 

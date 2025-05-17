@@ -86,16 +86,16 @@ public class JavaAgent {
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
 
-            boolean enableJvmMetrics =
+            boolean excludeJvmMetrics =
                     mapAccessor
-                            .get("/jvmMetrics")
+                            .get("/excludeJvmMetrics")
                             .map(
                                     new ToBoolean(
                                             ConfigurationException.supplier(
-                                                    "/jvmMetrics must be a boolean")))
-                            .orElse(true);
+                                                    "/excludeJvmMetrics must be a boolean")))
+                            .orElse(false);
 
-            if (enableJvmMetrics) {
+            if (!excludeJvmMetrics) {
                 JvmMetrics.builder().register(DEFAULT_REGISTRY);
             }
 
