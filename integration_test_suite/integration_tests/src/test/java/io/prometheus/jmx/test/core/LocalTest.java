@@ -332,13 +332,5 @@ public class LocalTest {
                 .withName("io_prometheus_jmx_optionalValue_Value")
                 .withValue(345.0d)
                 .isPresent();
-
-        /*
-        for (String metricName : metrics.keySet()) {
-            String lowerCaseMetricName = metricName.toLowerCase();
-            assertThat(lowerCaseMetricName).doesNotStartWith("jvm_");
-            assertThat(lowerCaseMetricName).doesNotStartWith("java_");
-        }
-        */
     }
 }

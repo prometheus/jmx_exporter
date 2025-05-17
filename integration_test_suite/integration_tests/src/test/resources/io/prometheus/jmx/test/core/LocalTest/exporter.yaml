@@ -1,3 +1,2 @@
-jvmMetrics: false
 rules:
   - pattern: ".*"
