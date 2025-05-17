@@ -16,12 +16,9 @@
 
 package io.prometheus.jmx;
 
-import java.lang.management.ManagementFactory;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 /** Class to implement JmxExampleApplication */
 public class JmxExampleApplication {
@@ -41,29 +38,13 @@ public class JmxExampleApplication {
      * @throws Exception Exception
      */
     public static void main(String[] args) throws Exception {
-        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-
-        mBeanServer.registerMBean(
-                new TabularMBean(), new ObjectName("io.prometheus.jmx:type=tabularData"));
-
-        mBeanServer.registerMBean(
-                new AutoIncrementing(), new ObjectName("io.prometheus.jmx:type=autoIncrementing"));
-
-        mBeanServer.registerMBean(
-                new ExistDb(), new ObjectName("org.exist.management.exist:type=ProcessReport"));
-
-        mBeanServer.registerMBean(
-                new OptionalValue(), new ObjectName("io.prometheus.jmx:type=optionalValue"));
-
-        mBeanServer.registerMBean(
-                new PerformanceMetrics(),
-                new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean"));
-
-        mBeanServer.registerMBean(
-                new CustomValue(), new ObjectName("io.prometheus.jmx:type=customValue"));
-
-        mBeanServer.registerMBean(
-                new StringValue(), new ObjectName("io.prometheus.jmx:type=stringValue"));
+        new TabularData().register();
+        new AutoIncrementing().register();
+        new ExistDb().register();
+        new OptionalValue().register();
+        new PerformanceMetrics().register();
+        new CustomValue().register();
+        new StringValue().register();
 
         System.out.printf(
                 "%s | %s | INFO | %s | %s%n",

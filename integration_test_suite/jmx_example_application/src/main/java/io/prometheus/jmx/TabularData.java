@@ -20,6 +20,7 @@ import static javax.management.openmbean.SimpleType.BIGINTEGER;
 import static javax.management.openmbean.SimpleType.DOUBLE;
 import static javax.management.openmbean.SimpleType.STRING;
 
+import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
@@ -54,7 +57,7 @@ import javax.management.openmbean.TabularType;
  *   /dev/sda2      100G    80G    20G    80%   /
  * </pre>
  */
-public class TabularMBean implements DynamicMBean {
+public class TabularData implements DynamicMBean {
 
     private final MBeanInfo mBeanInfo;
     private final Map<String, TabularDataSupport> data;
@@ -64,8 +67,7 @@ public class TabularMBean implements DynamicMBean {
      *
      * @throws OpenDataException OpenDataException
      */
-    public TabularMBean() throws OpenDataException {
-
+    public TabularData() throws OpenDataException {
         String[] columnNames = {"source", "target", "size", "used", "avail", "pcent"};
         String[] columnDescriptions = {
             "filesystem", "mounted on", "size", "used", "available", "use %"
@@ -211,5 +213,16 @@ public class TabularMBean implements DynamicMBean {
     @Override
     public Object invoke(String actionName, Object[] params, String[] signature) {
         throw new UnsupportedOperationException("not implemented");
+    }
+
+    /**
+     * Method to register the MBean
+     *
+     * @throws Exception If an error occurs during registration
+     */
+    public void register() throws Exception {
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        mBeanServer.registerMBean(
+                new TabularData(), new ObjectName("io.prometheus.jmx:type=tabularData"));
     }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.prometheus.jmx;
 
 /** Class to implement CustomValueMBean */
@@ -31,23 +32,4 @@ public interface CustomValueMBean {
      * @return text
      */
     String getText();
-}
-
-/** Class to implement CustomValue */
-class CustomValue implements CustomValueMBean {
-
-    /** Constructor */
-    public CustomValue() {
-        // INTENTIONALLY BLANK
-    }
-
-    @Override
-    public Integer getValue() {
-        return 345;
-    }
-
-    @Override
-    public String getText() {
-        return "value";
-    }
 }
