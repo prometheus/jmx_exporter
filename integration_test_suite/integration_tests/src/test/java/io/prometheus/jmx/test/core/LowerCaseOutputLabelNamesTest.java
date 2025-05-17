@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -151,8 +150,6 @@ public class LowerCaseOutputLabelNamesTest {
                         metric.labels()
                                 .forEach(
                                         (key, value) ->
-                                                assertThat(key)
-                                                        .isEqualTo(
-                                                                key.toLowerCase())));
+                                                assertThat(key).isEqualTo(key.toLowerCase())));
     }
 }
