@@ -1,0 +1,3 @@
+jvmMetrics: false
+rules:
+  - pattern: ".*"
