@@ -150,7 +150,7 @@ public class BlacklistObjectNamesTest {
          */
         metrics.forEach(
                 metric ->
-                        assertThat(metric.name().toLowerCase(Locale.ENGLISH))
+                        assertThat(metric.name().toLowerCase())
                                 .doesNotStartWith("java_lang"));
     }
 }

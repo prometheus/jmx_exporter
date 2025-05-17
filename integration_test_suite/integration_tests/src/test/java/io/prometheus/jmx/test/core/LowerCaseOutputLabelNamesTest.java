@@ -153,6 +153,6 @@ public class LowerCaseOutputLabelNamesTest {
                                         (key, value) ->
                                                 assertThat(key)
                                                         .isEqualTo(
-                                                                key.toLowerCase(Locale.ENGLISH))));
+                                                                key.toLowerCase())));
     }
 }

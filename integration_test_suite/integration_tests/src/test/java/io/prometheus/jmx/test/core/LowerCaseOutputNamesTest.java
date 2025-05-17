@@ -149,6 +149,6 @@ public class LowerCaseOutputNamesTest {
         metrics.forEach(
                 metric ->
                         assertThat(metric.name())
-                                .isEqualTo(metric.name().toLowerCase(Locale.ENGLISH)));
+                                .isEqualTo(metric.name().toLowerCase()));
     }
 }

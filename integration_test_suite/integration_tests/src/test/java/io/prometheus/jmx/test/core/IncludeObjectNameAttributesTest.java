@@ -172,27 +172,27 @@ public class IncludeObjectNameAttributesTest {
                         .filter(
                                 metric ->
                                         !metric.name()
-                                                .toLowerCase(Locale.ENGLISH)
+                                                .toLowerCase()
                                                 .startsWith("jmx_exporter"))
                         .filter(
                                 metric ->
                                         !metric.name()
-                                                .toLowerCase(Locale.ENGLISH)
+                                                .toLowerCase()
                                                 .startsWith("jmx_config"))
                         .filter(
                                 metric ->
                                         !metric.name()
-                                                .toLowerCase(Locale.ENGLISH)
+                                                .toLowerCase()
                                                 .startsWith("jmx_scrape"))
                         .filter(
                                 metric ->
                                         !metric.name()
-                                                .toLowerCase(Locale.ENGLISH)
+                                                .toLowerCase()
                                                 .startsWith("jvm_"))
                         .filter(
                                 metric ->
                                         !metric.name()
-                                                .toLowerCase(Locale.ENGLISH)
+                                                .toLowerCase()
                                                 .startsWith("process_"))
                         .collect(Collectors.toSet());
 

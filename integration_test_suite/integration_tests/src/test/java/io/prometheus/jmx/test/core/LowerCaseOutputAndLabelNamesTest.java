@@ -148,12 +148,12 @@ public class LowerCaseOutputAndLabelNamesTest {
          */
         metrics.forEach(
                 metric -> {
-                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase(Locale.ENGLISH));
+                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase());
                     metric.labels()
                             .forEach(
                                     (key, value) ->
                                             assertThat(key)
-                                                    .isEqualTo(key.toLowerCase(Locale.ENGLISH)));
+                                                    .isEqualTo(key.toLowerCase()));
                 });
     }
 }
