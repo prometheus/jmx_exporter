@@ -689,7 +689,6 @@ public class JmxCollector implements MultiCollector {
             }
 
             if (matchedRule.isUnmatched()) {
-
                 String beanName =
                         domain
                                 + angleBrackets(beanProperties.toString())
@@ -710,7 +709,6 @@ public class JmxCollector implements MultiCollector {
                 }
 
                 for (Rule rule : config.rules) {
-
                     // If we cache that rule, and we found a cache entry for this bean/attribute,
                     // then what's left to do is to check all uncached rules
                     if (rule.cache && cachedRule != null) {
