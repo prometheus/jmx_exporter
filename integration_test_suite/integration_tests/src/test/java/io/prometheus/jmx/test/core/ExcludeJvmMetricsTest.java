@@ -21,10 +21,8 @@ import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.JmxExporterMode;
 import io.prometheus.jmx.test.support.Repeater;
 import io.prometheus.jmx.test.support.TestSupport;
@@ -34,9 +32,7 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -56,6 +52,7 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() throws Throwable {
         // Test all Java Docker images
+        /*
         List<ExporterTestEnvironment> exporterTestEnvironments = new ArrayList<>();
 
         try (BufferedReader bufferedReader =
@@ -80,6 +77,13 @@ public class ExcludeJvmMetricsTest {
         }
 
         return exporterTestEnvironments.stream();
+        */
+
+        return ExporterTestEnvironment.createExporterTestEnvironments()
+                .filter(
+                        exporterTestEnvironment ->
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.JavaAgent);
     }
 
     @Verifyica.Prepare
