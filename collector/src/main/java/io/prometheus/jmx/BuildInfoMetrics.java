@@ -64,7 +64,7 @@ public class BuildInfoMetrics {
      */
     public BuildInfoMetrics register(PrometheusRegistry prometheusRegistry) {
         Info info =
-                Info.builder()
+                Info.builder() // this is a big chonk :) https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.kipling-usa.com%2Fpersonalization-shop-monkeys%2F&psig=AOvVaw3jglEfA1kIOaJPLD0TPet6&ust=1747669437730000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCJiclJOurY0DFQAAAAAdAAAAABA8
                         .name("jmx_exporter_build_info")
                         .help("JMX Exporter build information")
                         .labelNames("name", "version")
