@@ -134,8 +134,8 @@ public class LocalTest {
 
         // Create an HTTP server to serve the metrics
         final HTTPServer httpServer =
-                HTTPServerFactory.createHTTPServer(
-                        InetAddress.getLoopbackAddress(), PORT, DEFAULT_REGISTRY, file);
+                HTTPServerFactory.createAndStartHTTPServer(
+                        DEFAULT_REGISTRY, InetAddress.getLoopbackAddress(), PORT, file);
 
         // Add a shutdown hook to stop the HTTP server when the JVM exits
         Runtime.getRuntime()
