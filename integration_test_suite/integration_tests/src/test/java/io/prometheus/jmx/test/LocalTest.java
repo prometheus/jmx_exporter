@@ -65,36 +65,26 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Verifyica;
 
 /**
- * LocalTest is a test class that verifies the functionality of the JMX Exporter running in the local JVM.
- * </p>
- * Disabled by default due to potential machine port conflicts, but can be enabled for development/testing.
+ * LocalTest is a test class that verifies the functionality of the JMX Exporter running in the
+ * local JVM. Disabled by default due to potential machine port conflicts, but can be enabled for
+ * development/testing.
  */
 @Verifyica.Disabled
 public class LocalTest {
 
-    /**
-     * The number of clients to simulate.
-     */
+    /** The number of clients to simulate. */
     private static final int CLIENT_COUNT = 10;
 
-    /**
-     * The port on which the HTTP server will run.
-     */
+    /** The port on which the HTTP server will run. */
     private static final int PORT = 9876;
 
-    /**
-     * The number of iterations for the repeated tests.
-     */
+    /** The number of iterations for the repeated tests. */
     private static final int ITERATIONS = 100;
 
-    /**
-     * The URL of the HTTP server.
-     */
+    /** The URL of the HTTP server. */
     private static final String URL = "http://localhost" + ":" + PORT;
 
-    /**
-     * The default Prometheus registry.
-     */
+    /** The default Prometheus registry. */
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
