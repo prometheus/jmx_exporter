@@ -65,9 +65,12 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Verifyica;
 
 /**
- * LocalTest is a test class that verifies the functionality of the JMX Exporter running in the
- * local JVM. Disabled by default due to potential machine port conflicts, but can be enabled for
- * development/testing.
+ * LocalTest that verifies the functionality of the JMX Exporter Java agent running in the local
+ * JVM.
+ *
+ * <p>Simulates multiple clients to test the HTTP server and the JMX Exporter.
+ *
+ * <p>Disabled by default due to potential machine port conflicts
  */
 @Verifyica.Disabled
 public class LocalTest {
