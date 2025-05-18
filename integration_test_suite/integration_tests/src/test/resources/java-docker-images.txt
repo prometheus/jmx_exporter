@@ -59,6 +59,10 @@ ibm-semeru-runtimes:open-23-jdk-focal
 konajdk/konajdk:8
 konajdk/konajdk:11
 konajdk/konajdk:17-tlinux
+mcr.microsoft.com/openjdk/jdk:8-azurelinux
+mcr.microsoft.com/openjdk/jdk:11-azurelinux
+mcr.microsoft.com/openjdk/jdk:17-azurelinux
+mcr.microsoft.com/openjdk/jdk:21-azurelinux
 mcr.microsoft.com/openjdk/jdk:8-mariner
 mcr.microsoft.com/openjdk/jdk:11-mariner
 mcr.microsoft.com/openjdk/jdk:17-mariner
