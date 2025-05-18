@@ -82,10 +82,10 @@ public class Standalone {
                 info("Starting HTTPServer ...");
 
                 httpServer =
-                        HTTPServerFactory.createHTTPServer(
+                        HTTPServerFactory.createAndStartHTTPServer(
+                                PrometheusRegistry.defaultRegistry,
                                 InetAddress.getByName(arguments.getHost()),
                                 arguments.getPort(),
-                                PrometheusRegistry.defaultRegistry,
                                 file);
 
                 info("HTTPServer started");
@@ -100,7 +100,7 @@ public class Standalone {
                 info("Starting OpenTelemetry ...");
 
                 openTelemetryExporter =
-                        OpenTelemetryExporterFactory.createOpenTelemetryExporter(
+                        OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
                                 PrometheusRegistry.defaultRegistry, file);
 
                 info("OpenTelemetry started");

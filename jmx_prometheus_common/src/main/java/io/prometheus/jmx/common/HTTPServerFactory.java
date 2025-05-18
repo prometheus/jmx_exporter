@@ -128,17 +128,17 @@ public class HTTPServerFactory {
     /**
      * Method to create an HTTPServer using the supplied arguments
      *
+     * @param prometheusRegistry prometheusRegistry
      * @param inetAddress inetAddress
      * @param port port
-     * @param prometheusRegistry prometheusRegistry
      * @param exporterYamlFile exporterYamlFile
      * @return an HTTPServer
      * @throws IOException IOException
      */
-    public static HTTPServer createHTTPServer(
+    public static HTTPServer createAndStartHTTPServer(
+            PrometheusRegistry prometheusRegistry,
             InetAddress inetAddress,
             int port,
-            PrometheusRegistry prometheusRegistry,
             File exporterYamlFile)
             throws IOException {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));

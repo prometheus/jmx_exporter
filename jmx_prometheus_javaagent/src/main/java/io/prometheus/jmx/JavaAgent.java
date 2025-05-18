@@ -87,10 +87,10 @@ public class JavaAgent {
 
                 // Create and start the HTTP server
                 httpServer =
-                        HTTPServerFactory.createHTTPServer(
+                        HTTPServerFactory.createAndStartHTTPServer(
+                                PrometheusRegistry.defaultRegistry,
                                 InetAddress.getByName(arguments.getHost()),
                                 arguments.getPort(),
-                                PrometheusRegistry.defaultRegistry,
                                 file);
 
                 info("HTTPServer started");
@@ -106,7 +106,7 @@ public class JavaAgent {
 
                 // Create and start the OpenTelemetry exporter
                 openTelemetryExporter =
-                        OpenTelemetryExporterFactory.createOpenTelemetryExporter(
+                        OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
                                 PrometheusRegistry.defaultRegistry, file);
 
                 info("OpenTelemetry started");
