@@ -49,7 +49,7 @@ public class OpenTelemetryExporterFactory {
      * @return OpenTelemetryExporter OpenTelemetryExporter
      * @throws ConfigurationException ConfigurationException
      */
-    public static OpenTelemetryExporter createOpenTelemetryExporter(
+    public static OpenTelemetryExporter createAndStartOpenTelemetryExporter(
             PrometheusRegistry prometheusRegistry, File exporterYamlFile)
             throws ConfigurationException {
         if (exporterYamlFile == null) {
