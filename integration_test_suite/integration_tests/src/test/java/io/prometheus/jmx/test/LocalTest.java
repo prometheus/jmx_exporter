@@ -112,9 +112,11 @@ public class LocalTest {
         new CustomValue().register();
         new StringValue().register();
 
-        // Load the exporter.yaml file from the classpath
+        // Derive the resource path for the exporter.yaml file based on the test class name
         String resource =
                 (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
+
+        // Load the exporter.yaml resource
         String exporterYaml = ResourceSupport.load(resource);
 
         // Register the build info metrics
@@ -205,6 +207,7 @@ public class LocalTest {
     public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
         // Run the test code multiple times to simulate concurrent requests
         new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             HttpResponse httpResponse = HttpClient.sendRequest(URL + "/metrics");
@@ -218,6 +221,7 @@ public class LocalTest {
     public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
         // Run the test code multiple times to simulate concurrent requests
         new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             HttpResponse httpResponse =
@@ -237,6 +241,7 @@ public class LocalTest {
     public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
         // Run the test code multiple times to simulate concurrent requests
         new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             HttpResponse httpResponse =
@@ -255,6 +260,7 @@ public class LocalTest {
     public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
         // Run the test code multiple times to simulate concurrent requests
         new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             HttpResponse httpResponse =
