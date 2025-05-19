@@ -118,7 +118,7 @@ public class ObjectNameAttributeFilter {
      */
     public void add(ObjectName objectName, String attributeName) {
         if (autoExcludeObjectNameAttributes) {
-            Set<String> attribteNameSet =
+            Set<String> attributeNameSet =
                     dynamicExcludeObjectNameAttributesMap.computeIfAbsent(
                             objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
@@ -128,7 +128,7 @@ public class ObjectNameAttributeFilter {
                     objectName.getCanonicalName(),
                     attributeName);
 
-            attribteNameSet.add(attributeName);
+            attributeNameSet.add(attributeName);
         }
     }
 
