@@ -438,8 +438,8 @@ class JmxScraper {
             attrKeys = new LinkedList<>(attrKeys);
             attrKeys.add(attrName);
             for (String key : type.keySet()) {
-                String typ = type.getType(key).getTypeName();
-                Object valu = composite.get(key);
+                String typeName = type.getType(key).getTypeName();
+                Object compositeValue = composite.get(key);
                 processBeanValue(
                         objectName,
                         domain,
@@ -447,9 +447,9 @@ class JmxScraper {
                         attributesAsLabelsWithValues,
                         attrKeys,
                         key,
-                        typ,
+                        typeName,
                         type.getDescription(),
-                        valu);
+                        compositeValue);
             }
         } else if (value instanceof TabularData) {
             // I don't pretend to have a good understanding of TabularData.
@@ -469,9 +469,9 @@ class JmxScraper {
 
             LinkedList<String> extendedAttrKeys = new LinkedList<>(attrKeys);
             extendedAttrKeys.add(attrName);
-            for (Object valu : tds.values()) {
-                if (valu instanceof CompositeData) {
-                    CompositeData composite = (CompositeData) valu;
+            for (Object compositeDataValue : tds.values()) {
+                if (compositeDataValue instanceof CompositeData) {
+                    CompositeData composite = (CompositeData) compositeDataValue;
                     LinkedHashMap<String, String> l2s = new LinkedHashMap<>(beanProperties);
                     for (String idx : rowKeys) {
                         Object obj = composite.get(idx);
@@ -500,7 +500,7 @@ class JmxScraper {
                     }
                     for (String valueIdx : valueKeys) {
                         LinkedList<String> attrNames = extendedAttrKeys;
-                        String typ = type.getType(valueIdx).getTypeName();
+                        String typeName = type.getType(valueIdx).getTypeName();
                         String name = valueIdx;
                         if (valueIdx.equalsIgnoreCase("value")) {
                             // Skip appending 'value' to the name
@@ -514,7 +514,7 @@ class JmxScraper {
                                 attributesAsLabelsWithValues,
                                 attrNames,
                                 name,
-                                typ,
+                                typeName,
                                 type.getDescription(),
                                 composite.get(valueIdx));
                     }
