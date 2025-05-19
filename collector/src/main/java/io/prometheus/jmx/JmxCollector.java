@@ -599,7 +599,7 @@ public class JmxCollector implements MultiCollector {
             this.stalenessTracker = stalenessTracker;
         }
 
-        // [] and () are special in regexes, so swtich to <>.
+        // [] and () are special in regexes, so switch to <>.
         private String angleBrackets(String s) {
             return "<" + s.substring(1, s.length() - 1) + ">";
         }

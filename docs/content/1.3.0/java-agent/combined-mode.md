@@ -21,7 +21,7 @@ Pushes metrics to an OpenTelemetry endpoint.
 
 **Notes**
 
--  Due to the indepenent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
+-  Due to the independent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
 
 # Installation
 
