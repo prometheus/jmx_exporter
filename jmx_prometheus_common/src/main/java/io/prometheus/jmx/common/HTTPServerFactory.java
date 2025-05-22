@@ -157,6 +157,27 @@ public class HTTPServerFactory {
     }
 
     /**
+     * Method to create an HTTPServer using the supplied arguments (used for testing)
+     *
+     * @param prometheusRegistry prometheusRegistry
+     * @param exporterYamlFile exporterYamlFile
+     * @return an HTTPServer
+     * @throws IOException IOException
+     */
+    public static HTTPServer createAndStartHTTPServer(
+            PrometheusRegistry prometheusRegistry, File exporterYamlFile) throws IOException {
+        MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+
+        HTTPServer.Builder httpServerBuilder = HTTPServer.builder().registry(prometheusRegistry);
+
+        configureThreads(rootMapAccessor, httpServerBuilder);
+        configureAuthentication(rootMapAccessor, httpServerBuilder);
+        configureSSL(rootMapAccessor, httpServerBuilder);
+
+        return httpServerBuilder.buildAndStart();
+    }
+
+    /**
      * Method to configure the HTTPServer thread pool
      *
      * @param rootMapAccessor rootMapAccessor

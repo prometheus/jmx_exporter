@@ -16,12 +16,10 @@
 
 package io.prometheus.jmx;
 
-import static java.lang.String.format;
-
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,8 +34,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("PMD.EmptyCatchBlock")
 public class IsolatorJavaAgent {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final Logger LOGGER = LoggerFactory.getLogger(IsolatorJavaAgent.class);
 
     private static final long TIMEOUT_MILLISECONDS = 60000;
 
@@ -72,9 +69,9 @@ public class IsolatorJavaAgent {
         Package pkg = IsolatorJavaAgent.class.getPackage();
         String version = pkg.getImplementationVersion();
 
-        info("IsolatorJavaAgent v%s", version);
-        info("Starting ...");
-        info("agent argument [%s]", agentArgument);
+        LOGGER.info("IsolatorJavaAgent v%s", version);
+        LOGGER.info("Starting ...");
+        LOGGER.info("agent argument [%s]", agentArgument);
 
         try {
             List<String> javaAgentArguments =
@@ -82,7 +79,7 @@ public class IsolatorJavaAgent {
                             .map(String::trim)
                             .collect(Collectors.toList());
 
-            info(
+            LOGGER.info(
                     "%s JMX Exporter%s defined",
                     javaAgentArguments.size(), javaAgentArguments.size() == 1 ? "" : "s");
 
@@ -92,21 +89,21 @@ public class IsolatorJavaAgent {
                 String jarPath = javaAgentArgument.substring(0, javaAgentArgument.indexOf("="));
                 String options = javaAgentArgument.substring(javaAgentArgument.indexOf("=") + 1);
 
-                info("JMX Exporter[%d] configuration ...", index);
-                info("jar [%s]", jarPath);
-                info("agent arguments [%s]", options);
+                LOGGER.info("JMX Exporter[%d] configuration ...", index);
+                LOGGER.info("jar [%s]", jarPath);
+                LOGGER.info("agent arguments [%s]", options);
 
-                info("Starting JMX Exporter[%d] ...", index);
+                LOGGER.info("Starting JMX Exporter[%d] ...", index);
 
                 ClassLoader classLoader =
                         new JarClassLoader(jarPath, ClassLoader.getSystemClassLoader());
 
                 runJavaAgent(options, instrumentation, classLoader);
 
-                info("JMX Exporter[%d] running", index);
+                LOGGER.info("JMX Exporter[%d] running", index);
             }
 
-            info("Running");
+            LOGGER.info("Running");
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter ...");
@@ -167,14 +164,5 @@ public class IsolatorJavaAgent {
         if (throwableAtomicReference.get() != null) {
             throw throwableAtomicReference.get();
         }
-    }
-
-    private static void info(String format, Object... objects) {
-        System.out.printf(
-                "%s | %s | INFO | %s | %s%n",
-                LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                Thread.currentThread().getName(),
-                IsolatorJavaAgent.class.getName(),
-                format(format, objects));
     }
 }

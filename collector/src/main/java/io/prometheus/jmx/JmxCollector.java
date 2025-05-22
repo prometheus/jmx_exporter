@@ -17,8 +17,6 @@
 package io.prometheus.jmx;
 
 import static java.lang.String.format;
-import static java.util.logging.Level.FINE;
-import static java.util.logging.Level.SEVERE;
 
 import io.prometheus.jmx.MatchedRulesCache.CacheKey;
 import io.prometheus.jmx.logger.Logger;
@@ -242,16 +240,14 @@ public class JmxCollector implements MultiCollector {
 
     private void exitOnConfigError() {
         if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
-            LOGGER.log(
-                    SEVERE,
+            LOGGER.error(
                     "Configuration error: When running jmx_exporter as a Java agent, you must not"
                         + " configure 'jmxUrl' or 'hostPort' because you don't want to monitor a"
                         + " remote JVM.");
             System.exit(-1);
         }
         if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
-            LOGGER.log(
-                    SEVERE,
+            LOGGER.error(
                     "Configuration error: When running jmx_exporter in standalone mode (using"
                             + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
                             + " 'hostPort'.");
@@ -267,7 +263,7 @@ public class JmxCollector implements MultiCollector {
             config = newConfig;
             configReloadSuccess.inc();
         } catch (Exception e) {
-            LOGGER.log(SEVERE, "Configuration reload failed: %s: ", e);
+            LOGGER.error("Configuration reload failed: %s: ", e);
             configReloadFailure.inc();
         }
     }
@@ -276,7 +272,7 @@ public class JmxCollector implements MultiCollector {
         if (configFile != null) {
             long lastModified = configFile.lastModified();
             if (lastModified > config.lastUpdate) {
-                LOGGER.log(FINE, "Configuration file changed, reloading...");
+                LOGGER.trace("Configuration file changed, reloading...");
                 reloadConfig();
             }
         }
@@ -745,14 +741,10 @@ public class JmxCollector implements MultiCollector {
                         try {
                             value = Double.valueOf(val);
                         } catch (NumberFormatException e) {
-                            LOGGER.log(
-                                    FINE,
+                            LOGGER.trace(
                                     "Unable to parse configured value '%s' to number for bean:"
                                             + " %s%s: %s",
-                                    val,
-                                    beanName,
-                                    attrName,
-                                    beanValue);
+                                    val, beanName, attrName, beanValue);
                             return;
                         }
                     }
@@ -852,8 +844,7 @@ public class JmxCollector implements MultiCollector {
             } else if (beanValue instanceof Boolean) {
                 value = (Boolean) beanValue ? 1 : 0;
             } else {
-                LOGGER.log(
-                        FINE,
+                LOGGER.trace(
                         "Ignoring unsupported bean: %s%s%s%s: %s ",
                         domain,
                         angleBrackets(beanProperties.toString()),
@@ -864,12 +855,9 @@ public class JmxCollector implements MultiCollector {
             }
 
             // Add to samples.
-            LOGGER.log(
-                    FINE,
+            LOGGER.trace(
                     "add metric sample: %s %s %s",
-                    matchedRule.name,
-                    matchedRule.labels,
-                    value.doubleValue());
+                    matchedRule.name, matchedRule.labels, value.doubleValue());
 
             matchedRules.add(matchedRule.withValue(value.doubleValue()));
         }
@@ -928,7 +916,7 @@ public class JmxCollector implements MultiCollector {
             error = 1;
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            LOGGER.log(SEVERE, "JMX scrape failed: %s", sw);
+            LOGGER.error("JMX scrape failed: %s", sw);
         }
 
         if (config.rulesCache != null) {

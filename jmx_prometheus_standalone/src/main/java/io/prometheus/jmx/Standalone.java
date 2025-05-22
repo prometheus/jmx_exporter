@@ -16,26 +16,23 @@
 
 package io.prometheus.jmx;
 
-import static java.lang.String.format;
-
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.common.util.YamlSupport;
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.net.InetAddress;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /** Class to implement Standalone */
 public class Standalone {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final Logger LOGGER = LoggerFactory.getLogger(Standalone.class);
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
@@ -51,7 +48,7 @@ public class Standalone {
      * @throws Exception Exception
      */
     public static void main(String[] args) throws Exception {
-        info("Starting ...");
+        LOGGER.info("Starting ...");
 
         HTTPServer httpServer = null;
         OpenTelemetryExporter openTelemetryExporter = null;
@@ -74,11 +71,11 @@ public class Standalone {
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
-            info("HTTP enabled [%b]", httpEnabled);
+            LOGGER.info("HTTP enabled [%b]", httpEnabled);
 
             if (httpEnabled) {
-                info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
-                info("Starting HTTPServer ...");
+                LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
+                LOGGER.info("Starting HTTPServer ...");
 
                 httpServer =
                         HTTPServerFactory.createAndStartHTTPServer(
@@ -87,29 +84,29 @@ public class Standalone {
                                 arguments.getPort(),
                                 file);
 
-                info("HTTPServer started");
+                LOGGER.info("HTTPServer started");
 
                 // Add shutdown hook
                 Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(httpServer));
             }
 
-            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
+            LOGGER.info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (openTelemetryEnabled) {
-                info("Starting OpenTelemetry ...");
+                LOGGER.info("Starting OpenTelemetry ...");
 
                 openTelemetryExporter =
                         OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
                                 PrometheusRegistry.defaultRegistry, file);
 
-                info("OpenTelemetry started");
+                LOGGER.info("OpenTelemetry started");
 
                 // Add shutdown hook
                 Runtime.getRuntime()
                         .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
-            info("Running ...");
+            LOGGER.info("Running ...");
 
             Thread.currentThread().join();
         } catch (Throwable t) {
@@ -142,20 +139,5 @@ public class Standalone {
                 // INTENTIONALLY BLANK
             }
         }
-    }
-
-    /**
-     * Log a message at the INFO level.
-     *
-     * @param format the format string
-     * @param objects the arguments to format the message
-     */
-    private static void info(String format, Object... objects) {
-        System.out.printf(
-                "%s | %s | INFO | %s | %s%n",
-                LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                Thread.currentThread().getName(),
-                Standalone.class.getName(),
-                format(format, objects));
     }
 }

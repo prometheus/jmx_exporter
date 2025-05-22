@@ -16,38 +16,26 @@
 
 package io.prometheus.jmx;
 
-import static java.lang.String.format;
-
-import io.prometheus.jmx.common.ConfigurationException;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
-import io.prometheus.jmx.common.util.functions.ToBoolean;
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
-import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /** Class to implement JavaAgent */
 public class JavaAgent {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final Logger LOGGER = LoggerFactory.getLogger(JavaAgent.class);
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
-
-    static {
-        // Get the platform MBean server to ensure that
-        // it's initialized prior to the application
-        ManagementFactory.getPlatformMBeanServer();
-    }
 
     /** Constructor */
     public JavaAgent() {
@@ -71,7 +59,7 @@ public class JavaAgent {
      * @param instrumentation the instrumentation
      */
     public static void premain(String agentArgument, Instrumentation instrumentation) {
-        info("Starting ...");
+        LOGGER.info("Starting ...");
 
         HTTPServer httpServer = null;
         OpenTelemetryExporter openTelemetryExporter = null;
@@ -84,27 +72,14 @@ public class JavaAgent {
             boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
-
-            boolean excludeJvmMetrics =
-                    mapAccessor
-                            .get("/excludeJvmMetrics")
-                            .map(
-                                    new ToBoolean(
-                                            ConfigurationException.supplier(
-                                                    "/excludeJvmMetrics must be a boolean")))
-                            .orElse(false);
-
-            if (!excludeJvmMetrics) {
-                JvmMetrics.builder().register(DEFAULT_REGISTRY);
-            }
-
+            JvmMetrics.builder().register(DEFAULT_REGISTRY);
             new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
-            info("HTTP enabled [%b]", httpEnabled);
+            LOGGER.info("HTTP enabled [%b]", httpEnabled);
 
             if (httpEnabled) {
-                info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
-                info("Starting HTTPServer ...");
+                LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
+                LOGGER.info("Starting HTTPServer ...");
 
                 // Create and start the HTTP server
                 httpServer =
@@ -114,30 +89,30 @@ public class JavaAgent {
                                 arguments.getPort(),
                                 file);
 
-                info("HTTPServer started");
+                LOGGER.info("HTTPServer started");
 
                 // Add shutdown hook
                 Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(httpServer));
             }
 
-            info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
+            LOGGER.info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (openTelemetryEnabled) {
-                info("Starting OpenTelemetry ...");
+                LOGGER.info("Starting OpenTelemetry ...");
 
                 // Create and start the OpenTelemetry exporter
                 openTelemetryExporter =
                         OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
                                 PrometheusRegistry.defaultRegistry, file);
 
-                info("OpenTelemetry started");
+                LOGGER.info("OpenTelemetry started");
 
                 // Add shutdown hook
                 Runtime.getRuntime()
                         .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
-            info("Running ...");
+            LOGGER.info("Running ...");
         } catch (Throwable t) {
             synchronized (System.err) {
                 System.err.println("Failed to start Prometheus JMX Exporter ...");
@@ -168,20 +143,5 @@ public class JavaAgent {
                 // INTENTIONALLY BLANK
             }
         }
-    }
-
-    /**
-     * Log a message at the INFO level.
-     *
-     * @param format the format string
-     * @param objects the arguments to format the message
-     */
-    private static void info(String format, Object... objects) {
-        System.out.printf(
-                "%s | %s | INFO | %s | %s%n",
-                LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                Thread.currentThread().getName(),
-                JavaAgent.class.getName(),
-                format(format, objects));
     }
 }
