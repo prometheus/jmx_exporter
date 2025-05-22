@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 /** Class to implement MatchedRuleToMetricSnapshotsConverter */
 public class MatchedRuleToMetricSnapshotsConverter {
@@ -61,17 +60,14 @@ public class MatchedRuleToMetricSnapshotsConverter {
             matchedRulesWithSameName.add(matchedRule);
         }
 
-        if (LOGGER.isLoggable(Level.FINE)) {
+        if (LOGGER.isTraceEnabled()) {
             rulesByPrometheusMetricName
                     .values()
                     .forEach(
                             matchedRules1 ->
                                     matchedRules1.forEach(
                                             matchedRule ->
-                                                    LOGGER.log(
-                                                            Level.FINE,
-                                                            "matchedRule %s",
-                                                            matchedRule)));
+                                                    LOGGER.trace("matchedRule %s", matchedRule)));
         }
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();

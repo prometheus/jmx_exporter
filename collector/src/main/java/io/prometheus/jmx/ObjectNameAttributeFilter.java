@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -77,7 +76,7 @@ public class ObjectNameAttributeFilter {
             autoExcludeObjectNameAttributes = true;
         }
 
-        LOGGER.log(Level.FINE, "dynamicExclusion [%b]", autoExcludeObjectNameAttributes);
+        LOGGER.trace("dynamicExclusion [%b]", autoExcludeObjectNameAttributes);
 
         return this;
     }
@@ -122,11 +121,9 @@ public class ObjectNameAttributeFilter {
                     dynamicExcludeObjectNameAttributesMap.computeIfAbsent(
                             objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
-            LOGGER.log(
-                    Level.FINE,
+            LOGGER.trace(
                     "auto adding exclusion of object name [%s] attribute name [%s]",
-                    objectName.getCanonicalName(),
-                    attributeName);
+                    objectName.getCanonicalName(), attributeName);
 
             attributeNameSet.add(attributeName);
         }
