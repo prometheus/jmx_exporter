@@ -51,34 +51,6 @@ public class ExcludeJvmMetricsTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() throws Throwable {
-        // Test all Java Docker images
-        /*
-        List<ExporterTestEnvironment> exporterTestEnvironments = new ArrayList<>();
-
-        try (BufferedReader bufferedReader =
-                new BufferedReader(
-                        new StringReader(
-                                ResourceSupport.load(
-                                        JavaDockerImages.ALL_DOCKER_IMAGES_RESOURCE)))) {
-            while (true) {
-                String line = bufferedReader.readLine();
-
-                if (line == null) {
-                    break;
-                }
-
-                line = line.trim();
-
-                if (!line.isEmpty() && !line.startsWith("#")) {
-                    exporterTestEnvironments.add(
-                            new ExporterTestEnvironment(line, JmxExporterMode.JavaAgent));
-                }
-            }
-        }
-
-        return exporterTestEnvironments.stream();
-        */
-
         return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
                         exporterTestEnvironment ->
