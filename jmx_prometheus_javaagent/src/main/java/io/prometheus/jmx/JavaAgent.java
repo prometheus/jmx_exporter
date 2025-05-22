@@ -16,10 +16,12 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.jmx.common.ConfigurationException;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
+import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
@@ -28,6 +30,7 @@ import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
 /** Class to implement JavaAgent */
@@ -36,6 +39,12 @@ public class JavaAgent {
     private static final Logger LOGGER = LoggerFactory.getLogger(JavaAgent.class);
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
+
+    static {
+        // Get the platform MBean server to ensure that
+        // it's initialized prior to the application
+        ManagementFactory.getPlatformMBeanServer();
+    }
 
     /** Constructor */
     public JavaAgent() {
@@ -72,7 +81,20 @@ public class JavaAgent {
             boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
-            JvmMetrics.builder().register(DEFAULT_REGISTRY);
+
+            boolean excludeJvmMetrics =
+                    mapAccessor
+                            .get("/excludeJvmMetrics")
+                            .map(
+                                    new ToBoolean(
+                                            ConfigurationException.supplier(
+                                                    "/excludeJvmMetrics must be a boolean")))
+                            .orElse(false);
+
+            if (!excludeJvmMetrics) {
+                JvmMetrics.builder().register(DEFAULT_REGISTRY);
+            }
+
             new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
             LOGGER.info("HTTP enabled [%b]", httpEnabled);
