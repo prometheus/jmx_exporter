@@ -30,6 +30,7 @@ public interface ExistDbMXBean {
 
     /** Class to implement QueryKey */
     class QueryKey implements Comparable<QueryKey> {
+
         private final int id;
         private final String path;
 

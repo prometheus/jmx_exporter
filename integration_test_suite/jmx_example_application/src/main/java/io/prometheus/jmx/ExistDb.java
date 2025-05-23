@@ -25,13 +25,24 @@ import javax.management.ObjectName;
 /** Class to implement ExitDb */
 public class ExistDb implements ExistDbMXBean {
 
+    private final Map<QueryKey, RunningQuery> queries;
+
+    public ExistDb() {
+        queries = build();
+    }
+
     @Override
     public Map<QueryKey, RunningQuery> getRunningQueries() {
-        final Map<QueryKey, RunningQuery> queries = new TreeMap<>();
+        return queries;
+    }
 
-        final RunningQuery runningQuery1 =
+    private Map<QueryKey, RunningQuery> build() {
+        Map<QueryKey, RunningQuery> queries = new TreeMap<>();
+
+        RunningQuery runningQuery1 =
                 new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
-        final RunningQuery runningQuery2 =
+
+        RunningQuery runningQuery2 =
                 new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
 
         queries.put(new QueryKey(runningQuery1.getId(), runningQuery1.getPath()), runningQuery1);

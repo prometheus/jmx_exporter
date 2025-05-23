@@ -31,6 +31,7 @@ import io.prometheus.jmx.StringValue;
 import io.prometheus.jmx.TabularData;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.util.ResourceSupport;
+import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.Repeater;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -140,7 +141,7 @@ public class LocalTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + "/-/healthy";
+        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.HEALTHY;
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -149,7 +150,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + "/metrics";
+        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -165,7 +166,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + "/metrics";
+        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -187,7 +188,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + "/metrics";
+        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -208,7 +209,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + "/metrics";
+        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -312,6 +313,20 @@ public class LocalTest {
                 .withName(
                         "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "1")
+                .withLabel("key_path", "/db/query1.xq")
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "2")
+                .withLabel("key_path", "/db/query2.xq")
                 .isPresent();
     }
 }
