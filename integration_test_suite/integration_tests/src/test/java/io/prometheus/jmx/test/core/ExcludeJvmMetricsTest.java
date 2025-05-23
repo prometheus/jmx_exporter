@@ -49,9 +49,9 @@ import org.verifyica.api.Verifyica;
 
 public class ExcludeJvmMetricsTest {
 
-    private static final int ITERATIONS = 1;
+    private static final int ITERATIONS = 10;
 
-    @Verifyica.ArgumentSupplier(parallelism = 1) // Integer.MAX_VALUE)
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() throws Throwable {
         return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
