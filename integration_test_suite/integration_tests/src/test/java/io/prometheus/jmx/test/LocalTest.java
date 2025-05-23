@@ -37,6 +37,7 @@ import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
@@ -313,6 +314,20 @@ public class LocalTest {
                 .withName(
                         "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "1")
+                .withLabel("key_path", "/db/query1.xq")
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.UNTYPED)
+                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
+                .withLabel("key_id", "2")
+                .withLabel("key_path", "/db/query2.xq")
                 .isPresent();
     }
 }
