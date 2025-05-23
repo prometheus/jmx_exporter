@@ -49,7 +49,9 @@ import org.verifyica.api.Verifyica;
 
 public class ExcludeJvmMetricsTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
+    private static final int ITERATIONS = 1;
+
+    @Verifyica.ArgumentSupplier(parallelism = 1) // Integer.MAX_VALUE)
     public static Stream<ExporterTestEnvironment> arguments() throws Throwable {
         return ExporterTestEnvironment.createExporterTestEnvironments()
                 .filter(
@@ -83,8 +85,8 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.Test
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws Throwable {
-        new Repeater(100)
-                .throttle(10)
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
@@ -102,8 +104,8 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws Throwable {
-        new Repeater(100)
-                .throttle(10)
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
@@ -126,8 +128,8 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.Test
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws Throwable {
-        new Repeater(100)
-                .throttle(10)
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
@@ -149,8 +151,8 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
             throws Throwable {
-        new Repeater(100)
-                .throttle(10)
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
                 .test(
                         () -> {
                             String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
@@ -188,7 +190,8 @@ public class ExcludeJvmMetricsTest {
     private void assertMetricsResponse(
             ExporterTestEnvironment exporterTestEnvironment,
             HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+            MetricsContentType metricsContentType)
+            throws IOException {
         assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();

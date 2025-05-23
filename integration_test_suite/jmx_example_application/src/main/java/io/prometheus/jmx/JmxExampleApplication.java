@@ -49,7 +49,7 @@ public class JmxExampleApplication {
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
                 Thread.currentThread().getName(),
                 JmxExampleApplication.class.getName(),
-                "Running");
+                "Running ...");
 
         Thread.currentThread().join();
     }
