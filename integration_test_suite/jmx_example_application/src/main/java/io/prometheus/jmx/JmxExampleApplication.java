@@ -40,7 +40,6 @@ public class JmxExampleApplication {
         new TabularData().register();
         new AutoIncrementing().register();
         new ExistDb().register();
-        new OptionalValue().register();
         new PerformanceMetrics().register();
         new CustomValue().register();
         new StringValue().register();
