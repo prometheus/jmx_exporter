@@ -26,7 +26,6 @@ import io.prometheus.jmx.BuildInfoMetrics;
 import io.prometheus.jmx.CustomValue;
 import io.prometheus.jmx.ExistDb;
 import io.prometheus.jmx.JmxCollector;
-import io.prometheus.jmx.OptionalValue;
 import io.prometheus.jmx.PerformanceMetrics;
 import io.prometheus.jmx.StringValue;
 import io.prometheus.jmx.TabularData;
@@ -117,7 +116,6 @@ public class LocalTest {
         new TabularData().register();
         new AutoIncrementing().register();
         new ExistDb().register();
-        new OptionalValue().register();
         new PerformanceMetrics().register();
         new CustomValue().register();
         new StringValue().register();
@@ -325,12 +323,6 @@ public class LocalTest {
                 .withName(
                         "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_optionalValue_Value")
-                .withValue(345.0d)
                 .isPresent();
     }
 }
