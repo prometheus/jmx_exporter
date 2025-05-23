@@ -16,11 +16,17 @@
 
 package io.prometheus.jmx.common.util;
 
+import static java.lang.String.format;
+
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 /** Class to implement ResourceSupport */
 public class ResourceSupport {
@@ -68,5 +74,41 @@ public class ResourceSupport {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Method to export a resource to a temporary file
+     *
+     * @param resource the resource to export
+     * @return the path to the temporary file
+     * @throws IOException If an I/O error occurs
+     */
+    public static File export(String resource) throws IOException {
+        Precondition.notNullOrEmpty(resource, "resource is null or empty");
+
+        if (!resource.startsWith("/")) {
+            resource = "/" + resource;
+        }
+
+        try (InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource)) {
+            if (inputStream == null) {
+                throw new IOException(format("Resource [%s] not found", resource));
+            }
+
+            File file = File.createTempFile("resource-", ".tmp");
+            file.deleteOnExit();
+
+            try (OutputStream outputStream =
+                    new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
+                byte[] buffer = new byte[8192];
+                int count;
+
+                while ((count = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, count);
+                }
+            }
+
+            return file;
+        }
     }
 }

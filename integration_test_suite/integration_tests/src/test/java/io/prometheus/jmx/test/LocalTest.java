@@ -26,7 +26,6 @@ import io.prometheus.jmx.BuildInfoMetrics;
 import io.prometheus.jmx.CustomValue;
 import io.prometheus.jmx.ExistDb;
 import io.prometheus.jmx.JmxCollector;
-import io.prometheus.jmx.OptionalValue;
 import io.prometheus.jmx.PerformanceMetrics;
 import io.prometheus.jmx.StringValue;
 import io.prometheus.jmx.TabularData;
@@ -42,9 +41,7 @@ import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,27 +95,17 @@ public class LocalTest {
 
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) throws Throwable {
-        // Derive the resource path for the exporter.yaml file based on the test class name
+        // Derive the resource path based on the test class name
         String resource =
                 (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
 
-        // Load the exporter.yaml resource content
-        String exporterYamlContent = ResourceSupport.load(resource);
-
-        // Create a temporary file for exporter.yaml
-        File exporterYamlFile = File.createTempFile("exporter", ".yaml");
-        exporterYamlFile.deleteOnExit();
-
-        // Write the exporter.yaml content to the temporary file
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(exporterYamlFile))) {
-            bufferedWriter.write(exporterYamlContent);
-        }
+        // Export the resource to a temporary file
+        File exporterYaml = ResourceSupport.export(resource);
 
         // Register the example MBeans
         new TabularData().register();
         new AutoIncrementing().register();
         new ExistDb().register();
-        new OptionalValue().register();
         new PerformanceMetrics().register();
         new CustomValue().register();
         new StringValue().register();
@@ -127,11 +114,11 @@ public class LocalTest {
         new BuildInfoMetrics().register(DEFAULT_REGISTRY);
 
         // Register the JMX collector
-        new JmxCollector(exporterYamlContent).register(DEFAULT_REGISTRY);
+        new JmxCollector(exporterYaml).register(DEFAULT_REGISTRY);
 
         // Create an HTTP server to serve the metrics
         final HTTPServer httpServer =
-                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
+                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYaml);
 
         // Add a shutdown hook to stop the HTTP server when the JVM exits
         Runtime.getRuntime()
@@ -152,7 +139,7 @@ public class LocalTest {
     }
 
     @Verifyica.Test
-    @Verifyica.Order(2)
+    @Verifyica.Order(1)
     public void testHealthy(ArgumentContext argumentContext) throws Throwable {
         String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.HEALTHY;
 
@@ -326,12 +313,6 @@ public class LocalTest {
                 .withName(
                         "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_optionalValue_Value")
-                .withValue(345.0d)
                 .isPresent();
     }
 }
