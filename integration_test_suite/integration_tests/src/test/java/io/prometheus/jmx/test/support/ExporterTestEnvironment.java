@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.startupcheck.IsRunningStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.verifyica.api.Argument;
 
@@ -194,8 +193,8 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(60000))
+                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
+                .withStartupTimeout(Duration.ofSeconds(60))
                 .withWorkingDirectory("/temp");
     }
 
@@ -218,7 +217,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("application")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
+                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
                 .withStartupTimeout(Duration.ofMillis(60000))
                 .withWorkingDirectory("/temp");
     }
@@ -242,8 +241,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
                 .withLogConsumer(TestContainerLogger.getInstance())
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
-                .withStartupCheckStrategy(new IsRunningStartupCheckStrategy())
-                .withStartupTimeout(Duration.ofMillis(60000))
+                .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
                 .withWorkingDirectory("/temp");
     }
 

@@ -53,9 +53,9 @@ public final class PrometheusDockerImages {
     }
 
     /**
-     * Method to get List of Docker image names filtered by a Predicate
+     * Method to get a collection of Docker image names filter by configuration
      *
-     * @return the List of Docker image names
+     * @return the collection of Docker image names
      */
     public static Collection<String> names() {
         String configurationValue =
@@ -75,6 +75,15 @@ public final class PrometheusDockerImages {
         }
 
         return Collections.unmodifiableList(toList(configurationValue));
+    }
+
+    /**
+     * Method to get a collection of all Docker image names
+     *
+     * @return a collection of all Docker image names
+     */
+    public static Collection<String> allNames() {
+        return ALL_DOCKER_IMAGE_NAMES;
     }
 
     /**
