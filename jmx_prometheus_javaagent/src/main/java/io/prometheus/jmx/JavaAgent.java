@@ -28,6 +28,7 @@ import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
 /** Class to implement JavaAgent */
@@ -36,6 +37,12 @@ public class JavaAgent {
     private static final Logger LOGGER = LoggerFactory.getLogger(JavaAgent.class);
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
+
+    static {
+        // Get the platform MBean server to ensure that
+        // it's initialized prior to the application
+        ManagementFactory.getPlatformMBeanServer();
+    }
 
     /** Constructor */
     public JavaAgent() {
