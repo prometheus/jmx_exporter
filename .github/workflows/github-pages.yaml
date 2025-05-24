@@ -29,6 +29,7 @@ defaults:
 jobs:
   # Build job
   build:
+    if: github.repository == 'prometheus/jmx_exporter'
     runs-on: ubuntu-24.04
     env:
       HUGO_VERSION: 0.115.4
@@ -71,6 +72,7 @@ jobs:
 
   # Deployment job
   deploy:
+    if: github.repository == 'prometheus/jmx_exporter'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

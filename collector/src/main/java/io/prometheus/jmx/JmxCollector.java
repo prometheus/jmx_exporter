@@ -355,6 +355,24 @@ public class JmxCollector implements MultiCollector {
             }
         }
 
+        // Default ObjectNames to exclude if excludeJvmMetrics is true
+        if (yamlConfig.containsKey("excludeJvmMetrics")) {
+            Boolean excludeJvmMetrics = (Boolean) yamlConfig.get("excludeJvmMetrics");
+            if (excludeJvmMetrics != null && excludeJvmMetrics) {
+                cfg.excludeObjectNames.add(new ObjectName("com.sun.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("com.sun.management.jmxremote:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.lang:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.nio:*"));
+                cfg.excludeObjectNames.add(new ObjectName("java.util.logging:*"));
+                cfg.excludeObjectNames.add(new ObjectName("javax.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("javax.management.remote:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.internal:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.management:*"));
+                cfg.excludeObjectNames.add(new ObjectName("jdk.management.jfr:*"));
+                cfg.excludeObjectNames.add(new ObjectName("sun.management:*"));
+            }
+        }
+
         if (yamlConfig.containsKey("metricCustomizers")) {
             List<Map<String, Object>> metricCustomizersYaml =
                     (List<Map<String, Object>>) yamlConfig.get("metricCustomizers");
@@ -667,7 +685,6 @@ public class JmxCollector implements MultiCollector {
             }
 
             if (matchedRule.isUnmatched()) {
-
                 String beanName =
                         domain
                                 + angleBrackets(beanProperties.toString())
@@ -688,7 +705,6 @@ public class JmxCollector implements MultiCollector {
                 }
 
                 for (Rule rule : config.rules) {
-
                     // If we cache that rule, and we found a cache entry for this bean/attribute,
                     // then what's left to do is to check all uncached rules
                     if (rule.cache && cachedRule != null) {
