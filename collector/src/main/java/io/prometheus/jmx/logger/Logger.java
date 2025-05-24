@@ -20,6 +20,8 @@ import static java.lang.String.format;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Handler;
+import java.util.logging.SimpleFormatter;
 
 /** Class to implement a Logger */
 public class Logger {
@@ -40,6 +42,16 @@ public class Logger {
      */
     Logger(Class<?> clazz) {
         LOGGER = java.util.logging.Logger.getLogger(clazz.getName());
+
+        // Override the default formatter for the logger if it is SimpleFormatter
+        for (Handler handler : LOGGER.getHandlers()) {
+            if (handler.getFormatter()
+                    .getClass()
+                    .getName()
+                    .endsWith(SimpleFormatter.class.getName())) {
+                handler.setFormatter(new LoggerFormatter());
+            }
+        }
     }
 
     /**
