@@ -270,10 +270,11 @@ public class ExcludeJvmMetricsTest {
                 .withValue(6.0d)
                 .isPresent();
 
-        // Validate JVM metrics are disabled
+        // Validate JVM metrics are not present
 
         for (String metricName : metrics.keySet()) {
             String lowerCaseMetricName = metricName.toLowerCase();
+
             assertThat(lowerCaseMetricName).doesNotStartWith("com_sun_");
             assertThat(lowerCaseMetricName).doesNotStartWith("java_lang");
             assertThat(lowerCaseMetricName).doesNotStartWith("java_nio");

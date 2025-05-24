@@ -257,5 +257,18 @@ public class BasicTest {
                         "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
+
+        // Validate JVM metrics are present
+
+        boolean hasJavaMetrics = false;
+
+        for (String metricName : metrics.keySet()) {
+            if (metricName.startsWith("java_lang_")) {
+                hasJavaMetrics = true;
+                break;
+            }
+        }
+
+        assertThat(hasJavaMetrics).as("No java_lang_ metrics found in the response").isTrue();
     }
 }
