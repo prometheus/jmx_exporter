@@ -16,27 +16,30 @@
 
 package io.prometheus.jmx.logger;
 
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.LogManager;
+import java.util.logging.Handler;
+import java.util.logging.SimpleFormatter;
 
 /** Class to implement LoggerFactory */
 public class LoggerFactory {
 
-    /** Constant for java.util.logging.config.file */
-    private static final String JAVA_UTIL_LOGGING_CONFIG_FILE = "java.util.logging.config.file";
-
-    /** Constant for root logger */
+    /** The root logger name */
     private static final String ROOT_LOGGER = "";
 
     /** Cache for Logger instances */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
     static {
-        initialize();
+        // Override the default formatter for the root logger if it is SimpleFormatter
+        for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
+            if (handler.getFormatter()
+                    .getClass()
+                    .getName()
+                    .endsWith(SimpleFormatter.class.getName())) {
+                handler.setFormatter(new LoggerFormatter());
+            }
+        }
     }
 
     /** Constructor */
@@ -52,29 +55,5 @@ public class LoggerFactory {
      */
     public static Logger getLogger(Class<?> clazz) {
         return CACHE.computeIfAbsent(clazz, Logger::new);
-    }
-
-    /** Method to initialize the logger */
-    public static void initialize() {
-        String configFile = System.getProperty(JAVA_UTIL_LOGGING_CONFIG_FILE);
-
-        try {
-            if (configFile != null && !configFile.trim().isEmpty()) {
-                try (InputStream fis = Files.newInputStream(Paths.get(configFile))) {
-                    LogManager.getLogManager().readConfiguration(fis);
-                    return;
-                }
-            }
-
-            java.util.logging.Logger root = java.util.logging.Logger.getLogger(ROOT_LOGGER);
-            for (java.util.logging.Handler handler : root.getHandlers()) {
-                handler.setFormatter(new LoggerFormatter());
-            }
-        } catch (Throwable t) {
-            System.err.printf(
-                    "Failed to initialize logging using system property [%s]%n",
-                    JAVA_UTIL_LOGGING_CONFIG_FILE);
-            t.printStackTrace(System.err);
-        }
     }
 }

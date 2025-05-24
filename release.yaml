@@ -2,10 +2,10 @@ pipeline:
   name: release
   jobs:
     - name: release
+      if: |
+        "${{ release }}" != ''
       enabled: true
       steps:
-        - name: check for release property
-          run: if [ -z "${{ release }}" ]; then echo "release property is required, exiting" && exit 1; fi
         - name: check for ~/.m2/prometheus.settings.xml
           run: if [ -f "~/.m2/prometheus.settings.xml" ]; then echo "~/.m2/prometheus.settings.xml required, exiting" && exit 1; fi
         - name: change version
@@ -67,3 +67,12 @@ pipeline:
         - name: git push
           enabled: true
           run: git push
+    - name: error
+      if: |
+        "${{ release }}" == ''
+      steps:
+        - name: error
+          run: |
+            echo "\"release\" variable is required"
+            exit 1
+
