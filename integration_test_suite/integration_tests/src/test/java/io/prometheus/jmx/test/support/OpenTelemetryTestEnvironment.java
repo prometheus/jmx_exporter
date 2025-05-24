@@ -375,8 +375,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                 .withNetworkAliases("exporter")
                 .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
                 .withStartupTimeout(Duration.ofMillis(60000))
-                .withWorkingDirectory("/temp")
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1));
+                .withWorkingDirectory("/temp");
     }
 
     /**

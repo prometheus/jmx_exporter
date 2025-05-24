@@ -1,0 +1,23 @@
+---
+title: Standalone exporter
+weight: 3
+geekdocCollapseSection: true
+---
+
+The Standalone JMX Exporter runs as a separate application that connects to your application using RMI and collects JMX MBean values.
+
+**Use of the JMX Exporter Java agent is strongly encouraged due to the complex application RMI configuration required when running the Standalone JMX Exporter.**
+
+# Jar File
+
+The Standalone JMX Exporter jar file is published via GitHub Releases.
+
+- [jmx_prometheus_standalone-1.3.0-post.jar](https://github.com/prometheus/jmx_exporter/releases/download/1.3.0-post/jmx_prometheus_standalone-1.3.0-post.jar)
+
+# Installation
+
+Installation depends on which modes you want to support:
+
+- [HTTP mode](/java-agent/http-mode/)
+- [OpenTelemetry mode](/java-agent/opentelemetry-mode/)
+- [Combined mode](/java-agent/combined-mode/)

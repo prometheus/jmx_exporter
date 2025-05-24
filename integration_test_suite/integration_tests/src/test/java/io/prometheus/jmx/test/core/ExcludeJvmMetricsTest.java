@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.JmxExporterMode;
+import io.prometheus.jmx.test.support.Repeater;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -46,11 +47,17 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class BasicTest {
+public class ExcludeJvmMetricsTest {
+
+    private static final int ITERATIONS = 10;
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironment.createExporterTestEnvironments();
+    public static Stream<ExporterTestEnvironment> arguments() throws Throwable {
+        return ExporterTestEnvironment.createExporterTestEnvironments()
+                .filter(
+                        exporterTestEnvironment ->
+                                exporterTestEnvironment.getJmxExporterMode()
+                                        == JmxExporterMode.JavaAgent);
     }
 
     @Verifyica.Prepare
@@ -77,61 +84,92 @@ public class BasicTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+            throws Throwable {
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
+                .test(
+                        () -> {
+                            String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
+                            HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                            assertMetricsResponse(
+                                    exporterTestEnvironment,
+                                    httpResponse,
+                                    MetricsContentType.DEFAULT);
+                        })
+                .run();
     }
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+            throws Throwable {
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
+                .test(
+                        () -> {
+                            String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                            HttpResponse httpResponse =
+                                    HttpClient.sendRequest(
+                                            url,
+                                            HttpHeader.ACCEPT,
+                                            MetricsContentType.OPEN_METRICS_TEXT_METRICS
+                                                    .toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                            assertMetricsResponse(
+                                    exporterTestEnvironment,
+                                    httpResponse,
+                                    MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                        })
+                .run();
     }
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+            throws Throwable {
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
+                .test(
+                        () -> {
+                            String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                            HttpResponse httpResponse =
+                                    HttpClient.sendRequest(
+                                            url,
+                                            HttpHeader.ACCEPT,
+                                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                            assertMetricsResponse(
+                                    exporterTestEnvironment,
+                                    httpResponse,
+                                    MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                        })
+                .run();
     }
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
-            throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+            throws Throwable {
+        new Repeater(ITERATIONS)
+                .throttle(new Repeater.RandomThrottle(0, 100))
+                .test(
+                        () -> {
+                            String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+                            HttpResponse httpResponse =
+                                    HttpClient.sendRequest(
+                                            url,
+                                            HttpHeader.ACCEPT,
+                                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS
+                                                    .toString());
 
-        assertMetricsResponse(
-                exporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                            assertMetricsResponse(
+                                    exporterTestEnvironment,
+                                    httpResponse,
+                                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                        })
+                .run();
     }
 
     @Verifyica.AfterAll
@@ -152,7 +190,8 @@ public class BasicTest {
     private void assertMetricsResponse(
             ExporterTestEnvironment exporterTestEnvironment,
             HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+            MetricsContentType metricsContentType)
+            throws IOException {
         assertCommonMetricsResponse(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -173,9 +212,6 @@ public class BasicTest {
                         });
 
         // Validate common / known metrics (and potentially values)
-
-        boolean isJmxExporterModeJavaAgent =
-                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
                 TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
@@ -198,30 +234,6 @@ public class BasicTest {
                 .withName("jmx_config_reload_success_total")
                 .withValue(0d)
                 .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
@@ -258,17 +270,20 @@ public class BasicTest {
                 .withValue(6.0d)
                 .isPresent();
 
-        // Validate JVM metrics are present
-
-        boolean hasJavaMetrics = false;
+        // Validate JVM metrics are not present
 
         for (String metricName : metrics.keySet()) {
-            if (metricName.startsWith("java_lang_")) {
-                hasJavaMetrics = true;
-                break;
-            }
-        }
+            String lowerCaseMetricName = metricName.toLowerCase();
 
-        assertThat(hasJavaMetrics).as("No java_lang_ metrics found in the response").isTrue();
+            assertThat(lowerCaseMetricName).doesNotStartWith("com_sun_");
+            assertThat(lowerCaseMetricName).doesNotStartWith("java_lang");
+            assertThat(lowerCaseMetricName).doesNotStartWith("java_nio");
+            assertThat(lowerCaseMetricName).doesNotStartWith("java_util_logging");
+            assertThat(lowerCaseMetricName).doesNotStartWith("javax_management");
+            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_internal");
+            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_management");
+            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_management_flr");
+            assertThat(lowerCaseMetricName).doesNotStartWith("jvm_");
+        }
     }
 }
