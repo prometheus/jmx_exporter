@@ -20,7 +20,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <prometheus.metrics.version>1.3.7</prometheus.metrics.version>
+        <prometheus.metrics.version>1.3.8</prometheus.metrics.version>
     </properties>
 
     <modules>
