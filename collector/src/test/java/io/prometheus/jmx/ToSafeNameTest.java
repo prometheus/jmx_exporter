@@ -24,7 +24,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class SafeNameTest {
+public class ToSafeNameTest {
+
     @Parameterized.Parameters(name = "{index}: testSafeName(expected={0} actual={1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(
@@ -53,14 +54,14 @@ public class SafeNameTest {
     private final String expected;
     private final String input;
 
-    public SafeNameTest(String expected, String input) {
+    public ToSafeNameTest(String expected, String input) {
         this.expected = expected;
         this.input = input;
     }
 
     @Test
-    public void testSafeName() {
-        String safeName = JmxCollector.safeName(input);
+    public void testToSafeName() {
+        String safeName = JmxCollector.toSafeName(input);
         assertEquals(expected, safeName);
     }
 }

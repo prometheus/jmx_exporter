@@ -24,7 +24,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class SnakeCaseAttrTest {
+public class ToSnakeAndLowerCaseTest {
+
     @Parameterized.Parameters(name = "{index}: testAttrToSnakeAndLowerCase(expected={0} actual={1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(
@@ -50,13 +51,13 @@ public class SnakeCaseAttrTest {
     private final String expected;
     private final String input;
 
-    public SnakeCaseAttrTest(String expected, String input) {
+    public ToSnakeAndLowerCaseTest(String expected, String input) {
         this.expected = expected;
         this.input = input;
     }
 
     @Test
-    public void testAttrToSnakeAndLowerCase() {
+    public void testToSnakeAndLowerCase() {
         String snakeAndLowerString = JmxCollector.toSnakeAndLowerCase(input);
         assertEquals(expected, snakeAndLowerString);
     }
