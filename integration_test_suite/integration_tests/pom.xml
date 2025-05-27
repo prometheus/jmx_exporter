@@ -28,7 +28,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <prometheus.metrics.version>1.3.8</prometheus.metrics.version>
-        <verifyica.version>0.12.0</verifyica.version>
+        <verifyica.version>0.12.0-post</verifyica.version>
         <automatic.module.name>io.prometheus.jmx.test</automatic.module.name>
     </properties>
 
@@ -72,6 +72,17 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <version>1.21.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.27.0</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
