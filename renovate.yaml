@@ -1,0 +1,19 @@
+extends:
+  - config:base
+
+updates:
+  - packageManager: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - packageManager: maven
+    directory: /
+    schedule:
+      interval: daily
+
+packageRules:
+  - matchManagers:
+      - maven
+    allowedVersions: "^3.9.6"
+    groupName: "Maven dependencies pinned to 3.9.6"
