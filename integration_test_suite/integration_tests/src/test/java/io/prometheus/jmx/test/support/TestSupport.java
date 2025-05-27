@@ -102,16 +102,16 @@ public class TestSupport {
     }
 
     /**
-     * Initializes the OpenTelemetryTestEnvironment
+     * Initializes the PrometheusTestEnvironment
      *
      * @param argumentContext argumentContext
      * @param network network
      * @param testClass testClass
      */
-    public static void initializeOpenTelemetryTestEnvironment(
+    public static void initializePrometheusTestEnvironment(
             ArgumentContext argumentContext, Network network, Class<?> testClass) {
         argumentContext
-                .testArgument(OpenTelemetryTestEnvironment.class)
+                .testArgument(PrometheusTestEnvironment.class)
                 .payload()
                 .initialize(testClass, network);
     }
@@ -141,15 +141,14 @@ public class TestSupport {
     }
 
     /**
-     * Destroys the OpenTelemetryTestEnvironment
+     * Destroys the PrometheusTestEnvironment
      *
      * @param argumentContext argumentContext
      */
-    public static void destroyOpenTelemetryTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(OpenTelemetryTestEnvironment.class))
+    public static void destroyPrometheusTestEnvironment(ArgumentContext argumentContext) {
+        Optional.ofNullable(argumentContext.testArgument(PrometheusTestEnvironment.class))
                 .ifPresent(
-                        openTelemetryTestEnvironment ->
-                                openTelemetryTestEnvironment.payload().destroy());
+                        prometheusTestEnvironment -> prometheusTestEnvironment.payload().destroy());
     }
 
     /**

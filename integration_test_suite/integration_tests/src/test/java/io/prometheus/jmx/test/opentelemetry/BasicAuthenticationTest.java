@@ -19,7 +19,7 @@ package io.prometheus.jmx.test.opentelemetry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.support.PrometheusTestEnvironment;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -48,8 +48,8 @@ public class BasicAuthenticationTest {
     private static final String VALUE_PASSWORD = "secret";
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<OpenTelemetryTestEnvironment> arguments() {
-        return OpenTelemetryTestEnvironment.createOpenTelemetryTestEnvironments();
+    public static Stream<PrometheusTestEnvironment> arguments() {
+        return PrometheusTestEnvironment.createPrometheusTestEnvironment();
     }
 
     @Verifyica.Prepare
@@ -61,19 +61,19 @@ public class BasicAuthenticationTest {
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
         Network network = TestSupport.getOrCreateNetwork(argumentContext);
-        TestSupport.initializeOpenTelemetryTestEnvironment(argumentContext, network, testClass);
+        TestSupport.initializePrometheusTestEnvironment(argumentContext, network, testClass);
     }
 
     /** Method to test that Prometheus is up */
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testPrometheusIsUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testPrometheusIsUp(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         boolean isUp = false;
 
         for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse = sendPrometheusQuery(openTelemetryTestEnvironment, "up");
+            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, "up");
 
             if (httpResponse.statusCode() == 200) {
                 assertThat(httpResponse.body()).isNotNull();
@@ -97,10 +97,10 @@ public class BasicAuthenticationTest {
     /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
     @Verifyica.Order(2)
-    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testPrometheusHasMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
         boolean isJmxExporterModeJavaStandalone =
-                openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+                prometheusTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
 
         for (String metricName :
                 ExpectedMetricsNames.getMetricsNames().stream()
@@ -110,7 +110,7 @@ public class BasicAuthenticationTest {
                                                 || (!metricName.startsWith("jvm_")
                                                         && !metricName.startsWith("process_")))
                         .collect(Collectors.toList())) {
-            Double value = getPrometheusMetric(openTelemetryTestEnvironment, metricName);
+            Double value = getPrometheusMetric(prometheusTestEnvironment, metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
             assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
@@ -121,7 +121,7 @@ public class BasicAuthenticationTest {
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(new Trap(() -> TestSupport.destroyOpenTelemetryTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyPrometheusTestEnvironment(argumentContext)));
         traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
@@ -135,19 +135,18 @@ public class BasicAuthenticationTest {
     /**
      * Method to get a Prometheus metric
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
     protected Double getPrometheusMetric(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String metricName)
+            PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         Double value = null;
 
         for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse =
-                    sendPrometheusQuery(openTelemetryTestEnvironment, metricName);
+            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, metricName);
 
             assertThat(httpResponse.statusCode()).isEqualTo(200);
             assertThat(httpResponse.body()).isNotNull();
@@ -168,31 +167,29 @@ public class BasicAuthenticationTest {
     /**
      * Method to send a Prometheus query
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param query query
      * @return an HttpResponse
      */
     protected HttpResponse sendPrometheusQuery(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String query)
-            throws IOException {
+            PrometheusTestEnvironment prometheusTestEnvironment, String query) throws IOException {
         return sendRequest(
-                openTelemetryTestEnvironment,
+                prometheusTestEnvironment,
                 "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
     /**
      * Method to send a Http GET request
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param path path
      * @return an HttpResponse
      */
     protected HttpResponse sendRequest(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path)
-            throws IOException {
+            PrometheusTestEnvironment prometheusTestEnvironment, String path) throws IOException {
         return HttpClient.sendRequest(
                 HttpRequest.builder()
-                        .url(openTelemetryTestEnvironment.getPrometheusUrl(path))
+                        .url(prometheusTestEnvironment.getPrometheusUrl(path))
                         .basicAuthentication(VALID_USER, VALUE_PASSWORD)
                         .build());
     }
