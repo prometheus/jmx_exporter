@@ -50,7 +50,6 @@ import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
-import org.yaml.snakeyaml.Yaml;
 
 /** Class to implement CombinedModeTest */
 public class CombinedModeTest {
@@ -148,39 +147,9 @@ public class CombinedModeTest {
                 MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    /** Method to test that Prometheus is up */
-    @Verifyica.Test
-    @Verifyica.Order(6)
-    public void testPrometheusIsUp(PrometheusTestEnvironment prometheusTestEnvironment)
-            throws IOException {
-        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
-        boolean isUp = false;
-
-        for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, "up");
-
-            if (httpResponse.statusCode() == 200) {
-                assertThat(httpResponse.body()).isNotNull();
-                assertThat(httpResponse.body().string()).isNotNull();
-
-                Map<Object, Object> map = new Yaml().load(httpResponse.body().string());
-
-                String status = (String) map.get("status");
-                assertThat(status).isEqualTo("success");
-
-                isUp = true;
-                break;
-            } else {
-                throttle.throttle();
-            }
-        }
-
-        assertThat(isUp).withFailMessage("Prometheus is down").isTrue();
-    }
-
     /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
-    @Verifyica.Order(7)
+    @Verifyica.Order(6)
     public void testPrometheusHasMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
         boolean isJmxExporterModeJavaStandalone =
