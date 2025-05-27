@@ -8,6 +8,10 @@
       "matchManagers": ["maven"],
       "allowedVersions": "^3.9.6",
       "groupName": "Maven dependencies pinned to 3.9.6"
+    },
+    {
+      "matchPackageNames": ["jmx_example_application"],
+      "enabled": false
     }
   ]
 }
