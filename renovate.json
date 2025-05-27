@@ -2,5 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["maven"],
+      "allowedVersions": "^3.9.6",
+      "groupName": "Maven dependencies pinned to 3.9.6"
+    }
   ]
 }
