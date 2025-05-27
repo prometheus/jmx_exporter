@@ -519,58 +519,72 @@ public class JmxCollector implements MultiCollector {
         return cfg;
     }
 
-    static String toSnakeAndLowerCase(String attrName) {
-        if (attrName == null || attrName.isEmpty()) {
-            return attrName;
+    /**
+     * Convert the attribute name to snake case and lower case.
+     *
+     * @param attributeName the attribute name
+     * @return the converted attribute name
+     */
+    static String toSnakeAndLowerCase(String attributeName) {
+        if (attributeName == null || attributeName.isEmpty()) {
+            return attributeName;
         }
-        char firstChar = attrName.subSequence(0, 1).charAt(0);
-        boolean prevCharIsUpperCaseOrUnderscore =
-                Character.isUpperCase(firstChar) || firstChar == '_';
-        StringBuilder resultBuilder =
-                new StringBuilder(attrName.length()).append(Character.toLowerCase(firstChar));
-        for (char attrChar : attrName.substring(1).toCharArray()) {
-            boolean charIsUpperCase = Character.isUpperCase(attrChar);
-            if (!prevCharIsUpperCaseOrUnderscore && charIsUpperCase) {
-                resultBuilder.append("_");
+
+        char[] chars = attributeName.toCharArray();
+        StringBuilder result = new StringBuilder(chars.length);
+        boolean prevUpperOrUnderscore = Character.isUpperCase(chars[0]) || chars[0] == '_';
+        result.append(Character.toLowerCase(chars[0]));
+
+        for (int i = 1; i < chars.length; i++) {
+            boolean isUpper = Character.isUpperCase(chars[i]);
+
+            if (!prevUpperOrUnderscore && isUpper) {
+                result.append('_');
             }
-            resultBuilder.append(Character.toLowerCase(attrChar));
-            prevCharIsUpperCaseOrUnderscore = charIsUpperCase || attrChar == '_';
+
+            result.append(Character.toLowerCase(chars[i]));
+            prevUpperOrUnderscore = isUpper || chars[i] == '_';
         }
-        return resultBuilder.toString();
+
+        return result.toString();
     }
 
     /**
-     * Change invalid chars to underscore, and merge underscores.
+     * Convert the name to a "safe" name by changing invalid chars to underscore, and merge
+     * underscores.
      *
-     * @param name Input string
+     * @param name the name
      * @return the safe string
      */
-    static String safeName(String name) {
-        if (name == null) {
-            return null;
+    static String toSafeName(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
         }
-        boolean prevCharIsUnderscore = false;
-        StringBuilder safeNameBuilder = new StringBuilder(name.length());
-        if (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
-            // prevent a numeric prefix.
-            safeNameBuilder.append("_");
+
+        char[] chars = name.toCharArray();
+        StringBuilder sb = new StringBuilder(chars.length + 1); // +1 for optional prefix
+        boolean prevUnderscore = false;
+
+        if (Character.isDigit(chars[0])) {
+            sb.append('_');
         }
-        for (char nameChar : name.toCharArray()) {
-            boolean isUnsafeChar = !JmxCollector.isLegalCharacter(nameChar);
-            if ((isUnsafeChar || nameChar == '_')) {
-                if (prevCharIsUnderscore) {
-                    // INTENTIONALLY BLANK
-                } else {
-                    safeNameBuilder.append("_");
-                    prevCharIsUnderscore = true;
+
+        for (char c : chars) {
+            boolean isUnderscore = c == '_';
+            boolean isUnsafe = !isLegalCharacter(c);
+
+            if (isUnsafe || isUnderscore) {
+                if (!prevUnderscore) {
+                    sb.append('_');
+                    prevUnderscore = true;
                 }
             } else {
-                safeNameBuilder.append(nameChar);
-                prevCharIsUnderscore = false;
+                sb.append(c);
+                prevUnderscore = false;
             }
         }
 
-        return safeNameBuilder.toString();
+        return sb.toString();
     }
 
     private static boolean isLegalCharacter(char input) {
@@ -631,7 +645,7 @@ public class JmxCollector implements MultiCollector {
             }
             name.append(SEP);
             name.append(attrName);
-            String fullname = safeName(name.toString());
+            String fullname = toSafeName(name.toString());
 
             if (config.lowercaseOutputName) {
                 fullname = fullname.toLowerCase();
@@ -645,7 +659,7 @@ public class JmxCollector implements MultiCollector {
                 iter.next();
                 while (iter.hasNext()) {
                     Map.Entry<String, String> entry = iter.next();
-                    String labelName = safeName(entry.getKey());
+                    String labelName = toSafeName(entry.getKey());
                     if (config.lowercaseOutputLabelNames) {
                         labelName = labelName.toLowerCase();
                     }
@@ -770,7 +784,7 @@ public class JmxCollector implements MultiCollector {
                     }
 
                     // Matcher is set below here due to validation in the constructor.
-                    String name = safeName(matcher.replaceAll(rule.name));
+                    String name = toSafeName(matcher.replaceAll(rule.name));
                     if (name.isEmpty()) {
                         return;
                     }
@@ -793,7 +807,7 @@ public class JmxCollector implements MultiCollector {
                             final String unsafeLabelName = rule.labelNames.get(i);
                             final String labelValReplacement = rule.labelValues.get(i);
                             try {
-                                String labelName = safeName(matcher.replaceAll(unsafeLabelName));
+                                String labelName = toSafeName(matcher.replaceAll(unsafeLabelName));
                                 String labelValue = matcher.replaceAll(labelValReplacement);
                                 if (config.lowercaseOutputLabelNames) {
                                     labelName = labelName.toLowerCase();
@@ -870,7 +884,7 @@ public class JmxCollector implements MultiCollector {
             List<String> labelValues) {
         attributesAsLabelsWithValues.forEach(
                 (attributeAsLabelName, attributeValue) -> {
-                    String labelName = safeName(attributeAsLabelName);
+                    String labelName = toSafeName(attributeAsLabelName);
                     if (config.lowercaseOutputLabelNames) {
                         labelName = labelName.toLowerCase();
                     }
