@@ -32,8 +32,8 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.verifyica.api.Argument;
 
-/** Class to implement OpenTelemetryTestEnvironment */
-public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestEnvironment> {
+/** Class to implement PrometheusTestEnvironment */
+public class PrometheusTestEnvironment implements Argument<PrometheusTestEnvironment> {
 
     private static final long MEMORY_BYTES = 1073741824; // 1 GB
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
@@ -58,7 +58,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @param javaDockerImage javaDockerImage
      * @param jmxExporterMode jmxExporterMode
      */
-    public OpenTelemetryTestEnvironment(
+    public PrometheusTestEnvironment(
             String prometheusDockerImage, String javaDockerImage, JmxExporterMode jmxExporterMode) {
         this.prometheusDockerImage = prometheusDockerImage;
         this.javaDockerImage = javaDockerImage;
@@ -72,7 +72,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     }
 
     @Override
-    public OpenTelemetryTestEnvironment getPayload() {
+    public PrometheusTestEnvironment getPayload() {
         return this;
     }
 
@@ -82,7 +82,7 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
      * @param baseUrl baseUrl
      * @return the ExporterTestEnvironment
      */
-    public OpenTelemetryTestEnvironment setBaseUrl(String baseUrl) {
+    public PrometheusTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
         return this;
     }
@@ -409,12 +409,12 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
     }
 
     /**
-     * Create the OpenTelemetryTestEnvironments
+     * Method to create a Stream of PrometheusTestEnvironments
      *
-     * @return a Stream of OpenTelemetryTestEnvironments
+     * @return a Stream of PrometheusTestEnvironments
      */
-    public static Stream<OpenTelemetryTestEnvironment> createOpenTelemetryTestEnvironments() {
-        Collection<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
+    public static Stream<PrometheusTestEnvironment> createPrometheusTestEnvironment() {
+        Collection<PrometheusTestEnvironment> prometheusTestEnvironments = new ArrayList<>();
 
         PrometheusDockerImages.names()
                 .forEach(
@@ -424,14 +424,14 @@ public class OpenTelemetryTestEnvironment implements Argument<OpenTelemetryTestE
                                                 javaDockerImageName -> {
                                                     for (JmxExporterMode jmxExporterMode :
                                                             JmxExporterMode.values()) {
-                                                        openTelemetryTestEnvironments.add(
-                                                                new OpenTelemetryTestEnvironment(
+                                                        prometheusTestEnvironments.add(
+                                                                new PrometheusTestEnvironment(
                                                                         prometheusDockerImage,
                                                                         javaDockerImageName,
                                                                         jmxExporterMode));
                                                     }
                                                 }));
 
-        return openTelemetryTestEnvironments.stream();
+        return prometheusTestEnvironments.stream();
     }
 }

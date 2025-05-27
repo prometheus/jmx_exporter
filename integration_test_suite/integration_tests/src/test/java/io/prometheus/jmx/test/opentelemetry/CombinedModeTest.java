@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.ExporterPath;
 import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.OpenTelemetryTestEnvironment;
+import io.prometheus.jmx.test.support.PrometheusTestEnvironment;
 import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -56,8 +56,8 @@ import org.yaml.snakeyaml.Yaml;
 public class CombinedModeTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<OpenTelemetryTestEnvironment> arguments() {
-        return OpenTelemetryTestEnvironment.createOpenTelemetryTestEnvironments();
+    public static Stream<PrometheusTestEnvironment> arguments() {
+        return PrometheusTestEnvironment.createPrometheusTestEnvironment();
     }
 
     @Verifyica.Prepare
@@ -69,14 +69,14 @@ public class CombinedModeTest {
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
         Network network = TestSupport.getOrCreateNetwork(argumentContext);
-        TestSupport.initializeOpenTelemetryTestEnvironment(argumentContext, network, testClass);
+        TestSupport.initializePrometheusTestEnvironment(argumentContext, network, testClass);
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testHealthy(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
-        String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.HEALTHY);
+        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -85,21 +85,20 @@ public class CombinedModeTest {
 
     @Verifyica.Test
     @Verifyica.Order(2)
-    public void testDefaultTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testDefaultTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
-        String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(
-                openTelemetryTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        assertMetricsResponse(prometheusTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
     @Verifyica.Order(3)
-    public void testOpenMetricsTextMetrics(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
-        String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+    public void testOpenMetricsTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
+            throws IOException {
+        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -108,16 +107,16 @@ public class CombinedModeTest {
                         MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                openTelemetryTestEnvironment,
+                prometheusTestEnvironment,
                 httpResponse,
                 MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     @Verifyica.Order(4)
-    public void testPrometheusTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testPrometheusTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
-        String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -126,16 +125,16 @@ public class CombinedModeTest {
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                openTelemetryTestEnvironment,
+                prometheusTestEnvironment,
                 httpResponse,
                 MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     @Verifyica.Order(5)
-    public void testPrometheusProtobufMetrics(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
-        String url = openTelemetryTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+    public void testPrometheusProtobufMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
+            throws IOException {
+        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -144,7 +143,7 @@ public class CombinedModeTest {
                         MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
         assertMetricsResponse(
-                openTelemetryTestEnvironment,
+                prometheusTestEnvironment,
                 httpResponse,
                 MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
@@ -152,13 +151,13 @@ public class CombinedModeTest {
     /** Method to test that Prometheus is up */
     @Verifyica.Test
     @Verifyica.Order(6)
-    public void testPrometheusIsUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testPrometheusIsUp(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         boolean isUp = false;
 
         for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse = sendPrometheusQuery(openTelemetryTestEnvironment, "up");
+            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, "up");
 
             if (httpResponse.statusCode() == 200) {
                 assertThat(httpResponse.body()).isNotNull();
@@ -182,10 +181,10 @@ public class CombinedModeTest {
     /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
     @Verifyica.Order(7)
-    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
+    public void testPrometheusHasMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
             throws IOException {
         boolean isJmxExporterModeJavaStandalone =
-                openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+                prometheusTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
 
         for (String metricName :
                 ExpectedMetricsNames.getMetricsNames().stream()
@@ -195,7 +194,7 @@ public class CombinedModeTest {
                                                 || (!metricName.startsWith("jvm_")
                                                         && !metricName.startsWith("process_")))
                         .collect(Collectors.toList())) {
-            Double value = getPrometheusMetric(openTelemetryTestEnvironment, metricName);
+            Double value = getPrometheusMetric(prometheusTestEnvironment, metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
             assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
@@ -206,7 +205,7 @@ public class CombinedModeTest {
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(new Trap(() -> TestSupport.destroyOpenTelemetryTestEnvironment(argumentContext)));
+        traps.add(new Trap(() -> TestSupport.destroyPrometheusTestEnvironment(argumentContext)));
         traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
@@ -218,7 +217,7 @@ public class CombinedModeTest {
     }
 
     private void assertMetricsResponse(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment,
+            PrometheusTestEnvironment prometheusTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertCommonMetricsResponse(httpResponse, metricsContentType);
@@ -243,10 +242,10 @@ public class CombinedModeTest {
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
-                openTelemetryTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+                prometheusTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                TestSupport.getBuildInfoName(openTelemetryTestEnvironment.getJmxExporterMode());
+                TestSupport.getBuildInfoName(prometheusTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -330,19 +329,18 @@ public class CombinedModeTest {
     /**
      * Method to get a Prometheus metric
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
     protected Double getPrometheusMetric(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String metricName)
+            PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         Double value = null;
 
         for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse =
-                    sendPrometheusQuery(openTelemetryTestEnvironment, metricName);
+            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, metricName);
 
             assertThat(httpResponse.statusCode()).isEqualTo(200);
             assertThat(httpResponse.body()).isNotNull();
@@ -363,28 +361,26 @@ public class CombinedModeTest {
     /**
      * Method to send a Prometheus query
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param query query
      * @return an HttpResponse
      */
     protected HttpResponse sendPrometheusQuery(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String query)
-            throws IOException {
+            PrometheusTestEnvironment prometheusTestEnvironment, String query) throws IOException {
         return sendRequest(
-                openTelemetryTestEnvironment,
+                prometheusTestEnvironment,
                 "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
     /**
      * Method to send a Http GET request
      *
-     * @param openTelemetryTestEnvironment openTelemetryTestEnvironment
+     * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param path path
      * @return an HttpResponse
      */
     protected HttpResponse sendRequest(
-            OpenTelemetryTestEnvironment openTelemetryTestEnvironment, String path)
-            throws IOException {
-        return HttpClient.sendRequest(openTelemetryTestEnvironment.getPrometheusUrl(path));
+            PrometheusTestEnvironment prometheusTestEnvironment, String path) throws IOException {
+        return HttpClient.sendRequest(prometheusTestEnvironment.getPrometheusUrl(path));
     }
 }
