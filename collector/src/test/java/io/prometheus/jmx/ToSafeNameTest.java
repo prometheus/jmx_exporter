@@ -16,52 +16,50 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ToSafeNameTest {
 
-    @Parameterized.Parameters(name = "{index}: testSafeName(expected={0} actual={1}")
-    public static Iterable<Object[]> data() {
-        return Arrays.asList(
-                new Object[][] {
-                    {"test_test", "test-test"},
-                    {"test_test", "test-_test"},
-                    {"test_test", "test-_-test"},
-                    {"_", "-_-"},
-                    {"", ""},
-                    {null, null},
-                    {"_", "---"},
-                    {"test", "test"},
-                    {"_001", "001"},
-                    // A very long string
-                    {
-                        "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_",
-                        "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___"
-                    },
-                    {"test_swedish_chars_", "test_swedish_chars_åäö"},
-                    {"test_test", "test@test"},
-                    {"test_test", "test;test"},
-                    {"test:test", "test:test"},
-                });
+    private static final Pattern VALID_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_:]*");
+
+    static Stream<Arguments> arguments() {
+        return Stream.of(
+                Arguments.of("test-test", "test_test"),
+                Arguments.of("test-_test", "test_test"),
+                Arguments.of("test-_-test", "test_test"),
+                Arguments.of("-_-", "_"),
+                Arguments.of("", ""),
+                Arguments.of(null, null),
+                Arguments.of("---", "_"),
+                Arguments.of("__test", "_test"),
+                Arguments.of("____test", "_test"),
+                Arguments.of("test", "test"),
+                Arguments.of("001", "_001"),
+                // Arguments.of("__001", "__001"),
+                Arguments.of(
+                        "$asetstjlk_$testkljsek_$tesktjsekrslk_$testkljsetkl_$tkesjtk_$sljtslkjetesslelse_$lktsjetlkesltel_$kesjltelksjetkl_$tesktjksjltse_$sljteslselkselse_$tsjetlksetklsjekl_$slkfjrtlskek___",
+                        "_asetstjlk_testkljsek_tesktjsekrslk_testkljsetkl_tkesjtk_sljtslkjetesslelse_lktsjetlkesltel_kesjltelksjetkl_tesktjksjltse_sljteslselkselse_tsjetlksetklsjekl_slkfjrtlskek_"),
+                Arguments.of("test_swedish_chars_åäö", "test_swedish_chars_"),
+                Arguments.of("test@test", "test_test"),
+                Arguments.of("test;test", "test_test"),
+                Arguments.of("test:test", "test:test"));
     }
 
-    private final String expected;
-    private final String input;
+    @ParameterizedTest(name = "{index} => input={0}, expected={1}")
+    @MethodSource("arguments")
+    public void testToSafeName(String input, String expected) {
+        String actual = JmxCollector.toSafeName(input);
 
-    public ToSafeNameTest(String expected, String input) {
-        this.expected = expected;
-        this.input = input;
-    }
+        assertThat(actual).isEqualTo(expected);
 
-    @Test
-    public void testToSafeName() {
-        String safeName = JmxCollector.toSafeName(input);
-        assertEquals(expected, safeName);
+        if (input != null && !input.isEmpty()) {
+            assertThat(VALID_NAME.matcher(actual)).matches();
+        }
     }
 }

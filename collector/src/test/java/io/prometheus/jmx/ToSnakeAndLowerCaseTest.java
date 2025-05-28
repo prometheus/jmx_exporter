@@ -16,49 +16,39 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ToSnakeAndLowerCaseTest {
 
-    @Parameterized.Parameters(name = "{index}: testAttrToSnakeAndLowerCase(expected={0} actual={1}")
-    public static Iterable<Object[]> data() {
-        return Arrays.asList(
-                new Object[][] {
-                    {"test_test", "testTest"},
-                    {"test_test_test", "testTestTest"},
-                    {"test_test", "test_test"},
-                    {"test1", "test1"},
-                    {"start_time_$1_$2", "StartTime_$1_$2"},
-                    {"a", "A"},
-                    {"aa", "AA"},
-                    {"tcp", "TCP"},
-                    {"test_tcptest", "testTCPTest"},
-                    {null, null},
-                    {"", ""},
-                    {" ", " "},
-                    {"test_test\n_test", "testTest\nTest"},
-                    {"test_test", "test_Test"},
-                    {"_test_test", "_Test_Test"}
-                });
+    static Stream<Arguments> arguments() {
+        return Stream.of(
+                Arguments.of("testTest", "test_test"),
+                Arguments.of("testTestTest", "test_test_test"),
+                Arguments.of("test_test", "test_test"),
+                Arguments.of("test1", "test1"),
+                Arguments.of("StartTime_$1_$2", "start_time_$1_$2"),
+                Arguments.of("A", "a"),
+                Arguments.of("AA", "aa"),
+                Arguments.of("TCP", "tcp"),
+                Arguments.of("testTCPTest", "test_tcptest"),
+                Arguments.of(null, null),
+                Arguments.of("", ""),
+                Arguments.of(" ", " "),
+                Arguments.of("testTest\nTest", "test_test\n_test"),
+                Arguments.of("test_Test", "test_test"),
+                Arguments.of("_Test_Test", "_test_test"));
     }
 
-    private final String expected;
-    private final String input;
+    @ParameterizedTest(name = "{index} => input={0}, expected={1}")
+    @MethodSource("arguments")
+    public void testToSnakeAndLowerCase(String input, String expected) {
+        String actual = JmxCollector.toSnakeAndLowerCase(input);
 
-    public ToSnakeAndLowerCaseTest(String expected, String input) {
-        this.expected = expected;
-        this.input = input;
-    }
-
-    @Test
-    public void testToSnakeAndLowerCase() {
-        String snakeAndLowerString = JmxCollector.toSnakeAndLowerCase(input);
-        assertEquals(expected, snakeAndLowerString);
+        assertThat(actual).isEqualTo(expected);
     }
 }

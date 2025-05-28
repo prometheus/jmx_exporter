@@ -69,7 +69,7 @@ public class LocalTest {
     private static final int CLIENT_COUNT = 10;
 
     /** The number of iterations for the repeated tests. */
-    private static final int ITERATIONS = 10;
+    private static final int ITERATIONS = 100;
 
     /** The URL of the HTTP server. */
     private static final String BASE_URL = "http://localhost:";

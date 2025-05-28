@@ -520,71 +520,74 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
-     * Convert the attribute name to snake case and lower case.
-     *
-     * @param attributeName the attribute name
-     * @return the converted attribute name
-     */
-    static String toSnakeAndLowerCase(String attributeName) {
-        if (attributeName == null || attributeName.isEmpty()) {
-            return attributeName;
-        }
-
-        char[] chars = attributeName.toCharArray();
-        StringBuilder result = new StringBuilder(chars.length);
-        boolean prevUpperOrUnderscore = Character.isUpperCase(chars[0]) || chars[0] == '_';
-        result.append(Character.toLowerCase(chars[0]));
-
-        for (int i = 1; i < chars.length; i++) {
-            boolean isUpper = Character.isUpperCase(chars[i]);
-
-            if (!prevUpperOrUnderscore && isUpper) {
-                result.append('_');
-            }
-
-            result.append(Character.toLowerCase(chars[i]));
-            prevUpperOrUnderscore = isUpper || chars[i] == '_';
-        }
-
-        return result.toString();
-    }
-
-    /**
-     * Convert the name to a "safe" name by changing invalid chars to underscore, and merge
-     * underscores.
+     * Convert the a name to snake case and lower case.
      *
      * @param name the name
-     * @return the safe string
+     * @return the converted name
      */
-    static String toSafeName(String name) {
+    static String toSnakeAndLowerCase(String name) {
         if (name == null || name.isEmpty()) {
             return name;
         }
 
-        char[] chars = name.toCharArray();
-        StringBuilder sb = new StringBuilder(chars.length + 1); // +1 for optional prefix
-        boolean prevUnderscore = false;
+        char firstChar = name.charAt(0);
 
-        if (Character.isDigit(chars[0])) {
-            sb.append('_');
+        boolean prevCharIsUpperCaseOrUnderscore =
+                Character.isUpperCase(firstChar) || firstChar == '_';
+
+        StringBuilder stringBuilder =
+                new StringBuilder(name.length()).append(Character.toLowerCase(firstChar));
+
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            boolean charIsUpperCase = Character.isUpperCase(c);
+
+            if (!prevCharIsUpperCaseOrUnderscore && charIsUpperCase) {
+                stringBuilder.append("_");
+            }
+
+            stringBuilder.append(Character.toLowerCase(c));
+            prevCharIsUpperCaseOrUnderscore = charIsUpperCase || c == '_';
         }
 
-        for (char c : chars) {
-            boolean isUnderscore = c == '_';
-            boolean isUnsafe = !isLegalCharacter(c);
+        return stringBuilder.toString();
+    }
 
-            if (isUnsafe || isUnderscore) {
-                if (!prevUnderscore) {
-                    sb.append('_');
-                    prevUnderscore = true;
+    /**
+     * Convert the name to a "safe" name by changing invalid chars to underscore, and merging
+     * consecutive underscores.
+     *
+     * @param name the name
+     * @return the safe name
+     */
+    static String toSafeName(String name) {
+        if (name == null) {
+            return null;
+        }
+
+        boolean prevCharIsUnderscore = false;
+        StringBuilder stringBuilder = new StringBuilder(name.length());
+
+        if (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
+            // prevent a numeric prefix.
+            stringBuilder.append("_");
+        }
+
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            boolean isUnsafeChar = !JmxCollector.isLegalCharacter(c);
+            if ((isUnsafeChar || c == '_')) {
+                if (!prevCharIsUnderscore) {
+                    stringBuilder.append("_");
+                    prevCharIsUnderscore = true;
                 }
             } else {
-                sb.append(c);
-                prevUnderscore = false;
+                stringBuilder.append(c);
+                prevCharIsUnderscore = false;
             }
         }
 
-        return sb.toString();
+        return stringBuilder.toString();
     }
 
     private static boolean isLegalCharacter(char input) {
