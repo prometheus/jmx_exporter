@@ -284,6 +284,7 @@ public class MetricsParser {
         if (line != null) {
             line = line.substring("# HELP".length()).trim();
         }
+
         return line;
     }
 
@@ -296,6 +297,7 @@ public class MetricsParser {
      */
     private static String readTypeLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
+
         return line.substring(line.lastIndexOf(" ")).trim();
     }
 
@@ -312,6 +314,7 @@ public class MetricsParser {
             lineReader.unreadLine(line);
             return null;
         }
+
         return line;
     }
 
@@ -368,6 +371,7 @@ public class MetricsParser {
             int equalIndex = token.indexOf("=");
             String label = token.substring(0, equalIndex);
             String value = token.substring(equalIndex + 1);
+
             if (value.startsWith("\"")) {
                 value = value.substring(1);
             }
@@ -388,16 +392,23 @@ public class MetricsParser {
      */
     private static List<String> splitOnCommas(String string) {
         List<String> result = new ArrayList<>();
+        char[] chars = string.toCharArray();
         int start = 0;
         boolean inQuotes = false;
-        for (int current = 0; current < string.length(); current++) {
-            if (string.charAt(current) == '\"') inQuotes = !inQuotes; // toggle state
-            else if (string.charAt(current) == ',' && !inQuotes) {
+
+        for (int current = 0; current < chars.length; current++) {
+            char c = chars[current];
+
+            if (c == '\"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
                 result.add(string.substring(start, current));
                 start = current + 1;
             }
         }
+
         result.add(string.substring(start));
+
         return result;
     }
 
@@ -434,6 +445,7 @@ public class MetricsParser {
             } else {
                 this.bufferedReader = new BufferedReader(reader);
             }
+
             this.lineBuffer = new LinkedList<>();
         }
 
