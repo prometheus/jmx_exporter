@@ -55,6 +55,7 @@ import javax.management.MalformedObjectNameException;
 import org.verifyica.api.Argument;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
+import org.verifyica.api.TemporaryDirectory;
 import org.verifyica.api.Verifyica;
 
 /**
@@ -96,11 +97,16 @@ public class LocalTest {
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) throws Throwable {
         // Derive the resource path based on the test class name
-        String resource =
-                (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
+        String resource = (classContext.testClass().getName().replace(".", "/") + "/exporter.yaml");
+
+        // Create a temporary directory
+        TemporaryDirectory temporaryDirectory = TemporaryDirectory.newDirectory();
+
+        // Create a temporary file
+        File exporterYamlFile = temporaryDirectory.newFile();
 
         // Export the resource to a temporary file
-        File exporterYaml = ResourceSupport.export(resource);
+        ResourceSupport.export(resource, exporterYamlFile);
 
         // Register the example MBeans
         new TabularData().register();
@@ -114,11 +120,11 @@ public class LocalTest {
         new BuildInfoMetrics().register(DEFAULT_REGISTRY);
 
         // Register the JMX collector
-        new JmxCollector(exporterYaml).register(DEFAULT_REGISTRY);
+        new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
 
         // Create an HTTP server to serve the metrics
         final HTTPServer httpServer =
-                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYaml);
+                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
 
         // Add a shutdown hook to stop the HTTP server when the JVM exits
         Runtime.getRuntime()
