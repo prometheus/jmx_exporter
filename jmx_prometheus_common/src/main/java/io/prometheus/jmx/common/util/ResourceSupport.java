@@ -80,11 +80,12 @@ public class ResourceSupport {
      * Method to export a resource to a temporary file
      *
      * @param resource the resource to export
-     * @return the path to the temporary file
+     * @param file the file to export to
      * @throws IOException If an I/O error occurs
      */
-    public static File export(String resource) throws IOException {
+    public static void export(String resource, File file) throws IOException {
         Precondition.notNullOrEmpty(resource, "resource is null or empty");
+        Precondition.notNull(file, "file is null");
 
         if (!resource.startsWith("/")) {
             resource = "/" + resource;
@@ -95,9 +96,6 @@ public class ResourceSupport {
                 throw new IOException(format("Resource [%s] not found", resource));
             }
 
-            File file = File.createTempFile("resource-", ".tmp");
-            file.deleteOnExit();
-
             try (OutputStream outputStream =
                     new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
                 byte[] buffer = new byte[8192];
@@ -107,8 +105,6 @@ public class ResourceSupport {
                     outputStream.write(buffer, 0, count);
                 }
             }
-
-            return file;
         }
     }
 }
