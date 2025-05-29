@@ -1,0 +1,8 @@
+httpServer:
+  authentication:
+    environment:
+      username: Prometheus
+      password: $SECRET
+hostPort: application:9999
+rules:
+  - pattern: ".*"

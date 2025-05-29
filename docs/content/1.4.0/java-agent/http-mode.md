@@ -1,31 +1,11 @@
 ---
-title: Combined mode
-weight: 4
+title: HTTP mode
+weight: 2
 ---
 
-Combined mode allows for both HTTP mode and OpenTelemetry mode metrics collection methods.
-
-### HTTP mode
-
-Exposes metric using an HTTP endpoint.
-
-- metrics are collected when the HTTP endpoint is accessed
-- "pull" model
-
-### OpenTelemetry mode
-
-Pushes metrics to an OpenTelemetry endpoint.
-
-- metrics are periodically collected and pushed OpenTelemetry endpoint
-- "push" model
-
-**Notes**
-
--  Due to the indepenent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
+HTTP mode collects metrics when accessed via HTTP, and returning them as HTTP content.
 
 # Installation
-
-### Example
 
 ```shell
 java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
@@ -40,7 +20,7 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORT
 ### Concrete Example
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-1.3.0-post.jar=12345:exporter.yaml -jar <YOUR_APPLICATION.JAR>
+java -javaagent:jmx_prometheus_javaagent-1.4.0.jar=12345:exporter.yaml -jar <YOUR_APPLICATION.JAR>
 ```
 
 # Basic YAML Configuration
@@ -48,10 +28,6 @@ java -javaagent:jmx_prometheus_javaagent-1.3.0-post.jar=12345:exporter.yaml -jar
 **exporter.yaml**
 
 ```yaml
-openTelemetry:
-  endpoint: http://prometheus:9090/api/v1/otlp
-  protocol: http/protobuf
-  interval: 60
 rules:
 - pattern: ".*"
 ```
@@ -75,8 +51,6 @@ http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics
 my_count_total{status="error"} 1.0
 my_count_total{status="ok"} 2.0
 ```
-
-3. Access your OpenTelemetry platform to view OpenTelemetry metrics.
 
 #  Complex YAML Configuration Examples
 

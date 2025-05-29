@@ -1,14 +1,34 @@
 ---
-title: HTTP mode
-weight: 2
+title: Combined mode
+weight: 4
 ---
 
-HTTP mode collects metrics when accessed via HTTP, and returning them as HTTP content.
+Combined mode allows for both HTTP mode and OpenTelemetry mode metrics collection methods.
+
+### HTTP mode
+
+Exposes metric using an HTTP endpoint.
+
+- metrics are collected when the HTTP endpoint is accessed
+- "pull" model
+
+### OpenTelemetry mode
+
+Pushes metrics to an OpenTelemetry endpoint.
+
+- metrics are periodically collected and pushed OpenTelemetry endpoint
+- "push" model
+
+**Notes**
+
+-  Due to the indepenent collection methods, HTTP mode metrics most likely  will not match OpenTelemetry mode metrics exactly
 
 # Installation
 
+### Example
+
 ```shell
-java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
+java -jar jmx_prometheus_standalone-<VERSION>.jar [HOSTNAME:]<PORT> <EXPORTER.YAML>
 ```
 
  **Notes**
@@ -20,16 +40,18 @@ java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORT
 ### Concrete Example
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-1.3.0-post.jar=12345:exporter.yaml -jar <YOUR_APPLICATION.JAR>
+java -jar jmx_prometheus_standalone-1.4.0.jar 12345 exporter.yaml
 ```
 
 # Basic YAML Configuration
 
-Your application **must** expose RMI.
-
 **exporter.yaml**
 
 ```yaml
+openTelemetry:
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 60
 hostPort: <APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>
 rules:
 - pattern: ".*"
@@ -38,6 +60,10 @@ rules:
 ... or ...
 
 ```yaml
+openTelemetry:
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 60
 jmxUrl: service:jmx:rmi:///jndi/rmi://<APPLICATION_HOSTNAME_OR_IP>:<APPLICATION_RMI_PORT>/jmxrmi
 rules:
 - pattern: ".*"
@@ -79,11 +105,10 @@ Reference HTTP mode [Rules](../../http-mode/rules/) for various `exporter.yaml` 
 # Metrics
 
 1. Run your application.
-2. Run the Standalone JMX Exporter application.
-3. Access HTTP mode metrics using a browser to view your metrics.
+2. Access HTTP mode metrics using a browser to view your metrics.
 
 ```
-http://<STANDALONE_JMX_EXPORTER_HOSTNAME>:<PORT>/metrics
+http://<APPLICATION_HOSTNAME_OR_IP>:<PORT>/metrics
 ```
 
 ```
@@ -92,6 +117,8 @@ http://<STANDALONE_JMX_EXPORTER_HOSTNAME>:<PORT>/metrics
 my_count_total{status="error"} 1.0
 my_count_total{status="ok"} 2.0
 ```
+
+3. Access your OpenTelemetry platform to view OpenTelemetry metrics.
 
 #  Complex YAML Configuration Examples
 

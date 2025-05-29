@@ -16,7 +16,7 @@ disablePathToLower = true
 enableRobotsTXT = true
 
 # Ignore content
-ignoreFiles = ["content/1\\.3\\.0\\-post/"]
+ignoreFiles = ["content/1\\.4\\.0\\/"]
 
 # Needed for mermaid shortcodes
 [markup]

@@ -31,6 +31,24 @@ httpServer:
 
 ---
 
+Environment variable password example:
+
+```yaml
+httpServer:
+  authentication:
+    environment:
+      username: Prometheus
+      password: $SECRET
+```
+
+**Notes**
+
+- The referenced environment variable must be set before running the Java agent or Standalone JMX Exporter
+
+- `SECRET`, `$SECRET`, and `${SECRET}` are all valid ways to reference the environment variable
+
+---
+
 SHA-256 example using a salted password SHA-256(`<salt>:<password>`) with a password of `secret`
 
 ```yaml
