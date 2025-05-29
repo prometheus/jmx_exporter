@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.environment;
 
 /** Class to implement ExporterPath */
 public class ExporterPath {

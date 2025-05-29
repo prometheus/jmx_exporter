@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.metrics;
+package io.prometheus.jmx.test.support.metrics.impl;
 
 import static java.lang.String.format;
 
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricAssertion;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.opentest4j.AssertionFailedError;
 
-/** Class to assert a MapMetricAssertion */
-public class MapMetricAssertion {
+/** Class to implement MetricMapAssertion */
+public class MetricMapAssertion implements MetricAssertion {
 
     private final Map<String, Collection<Metric>> metrics;
     private Metric.Type type;
@@ -39,7 +41,7 @@ public class MapMetricAssertion {
      *
      * @param metrics metrics
      */
-    MapMetricAssertion(Map<String, Collection<Metric>> metrics) {
+    public MetricMapAssertion(Map<String, Collection<Metric>> metrics) {
         if (metrics == null) {
             throw new IllegalArgumentException("metrics is null");
         }
@@ -52,7 +54,7 @@ public class MapMetricAssertion {
      * @param type type
      * @return this MetricAssertion
      */
-    public MapMetricAssertion ofType(Metric.Type type) {
+    public MetricMapAssertion ofType(Metric.Type type) {
         if (type == null) {
             throw new IllegalArgumentException("Type is null");
         }
@@ -66,7 +68,7 @@ public class MapMetricAssertion {
      * @param name name
      * @return this MetricAssertion
      */
-    public MapMetricAssertion withName(String name) {
+    public MetricMapAssertion withName(String name) {
         this.name = name;
         return this;
     }
@@ -77,7 +79,7 @@ public class MapMetricAssertion {
      * @param help help
      * @return this MetricAssertion
      */
-    public MapMetricAssertion help(String help) {
+    public MetricMapAssertion withHelp(String help) {
         this.help = help;
         return this;
     }
@@ -89,7 +91,7 @@ public class MapMetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MapMetricAssertion withLabel(String name, String value) {
+    public MetricMapAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
                     format("Label name [%s] or value [%s] is null", name, value));
@@ -107,7 +109,7 @@ public class MapMetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MapMetricAssertion withValue(Double value) {
+    public MetricMapAssertion withValue(Double value) {
         this.value = value;
         return this;
     }
@@ -117,7 +119,7 @@ public class MapMetricAssertion {
      *
      * @return this MetricAssertion
      */
-    public MapMetricAssertion isPresent() {
+    public MetricMapAssertion isPresent() {
         return isPresentWhen(true);
     }
 
@@ -127,7 +129,7 @@ public class MapMetricAssertion {
      * @param condition condition
      * @return this MetricAssertion
      */
-    public MapMetricAssertion isPresentWhen(boolean condition) {
+    public MetricMapAssertion isPresentWhen(boolean condition) {
         Collection<Metric> metrics = this.metrics.get(name);
 
         if (condition) {
@@ -189,7 +191,7 @@ public class MapMetricAssertion {
      *
      * @return this MetricAssertion
      */
-    public MapMetricAssertion isNotPresent() {
+    public MetricMapAssertion isNotPresent() {
         return isPresentWhen(false);
     }
 
@@ -199,7 +201,7 @@ public class MapMetricAssertion {
      * @param condition condition
      * @return this MetricAssertion
      */
-    public MapMetricAssertion isNotPresentWhen(boolean condition) {
+    public MetricMapAssertion isNotPresentWhen(boolean condition) {
         return isPresentWhen(!condition);
     }
 
@@ -209,7 +211,7 @@ public class MapMetricAssertion {
      * @param metrics the collection of metrics
      * @return a MetricAssertion
      */
-    public static MapMetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
-        return new MapMetricAssertion(metrics);
+    public static MetricMapAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
+        return new MetricMapAssertion(metrics);
     }
 }

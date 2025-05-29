@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.environment;
 
 /** Enum of the two operational modes */
 public enum JmxExporterMode {

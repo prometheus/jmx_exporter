@@ -18,7 +18,7 @@ package io.prometheus.jmx.test.support.metrics;
 
 import java.util.Objects;
 
-/** Class to implement MetricsType */
+/** Class to implement MetricsContentType */
 public class MetricsContentType {
 
     /** Default text format */

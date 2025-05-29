@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.environment;
 
+import io.prometheus.jmx.test.support.JavaDockerImages;
+import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -135,7 +137,7 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
                         testClass.getName().replace(".", "/") + "/JavaAgent",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
+                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
                 .withLogConsumer(TestContainerLogger.getInstance())

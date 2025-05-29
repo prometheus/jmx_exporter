@@ -16,6 +16,8 @@
 
 package io.prometheus.jmx.test.support.http;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -88,5 +90,21 @@ public class HttpResponse {
      */
     public HttpResponseBody body() {
         return body;
+    }
+
+    /**
+     * Assert a health response
+     *
+     * @param httpResponse httpResponse
+     */
+    public static void assertHealthyResponse(HttpResponse httpResponse) {
+        assertThat(httpResponse).isNotNull();
+        assertThat(httpResponse.statusCode()).isEqualTo(200);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
+                .contains("text/plain");
+        assertThat(httpResponse.body()).isNotNull();
+        assertThat(httpResponse.body().string()).isNotBlank();
+        assertThat(httpResponse.body().string()).contains("Exporter is healthy.");
     }
 }

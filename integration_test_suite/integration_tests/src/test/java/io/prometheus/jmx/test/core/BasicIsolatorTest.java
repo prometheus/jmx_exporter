@@ -16,25 +16,25 @@
 
 package io.prometheus.jmx.test.core;
 
-import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
-import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.ExporterPath;
-import io.prometheus.jmx.test.support.IsolatorExporterTestEnvironment;
-import io.prometheus.jmx.test.support.TestSupport;
+import io.prometheus.jmx.test.support.environment.ExporterPath;
+import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -240,22 +240,22 @@ public class BasicIsolatorTest {
 
     private void assertMetricsResponse(
             HttpResponse httpResponse, MetricsContentType metricsContentType) {
-        assertCommonMetricsResponse(httpResponse, metricsContentType);
+        assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)
         // and build a Metrics Map for subsequent processing
 
-        Set<String> compositeSet = new LinkedHashSet<>();
+        Set<String> compositeNameSet = new HashSet<>();
         MetricsParser.parseCollection(httpResponse)
                 .forEach(
                         metric -> {
                             String name = metric.name();
                             Map<String, String> labels = metric.labels();
-                            String composite = name + " " + labels;
-                            assertThat(compositeSet).doesNotContain(composite);
-                            compositeSet.add(composite);
+                            String compositeName = name + " " + labels;
+                            assertThat(compositeNameSet).doesNotContain(compositeName);
+                            compositeNameSet.add(compositeName);
                             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
                         });
 
@@ -338,22 +338,22 @@ public class BasicIsolatorTest {
 
     private void assertMetricsResponseLowerCase(
             HttpResponse httpResponse, MetricsContentType metricsContentType) {
-        assertCommonMetricsResponse(httpResponse, metricsContentType);
+        assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)
         // and build a Metrics Map for subsequent processing
 
-        Set<String> compositeSet = new LinkedHashSet<>();
+        Set<String> compositeNameSet = new HashSet<>();
         MetricsParser.parseCollection(httpResponse)
                 .forEach(
                         metric -> {
                             String name = metric.name();
                             Map<String, String> labels = metric.labels();
-                            String composite = name + " " + labels;
-                            assertThat(compositeSet).doesNotContain(composite);
-                            compositeSet.add(composite);
+                            String compositeName = name + " " + labels;
+                            assertThat(compositeNameSet).doesNotContain(compositeName);
+                            compositeNameSet.add(compositeName);
                             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
                         });
 

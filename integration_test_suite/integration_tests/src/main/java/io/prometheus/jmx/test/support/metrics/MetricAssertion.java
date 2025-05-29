@@ -17,35 +17,18 @@
 package io.prometheus.jmx.test.support.metrics;
 
 import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.test.support.http.HttpHeader;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.http.HttpResponseBody;
+import io.prometheus.jmx.test.support.metrics.impl.MetricCollectionAssertion;
+import io.prometheus.jmx.test.support.metrics.impl.MetricMapAssertion;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import org.opentest4j.AssertionFailedError;
 
-/** Class to assert a MetricAssertion */
-public class MetricAssertion {
-
-    private final Collection<Metric> metrics;
-    private Metric.Type type;
-    private String name;
-    private String help;
-    private TreeMap<String, String> labels;
-    private Double value;
-
-    /**
-     * Constructor
-     *
-     * @param metrics metrics
-     */
-    private MetricAssertion(Collection<Metric> metrics) {
-        if (metrics == null) {
-            throw new IllegalArgumentException("metrics is null");
-        }
-        this.metrics = metrics;
-    }
+/** Class to implement MetricAssertion */
+public interface MetricAssertion {
 
     /**
      * Method to set the type to match against
@@ -53,13 +36,7 @@ public class MetricAssertion {
      * @param type type
      * @return this MetricAssertion
      */
-    public MetricAssertion ofType(Metric.Type type) {
-        if (type == null) {
-            throw new IllegalArgumentException("Type is null");
-        }
-        this.type = type;
-        return this;
-    }
+    MetricAssertion ofType(Metric.Type type);
 
     /**
      * Method to set the name to match against
@@ -67,10 +44,7 @@ public class MetricAssertion {
      * @param name name
      * @return this MetricAssertion
      */
-    public MetricAssertion withName(String name) {
-        this.name = name;
-        return this;
-    }
+    MetricAssertion withName(String name);
 
     /**
      * Method to set the help to match against
@@ -78,10 +52,7 @@ public class MetricAssertion {
      * @param help help
      * @return this MetricAssertion
      */
-    public MetricAssertion help(String help) {
-        this.help = help;
-        return this;
-    }
+    MetricAssertion withHelp(String help);
 
     /**
      * Method to add a label to match against
@@ -90,17 +61,7 @@ public class MetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MetricAssertion withLabel(String name, String value) {
-        if (name == null || value == null) {
-            throw new IllegalArgumentException(
-                    format("Label name [%s] or value [%s] is null", name, value));
-        }
-        if (labels == null) {
-            labels = new TreeMap<>();
-        }
-        labels.put(name, value);
-        return this;
-    }
+    MetricAssertion withLabel(String name, String value);
 
     /**
      * Method to set the value to match against
@@ -108,19 +69,14 @@ public class MetricAssertion {
      * @param value value
      * @return this MetricAssertion
      */
-    public MetricAssertion withValue(Double value) {
-        this.value = value;
-        return this;
-    }
+    MetricAssertion withValue(Double value);
 
     /**
      * Method to assert the Metric is present
      *
      * @return this MetricAssertion
      */
-    public MetricAssertion isPresent() {
-        return isPresentWhen(true);
-    }
+    MetricAssertion isPresent();
 
     /**
      * Method to assert the Metric is present
@@ -128,84 +84,73 @@ public class MetricAssertion {
      * @param condition condition
      * @return this MetricAssertion
      */
-    public MetricAssertion isPresentWhen(boolean condition) {
-        List<Metric> metrics =
-                this.metrics.stream()
-                        .filter(metric -> type == null || metric.type().equals(type))
-                        .filter(metric -> name == null || metric.name().equals(name))
-                        .filter(metric -> help == null || metric.help().equals(help))
-                        .filter(
-                                metric ->
-                                        labels == null
-                                                || metric.labels()
-                                                        .entrySet()
-                                                        .containsAll(labels.entrySet()))
-                        .filter(metric -> value == null || metric.value() == value)
-                        .collect(Collectors.toList());
+    MetricAssertion isPresentWhen(boolean condition);
 
-        if (condition) {
-            if (metrics.size() > 1) {
-                throw new AssertionFailedError(
+    /**
+     * Method to assert the Metric is not present
+     *
+     * @return this MetricAssertion
+     */
+    MetricAssertion isNotPresent();
+
+    /**
+     * Method to assert the Metric is not present
+     *
+     * @param condition condition
+     * @return this MetricAssertion
+     */
+    MetricAssertion isNotPresentWhen(boolean condition);
+
+    /**
+     * Method to create a MetricAssertion
+     *
+     * @param metrics the collection of metrics
+     * @return a MetricAssertion
+     */
+    static MetricAssertion assertMetric(Collection<Metric> metrics) {
+        return new MetricCollectionAssertion(metrics);
+    }
+
+    /**
+     * Method to create a MetricAssertion
+     *
+     * @param metrics the collection of metrics
+     * @return a MetricAssertion
+     */
+    static MetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
+        return new MetricMapAssertion(metrics);
+    }
+
+    /**
+     * Assert common metrics response
+     *
+     * @param httpResponse httpResponse
+     * @param metricsContentType metricsContentType
+     */
+    static void assertMetricsContentType(
+            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+        assertThat(httpResponse).isNotNull();
+
+        int statusCode = httpResponse.statusCode();
+        if (statusCode != 200) {
+            HttpResponseBody body = httpResponse.body();
+            if (body != null) {
+                throw new AssertionError(
                         format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
-                                        + " matches multiple metrics",
-                                type, help, name, labels, value));
-            } else if (metrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
-                                        + " present",
-                                type, help, name, labels, value));
-            }
-        } else {
-            if (!metrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
-                                        + " present",
-                                type, help, name, labels, value));
+                                "Expected statusCode [%d] but was [%d] body [%s]",
+                                200, statusCode, body.string()));
+            } else {
+                throw new AssertionError(
+                        format("Expected statusCode [%d] but was [%d] no body", 200, statusCode));
             }
         }
 
-        return this;
-    }
-
-    /**
-     * Method to assert the Metric is not present
-     *
-     * @return this MetricAssertion
-     */
-    public MetricAssertion isNotPresent() {
-        return isPresentWhen(false);
-    }
-
-    /**
-     * Method to assert the Metric is not present
-     *
-     * @param condition condition
-     * @return this MetricAssertion
-     */
-    public MetricAssertion isNotPresentWhen(boolean condition) {
-        return isPresentWhen(!condition);
-    }
-
-    /**
-     * Method to create a MetricAssertion
-     *
-     * @param metrics the collection of metrics
-     * @return a MetricAssertion
-     */
-    public static MetricAssertion assertMetric(Collection<Metric> metrics) {
-        return new MetricAssertion(metrics);
-    }
-
-    /**
-     * Method to create a MetricAssertion
-     *
-     * @param metrics the collection of metrics
-     * @return a MetricAssertion
-     */
-    public static MapMetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
-        return new MapMetricAssertion(metrics);
+        assertThat(httpResponse.headers()).isNotNull();
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
+                .isEqualTo(metricsContentType.toString());
+        assertThat(httpResponse.body()).isNotNull();
+        assertThat(httpResponse.body().bytes()).isNotNull();
+        assertThat(httpResponse.body().bytes().length).isGreaterThan(0);
     }
 }
