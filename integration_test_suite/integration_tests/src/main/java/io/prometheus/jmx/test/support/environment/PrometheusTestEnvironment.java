@@ -57,12 +57,12 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     /**
      * Constructor
      *
-     * @param prometheusDockerImage prometheusDockerImage
      * @param javaDockerImage javaDockerImage
+     * @param prometheusDockerImage prometheusDockerImage
      * @param jmxExporterMode jmxExporterMode
      */
     public PrometheusTestEnvironment(
-            String prometheusDockerImage, String javaDockerImage, JmxExporterMode jmxExporterMode) {
+            String javaDockerImage, String prometheusDockerImage, JmxExporterMode jmxExporterMode) {
         this.prometheusDockerImage = prometheusDockerImage;
         this.javaDockerImage = javaDockerImage;
         this.jmxExporterMode = jmxExporterMode;
@@ -71,7 +71,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
 
     @Override
     public String getName() {
-        return prometheusDockerImage + " / " + javaDockerImage + " / " + jmxExporterMode;
+        return javaDockerImage + " / " + prometheusDockerImage + " / " + jmxExporterMode;
     }
 
     @Override
@@ -91,21 +91,21 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     }
 
     /**
-     * Method to get the Prometheus Docker image name
-     *
-     * @return the Prometheus Docker image name
-     */
-    public String getPrometheusDockerImage() {
-        return prometheusDockerImage;
-    }
-
-    /**
      * Method to get the Java Docker image name
      *
      * @return the Java Docker image name
      */
     public String getJavaDockerImage() {
         return javaDockerImage;
+    }
+
+    /**
+     * Method to get the Prometheus Docker image name
+     *
+     * @return the Prometheus Docker image name
+     */
+    public String getPrometheusDockerImage() {
+        return prometheusDockerImage;
     }
 
     /**
@@ -246,70 +246,6 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     }
 
     /**
-     * Method to create a Prometheus container
-     *
-     * @return the return value
-     */
-    private GenericContainer<?> createPrometheusContainer() {
-        List<String> commands = new ArrayList<>();
-
-        commands.add("--config.file=/etc/prometheus/prometheus.yaml");
-        commands.add("--storage.tsdb.path=/prometheus");
-        commands.add("--web.console.libraries=/usr/share/prometheus/console_libraries");
-        commands.add("--web.console.templates=/usr/share/prometheus/consoles");
-
-        if (prometheusDockerImage.contains("v3.")) {
-            commands.add("--web.enable-otlp-receiver");
-        } else {
-            commands.add("--enable-feature=otlp-write-receiver");
-        }
-
-        String webYml =
-                "/" + testClass.getName().replace(".", "/") + "/" + jmxExporterMode + "/web.yaml";
-
-        boolean hasWebYaml = hasResource(webYml);
-
-        if (hasWebYaml) {
-            commands.add("--web.config.file=/etc/prometheus/web.yaml");
-        }
-
-        GenericContainer<?> genericContainer =
-                new GenericContainer<>(prometheusDockerImage)
-                        .withClasspathResourceMapping(
-                                testClass.getName().replace(".", "/")
-                                        + "/"
-                                        + jmxExporterMode
-                                        + "/prometheus.yaml",
-                                "/etc/prometheus/prometheus.yaml",
-                                BindMode.READ_ONLY)
-                        .withWorkingDirectory("/prometheus")
-                        .withCommand(commands.toArray(new String[0]))
-                        .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                        .withExposedPorts(9090)
-                        .withLogConsumer(
-                                outputFrame -> {
-                                    String string =
-                                            outputFrame.getUtf8StringWithoutLineEnding().trim();
-                                    if (!string.isBlank()) {
-                                        System.out.println("> " + string);
-                                    }
-                                })
-                        .withNetwork(network)
-                        .withNetworkAliases("prometheus")
-                        .withStartupTimeout(Duration.ofMillis(60000))
-                        .waitingFor(
-                                Wait.forLogMessage(
-                                        ".*Server is ready to receive web requests.*", 1));
-
-        if (hasWebYaml) {
-            genericContainer.withClasspathResourceMapping(
-                    webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
-        }
-
-        return genericContainer;
-    }
-
-    /**
      * Method to create an application container
      *
      * @return the return value
@@ -382,6 +318,70 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     }
 
     /**
+     * Method to create a Prometheus container
+     *
+     * @return the return value
+     */
+    private GenericContainer<?> createPrometheusContainer() {
+        List<String> commands = new ArrayList<>();
+
+        commands.add("--config.file=/etc/prometheus/prometheus.yaml");
+        commands.add("--storage.tsdb.path=/prometheus");
+        commands.add("--web.console.libraries=/usr/share/prometheus/console_libraries");
+        commands.add("--web.console.templates=/usr/share/prometheus/consoles");
+
+        if (prometheusDockerImage.contains("v3.")) {
+            commands.add("--web.enable-otlp-receiver");
+        } else {
+            commands.add("--enable-feature=otlp-write-receiver");
+        }
+
+        String webYml =
+                "/" + testClass.getName().replace(".", "/") + "/" + jmxExporterMode + "/web.yaml";
+
+        boolean hasWebYaml = hasResource(webYml);
+
+        if (hasWebYaml) {
+            commands.add("--web.config.file=/etc/prometheus/web.yaml");
+        }
+
+        GenericContainer<?> genericContainer =
+                new GenericContainer<>(prometheusDockerImage)
+                        .withClasspathResourceMapping(
+                                testClass.getName().replace(".", "/")
+                                        + "/"
+                                        + jmxExporterMode
+                                        + "/prometheus.yaml",
+                                "/etc/prometheus/prometheus.yaml",
+                                BindMode.READ_ONLY)
+                        .withWorkingDirectory("/prometheus")
+                        .withCommand(commands.toArray(new String[0]))
+                        .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
+                        .withExposedPorts(9090)
+                        .withLogConsumer(
+                                outputFrame -> {
+                                    String string =
+                                            outputFrame.getUtf8StringWithoutLineEnding().trim();
+                                    if (!string.isBlank()) {
+                                        System.out.println("> " + string);
+                                    }
+                                })
+                        .withNetwork(network)
+                        .withNetworkAliases("prometheus")
+                        .withStartupTimeout(Duration.ofMillis(60000))
+                        .waitingFor(
+                                Wait.forLogMessage(
+                                        ".*Server is ready to receive web requests.*", 1));
+
+        if (hasWebYaml) {
+            genericContainer.withClasspathResourceMapping(
+                    webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
+        }
+
+        return genericContainer;
+    }
+
+    /**
      * Method to determine if a resource exists
      *
      * @param resource resource
@@ -429,8 +429,8 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                                                             JmxExporterMode.values()) {
                                                         prometheusTestEnvironments.add(
                                                                 new PrometheusTestEnvironment(
-                                                                        prometheusDockerImage,
                                                                         javaDockerImageName,
+                                                                        prometheusDockerImage,
                                                                         jmxExporterMode));
                                                     }
                                                 }));
