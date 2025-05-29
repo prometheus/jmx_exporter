@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.util;
 
 import java.util.function.Consumer;
 import org.testcontainers.containers.output.OutputFrame;

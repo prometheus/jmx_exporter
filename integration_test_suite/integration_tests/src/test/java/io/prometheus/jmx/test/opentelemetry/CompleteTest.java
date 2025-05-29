@@ -18,13 +18,13 @@ package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.PrometheusTestEnvironment;
-import io.prometheus.jmx.test.support.TestSupport;
+import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.PrometheusTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
 import io.prometheus.jmx.test.support.throttle.Throttle;
+import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

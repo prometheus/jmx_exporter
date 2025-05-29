@@ -15,7 +15,7 @@
  */
 
 // package org.verifyica.test.support;
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.util;
 
 import static java.lang.String.format;
 

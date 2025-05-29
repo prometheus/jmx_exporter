@@ -16,15 +16,14 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.ExporterPath;
-import io.prometheus.jmx.test.support.ExporterTestEnvironment;
-import io.prometheus.jmx.test.support.JmxExporterMode;
-import io.prometheus.jmx.test.support.PBKDF2WithHmacExporterTestEnvironmentFilter;
-import io.prometheus.jmx.test.support.TestSupport;
+import io.prometheus.jmx.test.support.environment.ExporterPath;
+import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.filter.PBKDF2WithHmacExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -32,6 +31,7 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -278,7 +278,7 @@ public class BasicAuthenticationPBKDF2WithHmacSHA1Test {
             ExporterTestEnvironment exporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
-        assertCommonMetricsResponse(httpResponse, metricsContentType);
+        assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.util;
 
+import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.PrometheusTestEnvironment;
 import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;

@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.common.util.ResourceSupport;
+import io.prometheus.jmx.test.support.JavaDockerImages;
+import io.prometheus.jmx.test.support.PrometheusDockerImages;
+import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -281,7 +284,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                                 BindMode.READ_ONLY)
                         .withWorkingDirectory("/prometheus")
                         .withCommand(commands.toArray(new String[0]))
-                        .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
+                        .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                         .withExposedPorts(9090)
                         .withLogConsumer(
                                 outputFrame -> {
@@ -319,7 +322,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                         testClass.getName().replace(".", "/") + "/JavaAgent",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
+                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
                 .withLogConsumer(TestContainerLogger.getInstance())
@@ -343,7 +346,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
+                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
                 .withLogConsumer(TestContainerLogger.getInstance())
@@ -367,7 +370,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                         testClass.getName().replace(".", "/") + "/Standalone",
                         "/temp",
                         BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(TestContainerConfigureCmd.getInstance())
+                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
                 .withLogConsumer(TestContainerLogger.getInstance())

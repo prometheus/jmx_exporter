@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.environment;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Ulimit;
 import java.util.function.Consumer;
 
-/** Class to implement ConfigureContainerCmd */
-public class TestContainerConfigureCmd implements Consumer<CreateContainerCmd> {
+/** Class to implement ContainerCmdModifier */
+public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
 
     private static final long MEMORY_BYTES = 1073741824;
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
@@ -31,10 +31,10 @@ public class TestContainerConfigureCmd implements Consumer<CreateContainerCmd> {
     private static final long UFILE_SOFT = 65536L;
     private static final long UFILE_HARD = 65536L;
 
-    private static final TestContainerConfigureCmd SINGLETON = new TestContainerConfigureCmd();
+    private static final ContainerCmdModifier SINGLETON = new ContainerCmdModifier();
 
     /** Constructor */
-    private TestContainerConfigureCmd() {
+    private ContainerCmdModifier() {
         // INTENTIONALLY BLANK
     }
 
@@ -54,7 +54,7 @@ public class TestContainerConfigureCmd implements Consumer<CreateContainerCmd> {
      *
      * @return the singleton instance of TestContainerConfigureCmd
      */
-    public static TestContainerConfigureCmd getInstance() {
+    public static ContainerCmdModifier getInstance() {
         return SINGLETON;
     }
 }

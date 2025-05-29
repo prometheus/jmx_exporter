@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support;
+package io.prometheus.jmx.test.support.filter;
 
+import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;

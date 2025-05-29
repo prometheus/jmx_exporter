@@ -16,9 +16,9 @@
 
 package io.prometheus.jmx.test;
 
-import static io.prometheus.jmx.test.support.Assertions.assertCommonMetricsResponse;
-import static io.prometheus.jmx.test.support.Assertions.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MapMetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.AutoIncrementing;
@@ -31,14 +31,14 @@ import io.prometheus.jmx.StringValue;
 import io.prometheus.jmx.TabularData;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.ExporterPath;
-import io.prometheus.jmx.test.support.Repeater;
+import io.prometheus.jmx.test.support.environment.ExporterPath;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import io.prometheus.jmx.test.support.util.Repeater;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -46,8 +46,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,22 +257,22 @@ public class LocalTest {
      */
     private void assertMetricsResponse(
             HttpResponse httpResponse, MetricsContentType metricsContentType) {
-        assertCommonMetricsResponse(httpResponse, metricsContentType);
+        assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         // Validate no duplicate metrics (metrics with the same name and labels)
         // and build a Metrics Map for subsequent processing
 
-        Set<String> compositeSet = new LinkedHashSet<>();
+        Set<String> compositeNameSet = new HashSet<>();
         MetricsParser.parseCollection(httpResponse)
                 .forEach(
                         metric -> {
                             String name = metric.name();
                             Map<String, String> labels = metric.labels();
-                            String composite = name + " " + labels;
-                            assertThat(compositeSet).doesNotContain(composite);
-                            compositeSet.add(composite);
+                            String compositeName = name + " " + labels;
+                            assertThat(compositeNameSet).doesNotContain(compositeName);
+                            compositeNameSet.add(compositeName);
                             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
                         });
 
