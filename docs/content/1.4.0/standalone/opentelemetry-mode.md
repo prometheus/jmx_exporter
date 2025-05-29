@@ -10,13 +10,13 @@ OpenTelemetry mode periodically collects metrics and pushes them to an OpenTelem
 ### Example
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
+-jar jmx_prometheus_standalone-<VERSION>.jar exporter.yaml
 ```
 
 ### Concrete Example
 
 ```shell
-java -javaagent:jmx_prometheus_javaagent-1.3.0-post.jar=exporter.yaml -jar <YOUR_APPLICATION.JAR>
+java -javaagent:jmx_prometheus_javaagent-1.4.0.jar exporter.yaml
 ```
 
  **Notes**
@@ -54,6 +54,7 @@ rules:
 # Output
 
 Run your application.
+Run the Standalone JMX Exporter application.
 
 Access OpenTelemetry metrics using your OpenTelemetry platform.
 
