@@ -1,0 +1,15 @@
+name: Manual Renovate
+on:
+  workflow_dispatch:
+jobs:
+  renovate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Renovate
+        uses: renovatebot/github-action@v40.3.6
+        with:
+          renovate-version: "latest"
+        env:
+          RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
