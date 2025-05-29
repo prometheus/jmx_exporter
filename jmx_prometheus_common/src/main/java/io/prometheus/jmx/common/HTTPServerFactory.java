@@ -78,6 +78,7 @@ public class HTTPServerFactory {
 
     private static final String REALM = "/";
     private static final String PLAINTEXT = "plaintext";
+    private static final String ENVIRONMENT_VARIABLE = "environmentVariable";
     private static final Set<String> SHA_ALGORITHMS;
     private static final Set<String> PBKDF2_ALGORITHMS;
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
@@ -356,62 +357,100 @@ public class HTTPServerFactory {
 
                 authenticator = loadAuthenticator(authenticatorClass);
             } else {
-                if (rootMapAccessor.containsPath("/httpServer/authentication/environment")) {
-                    MapAccessor httpServerAuthenticationEnvironmentMapAccessor =
-                            rootMapAccessor
-                                    .get("/httpServer/authentication/environment")
-                                    .map(
-                                            new ToMapAccessor(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/environment")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/httpServer/authentication/environment"
-                                                            + " configuration must be a map"));
+                MapAccessor httpServerAuthenticationBasicMapAccessor =
+                        rootMapAccessor
+                                .get("/httpServer/authentication/basic")
+                                .map(
+                                        new ToMapAccessor(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic configuration"
+                                                        + " must be a map"));
 
-                    String username =
-                            httpServerAuthenticationEnvironmentMapAccessor
-                                    .get("/username")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/environment/username"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/environment/username"
-                                                                + " must not be blank")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/httpServer/authentication/environment/username"
-                                                        + " is a required string"));
+                String username =
+                        httpServerAuthenticationBasicMapAccessor
+                                .get("/username")
+                                .map(
+                                        new ToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/username"
+                                                            + " must be a string")))
+                                .map(
+                                        new StringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/username"
+                                                            + " must not be blank")))
+                                .orElseThrow(
+                                        ConfigurationException.supplier(
+                                                "/httpServer/authentication/basic/username is a"
+                                                        + " required string"));
 
-                    String environmentVariable =
-                            httpServerAuthenticationEnvironmentMapAccessor
+                String algorithm =
+                        httpServerAuthenticationBasicMapAccessor
+                                .get("/algorithm")
+                                .map(
+                                        new ToString(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/algorithm"
+                                                            + " must be a string")))
+                                .map(
+                                        new StringIsNotBlank(
+                                                ConfigurationException.supplier(
+                                                        "Invalid configuration for"
+                                                            + " /httpServer/authentication/basic/algorithm"
+                                                            + " must not be blank")))
+                                .orElse(PLAINTEXT);
+
+                if (PLAINTEXT.equalsIgnoreCase(algorithm)) {
+                    String password =
+                            httpServerAuthenticationBasicMapAccessor
                                     .get("/password")
                                     .map(
                                             new ToString(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/environment/password"
+                                                                + " /httpServer/authentication/basic/password"
                                                                 + " must be a string")))
                                     .map(
                                             new StringIsNotBlank(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/environment/password"
+                                                                + " /httpServer/authentication/basic/password"
                                                                 + " must not be blank")))
                                     .orElseThrow(
                                             ConfigurationException.supplier(
-                                                    "/httpServer/authentication/environment/password"
+                                                    "/httpServer/authentication/basic/password"
+                                                            + " is a required string"));
+
+                    authenticator = new PlaintextAuthenticator("/", username, password);
+                } else if (ENVIRONMENT_VARIABLE.equalsIgnoreCase(algorithm)) {
+                    String environmentVariable =
+                            httpServerAuthenticationBasicMapAccessor
+                                    .get("/passwordEnvironmentVariable")
+                                    .map(
+                                            new ToString(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/passwordEnvironmentVariable"
+                                                                + " must be a string")))
+                                    .map(
+                                            new StringIsNotBlank(
+                                                    ConfigurationException.supplier(
+                                                            "Invalid configuration for"
+                                                                + " /httpServer/authentication/basic/passwordEnvironmentVariable"
+                                                                + " must not be blank")))
+                                    .orElseThrow(
+                                            ConfigurationException.supplier(
+                                                    "/httpServer/authentication/basic/passwordEnvironmentVariable"
                                                         + " is a required string"));
 
                     // Remove the ${} or $ prefix if it exists
-
                     if (environmentVariable.startsWith("${") && environmentVariable.endsWith("}")) {
                         environmentVariable =
                                 environmentVariable.substring(2, environmentVariable.length() - 1);
@@ -425,131 +464,57 @@ public class HTTPServerFactory {
                     if (password == null || password.trim().isEmpty()) {
                         throw new ConfigurationException(
                                 format(
-                                        "/httpServer/authentication/environment/password"
+                                        "/httpServer/authentication/basic/passwordEnvironmentVariable"
                                             + " environment variable [%s] is not set or is blank",
                                         environmentVariable));
                     }
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
-                } else {
-                    MapAccessor httpServerAuthenticationBasicMapAccessor =
-                            rootMapAccessor
-                                    .get("/httpServer/authentication/basic")
-                                    .map(
-                                            new ToMapAccessor(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/httpServer/authentication/basic configuration"
-                                                            + " must be a map"));
-
-                    String username =
+                } else if (SHA_ALGORITHMS.contains(algorithm)
+                        || PBKDF2_ALGORITHMS.contains(algorithm)) {
+                    String hash =
                             httpServerAuthenticationBasicMapAccessor
-                                    .get("/username")
+                                    .get("/passwordHash")
                                     .map(
                                             new ToString(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/username"
+                                                                + " /httpServer/authentication/basic/passwordHash"
                                                                 + " must be a string")))
                                     .map(
                                             new StringIsNotBlank(
                                                     ConfigurationException.supplier(
                                                             "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/username"
+                                                                + " /httpServer/authentication/basic/passwordHash"
                                                                 + " must not be blank")))
                                     .orElseThrow(
                                             ConfigurationException.supplier(
-                                                    "/httpServer/authentication/basic/username is a"
-                                                            + " required string"));
-
-                    String algorithm =
-                            httpServerAuthenticationBasicMapAccessor
-                                    .get("/algorithm")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/algorithm"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/algorithm"
-                                                                + " must not be blank")))
-                                    .orElse(PLAINTEXT);
-
-                    if (PLAINTEXT.equalsIgnoreCase(algorithm)) {
-                        String password =
-                                httpServerAuthenticationBasicMapAccessor
-                                        .get("/password")
-                                        .map(
-                                                new ToString(
-                                                        ConfigurationException.supplier(
-                                                                "Invalid configuration for"
-                                                                    + " /httpServer/authentication/basic/password"
-                                                                    + " must be a string")))
-                                        .map(
-                                                new StringIsNotBlank(
-                                                        ConfigurationException.supplier(
-                                                                "Invalid configuration for"
-                                                                    + " /httpServer/authentication/basic/password"
-                                                                    + " must not be blank")))
-                                        .orElseThrow(
-                                                ConfigurationException.supplier(
-                                                        "/httpServer/authentication/basic/password"
-                                                                + " is a required string"));
-
-                        authenticator = new PlaintextAuthenticator("/", username, password);
-                    } else if (SHA_ALGORITHMS.contains(algorithm)
-                            || PBKDF2_ALGORITHMS.contains(algorithm)) {
-                        String hash =
-                                httpServerAuthenticationBasicMapAccessor
-                                        .get("/passwordHash")
-                                        .map(
-                                                new ToString(
-                                                        ConfigurationException.supplier(
-                                                                "Invalid configuration for"
-                                                                    + " /httpServer/authentication/basic/passwordHash"
-                                                                    + " must be a string")))
-                                        .map(
-                                                new StringIsNotBlank(
-                                                        ConfigurationException.supplier(
-                                                                "Invalid configuration for"
-                                                                    + " /httpServer/authentication/basic/passwordHash"
-                                                                    + " must not be blank")))
-                                        .orElseThrow(
-                                                ConfigurationException.supplier(
-                                                        "/httpServer/authentication/basic/passwordHash"
+                                                    "/httpServer/authentication/basic/passwordHash"
                                                             + " is a required string"));
 
-                        if (SHA_ALGORITHMS.contains(algorithm)) {
-                            authenticator =
-                                    createMessageDigestAuthenticator(
-                                            httpServerAuthenticationBasicMapAccessor,
-                                            REALM,
-                                            username,
-                                            hash,
-                                            algorithm);
-                        } else {
-                            authenticator =
-                                    createPBKDF2Authenticator(
-                                            httpServerAuthenticationBasicMapAccessor,
-                                            REALM,
-                                            username,
-                                            hash,
-                                            algorithm);
-                        }
+                    if (SHA_ALGORITHMS.contains(algorithm)) {
+                        authenticator =
+                                createMessageDigestAuthenticator(
+                                        httpServerAuthenticationBasicMapAccessor,
+                                        REALM,
+                                        username,
+                                        hash,
+                                        algorithm);
                     } else {
-                        throw new ConfigurationException(
-                                format(
-                                        "Unsupported /httpServer/authentication/basic/algorithm"
-                                                + " [%s]",
-                                        algorithm));
+                        authenticator =
+                                createPBKDF2Authenticator(
+                                        httpServerAuthenticationBasicMapAccessor,
+                                        REALM,
+                                        username,
+                                        hash,
+                                        algorithm);
                     }
+                } else {
+                    throw new ConfigurationException(
+                            format(
+                                    "Unsupported /httpServer/authentication/basic/algorithm"
+                                            + " [%s]",
+                                    algorithm));
                 }
             }
 
