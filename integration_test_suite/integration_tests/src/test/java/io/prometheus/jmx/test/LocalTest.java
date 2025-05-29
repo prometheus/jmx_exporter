@@ -40,6 +40,7 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
@@ -116,8 +117,11 @@ public class LocalTest {
         new CustomValue().register();
         new StringValue().register();
 
-        // Register the build info metrics
+        // Register the build info metrics collector
         new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+
+        // Register the JVM metrics collector
+        JvmMetrics.builder().register(DEFAULT_REGISTRY);
 
         // Register the JMX collector
         new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
@@ -334,5 +338,31 @@ public class LocalTest {
                 .withLabel("key_id", "2")
                 .withLabel("key_path", "/db/query2.xq")
                 .isPresent();
+
+        // Validate Java metrics are present
+
+        boolean hasJavaMetrics = false;
+
+        for (String metricName : metrics.keySet()) {
+            if (metricName.startsWith("java_lang_")) {
+                hasJavaMetrics = true;
+                break;
+            }
+        }
+
+        assertThat(hasJavaMetrics).as("No java_lang_* metrics found").isTrue();
+
+        // Validate JVM metrics are present when using Java Agent mode
+
+        boolean hasJvmMetrics = false;
+
+        for (String metricName : metrics.keySet()) {
+            if (metricName.startsWith("jvm_")) {
+                hasJvmMetrics = true;
+                break;
+            }
+        }
+
+        assertThat(hasJvmMetrics).as("No jvm_* metrics found").isTrue();
     }
 }

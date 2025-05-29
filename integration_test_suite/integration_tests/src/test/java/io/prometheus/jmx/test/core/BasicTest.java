@@ -258,7 +258,7 @@ public class BasicTest {
                 .withValue(6.0d)
                 .isPresent();
 
-        // Validate JVM metrics are present
+        // Validate Java metrics are present
 
         boolean hasJavaMetrics = false;
 
@@ -269,6 +269,21 @@ public class BasicTest {
             }
         }
 
-        assertThat(hasJavaMetrics).as("No java_lang_ metrics found in the response").isTrue();
+        assertThat(hasJavaMetrics).as("No java_lang_* metrics found").isTrue();
+
+        // Validate JVM metrics are present when using Java Agent mode
+
+        if (exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent) {
+            boolean hasJvmMetrics = false;
+
+            for (String metricName : metrics.keySet()) {
+                if (metricName.startsWith("jvm_")) {
+                    hasJvmMetrics = true;
+                    break;
+                }
+            }
+
+            assertThat(hasJvmMetrics).as("No jvm_* metrics found").isTrue();
+        }
     }
 }
