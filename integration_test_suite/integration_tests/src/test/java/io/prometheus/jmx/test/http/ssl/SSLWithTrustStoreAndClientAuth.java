@@ -22,9 +22,9 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import io.prometheus.jmx.test.support.filter.PKCS12KeyStoreExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -63,10 +63,10 @@ public class SSLWithTrustStoreAndClientAuth {
 
     @Verifyica.ArgumentSupplier() // not parallel as the static HttpsURLConnection
     // defaultSSLSocketFactory is manipulated
-    public static Stream<ExporterTestEnvironment> arguments() {
+    public static Stream<JmxExporterTestEnvironment> arguments() {
         // Filter Java versions that don't support the PKCS12 keystore
         // format or don't support the required TLS cipher suites
-        return ExporterTestEnvironment.createExporterTestEnvironments()
+        return JmxExporterTestEnvironment.createEnvironments()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
                 .map(exporterTestEnvironment -> exporterTestEnvironment.setBaseUrl(BASE_URL));
     }
@@ -112,9 +112,10 @@ public class SSLWithTrustStoreAndClientAuth {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws Throwable {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
+            throws Throwable {
 
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(
@@ -123,7 +124,7 @@ public class SSLWithTrustStoreAndClientAuth {
                         });
 
         callWithClientKeyStore(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 () -> {
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
                     assertHealthyResponse(httpResponse);
@@ -131,13 +132,14 @@ public class SSLWithTrustStoreAndClientAuth {
     }
 
     private void callWithClientKeyStore(
-            ExporterTestEnvironment exporterTestEnvironment, ThrowableAssert.ThrowingCallable op)
+            JmxExporterTestEnvironment jmxExporterTestEnvironment,
+            ThrowableAssert.ThrowingCallable op)
             throws Throwable {
         // set ssl context with client key store and call the operation
         final SSLSocketFactory existing = HttpsURLConnection.getDefaultSSLSocketFactory();
         try {
             HttpsURLConnection.setDefaultSSLSocketFactory(
-                    initSSLContextForClientAuth(exporterTestEnvironment.getJmxExporterMode())
+                    initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode())
                             .getSocketFactory());
             op.call();
         } finally {
@@ -146,9 +148,9 @@ public class SSLWithTrustStoreAndClientAuth {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws Throwable {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(
@@ -157,18 +159,18 @@ public class SSLWithTrustStoreAndClientAuth {
                         });
 
         callWithClientKeyStore(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 () -> {
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
                     assertMetricsResponse(
-                            exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
                 });
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws Throwable {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(
@@ -180,7 +182,7 @@ public class SSLWithTrustStoreAndClientAuth {
                         });
 
         callWithClientKeyStore(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 () -> {
                     HttpResponse httpResponse =
                             HttpClient.sendRequest(
@@ -189,16 +191,16 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.OPEN_METRICS_TEXT_METRICS);
                 });
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws Throwable {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(
@@ -210,7 +212,7 @@ public class SSLWithTrustStoreAndClientAuth {
                         });
 
         callWithClientKeyStore(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 () -> {
                     HttpResponse httpResponse =
                             HttpClient.sendRequest(
@@ -219,16 +221,16 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.PROMETHEUS_TEXT_METRICS);
                 });
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws Throwable {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(
@@ -240,7 +242,7 @@ public class SSLWithTrustStoreAndClientAuth {
                         });
 
         callWithClientKeyStore(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 () -> {
                     HttpResponse httpResponse =
                             HttpClient.sendRequest(
@@ -249,7 +251,7 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
                 });
@@ -271,7 +273,7 @@ public class SSLWithTrustStoreAndClientAuth {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment,
+            JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
@@ -295,10 +297,10 @@ public class SSLWithTrustStoreAndClientAuth {
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
-                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
+                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

@@ -16,19 +16,18 @@
 
 package io.prometheus.jmx.test.support.environment;
 
+import static java.lang.String.format;
+
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.PrometheusDockerImages;
-import io.prometheus.jmx.test.support.util.TestContainerLogger;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
+import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.UUID;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -38,45 +37,44 @@ import org.verifyica.api.Argument;
 /** Class to implement PrometheusTestEnvironment */
 public class PrometheusTestEnvironment implements Argument<PrometheusTestEnvironment> {
 
-    private static final long MEMORY_BYTES = 1073741824; // 1 GB
-    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
     private static final String BASE_URL = "http://localhost";
 
+    private final String id;
     private final String prometheusDockerImage;
-    private final String javaDockerImage;
-    private final JmxExporterMode jmxExporterMode;
 
     private Class<?> testClass;
     private Network network;
     private String baseUrl;
     private GenericContainer<?> prometheusContainer;
-    private GenericContainer<?> standaloneApplicationContainer;
-    private GenericContainer<?> javaAgentApplicationContainer;
-    private GenericContainer<?> standaloneExporterContainer;
 
     /**
      * Constructor
      *
-     * @param javaDockerImage javaDockerImage
      * @param prometheusDockerImage prometheusDockerImage
-     * @param jmxExporterMode jmxExporterMode
      */
-    public PrometheusTestEnvironment(
-            String javaDockerImage, String prometheusDockerImage, JmxExporterMode jmxExporterMode) {
+    public PrometheusTestEnvironment(String prometheusDockerImage) {
+        this.id = UUID.randomUUID().toString();
         this.prometheusDockerImage = prometheusDockerImage;
-        this.javaDockerImage = javaDockerImage;
-        this.jmxExporterMode = jmxExporterMode;
         this.baseUrl = BASE_URL;
     }
 
     @Override
     public String getName() {
-        return javaDockerImage + " / " + prometheusDockerImage + " / " + jmxExporterMode;
+        return prometheusDockerImage;
     }
 
     @Override
     public PrometheusTestEnvironment getPayload() {
         return this;
+    }
+
+    /**
+     * Method to get the ID of the test environment
+     *
+     * @return the ID of the test environment
+     */
+    public String getId() {
+        return id;
     }
 
     /**
@@ -91,30 +89,12 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     }
 
     /**
-     * Method to get the Java Docker image name
-     *
-     * @return the Java Docker image name
-     */
-    public String getJavaDockerImage() {
-        return javaDockerImage;
-    }
-
-    /**
      * Method to get the Prometheus Docker image name
      *
      * @return the Prometheus Docker image name
      */
     public String getPrometheusDockerImage() {
         return prometheusDockerImage;
-    }
-
-    /**
-     * Method to get the JMX Exporter mode
-     *
-     * @return the JMX Exporter mode
-     */
-    public JmxExporterMode getJmxExporterMode() {
-        return jmxExporterMode;
     }
 
     /**
@@ -126,79 +106,12 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         this.testClass = testClass;
         this.network = network;
 
-        switch (jmxExporterMode) {
-            case JavaAgent:
-                {
-                    prometheusContainer = createPrometheusContainer();
-                    prometheusContainer.start();
+        prometheusContainer = createPrometheusContainer();
+        prometheusContainer.start();
 
-                    javaAgentApplicationContainer = createJavaAgentApplicationContainer();
-                    javaAgentApplicationContainer.start();
-
-                    break;
-                }
-            case Standalone:
-                {
-                    prometheusContainer = createPrometheusContainer();
-                    prometheusContainer.start();
-
-                    standaloneApplicationContainer = createStandaloneApplicationContainer();
-                    standaloneApplicationContainer.start();
-
-                    standaloneExporterContainer = createStandaloneExporterContainer();
-                    standaloneExporterContainer.start();
-
-                    break;
-                }
+        if (!prometheusContainer.isRunning()) {
+            throw new IllegalStateException("Prometheus container is not running");
         }
-
-        if (standaloneApplicationContainer != null && !standaloneApplicationContainer.isRunning()) {
-            throw new IllegalStateException("standalone exporter container is not running");
-        }
-
-        if (standaloneApplicationContainer != null && !standaloneApplicationContainer.isRunning()) {
-            throw new IllegalStateException("standalone exporter container is not running");
-        }
-
-        if (prometheusContainer != null && !prometheusContainer.isRunning()) {
-            throw new IllegalStateException("standalone exporter container is not running");
-        }
-    }
-
-    /**
-     * Method to get an exporter URL
-     *
-     * @param path path
-     * @return an exporter URL
-     */
-    public String getExporterUrl(String path) {
-        return !path.startsWith("/")
-                ? getExporterBaseUrl() + "/" + path
-                : getExporterBaseUrl() + path;
-    }
-
-    /**
-     * Method to get the exporter base URL
-     *
-     * @return the exporter base URL
-     */
-    private String getExporterBaseUrl() {
-        int port = 0;
-
-        switch (jmxExporterMode) {
-            case JavaAgent:
-                {
-                    port = javaAgentApplicationContainer.getMappedPort(8888);
-                    break;
-                }
-            case Standalone:
-                {
-                    port = standaloneExporterContainer.getMappedPort(8888);
-                    break;
-                }
-        }
-
-        return baseUrl + ":" + port;
     }
 
     /**
@@ -222,99 +135,56 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
+    /** Method to wait for the Prometheus container to be ready */
+    public void waitForReady() {
+        waitForReady(null, null);
+    }
+
+    /**
+     * Method to wait for the Prometheus container to be ready with credentials
+     *
+     * @param username username
+     * @param password password
+     */
+    public void waitForReady(String username, String password) {
+        long startMilliseconds = System.currentTimeMillis();
+        int maximumRetryCount = 10;
+        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
+
+        for (int i = 0; i < maximumRetryCount; i++) {
+            try {
+                HttpRequest.Builder httpRequestBuilder =
+                        HttpRequest.builder().url(getPrometheusBaseUrl() + "/-/ready");
+
+                if (username != null && password != null) {
+                    httpRequestBuilder.basicAuthentication(username, password);
+                }
+
+                HttpResponse httpResponse = HttpClient.sendRequest(httpRequestBuilder.build());
+
+                if (httpResponse.statusCode() == 200) {
+                    return;
+                } else {
+                    throttle.throttle();
+                }
+            } catch (Exception e) {
+                throttle.throttle();
+            }
+        }
+
+        throw new EnvironmentException(
+                format(
+                        "Prometheus [%s] not ready have after %d milliseconds",
+                        prometheusContainer.getDockerImageName(),
+                        System.currentTimeMillis() - startMilliseconds));
+    }
+
     /** Method to destroy the test environment */
     public void destroy() {
-        if (javaAgentApplicationContainer != null) {
-            javaAgentApplicationContainer.stop();
-            javaAgentApplicationContainer = null;
-        }
-
-        if (standaloneExporterContainer != null) {
-            standaloneExporterContainer.stop();
-            standaloneExporterContainer = null;
-        }
-
-        if (standaloneApplicationContainer != null) {
-            standaloneApplicationContainer.stop();
-            standaloneApplicationContainer = null;
-        }
-
         if (prometheusContainer != null) {
             prometheusContainer.stop();
             prometheusContainer = null;
         }
-    }
-
-    /**
-     * Method to create an application container
-     *
-     * @return the return value
-     */
-    private GenericContainer<?> createJavaAgentApplicationContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/JavaAgent",
-                        "/temp",
-                        BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(TestContainerLogger.getInstance())
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
-                .withStartupTimeout(Duration.ofMillis(60000))
-                .withWorkingDirectory("/temp");
-    }
-
-    /**
-     * Method to create an application container
-     *
-     * @return the return value
-     */
-    private GenericContainer<?> createStandaloneApplicationContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone",
-                        "/temp",
-                        BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(9999)
-                .withLogConsumer(TestContainerLogger.getInstance())
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
-                .withStartupTimeout(Duration.ofMillis(60000))
-                .withWorkingDirectory("/temp");
-    }
-
-    /**
-     * Method to create an exporter container
-     *
-     * @return the return value
-     */
-    private GenericContainer<?> createStandaloneExporterContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forListeningPort())
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone",
-                        "/temp",
-                        BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh exporter.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(TestContainerLogger.getInstance())
-                .withNetwork(network)
-                .withNetworkAliases("exporter")
-                .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
-                .withStartupTimeout(Duration.ofMillis(60000))
-                .withWorkingDirectory("/temp");
     }
 
     /**
@@ -336,10 +206,9 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
             commands.add("--enable-feature=otlp-write-receiver");
         }
 
-        String webYml =
-                "/" + testClass.getName().replace(".", "/") + "/" + jmxExporterMode + "/web.yaml";
+        String webYml = "/" + testClass.getName().replace(".", "/") + "/web.yaml";
 
-        boolean hasWebYaml = hasResource(webYml);
+        boolean hasWebYaml = ResourceSupport.exists(webYml);
 
         if (hasWebYaml) {
             commands.add("--web.config.file=/etc/prometheus/web.yaml");
@@ -348,10 +217,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         GenericContainer<?> genericContainer =
                 new GenericContainer<>(prometheusDockerImage)
                         .withClasspathResourceMapping(
-                                testClass.getName().replace(".", "/")
-                                        + "/"
-                                        + jmxExporterMode
-                                        + "/prometheus.yaml",
+                                testClass.getName().replace(".", "/") + "/prometheus.yaml",
                                 "/etc/prometheus/prometheus.yaml",
                                 BindMode.READ_ONLY)
                         .withWorkingDirectory("/prometheus")
@@ -368,10 +234,10 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                                 })
                         .withNetwork(network)
                         .withNetworkAliases("prometheus")
-                        .withStartupTimeout(Duration.ofMillis(60000))
                         .waitingFor(
                                 Wait.forLogMessage(
-                                        ".*Server is ready to receive web requests.*", 1));
+                                        ".*Server is ready to receive web requests.*", 1))
+                        .withStartupTimeout(Duration.ofMillis(60000));
 
         if (hasWebYaml) {
             genericContainer.withClasspathResourceMapping(
@@ -379,62 +245,5 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         }
 
         return genericContainer;
-    }
-
-    /**
-     * Method to determine if a resource exists
-     *
-     * @param resource resource
-     * @return true if the resource exists, else false
-     */
-    private static boolean hasResource(String resource) {
-        boolean hasResource = false;
-
-        if (!resource.startsWith("/")) {
-            resource = "/" + resource;
-        }
-
-        InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource);
-        if (inputStream != null) {
-            try (BufferedReader bufferedReader =
-                    new BufferedReader(
-                            new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-                String line = bufferedReader.readLine();
-                if (line != null) {
-                    hasResource = true;
-                }
-            } catch (Throwable t) {
-                // INTENTIONALLY BLANK
-            }
-        }
-
-        return hasResource;
-    }
-
-    /**
-     * Method to create a Stream of PrometheusTestEnvironments
-     *
-     * @return a Stream of PrometheusTestEnvironments
-     */
-    public static Stream<PrometheusTestEnvironment> createPrometheusTestEnvironment() {
-        Collection<PrometheusTestEnvironment> prometheusTestEnvironments = new ArrayList<>();
-
-        PrometheusDockerImages.names()
-                .forEach(
-                        prometheusDockerImage ->
-                                JavaDockerImages.names()
-                                        .forEach(
-                                                javaDockerImageName -> {
-                                                    for (JmxExporterMode jmxExporterMode :
-                                                            JmxExporterMode.values()) {
-                                                        prometheusTestEnvironments.add(
-                                                                new PrometheusTestEnvironment(
-                                                                        javaDockerImageName,
-                                                                        prometheusDockerImage,
-                                                                        jmxExporterMode));
-                                                    }
-                                                }));
-
-        return prometheusTestEnvironments.stream();
     }
 }

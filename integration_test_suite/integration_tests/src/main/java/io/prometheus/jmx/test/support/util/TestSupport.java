@@ -16,10 +16,9 @@
 
 package io.prometheus.jmx.test.support.util;
 
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
-import io.prometheus.jmx.test.support.environment.PrometheusTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -85,7 +84,7 @@ public class TestSupport {
     public static void initializeExporterTestEnvironment(
             ArgumentContext argumentContext, Network network, Class<?> testClass) {
         argumentContext
-                .testArgument(ExporterTestEnvironment.class)
+                .testArgument(JmxExporterTestEnvironment.class)
                 .payload()
                 .initialize(testClass, network);
     }
@@ -106,27 +105,12 @@ public class TestSupport {
     }
 
     /**
-     * Initializes the PrometheusTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     * @param network network
-     * @param testClass testClass
-     */
-    public static void initializePrometheusTestEnvironment(
-            ArgumentContext argumentContext, Network network, Class<?> testClass) {
-        argumentContext
-                .testArgument(PrometheusTestEnvironment.class)
-                .payload()
-                .initialize(testClass, network);
-    }
-
-    /**
      * Destroys the ExporterTestEnvironment
      *
      * @param argumentContext argumentContext
      */
     public static void destroyExporterTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(ExporterTestEnvironment.class))
+        Optional.ofNullable(argumentContext.testArgument(JmxExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
                                 exporterTestEnvironmentArgument.payload().destroy());
@@ -142,17 +126,6 @@ public class TestSupport {
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
                                 exporterTestEnvironmentArgument.payload().destroy());
-    }
-
-    /**
-     * Destroys the PrometheusTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     */
-    public static void destroyPrometheusTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(PrometheusTestEnvironment.class))
-                .ifPresent(
-                        prometheusTestEnvironment -> prometheusTestEnvironment.payload().destroy());
     }
 
     /**

@@ -31,7 +31,7 @@ import io.prometheus.jmx.StringValue;
 import io.prometheus.jmx.TabularData;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.environment.ExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -151,7 +151,7 @@ public class LocalTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.HEALTHY;
+        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.HEALTHY;
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -160,7 +160,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
+        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -176,7 +176,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
+        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -198,7 +198,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
+        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -219,7 +219,7 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + ExporterPath.METRICS;
+        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
