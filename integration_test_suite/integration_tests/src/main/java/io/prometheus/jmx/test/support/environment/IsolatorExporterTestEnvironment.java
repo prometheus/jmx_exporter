@@ -56,7 +56,7 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
 
     @Override
     public String getName() {
-        return javaDockerImage + " / IsolatorJavaAgent";
+        return "IsolatorJavaAgent ( " + javaDockerImage + " )";
     }
 
     @Override
