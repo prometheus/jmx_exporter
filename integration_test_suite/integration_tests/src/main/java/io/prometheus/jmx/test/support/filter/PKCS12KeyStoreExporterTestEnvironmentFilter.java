@@ -16,14 +16,14 @@
 
 package io.prometheus.jmx.test.support.filter;
 
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
 /** Class to implement PKCS12KeyStoreExporterContextFilter */
 public class PKCS12KeyStoreExporterTestEnvironmentFilter
-        implements Predicate<ExporterTestEnvironment> {
+        implements Predicate<JmxExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
@@ -42,11 +42,11 @@ public class PKCS12KeyStoreExporterTestEnvironmentFilter
     /**
      * Evaluates this predicate on the given argument.
      *
-     * @param ExporterTestEnvironment the input argument
+     * @param jmxExporterTestEnvironment jmxExporterTestEnvironment
      * @return {@code true} if the input argument matches the predicate, otherwise {@code false}
      */
     @Override
-    public boolean test(ExporterTestEnvironment ExporterTestEnvironment) {
-        return !filteredDockerImages.contains(ExporterTestEnvironment.getJavaDockerImage());
+    public boolean test(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
+        return !filteredDockerImages.contains(jmxExporterTestEnvironment.getJavaDockerImage());
     }
 }

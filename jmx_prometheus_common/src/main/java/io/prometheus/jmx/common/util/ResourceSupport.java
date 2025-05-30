@@ -37,6 +37,28 @@ public class ResourceSupport {
     }
 
     /**
+     * Method to check if a resource exists
+     *
+     * @param resource resource
+     * @return true if the resource exists, false otherwise
+     */
+    public static boolean exists(String resource) {
+        boolean hasResource = false;
+
+        if (!resource.startsWith("/")) {
+            resource = "/" + resource;
+        }
+
+        try (InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource)) {
+            hasResource = inputStream != null;
+        } catch (Throwable t) {
+            // INTENTIONALLY BLANK
+        }
+
+        return hasResource;
+    }
+
+    /**
      * Method to load a resource's content
      *
      * @param resource resource

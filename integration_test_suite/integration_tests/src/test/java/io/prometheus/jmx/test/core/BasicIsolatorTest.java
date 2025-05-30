@@ -21,8 +21,8 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -57,7 +57,7 @@ public class BasicIsolatorTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<IsolatorExporterTestEnvironment> arguments() {
-        return IsolatorExporterTestEnvironment.createMultiExporterTestEnvironments();
+        return IsolatorExporterTestEnvironment.createEnvironments();
     }
 
     @Verifyica.Prepare
@@ -77,7 +77,7 @@ public class BasicIsolatorTest {
     public void testHealthy(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
             throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = isolatorExporterTestEnvironment.getUrl(test, ExporterPath.HEALTHY);
+            String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.HEALTHY);
 
             switch (test) {
                 case LOWER_CASE_TEST:
@@ -95,7 +95,7 @@ public class BasicIsolatorTest {
     public void testDefaultTextMetrics(
             IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = isolatorExporterTestEnvironment.getUrl(test, ExporterPath.METRICS);
+            String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -123,7 +123,7 @@ public class BasicIsolatorTest {
     public void testOpenMetricsTextMetrics(
             IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = isolatorExporterTestEnvironment.getUrl(test, ExporterPath.METRICS);
+            String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse =
                     HttpClient.sendRequest(
@@ -157,7 +157,7 @@ public class BasicIsolatorTest {
     public void testPrometheusTextMetrics(
             IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = isolatorExporterTestEnvironment.getUrl(test, ExporterPath.METRICS);
+            String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse =
                     HttpClient.sendRequest(
@@ -191,7 +191,7 @@ public class BasicIsolatorTest {
     public void testPrometheusProtobufMetrics(
             IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = isolatorExporterTestEnvironment.getUrl(test, ExporterPath.METRICS);
+            String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse =
                     HttpClient.sendRequest(

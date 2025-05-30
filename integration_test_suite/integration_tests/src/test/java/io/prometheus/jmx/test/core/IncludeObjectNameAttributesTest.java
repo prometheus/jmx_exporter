@@ -20,8 +20,8 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -46,8 +46,8 @@ import org.verifyica.api.Verifyica;
 public class IncludeObjectNameAttributesTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironment.createExporterTestEnvironments();
+    public static Stream<JmxExporterTestEnvironment> arguments() {
+        return JmxExporterTestEnvironment.createEnvironments();
     }
 
     @Verifyica.Prepare
@@ -64,8 +64,9 @@ public class IncludeObjectNameAttributesTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
+            throws IOException {
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -73,9 +74,9 @@ public class IncludeObjectNameAttributesTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -83,9 +84,9 @@ public class IncludeObjectNameAttributesTest {
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -97,9 +98,9 @@ public class IncludeObjectNameAttributesTest {
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -111,9 +112,9 @@ public class IncludeObjectNameAttributesTest {
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(

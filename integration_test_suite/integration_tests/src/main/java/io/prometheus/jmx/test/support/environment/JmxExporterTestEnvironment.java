@@ -21,6 +21,7 @@ import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -29,10 +30,11 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.verifyica.api.Argument;
 
 /** Class to implement ExporterTestEnvironment */
-public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment> {
+public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvironment> {
 
     private static final String BASE_URL = "http://localhost";
 
+    private final String id;
     private final String javaDockerImage;
     private final JmxExporterMode jmxExporterMode;
 
@@ -49,7 +51,8 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      * @param javaDockerImage javaDockerImage
      * @param jmxExporterMode jmxExporterMode
      */
-    public ExporterTestEnvironment(String javaDockerImage, JmxExporterMode jmxExporterMode) {
+    public JmxExporterTestEnvironment(String javaDockerImage, JmxExporterMode jmxExporterMode) {
+        this.id = UUID.randomUUID().toString();
         this.javaDockerImage = javaDockerImage;
         this.jmxExporterMode = jmxExporterMode;
         this.baseUrl = BASE_URL;
@@ -57,12 +60,21 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
 
     @Override
     public String getName() {
-        return javaDockerImage + " / " + jmxExporterMode;
+        return jmxExporterMode + " ( " + javaDockerImage + " )";
     }
 
     @Override
-    public ExporterTestEnvironment getPayload() {
+    public JmxExporterTestEnvironment getPayload() {
         return this;
+    }
+
+    /**
+     * Method to get the ID of the ExporterTestEnvironment
+     *
+     * @return the ID of the ExporterTestEnvironment
+     */
+    public String getId() {
+        return id;
     }
 
     /**
@@ -71,7 +83,7 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      * @param baseUrl baseUrl
      * @return the ExporterTestEnvironment
      */
-    public ExporterTestEnvironment setBaseUrl(String baseUrl) {
+    public JmxExporterTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
         return this;
     }
@@ -252,15 +264,15 @@ public class ExporterTestEnvironment implements Argument<ExporterTestEnvironment
      *
      * @return a Stream of ExporterTestEnvironments
      */
-    public static Stream<ExporterTestEnvironment> createExporterTestEnvironments() {
-        Collection<ExporterTestEnvironment> collection = new ArrayList<>();
+    public static Stream<JmxExporterTestEnvironment> createEnvironments() {
+        Collection<JmxExporterTestEnvironment> collection = new ArrayList<>();
 
         JavaDockerImages.names()
                 .forEach(
                         dockerImageName -> {
                             for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
                                 collection.add(
-                                        new ExporterTestEnvironment(
+                                        new JmxExporterTestEnvironment(
                                                 dockerImageName, jmxExporterMode));
                             }
                         });

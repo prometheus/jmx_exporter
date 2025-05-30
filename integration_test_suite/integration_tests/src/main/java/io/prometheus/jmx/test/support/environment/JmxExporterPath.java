@@ -17,7 +17,7 @@
 package io.prometheus.jmx.test.support.environment;
 
 /** Class to implement ExporterPath */
-public class ExporterPath {
+public class JmxExporterPath {
 
     /** Healthy exporter path */
     public static final String HEALTHY = "/-/healthy";
@@ -26,7 +26,7 @@ public class ExporterPath {
     public static final String METRICS = "/metrics";
 
     /** Constructor */
-    private ExporterPath() {
+    private JmxExporterPath() {
         // INTENTIONALLY BLANK
     }
 }

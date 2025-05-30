@@ -111,7 +111,7 @@ public class HttpRequest {
         private String body;
 
         /** Constructor */
-        public Builder() {
+        private Builder() {
             // INTENTIONALLY BLANK
         }
 

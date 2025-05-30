@@ -21,8 +21,10 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.environment.PrometheusTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -47,35 +49,49 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
 /** Class to implement CombinedModeTest */
 public class CombinedModeTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<PrometheusTestEnvironment> arguments() {
-        return PrometheusTestEnvironment.createPrometheusTestEnvironment();
-    }
+    private static final String NETWORK = "network";
 
-    @Verifyica.Prepare
-    public static void prepare(ClassContext classContext) {
-        TestSupport.getOrCreateNetwork(classContext);
+    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
+    public static Stream<OpenTelemetryTestEnvironment> arguments() {
+        return OpenTelemetryTestEnvironment.createEnvironments();
     }
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
         Class<?> testClass = argumentContext.classContext().testClass();
-        Network network = TestSupport.getOrCreateNetwork(argumentContext);
-        TestSupport.initializePrometheusTestEnvironment(argumentContext, network, testClass);
+
+        Network network = Network.newNetwork();
+        network.getId();
+
+        argumentContext.map().put(NETWORK, network);
+
+        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
+                argumentContext.testArgument().payload(OpenTelemetryTestEnvironment.class);
+
+        PrometheusTestEnvironment prometheusTestEnvironment =
+                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        prometheusTestEnvironment.initialize(testClass, network);
+        prometheusTestEnvironment.waitForReady();
+
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+        jmxExporterTestEnvironment.initialize(testClass, network);
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(PrometheusTestEnvironment prometheusTestEnvironment)
+    public void testHealthy(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
             throws IOException {
-        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.HEALTHY);
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -84,20 +100,26 @@ public class CombinedModeTest {
 
     @Verifyica.Test
     @Verifyica.Order(2)
-    public void testDefaultTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
+    public void testDefaultTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
             throws IOException {
-        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(prometheusTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
     @Verifyica.Order(3)
-    public void testOpenMetricsTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
-            throws IOException {
-        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+    public void testOpenMetricsTextMetrics(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -106,16 +128,19 @@ public class CombinedModeTest {
                         MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                prometheusTestEnvironment,
+                jmxExporterTestEnvironment,
                 httpResponse,
                 MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     @Verifyica.Order(4)
-    public void testPrometheusTextMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
+    public void testPrometheusTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
             throws IOException {
-        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -124,16 +149,19 @@ public class CombinedModeTest {
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                prometheusTestEnvironment,
+                jmxExporterTestEnvironment,
                 httpResponse,
                 MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
     @Verifyica.Order(5)
-    public void testPrometheusProtobufMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
-            throws IOException {
-        String url = prometheusTestEnvironment.getExporterUrl(ExporterPath.METRICS);
+    public void testPrometheusProtobufMetrics(
+            OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -142,7 +170,7 @@ public class CombinedModeTest {
                         MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
         assertMetricsResponse(
-                prometheusTestEnvironment,
+                jmxExporterTestEnvironment,
                 httpResponse,
                 MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
@@ -150,10 +178,16 @@ public class CombinedModeTest {
     /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
     @Verifyica.Order(6)
-    public void testPrometheusHasMetrics(PrometheusTestEnvironment prometheusTestEnvironment)
+    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
             throws IOException {
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        PrometheusTestEnvironment prometheusTestEnvironment =
+                openTelemetryTestEnvironment.prometheusTestEnvironment();
+
         boolean isJmxExporterModeJavaStandalone =
-                prometheusTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
 
         for (String metricName :
                 ExpectedMetricsNames.getMetricsNames().stream()
@@ -172,21 +206,36 @@ public class CombinedModeTest {
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
+        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
+                argumentContext.testArgument().payload(OpenTelemetryTestEnvironment.class);
+
+        JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                openTelemetryTestEnvironment.exporterTestEnvironment();
+
+        PrometheusTestEnvironment prometheusTestEnvironment =
+                openTelemetryTestEnvironment.prometheusTestEnvironment();
+
+        Network network = argumentContext.map().getAs(NETWORK);
+
         List<Trap> traps = new ArrayList<>();
 
-        traps.add(new Trap(() -> TestSupport.destroyPrometheusTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
+        if (jmxExporterTestEnvironment != null) {
+            traps.add(new Trap(jmxExporterTestEnvironment::destroy));
+        }
+
+        if (prometheusTestEnvironment != null) {
+            traps.add(new Trap(prometheusTestEnvironment::destroy));
+        }
+
+        if (network != null) {
+            traps.add(new Trap(network::close));
+        }
 
         Trap.assertEmpty(traps);
     }
 
-    @Verifyica.Conclude
-    public static void conclude(ClassContext classContext) throws Throwable {
-        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
-    }
-
     private void assertMetricsResponse(
-            PrometheusTestEnvironment prometheusTestEnvironment,
+            JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
@@ -211,10 +260,10 @@ public class CombinedModeTest {
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
-                prometheusTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                TestSupport.getBuildInfoName(prometheusTestEnvironment.getJmxExporterMode());
+                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -342,7 +391,7 @@ public class CombinedModeTest {
     }
 
     /**
-     * Method to send a Http GET request
+     * Method to send an Http GET request
      *
      * @param prometheusTestEnvironment prometheusTestEnvironment
      * @param path path

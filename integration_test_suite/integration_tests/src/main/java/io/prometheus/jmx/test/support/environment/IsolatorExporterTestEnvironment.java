@@ -21,6 +21,7 @@ import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -34,6 +35,7 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
     private static final String BASE_URL = "http://localhost";
     private static final int BASE_PORT = 8888;
 
+    private final String id;
     private final String javaDockerImage;
 
     private Class<?> testClass;
@@ -47,18 +49,28 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
      * @param javaDockerImage javaDockerImage
      */
     public IsolatorExporterTestEnvironment(String javaDockerImage) {
+        this.id = UUID.randomUUID().toString();
         this.javaDockerImage = javaDockerImage;
         this.baseUrl = BASE_URL;
     }
 
     @Override
     public String getName() {
-        return javaDockerImage + " / IsolatorJavaAgent";
+        return "IsolatorJavaAgent ( " + javaDockerImage + " )";
     }
 
     @Override
     public IsolatorExporterTestEnvironment getPayload() {
         return this;
+    }
+
+    /**
+     * Method to get the ID of the test environment
+     *
+     * @return the ID of the test environment
+     */
+    public String getId() {
+        return id;
     }
 
     /**
@@ -153,7 +165,7 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
      *
      * @return a Stream of MultiExporterTestEnvironments
      */
-    public static Stream<IsolatorExporterTestEnvironment> createMultiExporterTestEnvironments() {
+    public static Stream<IsolatorExporterTestEnvironment> createEnvironments() {
         Collection<IsolatorExporterTestEnvironment> collection = new ArrayList<>();
 
         JavaDockerImages.names()

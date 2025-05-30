@@ -21,9 +21,9 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -49,8 +49,8 @@ import org.verifyica.api.Verifyica;
 public class BasicTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironment.createExporterTestEnvironments();
+    public static Stream<JmxExporterTestEnvironment> arguments() {
+        return JmxExporterTestEnvironment.createEnvironments();
     }
 
     @Verifyica.Prepare
@@ -67,8 +67,9 @@ public class BasicTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
+            throws IOException {
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -76,19 +77,19 @@ public class BasicTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-        assertMetricsResponse(exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -97,15 +98,15 @@ public class BasicTest {
                         MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 httpResponse,
                 MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -114,13 +115,15 @@ public class BasicTest {
                         MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(
-                exporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
                 HttpClient.sendRequest(
@@ -129,7 +132,7 @@ public class BasicTest {
                         MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
         assertMetricsResponse(
-                exporterTestEnvironment,
+                jmxExporterTestEnvironment,
                 httpResponse,
                 MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
@@ -150,7 +153,7 @@ public class BasicTest {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment,
+            JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
@@ -175,10 +178,10 @@ public class BasicTest {
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
-                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
+                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -273,7 +276,7 @@ public class BasicTest {
 
         // Validate JVM metrics are present when using Java Agent mode
 
-        if (exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent) {
+        if (jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent) {
             boolean hasJvmMetrics = false;
 
             for (String metricName : metrics.keySet()) {

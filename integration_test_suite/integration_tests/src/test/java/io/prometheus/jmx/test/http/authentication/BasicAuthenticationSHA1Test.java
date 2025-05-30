@@ -20,9 +20,9 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.prometheus.jmx.test.support.environment.ExporterPath;
-import io.prometheus.jmx.test.support.environment.ExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
@@ -56,8 +56,8 @@ public class BasicAuthenticationSHA1Test {
             new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<ExporterTestEnvironment> arguments() {
-        return ExporterTestEnvironment.createExporterTestEnvironments();
+    public static Stream<JmxExporterTestEnvironment> arguments() {
+        return JmxExporterTestEnvironment.createEnvironments();
     }
 
     @Verifyica.Prepare
@@ -74,8 +74,9 @@ public class BasicAuthenticationSHA1Test {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(ExporterTestEnvironment exporterTestEnvironment) throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.HEALTHY);
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
+            throws IOException {
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -99,9 +100,9 @@ public class BasicAuthenticationSHA1Test {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -123,16 +124,16 @@ public class BasicAuthenticationSHA1Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            exporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
                 }
             }
         }
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -157,7 +158,7 @@ public class BasicAuthenticationSHA1Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.OPEN_METRICS_TEXT_METRICS);
                 }
@@ -166,9 +167,9 @@ public class BasicAuthenticationSHA1Test {
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -193,7 +194,7 @@ public class BasicAuthenticationSHA1Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.PROMETHEUS_TEXT_METRICS);
                 }
@@ -202,9 +203,9 @@ public class BasicAuthenticationSHA1Test {
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(ExporterTestEnvironment exporterTestEnvironment)
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
             throws IOException {
-        String url = exporterTestEnvironment.getUrl(ExporterPath.METRICS);
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
@@ -229,7 +230,7 @@ public class BasicAuthenticationSHA1Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            exporterTestEnvironment,
+                            jmxExporterTestEnvironment,
                             httpResponse,
                             MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
                 }
@@ -253,7 +254,7 @@ public class BasicAuthenticationSHA1Test {
     }
 
     private void assertMetricsResponse(
-            ExporterTestEnvironment exporterTestEnvironment,
+            JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
@@ -261,10 +262,10 @@ public class BasicAuthenticationSHA1Test {
         Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
 
         boolean isJmxExporterModeJavaAgent =
-                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
         String buildInfoName =
-                TestSupport.getBuildInfoName(exporterTestEnvironment.getJmxExporterMode());
+                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
