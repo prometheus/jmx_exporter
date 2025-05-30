@@ -9,7 +9,7 @@
       "groupName": "Maven wrapper pinned to 3.9.6"
     },
     {
-      "matchPackageNames": ["jmx_example_application"],
+      "matchPackageNames": ["io.prometheus.jmx:jmx_example_application"],
       "enabled": false
     }
   ]
