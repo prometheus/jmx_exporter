@@ -11,6 +11,11 @@
     {
       "matchPackageNames": ["io.prometheus.jmx:jmx_example_application"],
       "enabled": false
+    },
+    {
+      "matchManagers": ["maven"],
+      "groupName": "Maven dependencies"
     }
   ]
 }
+
