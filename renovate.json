@@ -4,11 +4,6 @@
   "dependencyDashboard": false,
   "packageRules": [
     {
-      "matchManagers": ["maven"],
-      "allowedVersions": "3.9.6",
-      "groupName": "Maven dependencies pinned to 3.9.6"
-    },
-    {
       "matchManagers": ["maven-wrapper"],
       "allowedVersions": "3.9.6",
       "groupName": "Maven wrapper pinned to 3.9.6"
