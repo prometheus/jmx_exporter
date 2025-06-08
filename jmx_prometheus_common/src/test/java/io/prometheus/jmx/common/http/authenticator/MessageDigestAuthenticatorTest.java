@@ -16,14 +16,14 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 
@@ -43,7 +43,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
                             VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
                     boolean actualIsAuthenticated =
                             messageDigestAuthenticator.checkCredentials(username, password);
-                    assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
+                    assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
                 }
             }
         }
@@ -65,7 +65,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
                             VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
                     boolean actualIsAuthenticated =
                             messageDigestAuthenticator.checkCredentials(username, password);
-                    assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
+                    assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
                 }
             }
         }

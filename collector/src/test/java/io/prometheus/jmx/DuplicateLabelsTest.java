@@ -16,8 +16,7 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import io.prometheus.metrics.model.snapshots.DuplicateLabelsException;
 import io.prometheus.metrics.model.snapshots.Labels;
@@ -25,14 +24,14 @@ import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class DuplicateLabels {
+public class DuplicateLabelsTest {
 
     Map<String, UnknownSnapshot.Builder> unknownMap;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         unknownMap = new HashMap<>();
     }
@@ -71,18 +70,14 @@ public class DuplicateLabels {
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
 
-        Exception exception =
-                assertThrows(
-                        DuplicateLabelsException.class,
+        assertThatExceptionOfType(DuplicateLabelsException.class)
+                .isThrownBy(
                         () -> {
                             for (UnknownSnapshot.Builder unknown : unknownMap.values()) {
                                 UnknownSnapshot unknownSnapshot = unknown.build();
                                 result.metricSnapshot(unknownSnapshot);
                             }
-                        });
-
-        assertEquals(
-                "Duplicate labels for metric \"test_metric\": {label1=\"value1\"}",
-                exception.getMessage());
+                        })
+                .withMessage("Duplicate labels for metric \"test_metric\": {label1=\"value1\"}");
     }
 }
