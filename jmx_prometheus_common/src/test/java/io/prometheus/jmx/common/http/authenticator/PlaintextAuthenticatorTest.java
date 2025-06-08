@@ -16,7 +16,7 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
@@ -35,7 +35,7 @@ public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
                         VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
                 boolean actualIsAuthenticated =
                         plainTextAuthenticator.checkCredentials(username, password);
-                assertEquals(expectedIsAuthenticated, actualIsAuthenticated);
+                assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
             }
         }
     }

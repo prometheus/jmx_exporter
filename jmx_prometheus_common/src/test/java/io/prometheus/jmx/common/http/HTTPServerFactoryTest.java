@@ -16,8 +16,8 @@
 
 package io.prometheus.jmx.common.http;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import io.prometheus.jmx.common.ConfigurationException;
 import io.prometheus.jmx.common.HTTPServerFactory;
@@ -30,8 +30,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -124,7 +122,7 @@ public class HTTPServerFactoryTest {
             if (read > 0) {
                 actualResponse = new String(resp, 0, read);
             }
-            assertTrue(actualResponse.contains(expectedResponseSubString));
+            assertThat(actualResponse).contains(expectedResponseSubString);
         }
     }
 
@@ -140,7 +138,8 @@ public class HTTPServerFactoryTest {
                 "      class:" + " io.prometheus.jmx.common.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThrows(ConfigurationException.class, () -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
@@ -154,7 +153,8 @@ public class HTTPServerFactoryTest {
                 "      class:" + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThrows(ConfigurationException.class, () -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
@@ -168,7 +168,8 @@ public class HTTPServerFactoryTest {
         writer.println("       class: 10");
         writer.close();
 
-        assertThrows(ConfigurationException.class, () -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
@@ -182,7 +183,8 @@ public class HTTPServerFactoryTest {
         writer.println("      class:");
         writer.close();
 
-        assertThrows(ConfigurationException.class, () -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config));
     }
 
     private HTTPServer startServer(File config) throws IOException {

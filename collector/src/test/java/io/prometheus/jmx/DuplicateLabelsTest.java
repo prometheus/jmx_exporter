@@ -16,8 +16,7 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import io.prometheus.metrics.model.snapshots.DuplicateLabelsException;
 import io.prometheus.metrics.model.snapshots.Labels;
@@ -71,18 +70,14 @@ public class DuplicateLabelsTest {
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
 
-        Exception exception =
-                assertThrows(
-                        DuplicateLabelsException.class,
+        assertThatExceptionOfType(DuplicateLabelsException.class)
+                .isThrownBy(
                         () -> {
                             for (UnknownSnapshot.Builder unknown : unknownMap.values()) {
                                 UnknownSnapshot unknownSnapshot = unknown.build();
                                 result.metricSnapshot(unknownSnapshot);
                             }
-                        });
-
-        assertEquals(
-                "Duplicate labels for metric \"test_metric\": {label1=\"value1\"}",
-                exception.getMessage());
+                        })
+                .withMessage("Duplicate labels for metric \"test_metric\": {label1=\"value1\"}");
     }
 }

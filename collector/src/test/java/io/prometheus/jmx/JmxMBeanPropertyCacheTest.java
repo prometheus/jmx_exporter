@@ -16,9 +16,7 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -132,7 +130,7 @@ public class JmxMBeanPropertyCacheTest {
                 testCache.getKeyPropertyList(testObjectName);
         LinkedHashMap<String, String> parameterListSecond =
                 testCache.getKeyPropertyList(testObjectName);
-        assertEquals(parameterListFirst, parameterListSecond);
+        assertThat(parameterListFirst).isEqualTo(parameterListSecond);
     }
 
     @Test
@@ -141,14 +139,12 @@ public class JmxMBeanPropertyCacheTest {
         ObjectName testObjectName = new ObjectName("com.organisation:name=value");
         LinkedHashMap<String, String> parameterListFirst =
                 testCache.getKeyPropertyList(testObjectName);
-        assertNotNull(parameterListFirst);
+        assertThat(parameterListFirst).isNotNull();
         testCache.onlyKeepMBeans(Collections.<ObjectName>emptySet());
-        assertEquals(
-                Collections.<ObjectName, LinkedHashMap<String, String>>emptyMap(),
-                testCache.getKeyPropertiesPerBean());
+        assertThat(testCache.getKeyPropertiesPerBean()).isEmpty();
         LinkedHashMap<String, String> parameterListSecond =
                 testCache.getKeyPropertyList(testObjectName);
-        assertNotNull(parameterListSecond);
+        assertThat(parameterListSecond).isNotNull();
     }
 
     @Test
@@ -164,9 +160,9 @@ public class JmxMBeanPropertyCacheTest {
         keepSet.add(mBean2);
         keepSet.add(mBean3);
         testCache.onlyKeepMBeans(keepSet);
-        assertEquals(2, testCache.getKeyPropertiesPerBean().size());
-        assertTrue(testCache.getKeyPropertiesPerBean().containsKey(mBean2));
-        assertTrue(testCache.getKeyPropertiesPerBean().containsKey(mBean3));
+        assertThat(testCache.getKeyPropertiesPerBean().size()).isEqualTo(2);
+        assertThat(testCache.getKeyPropertiesPerBean()).containsKey(mBean2);
+        assertThat(testCache.getKeyPropertiesPerBean()).containsKey(mBean3);
     }
 
     @Test
@@ -174,7 +170,7 @@ public class JmxMBeanPropertyCacheTest {
         JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
         testCache.onlyKeepMBeans(Collections.emptySet());
         testCache.onlyKeepMBeans(Collections.emptySet());
-        assertEquals(0, testCache.getKeyPropertiesPerBean().size());
+        assertThat(testCache.getKeyPropertiesPerBean()).isEmpty();
     }
 
     private void assertSameElementsAndOrder(LinkedHashMap<?, ?> actual, Object... expected) {
@@ -185,6 +181,6 @@ public class JmxMBeanPropertyCacheTest {
             expectedList.add(
                     new AbstractMap.SimpleImmutableEntry<>(expected[i * 2], expected[i * 2 + 1]));
         }
-        assertEquals(expectedList, actualList);
+        assertThat(actualList).isEqualTo(expectedList);
     }
 }

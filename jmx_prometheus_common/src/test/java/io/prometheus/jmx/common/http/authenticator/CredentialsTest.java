@@ -16,8 +16,7 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.prometheus.jmx.common.authenticator.Credentials;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ public class CredentialsTest {
         Credentials credentials1 = new Credentials(username, password);
         Credentials credentials2 = new Credentials(username, password);
 
-        assertEquals(credentials1, credentials2);
+        assertThat(credentials1).isEqualTo(credentials2);
     }
 
     @Test
@@ -43,6 +42,6 @@ public class CredentialsTest {
         Credentials credentials1 = new Credentials(username, password);
         Credentials credentials2 = new Credentials(username, password + "X");
 
-        assertNotEquals(credentials1, credentials2);
+        assertThat(credentials1).isNotEqualTo(credentials2);
     }
 }

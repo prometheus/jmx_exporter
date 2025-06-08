@@ -16,8 +16,7 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
@@ -62,32 +61,38 @@ public class TomcatPatternCheckTest {
 
     @Test
     public void testSerlvetName() {
-        assertTrue(validateServletName("C"));
-        assertTrue(validateServletName("Cc"));
-        assertTrue(validateServletName("C$c"));
-        assertTrue(validateServletName("C9"));
-        assertTrue(validateServletName("host-manager"));
-        assertTrue(validateServletName("a.C"));
-        assertTrue(validateServletName(".C"));
-        assertTrue(validateServletName("prom_app_metrics"));
+        assertThat(validateServletName("C")).isTrue();
+        assertThat(validateServletName("Cc")).isTrue();
+        assertThat(validateServletName("C$c")).isTrue();
+        assertThat(validateServletName("C9")).isTrue();
+        assertThat(validateServletName("host-manager")).isTrue();
+        assertThat(validateServletName("a.C")).isTrue();
+        assertThat(validateServletName(".C")).isTrue();
+        assertThat(validateServletName("prom_app_metrics")).isTrue();
     }
 
     @Test
     public void validateTomcatPath() {
-        assertTrue(validateTomcatPath("//localhost/"));
-        assertTrue(validateTomcatPath("//localhost/docs/"));
-        assertTrue(validateTomcatPath("//www.example.com/prom-metric/"));
-        assertTrue(validateTomcatPath("//www.example.com/prom_metric+tomcat/"));
+        assertThat(validateTomcatPath("//localhost/")).isTrue();
+        assertThat(validateTomcatPath("//localhost/docs/")).isTrue();
+        assertThat(validateTomcatPath("//www.example.com/prom-metric/")).isTrue();
+        assertThat(validateTomcatPath("//www.example.com/prom_metric+tomcat/")).isTrue();
         // no tomcat path, but a validate url?
-        assertTrue(validateTomcatPath("//www.example.com:443;jsessionid=sajakjda/prom-metric/"));
-        assertFalse(validateTomcatPath("//localhost/$docs/"), "cannot include $");
-        assertFalse(validateTomcatPath("//localhost/docs()/"), "cannot include ()");
+        assertThat(validateTomcatPath("//www.example.com:443;jsessionid=sajakjda/prom-metric/"))
+                .isTrue();
+        assertThat(validateTomcatPath("//localhost/$docs/"))
+                .withFailMessage("cannot include $")
+                .isFalse();
+        assertThat(validateTomcatPath("//localhost/docs()/"))
+                .withFailMessage("cannot include ()")
+                .isFalse();
     }
 
     @Test
     public void testWebModule() {
-        assertTrue(
-                validateWebModule(
-                        "Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none"));
+        assertThat(
+                        validateWebModule(
+                                "Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none"))
+                .isTrue();
     }
 }
