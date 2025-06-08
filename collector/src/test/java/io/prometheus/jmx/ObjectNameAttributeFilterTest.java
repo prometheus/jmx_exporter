@@ -16,9 +16,9 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -75,7 +75,7 @@ public class ObjectNameAttributeFilterTest {
 
         boolean result = filter.exclude(new ObjectName("java.lang:type=Runtime"), "ClassPath");
 
-        assertTrue("java.lang:type=Runtime<>ClassPath should be excluded by config", result);
+        assertTrue(result, "java.lang:type=Runtime<>ClassPath should be excluded by config");
     }
 
     @Test
@@ -85,7 +85,7 @@ public class ObjectNameAttributeFilterTest {
 
         boolean result = filter.exclude(new ObjectName("boolean:Type=Test"), "Value");
 
-        assertTrue("boolean:Type=Test<>Value should be excluded dynamically", result);
+        assertTrue(result, "boolean:Type=Test<>Value should be excluded dynamically");
     }
 
     @Test
@@ -104,16 +104,17 @@ public class ObjectNameAttributeFilterTest {
         ObjectName unregisteredObjectName = iterator.next();
         iterator.remove();
         filter.onlyKeepMBeans(aliveMBeans);
-        assertEquals("onlyKeepMBeans should shrink the map", size - 1, dynamicMap.size());
+        assertEquals(size - 1, dynamicMap.size(), "onlyKeepMBeans should shrink the map");
         for (ObjectName objectName : aliveMBeans) {
             assertTrue(
-                    objectName
-                            + "<>Value should still be excluded dynamically after onlyKeepMBeans",
-                    filter.exclude(objectName, "Value"));
+                    filter.exclude(objectName, "Value"),
+                    objectName + "<>Value should still be excluded dynamically after onlyKeepMBeans"
+            );
         }
         assertFalse(
-                unregisteredObjectName + "<>Value should not be excluded dynamically before add",
-                filter.exclude(unregisteredObjectName, "Value"));
+                filter.exclude(unregisteredObjectName, "Value"),
+                unregisteredObjectName + "<>Value should not be excluded dynamically before add"
+        );
     }
 
     @Test
@@ -130,24 +131,24 @@ public class ObjectNameAttributeFilterTest {
         Map<ObjectName, Set<String>> dynamicExcludeObjectNameAttributesMap =
                 getInternalMapValue(objectNameAttributeFilter, DYNAMIC_EXCLUDE_MAP_FIELD);
         assertEquals(
-                "configExcludeObjectNameAttributesMap should be left untouched after"
-                        + " onlyKeepMBeans(emptyList())",
                 2,
-                configExcludeObjectNameAttributesMap.size());
+                configExcludeObjectNameAttributesMap.size(),
+                "configExcludeObjectNameAttributesMap should be left untouched after onlyKeepMBeans(emptyList())"
+        );
         assertEquals(
-                "dynamicExcludeObjectNameAttributesMap should be empty after"
-                        + " onlyKeepMBeans(emptyList())",
                 0,
-                dynamicExcludeObjectNameAttributesMap.size());
+                dynamicExcludeObjectNameAttributesMap.size(),
+                "dynamicExcludeObjectNameAttributesMap should be empty after onlyKeepMBeans(emptyList())"
+        );
         assertTrue(
-                "java.lang:type=Runtime<>ClassPath should be excluded by config and not removed by"
-                        + " onlyKeepMBeans",
-                objectNameAttributeFilter.exclude(
-                        new ObjectName("java.lang:type=Runtime"), "ClassPath"));
+                objectNameAttributeFilter.exclude(new ObjectName("java.lang:type=Runtime"), "ClassPath"),
+                "java.lang:type=Runtime<>ClassPath should be excluded by config and not removed by onlyKeepMBeans"
+        );
         for (ObjectName objectName : aliveMBeans) {
             assertFalse(
-                    objectName + "<>Value should not be excluded dynamically before call to add",
-                    objectNameAttributeFilter.exclude(objectName, "Value"));
+                    objectNameAttributeFilter.exclude(objectName, "Value"),
+                    "java.lang:type=Runtime<>ClassPath should be excluded by config and not removed by onlyKeepMBeans"
+            );
         }
     }
 
@@ -157,7 +158,7 @@ public class ObjectNameAttributeFilterTest {
 
         boolean result = filter.include(new ObjectName("java.lang:type=Threading"), "ThreadCount");
 
-        assertTrue("java.lang:type=Threading<>ThreadCount should be included by config", result);
+        assertTrue(result, "java.lang:type=Threading<>ThreadCount should be included by config");
     }
 
     private static ObjectNameAttributeFilter initEmptyConfigFilter() {

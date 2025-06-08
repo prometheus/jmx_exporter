@@ -16,11 +16,11 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.regex.Pattern;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Check tomcat path
@@ -80,8 +80,8 @@ public class TomcatPatternCheckTest {
         assertTrue(validateTomcatPath("//www.example.com/prom_metric+tomcat/"));
         // no tomcat path, but a validate url?
         assertTrue(validateTomcatPath("//www.example.com:443;jsessionid=sajakjda/prom-metric/"));
-        assertFalse("cannot include $", validateTomcatPath("//localhost/$docs/"));
-        assertFalse("cannot include ()", validateTomcatPath("//localhost/docs()/"));
+        assertFalse(validateTomcatPath("//localhost/$docs/"), "cannot include $");
+        assertFalse(validateTomcatPath("//localhost/docs()/"), "cannot include ()");
     }
 
     @Test

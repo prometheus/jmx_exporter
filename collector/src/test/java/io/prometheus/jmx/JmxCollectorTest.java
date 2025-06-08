@@ -16,25 +16,26 @@
 
 package io.prometheus.jmx;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.lang.management.ManagementFactory;
 import java.util.logging.LogManager;
 import javax.management.MBeanServer;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class JmxCollectorTest {
 
     private PrometheusRegistry prometheusRegistry;
     private PrometheusRegistryUtils prometheusRegistryUtils;
 
-    @BeforeClass
+    @BeforeAll
     public static void classSetUp() throws Exception {
         LogManager.getLogManager()
                 .readConfiguration(
@@ -60,25 +61,25 @@ public class JmxCollectorTest {
         StringValue.registerBean(mbs);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         prometheusRegistry = new PrometheusRegistry();
         prometheusRegistryUtils = new PrometheusRegistryUtils(prometheusRegistry);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testRulesMustHaveNameWithHelp() throws Exception {
-        JmxCollector jc = new JmxCollector("---\nrules:\n- help: foo");
+    @Test
+    public void testRulesMustHaveNameWithHelp() {
+        assertThrows(IllegalArgumentException.class, () -> new JmxCollector("---\nrules:\n- help: foo"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testRulesMustHaveNameWithLabels() throws Exception {
-        JmxCollector jc = new JmxCollector("---\nrules:\n- labels: {}");
+    @Test
+    public void testRulesMustHaveNameWithLabels() {
+        assertThrows(IllegalArgumentException.class, () -> new JmxCollector("---\nrules:\n- labels: {}"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testRulesMustHavePatternWithName() throws Exception {
-        JmxCollector jc = new JmxCollector("---\nrules:\n- name: foo");
+    @Test
+    public void testRulesMustHavePatternWithName() {
+        assertThrows(IllegalArgumentException.class, () -> new JmxCollector("---\nrules:\n- name: foo"));
     }
 
     @Test
@@ -593,12 +594,11 @@ public class JmxCollectorTest {
         assertEquals(1.0, getSampleValue("bean_running", new String[] {}, new String[] {}), .001);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testDelayedStartNotReady() throws Exception {
         JmxCollector jc =
                 new JmxCollector("---\nstartDelaySeconds: 1").register(prometheusRegistry);
-        assertNull(getSampleValue("boolean_Test_True", new String[] {}, new String[] {}));
-        fail();
+        assertThrows(IllegalStateException.class, () -> getSampleValue("boolean_Test_True", new String[] {}, new String[] {}));
     }
 
     @Test

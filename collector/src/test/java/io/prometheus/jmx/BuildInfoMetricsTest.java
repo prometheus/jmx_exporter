@@ -24,12 +24,12 @@ import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BuildInfoMetricsTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         new BuildInfoMetrics().register();
     }
