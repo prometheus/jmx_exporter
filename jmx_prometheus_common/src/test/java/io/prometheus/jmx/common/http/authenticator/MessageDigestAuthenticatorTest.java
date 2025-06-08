@@ -16,14 +16,14 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
 

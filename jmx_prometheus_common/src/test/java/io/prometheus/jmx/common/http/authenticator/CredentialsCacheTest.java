@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.prometheus.jmx.common.authenticator.Credentials;
 import io.prometheus.jmx.common.authenticator.CredentialsCache;
 import java.nio.charset.StandardCharsets;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CredentialsCacheTest {
 

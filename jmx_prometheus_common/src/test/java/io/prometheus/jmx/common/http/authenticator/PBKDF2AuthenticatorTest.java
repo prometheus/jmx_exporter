@@ -16,10 +16,10 @@
 
 package io.prometheus.jmx.common.http.authenticator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
 

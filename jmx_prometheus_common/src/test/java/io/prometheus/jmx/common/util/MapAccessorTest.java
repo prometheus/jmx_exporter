@@ -17,11 +17,12 @@
 package io.prometheus.jmx.common.util;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,15 +30,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unchecked")
 public class MapAccessorTest {
 
     private MapAccessor mapAccessor;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         mapAccessor =
                 MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
@@ -64,38 +65,38 @@ public class MapAccessorTest {
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/httpServer");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/httpServer/authentication");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/httpServer/authentication/basic");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/httpServer/authentication/basic/username");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof String);
+        assertInstanceOf(String.class, optional.get());
         assertEquals("Prometheus", optional.get());
 
         optional = mapAccessor.get("/httpServer/authentication/basic/password");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof String);
+        assertInstanceOf(String.class, optional.get());
         assertEquals(
                 "c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9", optional.get());
 
@@ -103,34 +104,34 @@ public class MapAccessorTest {
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/httpServer/threads/minimum");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Integer);
+        assertInstanceOf(Integer.class, optional.get());
         assertEquals(1, ((Integer) optional.get()).intValue());
 
         optional = mapAccessor.get("/httpServer/threads/maximum");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Integer);
+        assertInstanceOf(Integer.class, optional.get());
         assertEquals(10, ((Integer) optional.get()).intValue());
 
         optional = mapAccessor.get("/httpServer/threads/keepAlive");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Integer);
+        assertInstanceOf(Integer.class, optional.get());
         assertEquals(120, ((Integer) optional.get()).intValue());
 
         optional = mapAccessor.get("/key");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/key/subkey");
         assertNotNull(optional);
@@ -146,13 +147,13 @@ public class MapAccessorTest {
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         optional = mapAccessor.get("/key2/subkey2/foo");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
         assertNotNull(optional.get());
-        assertTrue(optional.get() instanceof String);
+        assertInstanceOf(String.class, optional.get());
 
         optional = mapAccessor.get("/key2/subkey2/foo/bar");
         assertNotNull(optional);
@@ -161,7 +162,7 @@ public class MapAccessorTest {
         optional = mapAccessor.get("/key3");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof String);
+        assertInstanceOf(String.class, optional.get());
 
         assertTrue(mapAccessor.containsPath("/key4"));
         optional = mapAccessor.get("/key4");
@@ -207,7 +208,7 @@ public class MapAccessorTest {
         Optional<Object> optional = mapAccessor.get("/");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
         Map<Object, Object> map = (Map<Object, Object>) optional.get();
         assertTrue(map.isEmpty());
 
@@ -225,7 +226,7 @@ public class MapAccessorTest {
         Optional<Object> optional = mapAccessor.get("/");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         Map<Object, Object> map = (Map<Object, Object>) optional.get();
 
@@ -239,7 +240,7 @@ public class MapAccessorTest {
         optional = mapAccessor.get("/key");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof Map);
+        assertInstanceOf(Map.class, optional.get());
 
         try {
             map.put("abc", "123");
@@ -258,7 +259,7 @@ public class MapAccessorTest {
         optional = mapAccessor2.get("/list");
         assertNotNull(optional);
         assertTrue(optional.isPresent());
-        assertTrue(optional.get() instanceof List);
+        assertInstanceOf(List.class, optional.get());
 
         List<String> list2 = (List<String>) optional.get();
         assertFalse(list2.isEmpty());

@@ -16,9 +16,9 @@
 
 package io.prometheus.jmx.common.util;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PreconditionTest {
 
