@@ -428,7 +428,7 @@ public class HTTPServerFactory {
                                                     "/httpServer/authentication/basic/password"
                                                             + " is a required string"));
 
-                    // Resolve environment variables in the password
+                    // Resolve environment variable in the password
                     password = EnvironmentVariableSupport.resolve(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
@@ -711,6 +711,9 @@ public class HTTPServerFactory {
                                                             + " must not be blank")))
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
+                // Resolve environment variable in the keystore password
+                keyStorePassword = EnvironmentVariableSupport.resolve(keyStorePassword);
+
                 String certificateAlias =
                         rootMapAccessor
                                 .get("/httpServer/ssl/certificate/alias")
@@ -809,6 +812,9 @@ public class HTTPServerFactory {
                                                                 + " /httpServer/ssl/trustStore/password"
                                                                 + " must not be blank")))
                                     .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
+
+                    // Resolve environment variable in the trust store password
+                    trustStorePassword = EnvironmentVariableSupport.resolve(trustStorePassword);
                 }
 
                 httpServerBuilder.httpsConfigurator(
