@@ -43,7 +43,7 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class BasicAuthenticationPlaintextTest {
+public class BasicAuthenticationEnvironmentVariableTest2 {
 
     private final String VALID_USERNAME = "Prometheus";
 
