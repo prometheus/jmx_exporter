@@ -24,6 +24,7 @@ import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
+import io.prometheus.jmx.common.util.EnvironmentVariableSupport;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.SSLContextFactory;
 import io.prometheus.jmx.common.util.YamlSupport;
@@ -78,7 +79,6 @@ public class HTTPServerFactory {
 
     private static final String REALM = "/";
     private static final String PLAINTEXT = "plaintext";
-    private static final String ENVIRONMENT_VARIABLE = "environmentVariable";
     private static final Set<String> SHA_ALGORITHMS;
     private static final Set<String> PBKDF2_ALGORITHMS;
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
@@ -428,46 +428,8 @@ public class HTTPServerFactory {
                                                     "/httpServer/authentication/basic/password"
                                                             + " is a required string"));
 
-                    authenticator = new PlaintextAuthenticator("/", username, password);
-                } else if (ENVIRONMENT_VARIABLE.equalsIgnoreCase(algorithm)) {
-                    String environmentVariable =
-                            httpServerAuthenticationBasicMapAccessor
-                                    .get("/passwordEnvironmentVariable")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/passwordEnvironmentVariable"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/authentication/basic/passwordEnvironmentVariable"
-                                                                + " must not be blank")))
-                                    .orElseThrow(
-                                            ConfigurationException.supplier(
-                                                    "/httpServer/authentication/basic/passwordEnvironmentVariable"
-                                                        + " is a required string"));
-
-                    // Remove the ${} or $ prefix if it exists
-                    if (environmentVariable.startsWith("${") && environmentVariable.endsWith("}")) {
-                        environmentVariable =
-                                environmentVariable.substring(2, environmentVariable.length() - 1);
-                    } else if (environmentVariable.startsWith("$")
-                            && environmentVariable.length() > 1) {
-                        environmentVariable = environmentVariable.substring(1);
-                    }
-
-                    String password = System.getenv(environmentVariable);
-
-                    if (password == null || password.trim().isEmpty()) {
-                        throw new ConfigurationException(
-                                format(
-                                        "/httpServer/authentication/basic/passwordEnvironmentVariable"
-                                            + " environment variable [%s] is not set or is blank",
-                                        environmentVariable));
-                    }
+                    // Resolve environment variables in the password
+                    password = EnvironmentVariableSupport.resolve(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm)

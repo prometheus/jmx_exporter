@@ -2,7 +2,6 @@ httpServer:
   authentication:
     basic:
       username: Prometheus
-      algorithm: environmentVariable
-      passwordEnvironmentVariable: $SECRET
+      password: $SECRET
 rules:
   - pattern: ".*"

@@ -8,11 +8,9 @@ This is the documentation for the [Prometheus JMX Exporter](https://github.com/p
 
 The main new features of the 1.4.0 release are:
 
-* **Isolator Java Agent**: A new Java agent that allows running multiple isolated and independent JMX Exporter instances in the same JVM.
+* **Disable JVM Metrics**: Support for completely disabling JVM metrics when using the JMX Exporter Java agent.
 
-
-* **Mutual TLS Authentication**: Support for mutual TLS authentication HTTP server authentication.
-
+* **Basic authentication Environment Variable Support**: Support for using environment variables for Basic authentication passwords.
 
 **Documentation and Examples**
 
@@ -20,6 +18,6 @@ Community provided example YAML configuration files:
 
 - [examples](https://github.com/prometheus/jmx_exporter/tree/main/examples)
 
-Integration tests also  provide complex/concrete examples of application and YAML configuration files:
+Integration tests also provide complex/concrete examples of application and YAML configuration files:
 
 - [integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test](https://github.com/prometheus/jmx_exporter/tree/main/integration_test_suite/integration_tests/src/test/resources/io/prometheus/jmx/test)

@@ -43,11 +43,12 @@ import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
-public class BasicAuthenticationEnvironmentVariableTest {
+public class BasicAuthenticationPlaintextTest2 {
 
     private final String VALID_USERNAME = "Prometheus";
 
-    private final String VALID_PASSWORD = "secret";
+    // Password is actually "$secret", but not an environment variable
+    private final String VALID_PASSWORD = "$secret";
 
     private final String[] TEST_USERNAMES =
             new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
