@@ -1,8 +1,8 @@
 httpServer:
   ssl:
     keyStore:
-      filename: localhost.pkcs12
-      password: $SECRET
+      filename: localhost.jks
+      password: ${SECRET}
     certificate:
       alias: localhost
 rules:
