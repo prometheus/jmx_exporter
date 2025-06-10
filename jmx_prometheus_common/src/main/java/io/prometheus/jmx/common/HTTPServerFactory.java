@@ -24,8 +24,8 @@ import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
-import io.prometheus.jmx.common.util.EnvironmentVariableSupport;
 import io.prometheus.jmx.common.util.MapAccessor;
+import io.prometheus.jmx.common.util.PasswordSupport;
 import io.prometheus.jmx.common.util.SSLContextFactory;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
@@ -428,8 +428,8 @@ public class HTTPServerFactory {
                                                     "/httpServer/authentication/basic/password"
                                                             + " is a required string"));
 
-                    // Resolve environment variable in the password
-                    password = EnvironmentVariableSupport.resolve(password);
+                    // Resolve the password
+                    password = PasswordSupport.resolve(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm)
@@ -711,8 +711,8 @@ public class HTTPServerFactory {
                                                             + " must not be blank")))
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
-                // Resolve environment variable in the keystore password
-                keyStorePassword = EnvironmentVariableSupport.resolve(keyStorePassword);
+                // Resolve the password
+                keyStorePassword = PasswordSupport.resolve(keyStorePassword);
 
                 String certificateAlias =
                         rootMapAccessor
@@ -813,8 +813,8 @@ public class HTTPServerFactory {
                                                                 + " must not be blank")))
                                     .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
 
-                    // Resolve environment variable in the trust store password
-                    trustStorePassword = EnvironmentVariableSupport.resolve(trustStorePassword);
+                    // Resolve the password
+                    trustStorePassword = PasswordSupport.resolve(trustStorePassword);
                 }
 
                 httpServerBuilder.httpsConfigurator(
