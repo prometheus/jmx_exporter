@@ -10,7 +10,9 @@ The main new features of the 1.4.0 release are:
 
 * **Disable JVM Metrics**: Support for completely disabling JVM metrics when using the JMX Exporter Java agent.
 
-* **Basic authentication Environment Variable Support**: Support for using environment variables for Basic authentication passwords.
+* **Basic authentication Environment Variable Support**: Support for using environment variable for Basic authentication password.
+
+* **HTTP SSL Environment Variable Support**: Support for using environment variables for HTTP server SSL keystore and truststore passwords.
 
 **Documentation and Examples**
 
