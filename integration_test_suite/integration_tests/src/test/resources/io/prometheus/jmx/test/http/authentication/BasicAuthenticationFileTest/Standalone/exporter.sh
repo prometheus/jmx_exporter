@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Export the environment variable used for authentication
-export SECRET=secret
+# Export the secret to a file for integration testing
+echo -n "secret" > /tmp/secret.txt
 
 java \
   -Xmx512M \

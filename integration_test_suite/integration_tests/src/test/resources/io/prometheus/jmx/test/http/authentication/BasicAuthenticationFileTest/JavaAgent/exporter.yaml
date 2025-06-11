@@ -2,6 +2,6 @@ httpServer:
   authentication:
     basic:
       username: Prometheus
-      password: ${SECRET}
+      password: ${file:/tmp/secret.txt}
 rules:
   - pattern: ".*"

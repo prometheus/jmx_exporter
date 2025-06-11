@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export SECRET=changeit
+# Export the secret to a file for integration testing
+echo -n "changeit" > /tmp/secret.txt
 
 java \
   -Xmx512M \
