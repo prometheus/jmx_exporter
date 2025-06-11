@@ -22,14 +22,16 @@ import java.util.Optional;
 /** A PasswordProvider that tries to resolve the password from an environment variable. */
 public class EnvironmentVariablePasswordProvider implements PasswordProvider {
 
+    public static final String PREFIX = "env:";
+
     @Override
     public boolean supports(String spec) {
-        return spec.toLowerCase().startsWith("env:");
+        return spec.toLowerCase().startsWith(PREFIX);
     }
 
     @Override
     public Optional<String> resolve(String spec) {
-        String environmentVariableName = spec.substring("env:".length()).trim();
+        String environmentVariableName = spec.substring(PREFIX.length()).trim();
 
         // If the environment variable name is empty after trimming, return an empty Optional
         if (environmentVariableName.isEmpty()) {

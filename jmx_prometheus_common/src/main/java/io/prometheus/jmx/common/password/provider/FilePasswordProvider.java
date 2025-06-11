@@ -30,14 +30,16 @@ import java.util.Optional;
  */
 public class FilePasswordProvider implements PasswordProvider {
 
+    public static final String PREFIX = "file:";
+
     @Override
     public boolean supports(String spec) {
-        return spec.toLowerCase().startsWith("file:");
+        return spec.toLowerCase().startsWith(PREFIX);
     }
 
     @Override
     public Optional<String> resolve(String spec) {
-        String path = spec.substring("file:".length()).trim();
+        String path = spec.substring(PREFIX.length()).trim();
 
         // If the path is empty after trimming, return an empty Optional
         if (path.isEmpty()) {
