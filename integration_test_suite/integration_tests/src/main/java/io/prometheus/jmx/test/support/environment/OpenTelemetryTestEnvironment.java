@@ -48,11 +48,10 @@ public class OpenTelemetryTestEnvironment implements Named {
     @Override
     public String getName() {
         return jmxExporterTestEnvironment.getJmxExporterMode()
-                + " ( "
+                + " / "
                 + jmxExporterTestEnvironment.getJavaDockerImage()
-                + " , "
-                + prometheusTestEnvironment.getPrometheusDockerImage().substring("prom/".length())
-                + " )";
+                + " / "
+                + prometheusTestEnvironment.getPrometheusDockerImage();
     }
 
     /**

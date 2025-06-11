@@ -60,7 +60,7 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
 
     @Override
     public String getName() {
-        return jmxExporterMode + " ( " + javaDockerImage + " )";
+        return jmxExporterMode + " / " + javaDockerImage;
     }
 
     @Override
