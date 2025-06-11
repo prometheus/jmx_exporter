@@ -2,7 +2,7 @@ httpServer:
   ssl:
     keyStore:
       filename: localhost.jks
-      password: ${file:/tmp/secret.txt}
+      password: ${file:./secret.txt}
     certificate:
       alias: localhost
 rules:
