@@ -30,9 +30,9 @@ public interface VariableProvider {
     boolean supports(String variableSpec);
 
     /**
-     * Tries to resolve the variable. Returns empty if it cannot.
+     * Method to try to resolve the variable. Returns empty if it can't.
      *
-     * @param variableSpec the same string to supports()
+     * @param variableSpec the trimmed content inside ${...} or the raw literal
      * @return an Optional containing the resolved variable, or empty to fall through
      */
     Optional<String> resolve(String variableSpec);
