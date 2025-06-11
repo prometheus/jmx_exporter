@@ -24,8 +24,8 @@ import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
+import io.prometheus.jmx.common.password.PasswordResolver;
 import io.prometheus.jmx.common.util.MapAccessor;
-import io.prometheus.jmx.common.util.PasswordSupport;
 import io.prometheus.jmx.common.util.SSLContextFactory;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
@@ -429,7 +429,7 @@ public class HTTPServerFactory {
                                                             + " is a required string"));
 
                     // Resolve the password
-                    password = PasswordSupport.resolve(password);
+                    password = PasswordResolver.resolve(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm)
@@ -712,7 +712,7 @@ public class HTTPServerFactory {
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
                 // Resolve the password
-                keyStorePassword = PasswordSupport.resolve(keyStorePassword);
+                keyStorePassword = PasswordResolver.resolve(keyStorePassword);
 
                 String certificateAlias =
                         rootMapAccessor
@@ -814,7 +814,7 @@ public class HTTPServerFactory {
                                     .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
 
                     // Resolve the password
-                    trustStorePassword = PasswordSupport.resolve(trustStorePassword);
+                    trustStorePassword = PasswordResolver.resolve(trustStorePassword);
                 }
 
                 httpServerBuilder.httpsConfigurator(

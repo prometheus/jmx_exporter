@@ -38,27 +38,28 @@ httpServer:
   authentication:
     basic:
       username: Prometheus
-      password: $SECRET
+      password: ${env:SECRET}
 ```
 
 ---
 
-Environment variable password example 2:
+File password example:
 
 ```yaml
 httpServer:
   authentication:
     basic:
       username: Prometheus
-      algorithm: environmentVariable
-      password: ${SECRET}
+      password: ${file:/etc/secret.txt}
 ```
+
+---
 
 **Notes**
 
-- The referenced environment variable must be set before running the Java agent or Standalone JMX Exporter
+- If an environment variable format is used and not defined or empty, the value is treated as plaintext
 
-- `$SECRET`, and `${SECRET}` are all valid ways to reference the environment variable
+- If a file format is used and doesn't exist or is empty, the value is treated as plaintext
 
 ---
 
