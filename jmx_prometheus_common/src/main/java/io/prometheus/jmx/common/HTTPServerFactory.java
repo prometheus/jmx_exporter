@@ -24,7 +24,6 @@ import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
-import io.prometheus.jmx.common.password.PasswordResolver;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.SSLContextFactory;
 import io.prometheus.jmx.common.util.YamlSupport;
@@ -34,6 +33,7 @@ import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToMapAccessor;
 import io.prometheus.jmx.common.util.functions.ToString;
+import io.prometheus.jmx.common.variable.VariableResolver;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -429,7 +429,7 @@ public class HTTPServerFactory {
                                                             + " is a required string"));
 
                     // Resolve the password
-                    password = PasswordResolver.resolve(password);
+                    password = VariableResolver.resolve(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm)
@@ -712,7 +712,7 @@ public class HTTPServerFactory {
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
                 // Resolve the password
-                keyStorePassword = PasswordResolver.resolve(keyStorePassword);
+                keyStorePassword = VariableResolver.resolve(keyStorePassword);
 
                 String certificateAlias =
                         rootMapAccessor
@@ -814,7 +814,7 @@ public class HTTPServerFactory {
                                     .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
 
                     // Resolve the password
-                    trustStorePassword = PasswordResolver.resolve(trustStorePassword);
+                    trustStorePassword = VariableResolver.resolve(trustStorePassword);
                 }
 
                 httpServerBuilder.httpsConfigurator(

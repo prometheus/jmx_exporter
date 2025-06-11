@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.password;
+package io.prometheus.jmx.common.variable;
 
-/** Class to implement PasswordResolverException */
-public class PasswordResolverException extends RuntimeException {
+/** Class to implement VariableResolverException */
+public class VariableResolverException extends RuntimeException {
 
     /**
      * Constructor
      *
      * @param message the message
      */
-    public PasswordResolverException(String message) {
+    public VariableResolverException(String message) {
         super(message);
     }
 }
