@@ -14,24 +14,29 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.password.provider;
+package io.prometheus.jmx.common.variable.provider;
 
-import io.prometheus.jmx.common.password.PasswordProvider;
+import io.prometheus.jmx.common.variable.VariableProvider;
 import java.util.Optional;
 
-/** A PasswordProvider that tries to resolve the password from an environment variable. */
-public class EnvironmentVariablePasswordProvider implements PasswordProvider {
+/** A {@link VariableProvider} that tries to resolve the variable from an environment variable. */
+public class EnvironmentVariableProvider implements VariableProvider {
 
     public static final String PREFIX = "env:";
 
-    @Override
-    public boolean supports(String spec) {
-        return spec.toLowerCase().startsWith(PREFIX);
+    /** Constructor */
+    public EnvironmentVariableProvider() {
+        // INTENTIONALLY BLANK
     }
 
     @Override
-    public Optional<String> resolve(String spec) {
-        String environmentVariableName = spec.substring(PREFIX.length()).trim();
+    public boolean supports(String variableSpec) {
+        return variableSpec != null && variableSpec.toLowerCase().startsWith(PREFIX);
+    }
+
+    @Override
+    public Optional<String> resolve(String variableSpec) {
+        String environmentVariableName = variableSpec.substring(PREFIX.length()).trim();
 
         // If the environment variable name is empty after trimming, return an empty Optional
         if (environmentVariableName.isEmpty()) {

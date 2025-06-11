@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.password.provider;
+package io.prometheus.jmx.common.variable.provider;
 
-import io.prometheus.jmx.common.password.PasswordProvider;
+import io.prometheus.jmx.common.variable.VariableProvider;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,21 +25,26 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
- * A PasswordProvider that reads the password from a file. The file path should be specified with
- * the prefix "file:". If the file cannot be read or is empty, it returns an empty Optional.
+ * A variable provider that reads a variable from a file. The file path should be specified with the
+ * prefix "file:". If the file cannot be read or is empty, it returns an empty Optional.
  */
-public class FilePasswordProvider implements PasswordProvider {
+public class FileVariableProvider implements VariableProvider {
 
     public static final String PREFIX = "file:";
 
-    @Override
-    public boolean supports(String spec) {
-        return spec.toLowerCase().startsWith(PREFIX);
+    /** Constructor */
+    public FileVariableProvider() {
+        // INTENTIONALLY BLANK
     }
 
     @Override
-    public Optional<String> resolve(String spec) {
-        String path = spec.substring(PREFIX.length()).trim();
+    public boolean supports(String variableSpec) {
+        return variableSpec != null && variableSpec.toLowerCase().startsWith(PREFIX);
+    }
+
+    @Override
+    public Optional<String> resolve(String variableSpec) {
+        String path = variableSpec.substring(PREFIX.length()).trim();
 
         // If the path is empty after trimming, return an empty Optional
         if (path.isEmpty()) {

@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.password;
+package io.prometheus.jmx.common.variable;
 
 import java.util.Optional;
 
-/** Interface to implement PasswordProvider */
-public interface PasswordProvider {
+/** Interface to implement VariableProvider */
+public interface VariableProvider {
 
     /**
-     * Checks whether this provider can handle the given specification.
+     * Checks whether this provider can handle the given variable specification.
      *
-     * @param spec the trimmed content inside ${...} or the raw literal
-     * @return true if this provider supports the spec, else false
+     * @param variableSpec the trimmed content inside ${...} or the raw literal
+     * @return true if this provider supports the variable spec, else false
      */
-    boolean supports(String spec);
+    boolean supports(String variableSpec);
 
     /**
-     * Tries to resolve the password. Returns empty if it cannot.
+     * Tries to resolve the variable. Returns empty if it cannot.
      *
-     * @param spec the same string passed to supports()
-     * @return an Optional containing the resolved password, or empty to fall through
+     * @param variableSpec the same string to supports()
+     * @return an Optional containing the resolved variable, or empty to fall through
      */
-    Optional<String> resolve(String spec);
+    Optional<String> resolve(String variableSpec);
 }
