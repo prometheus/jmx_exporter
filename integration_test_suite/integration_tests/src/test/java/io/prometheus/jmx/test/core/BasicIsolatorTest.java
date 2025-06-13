@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.ClassContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
@@ -58,11 +57,6 @@ public class BasicIsolatorTest {
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<IsolatorExporterTestEnvironment> arguments() {
         return IsolatorExporterTestEnvironment.createEnvironments();
-    }
-
-    @Verifyica.Prepare
-    public static void prepare(ClassContext classContext) {
-        TestSupport.getOrCreateNetwork(classContext);
     }
 
     @Verifyica.BeforeAll
@@ -231,11 +225,6 @@ public class BasicIsolatorTest {
         traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
 
         Trap.assertEmpty(traps);
-    }
-
-    @Verifyica.Conclude
-    public static void conclude(ClassContext classContext) throws Throwable {
-        new Trap(() -> TestSupport.destroyNetwork(classContext)).assertEmpty();
     }
 
     private void assertMetricsResponse(
