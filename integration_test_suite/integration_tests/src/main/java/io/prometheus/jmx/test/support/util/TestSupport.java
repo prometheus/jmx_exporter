@@ -22,7 +22,6 @@ import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.ClassContext;
 
 /** Class to implement TestSupport */
 public class TestSupport {
@@ -37,22 +36,6 @@ public class TestSupport {
     /** Constructor */
     private TestSupport() {
         // INTENTIONALLY BLANK
-    }
-
-    /**
-     * Creates a ClassContext scoped Network
-     *
-     * @param classContext classContext
-     */
-    public static void getOrCreateNetwork(ClassContext classContext) {
-        if (classContext.testArgumentParallelism() == 1) {
-            // Create the network at the test class scope
-            // Get the id to force the network creation
-            Network network = Network.newNetwork();
-            network.getId();
-
-            classContext.map().put(NETWORK, network);
-        }
     }
 
     /**
@@ -135,16 +118,6 @@ public class TestSupport {
      */
     public static void destroyNetwork(ArgumentContext argumentContext) {
         Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
-    }
-
-    /**
-     * Destroys a ClassContext scoped Network
-     *
-     * @param classContext classContext
-     */
-    public static void destroyNetwork(ClassContext classContext) {
-        Optional.ofNullable(classContext.map().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 
