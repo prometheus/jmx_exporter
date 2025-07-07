@@ -30,6 +30,7 @@ import java.util.Optional;
  */
 public class FileVariableProvider implements VariableProvider {
 
+    /** Prefix for file variable specifications. */
     public static final String PREFIX = "file:";
 
     /** Constructor */
