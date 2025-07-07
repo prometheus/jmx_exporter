@@ -22,6 +22,7 @@ import java.util.Optional;
 /** A {@link VariableProvider} that tries to resolve the variable from an environment variable. */
 public class EnvironmentVariableProvider implements VariableProvider {
 
+    /** Prefix for environment variable specifications. */
     public static final String PREFIX = "env:";
 
     /** Constructor */
