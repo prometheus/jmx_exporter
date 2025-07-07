@@ -158,13 +158,6 @@
                                         <exclude>META-INF/services/**</exclude>
                                     </excludes>
                                 </filter>
-                                <!-- Retain service metadata for prometheus exporter -->
-                                <filter>
-                                    <artifact>io.prometheus:prometheus-metrics-exporter-opentelemetry</artifact>
-                                    <includes>
-                                        <include>META-INF/services/**</include>
-                                    </includes>
-                                </filter>
                             </filters>
                             <!-- Relocate packages -->
                             <relocations>
