@@ -38,6 +38,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -718,14 +719,14 @@ public class HTTPServerFactory {
         SSLFactory.Builder sslFactoryBuilder =
                 SSLFactory.builder()
                         .withIdentityMaterial(
-                                Paths.get(keyStoreProperties.getKeyStoreFilename()),
+                                keyStoreProperties.getKeyStoreFilename(),
                                 keyStoreProperties.getKeyStorePassword(),
                                 keyStoreProperties.getKeyStorePassword(),
                                 keyStoreProperties.getKeyStoreType());
 
         if (trustStoreProperties.isPresent()) {
             sslFactoryBuilder.withTrustMaterial(
-                    Paths.get(trustStoreProperties.get().getKeyStoreFilename()),
+                    trustStoreProperties.get().getKeyStoreFilename(),
                     trustStoreProperties.get().getKeyStorePassword(),
                     trustStoreProperties.get().getKeyStoreType());
         }
@@ -955,7 +956,7 @@ public class HTTPServerFactory {
 
     private static final class KeyStoreProperties {
 
-        private final String keyStoreFilename;
+        private final Path keyStoreFilename;
         private final char[] keyStorePassword;
         private final String keyStoreType;
         private final String certificateAlias;
@@ -965,13 +966,13 @@ public class HTTPServerFactory {
                 char[] keyStorePassword,
                 String keyStoreType,
                 String certificateAlias) {
-            this.keyStoreFilename = keyStoreFilename;
+            this.keyStoreFilename = Paths.get(keyStoreFilename);
             this.keyStorePassword = keyStorePassword;
             this.keyStoreType = keyStoreType;
             this.certificateAlias = certificateAlias;
         }
 
-        public String getKeyStoreFilename() {
+        public Path getKeyStoreFilename() {
             return keyStoreFilename;
         }
 
