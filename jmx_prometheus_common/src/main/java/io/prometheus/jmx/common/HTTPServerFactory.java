@@ -25,7 +25,6 @@ import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
 import io.prometheus.jmx.common.util.MapAccessor;
-import io.prometheus.jmx.common.util.SSLContextFactory;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
 import io.prometheus.jmx.common.util.functions.StringIsNotBlank;
@@ -39,6 +38,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.HashMap;
@@ -48,12 +48,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLParameters;
+import nl.altindag.ssl.SSLFactory;
+import nl.altindag.ssl.exception.GenericException;
+import nl.altindag.ssl.util.SSLFactoryUtils;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the Standalone exporter
@@ -83,6 +87,8 @@ public class HTTPServerFactory {
     private static final Set<String> PBKDF2_ALGORITHMS;
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
+    private static final ScheduledExecutorService EXECUTOR_SERVICE =
+            Executors.newSingleThreadScheduledExecutor();
 
     static {
         // Get the keystore type system property
@@ -119,6 +125,8 @@ public class HTTPServerFactory {
         PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA1", 1300000);
         PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA256", 600000);
         PBKDF2_ALGORITHM_ITERATIONS.put("PBKDF2WithHmacSHA512", 210000);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(EXECUTOR_SERVICE::shutdownNow));
     }
 
     /** Constructor */
@@ -660,173 +668,17 @@ public class HTTPServerFactory {
             MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
-                String keyStoreFilename =
-                        rootMapAccessor
-                                .get("/httpServer/ssl/keyStore/filename")
-                                .map(
-                                        new ToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/keyStore/filename"
-                                                            + " must be a string")))
-                                .map(
-                                        new StringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/keyStore/filename"
-                                                            + " must not be blank")))
-                                .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
+                boolean mutualTLS = isMutualTls(rootMapAccessor);
+                SSLFactory baseSslFactory = createReloadableSslFactory();
+                Runnable sslUpdater = () -> reloadSsl(baseSslFactory, rootMapAccessor);
 
-                String keyStoreType =
-                        rootMapAccessor
-                                .get("/httpServer/ssl/keyStore/type")
-                                .map(
-                                        new ToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /httpServer/ssl/keyStore/type"
-                                                                + " must be a string")))
-                                .map(
-                                        new StringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /httpServer/ssl/keyStore/type"
-                                                                + " must not be blank")))
-                                .orElse(DEFAULT_KEYSTORE_TYPE);
-
-                String keyStorePassword =
-                        rootMapAccessor
-                                .get("/httpServer/ssl/keyStore/password")
-                                .map(
-                                        new ToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/keyStore/password"
-                                                            + " must be a string")))
-                                .map(
-                                        new StringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/keyStore/password"
-                                                            + " must not be blank")))
-                                .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
-
-                // Resolve the password
-                keyStorePassword = VariableResolver.resolveVariable(keyStorePassword);
-
-                String certificateAlias =
-                        rootMapAccessor
-                                .get("/httpServer/ssl/certificate/alias")
-                                .map(
-                                        new ToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/certificate/alias"
-                                                            + " must be a string")))
-                                .map(
-                                        new StringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                            + " /httpServer/ssl/certificate/alias"
-                                                            + " must not be blank")))
-                                .orElseThrow(
-                                        ConfigurationException.supplier(
-                                                "/httpServer/ssl/certificate/alias is a required"
-                                                        + " string"));
-
-                String trustStoreFilename = null;
-                String trustStoreType = null;
-                String trustStorePassword = null;
-
-                final boolean mutualTLS =
-                        rootMapAccessor
-                                .get("/httpServer/ssl/mutualTLS")
-                                .map(
-                                        new ToString(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /httpServer/ssl/mutualTLS"
-                                                                + " must be a boolean")))
-                                .map(
-                                        new StringIsNotBlank(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /httpServer/ssl/mutualTLS"
-                                                                + " must not be blank")))
-                                .map(
-                                        new ToBoolean(
-                                                ConfigurationException.supplier(
-                                                        "Invalid configuration for"
-                                                                + " /httpServer/ssl/mutualTLS"
-                                                                + " must be a boolean")))
-                                .orElse(false);
-
-                if (mutualTLS) {
-                    trustStoreFilename =
-                            rootMapAccessor
-                                    .get("/httpServer/ssl/trustStore/filename")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/filename"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/filename"
-                                                                + " must not be blank")))
-                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE));
-
-                    trustStoreType =
-                            rootMapAccessor
-                                    .get("/httpServer/ssl/trustStore/type")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/type"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/type"
-                                                                + " must not be blank")))
-                                    .orElse(DEFAULT_TRUST_STORE_TYPE);
-
-                    trustStorePassword =
-                            rootMapAccessor
-                                    .get("/httpServer/ssl/trustStore/password")
-                                    .map(
-                                            new ToString(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/password"
-                                                                + " must be a string")))
-                                    .map(
-                                            new StringIsNotBlank(
-                                                    ConfigurationException.supplier(
-                                                            "Invalid configuration for"
-                                                                + " /httpServer/ssl/trustStore/password"
-                                                                + " must not be blank")))
-                                    .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
-
-                    // Resolve the password
-                    trustStorePassword = VariableResolver.resolveVariable(trustStorePassword);
-                }
+                // initial update of ssl material to replace the dummies
+                sslUpdater.run();
+                // update ssl material every hour
+                EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
-                        new HttpsConfigurator(
-                                SSLContextFactory.createSSLContext(
-                                        keyStoreType,
-                                        keyStoreFilename,
-                                        keyStorePassword,
-                                        certificateAlias,
-                                        trustStoreType,
-                                        trustStoreFilename,
-                                        trustStorePassword)) {
+                        new HttpsConfigurator(baseSslFactory.getSslContext()) {
                             @Override
                             public void configure(HttpsParameters params) {
                                 SSLParameters sslParameters =
@@ -835,7 +687,7 @@ public class HTTPServerFactory {
                                 params.setSSLParameters(sslParameters);
                             }
                         });
-            } catch (GeneralSecurityException | IOException e) {
+            } catch (GenericException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
                     message = ", " + message.trim();
@@ -847,6 +699,211 @@ public class HTTPServerFactory {
                         format("Exception loading SSL configuration%s", message), e);
             }
         }
+    }
+
+    private static SSLFactory createReloadableSslFactory() {
+        return SSLFactory.builder()
+                .withDummyIdentityMaterial()
+                .withDummyTrustMaterial()
+                .withSwappableIdentityMaterial()
+                .withSwappableTrustMaterial()
+                .build();
+    }
+
+    private static void reloadSsl(SSLFactory baseSslFactory, MapAccessor rootMapAccessor) {
+        KeyStoreProperties keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
+        Optional<KeyStoreProperties> trustStoreProperties =
+                getTrustStoreProperties(rootMapAccessor);
+
+        SSLFactory.Builder sslFactoryBuilder =
+                SSLFactory.builder()
+                        .withIdentityMaterial(
+                                Paths.get(keyStoreProperties.getKeyStoreFilename()),
+                                keyStoreProperties.getKeyStorePassword(),
+                                keyStoreProperties.getKeyStorePassword(),
+                                keyStoreProperties.getKeyStoreType());
+
+        if (trustStoreProperties.isPresent()) {
+            sslFactoryBuilder.withTrustMaterial(
+                    Paths.get(trustStoreProperties.get().getKeyStoreFilename()),
+                    trustStoreProperties.get().getKeyStorePassword(),
+                    trustStoreProperties.get().getKeyStoreType());
+        }
+
+        SSLFactory updatedSslFactory = sslFactoryBuilder.build();
+        SSLFactoryUtils.reload(baseSslFactory, updatedSslFactory);
+    }
+
+    private static KeyStoreProperties getKeyStoreProperties(MapAccessor rootMapAccessor) {
+        String keyStoreFilename =
+                rootMapAccessor
+                        .get("/httpServer/ssl/keyStore/filename")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/filename"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/filename"
+                                                        + " must not be blank")))
+                        .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
+
+        String keyStoreType =
+                rootMapAccessor
+                        .get("/httpServer/ssl/keyStore/type")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/type"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/type"
+                                                        + " must not be blank")))
+                        .orElse(DEFAULT_KEYSTORE_TYPE);
+
+        String keyStorePassword =
+                rootMapAccessor
+                        .get("/httpServer/ssl/keyStore/password")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/password"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/keyStore/password"
+                                                        + " must not be blank")))
+                        .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
+
+        // Resolve the password
+        keyStorePassword = VariableResolver.resolveVariable(keyStorePassword);
+
+        String certificateAlias =
+                rootMapAccessor
+                        .get("/httpServer/ssl/certificate/alias")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/certificate/alias"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/certificate/alias"
+                                                        + " must not be blank")))
+                        .orElseThrow(
+                                ConfigurationException.supplier(
+                                        "/httpServer/ssl/certificate/alias is a required"
+                                                + " string"));
+
+        return new KeyStoreProperties(
+                keyStoreFilename, keyStorePassword.toCharArray(), keyStoreType, certificateAlias);
+    }
+
+    private static Optional<KeyStoreProperties> getTrustStoreProperties(
+            MapAccessor rootMapAccessor) {
+        final boolean mutualTLS = isMutualTls(rootMapAccessor);
+        if (!mutualTLS) {
+            return Optional.empty();
+        }
+
+        String trustStoreFilename =
+                rootMapAccessor
+                        .get("/httpServer/ssl/trustStore/filename")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/filename"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/filename"
+                                                        + " must not be blank")))
+                        .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE));
+
+        String trustStoreType =
+                rootMapAccessor
+                        .get("/httpServer/ssl/trustStore/type")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/type"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/type"
+                                                        + " must not be blank")))
+                        .orElse(DEFAULT_TRUST_STORE_TYPE);
+
+        String trustStorePassword =
+                rootMapAccessor
+                        .get("/httpServer/ssl/trustStore/password")
+                        .map(
+                                new ToString(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/password"
+                                                        + " must be a string")))
+                        .map(
+                                new StringIsNotBlank(
+                                        ConfigurationException.supplier(
+                                                "Invalid configuration for"
+                                                        + " /httpServer/ssl/trustStore/password"
+                                                        + " must not be blank")))
+                        .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
+
+        // Resolve the password
+        trustStorePassword = VariableResolver.resolveVariable(trustStorePassword);
+
+        return Optional.of(
+                new KeyStoreProperties(
+                        trustStoreFilename,
+                        trustStorePassword.toCharArray(),
+                        trustStoreType,
+                        null));
+    }
+
+    private static boolean isMutualTls(MapAccessor rootMapAccessor) {
+        return rootMapAccessor
+                .get("/httpServer/ssl/mutualTLS")
+                .map(
+                        new ToString(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/mutualTLS"
+                                                + " must be a boolean")))
+                .map(
+                        new StringIsNotBlank(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/mutualTLS"
+                                                + " must not be blank")))
+                .map(
+                        new ToBoolean(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/mutualTLS"
+                                                + " must be a boolean")))
+                .orElse(false);
     }
 
     /**
@@ -893,6 +950,41 @@ public class HTTPServerFactory {
                     // INTENTIONALLY BLANK
                 }
             }
+        }
+    }
+
+    private static final class KeyStoreProperties {
+
+        private final String keyStoreFilename;
+        private final char[] keyStorePassword;
+        private final String keyStoreType;
+        private final String certificateAlias;
+
+        private KeyStoreProperties(
+                String keyStoreFilename,
+                char[] keyStorePassword,
+                String keyStoreType,
+                String certificateAlias) {
+            this.keyStoreFilename = keyStoreFilename;
+            this.keyStorePassword = keyStorePassword;
+            this.keyStoreType = keyStoreType;
+            this.certificateAlias = certificateAlias;
+        }
+
+        public String getKeyStoreFilename() {
+            return keyStoreFilename;
+        }
+
+        public char[] getKeyStorePassword() {
+            return keyStorePassword;
+        }
+
+        public String getKeyStoreType() {
+            return keyStoreType;
+        }
+
+        public Optional<String> getCertificateAlias() {
+            return Optional.ofNullable(certificateAlias);
         }
     }
 }
