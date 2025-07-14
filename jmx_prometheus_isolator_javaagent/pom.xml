@@ -140,7 +140,7 @@
                                 <excludes>
                                     <exclude>org.apache.maven.plugins:maven-shade-plugin</exclude>
                                     <exclude>org.codehaus.plexus:plexus-utils</exclude>
-                                    <exclude>org.slf4j:slf4j-api</exclude>
+<!--                                    <exclude>org.slf4j:slf4j-api</exclude>-->
                                     <exclude>org.ow2.asm:asm</exclude>
                                     <exclude>org.ow2.asm:asm-commons</exclude>
                                     <exclude>org.ow2.asm:asm-tree</exclude>
