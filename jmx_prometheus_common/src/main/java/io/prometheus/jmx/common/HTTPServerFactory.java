@@ -681,13 +681,13 @@ public class HTTPServerFactory {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
                 boolean mutualTLS = isMutualTls(rootMapAccessor);
-                SSLFactory baseSslFactory = createSslFactory(rootMapAccessor);
-                Runnable sslUpdater = () -> reloadSsl(baseSslFactory, rootMapAccessor);
+                SSLFactory sslFactory = createSslFactory(rootMapAccessor);
+                Runnable sslUpdater = () -> reloadSsl(sslFactory, rootMapAccessor);
                 // check every hour for file changes and if it has been modified update the ssl configuration
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
-                        new HttpsConfigurator(baseSslFactory.getSslContext()) {
+                        new HttpsConfigurator(sslFactory.getSslContext()) {
                             @Override
                             public void configure(HttpsParameters params) {
                                 SSLParameters sslParameters =
@@ -729,7 +729,7 @@ public class HTTPServerFactory {
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    private static void reloadSsl(SSLFactory baseSslFactory, MapAccessor rootMapAccessor) {
+    private static void reloadSsl(SSLFactory sslFactory, MapAccessor rootMapAccessor) {
         KeyStoreProperties keyProps = getKeyStoreProperties(rootMapAccessor);
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
 
@@ -740,7 +740,7 @@ public class HTTPServerFactory {
                             keyProps.getFilename(), keyProps.getPassword(), keyProps.getType());
             X509ExtendedKeyManager keyManager =
                     KeyManagerUtils.createKeyManager(keyStore, keyProps.getPassword());
-            KeyManagerUtils.swapKeyManager(baseSslFactory.getKeyManager().get(), keyManager);
+            KeyManagerUtils.swapKeyManager(sslFactory.getKeyManager().get(), keyManager);
             keyStoreProperties = keyProps;
             sslUpdated = true;
         }
@@ -757,13 +757,13 @@ public class HTTPServerFactory {
                             trustProps.get().getType());
             X509ExtendedTrustManager trustManager = TrustManagerUtils.createTrustManager(keyStore);
             TrustManagerUtils.swapTrustManager(
-                    baseSslFactory.getTrustManager().get(), trustManager);
+                    sslFactory.getTrustManager().get(), trustManager);
             trustStoreProperties = trustProps.get();
             sslUpdated = true;
         }
 
         if (sslUpdated) {
-            SSLSessionUtils.invalidateCaches(baseSslFactory);
+            SSLSessionUtils.invalidateCaches(sslFactory);
         }
     }
 
