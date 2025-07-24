@@ -116,6 +116,7 @@ public class JmxCollector implements MultiCollector {
         boolean ssl = false;
         boolean lowercaseOutputName;
         boolean lowercaseOutputLabelNames;
+        boolean inferCounterTypeFromName;
         final List<ObjectName> includeObjectNames = new ArrayList<>();
         final List<ObjectName> excludeObjectNames = new ArrayList<>();
         ObjectNameAttributeFilter objectNameAttributeFilter;
@@ -323,6 +324,10 @@ public class JmxCollector implements MultiCollector {
 
         if (yamlConfig.containsKey("lowercaseOutputLabelNames")) {
             cfg.lowercaseOutputLabelNames = (Boolean) yamlConfig.get("lowercaseOutputLabelNames");
+        }
+
+        if (yamlConfig.containsKey("inferCounterTypeFromName")) {
+            cfg.inferCounterTypeFromName = (Boolean) yamlConfig.get("inferCounterTypeFromName");
         }
 
         // Default to includeObjectNames, but fall back to whitelistObjectNames for backward
@@ -654,6 +659,10 @@ public class JmxCollector implements MultiCollector {
                 fullname = fullname.toLowerCase();
             }
 
+            if (config.inferCounterTypeFromName && fullname.endsWith("_total")) {
+                type = "COUNTER";
+            }
+
             List<String> labelNames = new ArrayList<>();
             List<String> labelValues = new ArrayList<>();
             if (beanProperties.size() > 1) {
@@ -795,6 +804,11 @@ public class JmxCollector implements MultiCollector {
                         name = name.toLowerCase();
                     }
 
+                    String type = rule.type;
+                    if (config.inferCounterTypeFromName && name.endsWith("_total")) {
+                        type = "COUNTER";
+                    }
+
                     // Set the help.
                     if (rule.help != null) {
                         help = matcher.replaceAll(rule.help);
@@ -833,7 +847,7 @@ public class JmxCollector implements MultiCollector {
                             new MatchedRule(
                                     name,
                                     matchName,
-                                    rule.type,
+                                    type,
                                     help,
                                     labelNames,
                                     labelValues,
