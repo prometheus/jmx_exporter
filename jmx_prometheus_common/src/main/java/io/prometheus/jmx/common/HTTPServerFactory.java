@@ -38,10 +38,13 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,9 +59,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509ExtendedTrustManager;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.exception.GenericException;
-import nl.altindag.ssl.util.SSLFactoryUtils;
+import nl.altindag.ssl.util.KeyManagerUtils;
+import nl.altindag.ssl.util.KeyStoreUtils;
+import nl.altindag.ssl.util.SSLSessionUtils;
+import nl.altindag.ssl.util.TrustManagerUtils;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the Standalone exporter
@@ -90,6 +98,9 @@ public class HTTPServerFactory {
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
     private static final ScheduledExecutorService EXECUTOR_SERVICE =
             Executors.newSingleThreadScheduledExecutor();
+
+    private static KeyStoreProperties keyStoreProperties;
+    private static KeyStoreProperties trustStoreProperties;
 
     static {
         // Get the keystore type system property
@@ -670,12 +681,9 @@ public class HTTPServerFactory {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
                 boolean mutualTLS = isMutualTls(rootMapAccessor);
-                SSLFactory baseSslFactory = createReloadableSslFactory();
+                SSLFactory baseSslFactory = createSslFactory(rootMapAccessor);
                 Runnable sslUpdater = () -> reloadSsl(baseSslFactory, rootMapAccessor);
-
-                // initial update of ssl material to replace the dummies
-                sslUpdater.run();
-                // update ssl material every hour
+                // check every hour for file changes and if it has been modified update the ssl configuration
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
@@ -702,37 +710,61 @@ public class HTTPServerFactory {
         }
     }
 
-    private static SSLFactory createReloadableSslFactory() {
-        return SSLFactory.builder()
-                .withDummyIdentityMaterial()
-                .withDummyTrustMaterial()
+    private static SSLFactory createSslFactory(MapAccessor rootMapAccessor) {
+        keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
+        Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
+
+        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder()
                 .withSwappableIdentityMaterial()
-                .withSwappableTrustMaterial()
-                .build();
-    }
+                .withIdentityMaterial(keyStoreProperties.getFilename(), keyStoreProperties.getPassword(), keyStoreProperties.getPassword(), keyStoreProperties.getType());
 
-    private static void reloadSsl(SSLFactory baseSslFactory, MapAccessor rootMapAccessor) {
-        KeyStoreProperties keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
-        Optional<KeyStoreProperties> trustStoreProperties =
-                getTrustStoreProperties(rootMapAccessor);
-
-        SSLFactory.Builder sslFactoryBuilder =
-                SSLFactory.builder()
-                        .withIdentityMaterial(
-                                keyStoreProperties.getKeyStoreFilename(),
-                                keyStoreProperties.getKeyStorePassword(),
-                                keyStoreProperties.getKeyStorePassword(),
-                                keyStoreProperties.getKeyStoreType());
-
-        if (trustStoreProperties.isPresent()) {
-            sslFactoryBuilder.withTrustMaterial(
-                    trustStoreProperties.get().getKeyStoreFilename(),
-                    trustStoreProperties.get().getKeyStorePassword(),
-                    trustStoreProperties.get().getKeyStoreType());
+        if (trustProps.isPresent()) {
+            trustStoreProperties = trustProps.get();
+            sslFactoryBuilder
+                    .withSwappableTrustMaterial()
+                    .withTrustMaterial(trustStoreProperties.getFilename(), trustStoreProperties.getPassword(), trustStoreProperties.getType());
         }
 
-        SSLFactory updatedSslFactory = sslFactoryBuilder.build();
-        SSLFactoryUtils.reload(baseSslFactory, updatedSslFactory);
+        return sslFactoryBuilder.build();
+    }
+
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    private static void reloadSsl(SSLFactory baseSslFactory, MapAccessor rootMapAccessor) {
+        KeyStoreProperties keyProps = getKeyStoreProperties(rootMapAccessor);
+        Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
+
+        boolean sslUpdated = false;
+        if (keyStoreProperties.getLastModifiedTime().isBefore(keyProps.lastModifiedTime)) {
+            KeyStore keyStore =
+                    KeyStoreUtils.loadKeyStore(
+                            keyProps.getFilename(), keyProps.getPassword(), keyProps.getType());
+            X509ExtendedKeyManager keyManager =
+                    KeyManagerUtils.createKeyManager(keyStore, keyProps.getPassword());
+            KeyManagerUtils.swapKeyManager(baseSslFactory.getKeyManager().get(), keyManager);
+            keyStoreProperties = keyProps;
+            sslUpdated = true;
+        }
+
+        if (trustProps.isPresent()
+                && getTrustStoreProperties().isPresent()
+                && getTrustStoreProperties().get()
+                        .getLastModifiedTime()
+                        .isBefore(trustProps.get().lastModifiedTime)) {
+            KeyStore keyStore =
+                    KeyStoreUtils.loadKeyStore(
+                            trustProps.get().getFilename(),
+                            trustProps.get().getPassword(),
+                            trustProps.get().getType());
+            X509ExtendedTrustManager trustManager = TrustManagerUtils.createTrustManager(keyStore);
+            TrustManagerUtils.swapTrustManager(
+                    baseSslFactory.getTrustManager().get(), trustManager);
+            trustStoreProperties = trustProps.get();
+            sslUpdated = true;
+        }
+
+        if (sslUpdated) {
+            SSLSessionUtils.invalidateCaches(baseSslFactory);
+        }
     }
 
     private static KeyStoreProperties getKeyStoreProperties(MapAccessor rootMapAccessor) {
@@ -752,6 +784,8 @@ public class HTTPServerFactory {
                                                         + " /httpServer/ssl/keyStore/filename"
                                                         + " must not be blank")))
                         .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
+
+        Instant lastModifiedTime = getLastModifiedTime(keyStoreFilename);
 
         String keyStoreType =
                 rootMapAccessor
@@ -811,7 +845,21 @@ public class HTTPServerFactory {
                                                 + " string"));
 
         return new KeyStoreProperties(
-                keyStoreFilename, keyStorePassword.toCharArray(), keyStoreType, certificateAlias);
+                keyStoreFilename,
+                lastModifiedTime,
+                keyStorePassword.toCharArray(),
+                keyStoreType,
+                certificateAlias);
+    }
+
+    private static Instant getLastModifiedTime(String filename) {
+        try {
+            return Files.readAttributes(Paths.get(filename), BasicFileAttributes.class)
+                    .lastModifiedTime()
+                    .toInstant();
+        } catch (IOException e) {
+            return Instant.EPOCH;
+        }
     }
 
     private static Optional<KeyStoreProperties> getTrustStoreProperties(
@@ -837,6 +885,8 @@ public class HTTPServerFactory {
                                                         + " /httpServer/ssl/trustStore/filename"
                                                         + " must not be blank")))
                         .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE));
+
+        Instant lastModifiedTime = getLastModifiedTime(trustStoreFilename);
 
         String trustStoreType =
                 rootMapAccessor
@@ -878,6 +928,7 @@ public class HTTPServerFactory {
         return Optional.of(
                 new KeyStoreProperties(
                         trustStoreFilename,
+                        lastModifiedTime,
                         trustStorePassword.toCharArray(),
                         trustStoreType,
                         null));
@@ -905,6 +956,10 @@ public class HTTPServerFactory {
                                                 + " /httpServer/ssl/mutualTLS"
                                                 + " must be a boolean")))
                 .orElse(false);
+    }
+
+    private static Optional<KeyStoreProperties> getTrustStoreProperties() {
+        return Optional.ofNullable(trustStoreProperties);
     }
 
     /**
@@ -956,32 +1011,40 @@ public class HTTPServerFactory {
 
     private static final class KeyStoreProperties {
 
-        private final Path keyStoreFilename;
-        private final char[] keyStorePassword;
-        private final String keyStoreType;
+        private final Path filename;
+        private final Instant lastModifiedTime;
+        private final char[] password;
+        private final String type;
         private final String certificateAlias;
 
         private KeyStoreProperties(
-                String keyStoreFilename,
-                char[] keyStorePassword,
-                String keyStoreType,
+                String filename,
+                Instant lastModifiedTime,
+                char[] password,
+                String type,
                 String certificateAlias) {
-            this.keyStoreFilename = Paths.get(keyStoreFilename);
-            this.keyStorePassword = keyStorePassword;
-            this.keyStoreType = keyStoreType;
+
+            this.filename = Paths.get(filename);
+            this.lastModifiedTime = lastModifiedTime;
+            this.password = password;
+            this.type = type;
             this.certificateAlias = certificateAlias;
         }
 
-        public Path getKeyStoreFilename() {
-            return keyStoreFilename;
+        public Path getFilename() {
+            return filename;
         }
 
-        public char[] getKeyStorePassword() {
-            return keyStorePassword;
+        public Instant getLastModifiedTime() {
+            return lastModifiedTime;
         }
 
-        public String getKeyStoreType() {
-            return keyStoreType;
+        public char[] getPassword() {
+            return password;
+        }
+
+        public String getType() {
+            return type;
         }
 
         public Optional<String> getCertificateAlias() {
