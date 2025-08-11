@@ -34,7 +34,7 @@ jobs:
     env:
       HUGO_VERSION: 0.115.4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-tags: 'true'
           fetch-depth: 0
