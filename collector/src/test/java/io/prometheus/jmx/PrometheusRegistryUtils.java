@@ -20,6 +20,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
+import io.prometheus.metrics.model.snapshots.InfoSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.ArrayList;
@@ -61,7 +62,36 @@ public class PrometheusRegistryUtils {
      * @return the metric value, or null if it doesn't exist
      */
     public Double getSampleValue(String name, Labels labels) {
-        List<Double> values = new ArrayList<>();
+        DataPointSnapshot dataPointSnapshot = findDataPointSnapshot(name, labels);
+        return dataPointSnapshot != null ? getDataPointSnapshotValue(dataPointSnapshot) : null;
+    }
+
+    /**
+     * Method to get the type of metric from the PrometheusRegistry
+     *
+     * @param name name
+     * @param labelNames labelNames
+     * @param labelValues labelValues
+     * @return the metric type, or null if it doesn't exist
+     */
+    public String getSampleType(String name, String[] labelNames, String[] labelValues) {
+        return getSampleType(name, Labels.of(labelNames, labelValues));
+    }
+
+    /**
+     * Method to get the type of metric from the PrometheusRegistry
+     *
+     * @param name name
+     * @param labels labels
+     * @return the metric type, or null if it doesn't exist
+     */
+    public String getSampleType(String name, Labels labels) {
+        DataPointSnapshot dataPointSnapshot = findDataPointSnapshot(name, labels);
+        return dataPointSnapshot != null ? getDataPointSnapshotType(dataPointSnapshot) : null;
+    }
+
+    private DataPointSnapshot findDataPointSnapshot(String name, Labels labels) {
+        List<DataPointSnapshot> dataPoints = new ArrayList<>();
 
         prometheusRegistry.scrape(s -> s.equals(name)).stream()
                 .filter(metricSnapshot -> metricSnapshot.getMetadata().getName().equals(name))
@@ -76,18 +106,9 @@ public class PrometheusRegistryUtils {
                                                                                 .compareTo(labels)
                                                                         == 0)
                                         .findFirst()
-                                        .ifPresent(
-                                                (Consumer<DataPointSnapshot>)
-                                                        dataPointSnapshot ->
-                                                                values.add(
-                                                                        getDataPointSnapshotValue(
-                                                                                dataPointSnapshot))));
+                                        .ifPresent(dataPoints::add));
 
-        if (!values.isEmpty()) {
-            return values.get(0);
-        } else {
-            return null;
-        }
+        return !dataPoints.isEmpty() ? dataPoints.get(0) : null;
     }
 
     private static Double getDataPointSnapshotValue(DataPointSnapshot dataPointSnapshot) {
@@ -103,5 +124,18 @@ public class PrometheusRegistryUtils {
         // TODO add other DataPoint types
 
         return value;
+    }
+
+    private static String getDataPointSnapshotType(DataPointSnapshot dataPointSnapshot) {
+        if (dataPointSnapshot instanceof GaugeSnapshot.GaugeDataPointSnapshot) {
+            return "GAUGE";
+        } else if (dataPointSnapshot instanceof CounterSnapshot.CounterDataPointSnapshot) {
+            return "COUNTER";
+        } else if (dataPointSnapshot instanceof UnknownSnapshot.UnknownDataPointSnapshot) {
+            return "UNKNOWN";
+        }
+        // TODO add other DataPoint types
+
+        return null;
     }
 }
