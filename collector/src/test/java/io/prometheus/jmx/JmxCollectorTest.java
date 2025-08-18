@@ -749,64 +749,72 @@ public class JmxCollectorTest {
 
     @Test
     public void testInferCounterTypeFromNameEnabled() throws Exception {
-        JmxCollector jc = new JmxCollector("---\n" +
-          "inferCounterTypeFromName: true\n" +
-          "rules:\n" +
-          "- pattern: 'kafka.consumer<type=.+, client-id=(.+), node-id=(.+)><>(.+):'\n" +
-          "  name: kafka_consumer_$3\n" +
-          "  labels:\n" +
-          "    client_id: $1\n" +
-          "    node_id: $2").register(prometheusRegistry);
+        JmxCollector jc =
+                new JmxCollector(
+                                "---\n"
+                                        + "inferCounterTypeFromName: true\n"
+                                        + "rules:\n"
+                                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
+                                        + " node-id=(.+)><>(.+):'\n"
+                                        + "  name: kafka_consumer_$3\n"
+                                        + "  labels:\n"
+                                        + "    client_id: $1\n"
+                                        + "    node_id: $2")
+                        .register(prometheusRegistry);
 
         String totalType =
-          getSampleType(
-            // the `-total` (or `_total`) suffix in `request-total` attribute is lost
-            "kafka_consumer_request",
-            new String[] {"client_id", "node_id"},
-            new String[] {"my-app-consumer", "node-1"});
+                getSampleType(
+                        // the `-total` (or `_total`) suffix in `request-total` attribute is lost
+                        "kafka_consumer_request",
+                        new String[] {"client_id", "node_id"},
+                        new String[] {"my-app-consumer", "node-1"});
 
-        // But with the inferCounterTypeFromName=true, the type of `kafka_consumer_request` is COUNTER which will re-add the `_total` suffix
+        // But with the inferCounterTypeFromName=true, the type of `kafka_consumer_request` is
+        // COUNTER which will re-add the `_total` suffix
         assertThat(totalType).isEqualTo("COUNTER");
 
         // inferCounterTypeFromName has no influence on the request-rate attribute
         String rateType =
-          getSampleType(
-            "kafka_consumer_request_rate",
-            new String[] {"client_id", "node_id"},
-            new String[] {"my-app-consumer", "node-1"}
-          );
+                getSampleType(
+                        "kafka_consumer_request_rate",
+                        new String[] {"client_id", "node_id"},
+                        new String[] {"my-app-consumer", "node-1"});
 
         assertThat(rateType).isEqualTo("UNKNOWN");
     }
 
     @Test
     public void testInferCounterTypeFromNameDisabled() throws Exception {
-        JmxCollector jc = new JmxCollector("---\n" +
-          "inferCounterTypeFromName: false\n" +
-          "rules:\n" +
-          "- pattern: 'kafka.consumer<type=.+, client-id=(.+), node-id=(.+)><>(.+):'\n" +
-          "  name: kafka_consumer_$3\n" +
-          "  labels:\n" +
-          "    client_id: $1\n" +
-          "    node_id: $2").register(prometheusRegistry);
+        JmxCollector jc =
+                new JmxCollector(
+                                "---\n"
+                                        + "inferCounterTypeFromName: false\n"
+                                        + "rules:\n"
+                                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
+                                        + " node-id=(.+)><>(.+):'\n"
+                                        + "  name: kafka_consumer_$3\n"
+                                        + "  labels:\n"
+                                        + "    client_id: $1\n"
+                                        + "    node_id: $2")
+                        .register(prometheusRegistry);
 
         String totalType =
-          getSampleType(
-            // the `-total` (or `_total`) suffix in `request-total` attribute is lost
-            "kafka_consumer_request",
-            new String[] {"client_id", "node_id"},
-            new String[] {"my-app-consumer", "node-1"});
+                getSampleType(
+                        // the `-total` (or `_total`) suffix in `request-total` attribute is lost
+                        "kafka_consumer_request",
+                        new String[] {"client_id", "node_id"},
+                        new String[] {"my-app-consumer", "node-1"});
 
-        // With inferCounterTypeFromName=false, the type of `kafka_consumer_request` is UNKNOWN, so the final name will be `kafka_consumer_request`
+        // With inferCounterTypeFromName=false, the type of `kafka_consumer_request` is UNKNOWN, so
+        // the final name will be `kafka_consumer_request`
         assertThat(totalType).isEqualTo("UNKNOWN");
 
         // inferCounterTypeFromName has no influence on the request-rate attribute
         String rateType =
-          getSampleType(
-            "kafka_consumer_request_rate",
-            new String[] {"client_id", "node_id"},
-            new String[] {"my-app-consumer", "node-1"}
-          );
+                getSampleType(
+                        "kafka_consumer_request_rate",
+                        new String[] {"client_id", "node_id"},
+                        new String[] {"my-app-consumer", "node-1"});
 
         assertThat(rateType).isEqualTo("UNKNOWN");
     }
