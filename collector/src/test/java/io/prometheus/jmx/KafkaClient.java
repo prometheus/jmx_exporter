@@ -30,7 +30,8 @@ class KafkaClient implements DynamicMBean {
 
     public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
         ObjectName mbeanName =
-                new ObjectName("kafka.consumer:type=consumer-node-metrics,client-id=my-app-consumer,node-id=node-1");
+                new ObjectName(
+                        "kafka.consumer:type=consumer-node-metrics,client-id=my-app-consumer,node-id=node-1");
         KafkaClient mbean = new KafkaClient();
         mbs.registerMBean(mbean, mbeanName);
     }
@@ -72,24 +73,22 @@ class KafkaClient implements DynamicMBean {
     }
 
     @Override
-    public Object invoke(String actionName, Object[] params, String[] signature) throws MBeanException {
+    public Object invoke(String actionName, Object[] params, String[] signature)
+            throws MBeanException {
         throw new MBeanException(new UnsupportedOperationException("No operations are supported"));
     }
 
     @Override
     public MBeanInfo getMBeanInfo() {
-        MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[] {
-            new MBeanAttributeInfo("request-rate", "double", "Request rate", true, false, false),
-            new MBeanAttributeInfo("request-total", "double", "Request total", true, false, false)
-        };
-        
+        MBeanAttributeInfo[] attributes =
+                new MBeanAttributeInfo[] {
+                    new MBeanAttributeInfo(
+                            "request-rate", "double", "Request rate", true, false, false),
+                    new MBeanAttributeInfo(
+                            "request-total", "double", "Request total", true, false, false)
+                };
+
         return new MBeanInfo(
-            this.getClass().getName(),
-            "Kafka Client MBean",
-            attributes,
-            null,
-            null,
-            null
-        );
+                this.getClass().getName(), "Kafka Client MBean", attributes, null, null, null);
     }
 }
