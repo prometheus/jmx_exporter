@@ -1,7 +1,0 @@
-httpServer:
-  authentication:
-    basic:
-      username: Prometheus
-      password: ${file:./secret.txt}
-rules:
-  - pattern: ".*"
