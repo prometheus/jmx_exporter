@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>integration_test_suite</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.0-post</version>
     </parent>
 
     <artifactId>integration_tests</artifactId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>jmx_example_application</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.0-post</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
