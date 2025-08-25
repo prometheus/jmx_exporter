@@ -1,9 +1,0 @@
-httpServer:
-  ssl:
-    keyStore:
-      filename: localhost.jks
-      password: ${file:./secret.txt}
-    certificate:
-      alias: localhost
-rules:
-  - pattern: ".*"

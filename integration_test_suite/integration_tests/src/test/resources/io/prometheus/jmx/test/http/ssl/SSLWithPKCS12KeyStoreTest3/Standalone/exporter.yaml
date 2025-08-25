@@ -2,7 +2,7 @@ httpServer:
   ssl:
     keyStore:
       filename: localhost.pkcs12
-      password: ${env:SECRET}
+      password: ${SECRET}
     certificate:
       alias: localhost
 hostPort: application:9999

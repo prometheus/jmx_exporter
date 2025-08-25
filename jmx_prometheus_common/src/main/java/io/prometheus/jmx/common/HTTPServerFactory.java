@@ -429,7 +429,7 @@ public class HTTPServerFactory {
                                                             + " is a required string"));
 
                     // Resolve the password
-                    password = VariableResolver.resolve(password);
+                    password = VariableResolver.resolveVariable(password);
 
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm)
@@ -712,7 +712,7 @@ public class HTTPServerFactory {
                                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
 
                 // Resolve the password
-                keyStorePassword = VariableResolver.resolve(keyStorePassword);
+                keyStorePassword = VariableResolver.resolveVariable(keyStorePassword);
 
                 String certificateAlias =
                         rootMapAccessor
@@ -814,7 +814,7 @@ public class HTTPServerFactory {
                                     .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD));
 
                     // Resolve the password
-                    trustStorePassword = VariableResolver.resolve(trustStorePassword);
+                    trustStorePassword = VariableResolver.resolveVariable(trustStorePassword);
                 }
 
                 httpServerBuilder.httpsConfigurator(

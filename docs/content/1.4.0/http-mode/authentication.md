@@ -31,35 +31,15 @@ httpServer:
 
 ---
 
-Environment variable password example 1:
+Environment variable password example:
 
 ```yaml
 httpServer:
   authentication:
     basic:
       username: Prometheus
-      password: ${env:SECRET}
+      password: ${SECRET}
 ```
-
----
-
-File password example:
-
-```yaml
-httpServer:
-  authentication:
-    basic:
-      username: Prometheus
-      password: ${file:/etc/secret.txt}
-```
-
----
-
-**Notes**
-
-- If an environment variable format is used and not defined or empty, the value is treated as plaintext
-
-- If a file format is used and doesn't exist or is empty, the value is treated as plaintext
 
 ---
 
