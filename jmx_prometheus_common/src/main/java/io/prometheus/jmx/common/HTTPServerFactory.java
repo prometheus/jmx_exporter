@@ -683,7 +683,8 @@ public class HTTPServerFactory {
                 boolean mutualTLS = isMutualTls(rootMapAccessor);
                 SSLFactory sslFactory = createSslFactory(rootMapAccessor);
                 Runnable sslUpdater = () -> reloadSsl(sslFactory, rootMapAccessor);
-                // check every hour for file changes and if it has been modified update the ssl configuration
+                // check every hour for file changes and if it has been modified update the ssl
+                // configuration
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
@@ -714,15 +715,23 @@ public class HTTPServerFactory {
         keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
 
-        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder()
-                .withSwappableIdentityMaterial()
-                .withIdentityMaterial(keyStoreProperties.getFilename(), keyStoreProperties.getPassword(), keyStoreProperties.getPassword(), keyStoreProperties.getType());
+        SSLFactory.Builder sslFactoryBuilder =
+                SSLFactory.builder()
+                        .withSwappableIdentityMaterial()
+                        .withIdentityMaterial(
+                                keyStoreProperties.getFilename(),
+                                keyStoreProperties.getPassword(),
+                                keyStoreProperties.getPassword(),
+                                keyStoreProperties.getType());
 
         if (trustProps.isPresent()) {
             trustStoreProperties = trustProps.get();
             sslFactoryBuilder
                     .withSwappableTrustMaterial()
-                    .withTrustMaterial(trustStoreProperties.getFilename(), trustStoreProperties.getPassword(), trustStoreProperties.getType());
+                    .withTrustMaterial(
+                            trustStoreProperties.getFilename(),
+                            trustStoreProperties.getPassword(),
+                            trustStoreProperties.getType());
         }
 
         return sslFactoryBuilder.build();
@@ -747,7 +756,8 @@ public class HTTPServerFactory {
 
         if (trustProps.isPresent()
                 && getTrustStoreProperties().isPresent()
-                && getTrustStoreProperties().get()
+                && getTrustStoreProperties()
+                        .get()
                         .getLastModifiedTime()
                         .isBefore(trustProps.get().lastModifiedTime)) {
             KeyStore keyStore =
@@ -756,8 +766,7 @@ public class HTTPServerFactory {
                             trustProps.get().getPassword(),
                             trustProps.get().getType());
             X509ExtendedTrustManager trustManager = TrustManagerUtils.createTrustManager(keyStore);
-            TrustManagerUtils.swapTrustManager(
-                    sslFactory.getTrustManager().get(), trustManager);
+            TrustManagerUtils.swapTrustManager(sslFactory.getTrustManager().get(), trustManager);
             trustStoreProperties = trustProps.get();
             sslUpdated = true;
         }
