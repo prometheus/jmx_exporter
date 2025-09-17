@@ -45,8 +45,8 @@ public class Logger {
 
         // Override the default formatter for the logger if it is SimpleFormatter
         for (Handler handler : LOGGER.getHandlers()) {
-            if (null != handler.getFormatter() &&
-                    handler.getFormatter()
+            if (null != handler.getFormatter()
+                    && handler.getFormatter()
                             .getClass()
                             .getName()
                             .endsWith(SimpleFormatter.class.getName())) {
