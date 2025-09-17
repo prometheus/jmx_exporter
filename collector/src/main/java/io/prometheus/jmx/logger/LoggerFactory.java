@@ -33,8 +33,8 @@ public class LoggerFactory {
     static {
         // Override the default formatter for the root logger if it is SimpleFormatter
         for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
-            if (null != handler.getFormatter() &&
-                    handler.getFormatter()
+            if (null != handler.getFormatter()
+                    && handler.getFormatter()
                             .getClass()
                             .getName()
                             .endsWith(SimpleFormatter.class.getName())) {
