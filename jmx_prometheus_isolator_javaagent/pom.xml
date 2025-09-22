@@ -42,7 +42,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <compilerArgument>-Xbootclasspath/a:${env.JAVA_HOME}/lib/</compilerArgument>
                 </configuration>
@@ -171,7 +171,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.19.0</version>
+                <version>2.19.1</version>
                 <configuration>
                     <rulesUri>file://${project.basedir}/version-rules.xml</rulesUri>
                 </configuration>
