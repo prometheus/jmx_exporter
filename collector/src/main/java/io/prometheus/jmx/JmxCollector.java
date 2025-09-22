@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.prometheus.jmx.MatchedRulesCache.CacheKey;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
+import io.prometheus.jmx.variable.VariableResolver;
 import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Gauge;
 import io.prometheus.metrics.model.registry.MultiCollector;
@@ -307,11 +308,13 @@ public class JmxCollector implements MultiCollector {
         }
 
         if (yamlConfig.containsKey("username")) {
-            cfg.username = (String) yamlConfig.get("username");
+            String username = (String) yamlConfig.get("username");
+            cfg.username = VariableResolver.resolveVariable(username);
         }
 
         if (yamlConfig.containsKey("password")) {
-            cfg.password = (String) yamlConfig.get("password");
+            String password = (String) yamlConfig.get("password");
+            cfg.password = VariableResolver.resolveVariable(password);
         }
 
         if (yamlConfig.containsKey("ssl")) {

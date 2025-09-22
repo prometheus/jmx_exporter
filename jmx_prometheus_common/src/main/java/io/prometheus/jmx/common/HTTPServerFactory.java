@@ -33,7 +33,7 @@ import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToMapAccessor;
 import io.prometheus.jmx.common.util.functions.ToString;
-import io.prometheus.jmx.common.variable.VariableResolver;
+import io.prometheus.jmx.variable.VariableResolver;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
