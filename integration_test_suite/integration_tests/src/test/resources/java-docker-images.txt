@@ -8,7 +8,7 @@ amazoncorretto:8
 amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:21
-amazoncorretto:24
+amazoncorretto:25
 antublue/openjdk:25-ea-22
 antublue/openlogic-openjdk:8
 antublue/openlogic-openjdk:11
@@ -23,12 +23,12 @@ azul/zulu-openjdk:25
 azul/prime:8
 azul/prime:11
 azul/prime:17
-azul/prime:23
+azul/prime:21
 bellsoft/liberica-openjdk-debian:8
 bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
 bellsoft/liberica-openjdk-debian:21
-bellsoft/liberica-openjdk-debian:24
+bellsoft/liberica-openjdk-debian:25
 bitnami/java:1.8
 bitnami/java:11
 bitnami/java:17
@@ -79,7 +79,7 @@ openjdk:17
 openjdk:21
 openjdk:25
 openjdk:26
-container-registry.oracle.com/graalvm/jdk-community:24
+container-registry.oracle.com/graalvm/jdk-community:25
 registry.access.redhat.com/ubi8/openjdk-8-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi8/openjdk-17-runtime:latest
@@ -90,4 +90,4 @@ registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
 sapmachine:11
 sapmachine:17
 sapmachine:21
-sapmachine:24
+sapmachine:25
