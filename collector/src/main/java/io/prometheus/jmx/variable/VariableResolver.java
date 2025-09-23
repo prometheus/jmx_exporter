@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.variable;
+package io.prometheus.jmx.variable;
 
 /** Class to resolves variables. */
 public final class VariableResolver {
