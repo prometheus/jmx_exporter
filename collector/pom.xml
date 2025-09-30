@@ -69,7 +69,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>5.14.0</version>
-            <version>6.0.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
