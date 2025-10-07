@@ -1,18 +1,14 @@
 ---
-title: "JMX Exporter 1.3.0"
-weight: 997
+title: "JMX Exporter 1.5.0"
+weight: 995
 geekdocCollapseSection: true
 ---
 
-This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.3.0.
+This is the documentation for the [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter) version 1.5.0.
 
-The main new features of the 1.3.0 release are:
+The main new features of the 1.5.0 release are:
 
-* **Isolator Java Agent**: A new Java agent that allows running multiple isolated and independent JMX Exporter instances in the same JVM.
-
-
-* **Mutual TLS Authentication**: Support for mutual TLS authentication HTTP server authentication.
-
+* **Standalone JMX Authentication Environment Variable Support:** Support for using environment variables to inject JMX username/password.
 
 **Documentation and Examples**
 
