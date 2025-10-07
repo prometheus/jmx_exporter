@@ -13,3 +13,4 @@ prom/prometheus:v3.2.1
 prom/prometheus:v3.3.1
 prom/prometheus:v3.4.2
 prom/prometheus:v3.5.0
+prom/prometheus:v3.6.0
