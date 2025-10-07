@@ -8,6 +8,8 @@ This is the documentation for the [Prometheus JMX Exporter](https://github.com/p
 
 The main new features of the 1.5.0 release are:
 
+* **Basic authentication Environment Variable Support:** Support for using environment variables to inject Basic authentication username/password.
+
 * **Standalone JMX Authentication Environment Variable Support:** Support for using environment variables to inject JMX username/password.
 
 **Documentation and Examples**

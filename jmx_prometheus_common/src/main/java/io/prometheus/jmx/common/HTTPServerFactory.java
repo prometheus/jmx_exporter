@@ -390,6 +390,9 @@ public class HTTPServerFactory {
                                                 "/httpServer/authentication/basic/username is a"
                                                         + " required string"));
 
+                // Resolve the username
+                username = VariableResolver.resolveVariable(username);
+
                 String algorithm =
                         httpServerAuthenticationBasicMapAccessor
                                 .get("/algorithm")
