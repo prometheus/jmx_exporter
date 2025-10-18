@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>jmx_exporter</artifactId>
-        <version>1.4.0-post</version>
+        <version>1.5.0-post</version>
     </parent>
     <artifactId>jmx_prometheus_standalone</artifactId>
     <name>Prometheus JMX Exporter - Standalone Server</name>
@@ -48,7 +48,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <compilerArgument>-Xbootclasspath/a:${env.JAVA_HOME}/lib/</compilerArgument>
                 </configuration>
@@ -56,11 +56,11 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.46.1</version>
+                <version>3.0.0</version>
                 <configuration>
                     <java>
                         <palantirJavaFormat>
-                            <version>2.66.0</version>
+                            <version>2.76.0</version>
                             <style>PALANTIR</style>
                         </palantirJavaFormat>
                     </java>
@@ -77,7 +77,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -98,7 +98,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

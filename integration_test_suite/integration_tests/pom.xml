@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>integration_test_suite</artifactId>
-        <version>1.4.0-post</version>
+        <version>1.5.0-post</version>
     </parent>
 
     <artifactId>integration_tests</artifactId>
@@ -29,7 +29,7 @@
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <prometheus.metrics.version>1.4.1</prometheus.metrics.version>
-        <verifyica.version>0.16.0</verifyica.version>
+        <verifyica.version>0.18.0</verifyica.version>
         <automatic.module.name>io.prometheus.jmx.test</automatic.module.name>
     </properties>
 
@@ -67,12 +67,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.18</version>
+            <version>1.5.19</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.3</version>
+            <version>2.0.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.commons</groupId>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.4</version>
+            <version>3.27.6</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>jmx_example_application</artifactId>
-            <version>1.4.0-post</version>
+            <version>1.5.0-post</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -129,7 +129,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <compilerArgument>-Xbootclasspath/a:${env.JAVA_HOME}/lib/</compilerArgument>
                 </configuration>
@@ -162,7 +162,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <skipTests>true</skipTests>
                 </configuration>
@@ -183,11 +183,11 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.46.1</version>
+                <version>3.0.0</version>
                 <configuration>
                     <java>
                         <palantirJavaFormat>
-                            <version>2.66.0</version>
+                            <version>2.76.0</version>
                             <style>PALANTIR</style>
                         </palantirJavaFormat>
                     </java>
@@ -204,7 +204,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -224,7 +224,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.18.0</version>
+                <version>2.19.1</version>
                 <configuration>
                     <rulesUri>file://${project.basedir}/version-rules.xml</rulesUri>
                 </configuration>

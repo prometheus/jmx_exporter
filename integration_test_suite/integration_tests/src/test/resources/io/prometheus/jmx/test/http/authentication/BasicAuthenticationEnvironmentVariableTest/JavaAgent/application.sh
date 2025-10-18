@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Export the environment variable used for authentication
+# Export the environment variables used for authentication
+export USERNAME=Prometheus
 export SECRET=secret
 
 java \

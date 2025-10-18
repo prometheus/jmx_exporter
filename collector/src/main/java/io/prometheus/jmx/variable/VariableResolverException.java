@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.common.variable;
+package io.prometheus.jmx.variable;
 
 /** Class to implement VariableResolverException */
 public class VariableResolverException extends RuntimeException {

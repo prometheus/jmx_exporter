@@ -1,6 +1,6 @@
 ---
 title: "JMX Exporter 1.1.0"
-weight: 4
+weight: 999
 geekdocCollapseSection: true
 ---
 
