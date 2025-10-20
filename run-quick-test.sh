@@ -22,7 +22,7 @@
 
 (
   export JAVA_DOCKER_IMAGES="eclipse-temurin:25-alpine"
-  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.6.0"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.7.1"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
   ./mvnw clean verify
