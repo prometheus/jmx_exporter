@@ -9,7 +9,6 @@ amazoncorretto:11
 amazoncorretto:17
 amazoncorretto:21
 amazoncorretto:25
-antublue/openjdk:25-ea-22
 antublue/openlogic-openjdk:8
 antublue/openlogic-openjdk:11
 antublue/openlogic-openjdk:17
