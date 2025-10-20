@@ -4,6 +4,7 @@ alibabadragonwell/dragonwell:8
 alibabadragonwell/dragonwell:11
 alibabadragonwell/dragonwell:17
 alibabadragonwell/dragonwell:21
+alibabadragonwell/dragonwell:25
 amazoncorretto:8
 amazoncorretto:11
 amazoncorretto:17
