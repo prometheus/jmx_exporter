@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * <p>This class is responsible for loading Java agents from specified jar files and executing their
  * main methods. It uses a custom classloader to ensure that the agent classes are loaded correctly.
  */
-@SuppressWarnings("PMD.EmptyCatchBlock")
+@SuppressWarnings({"PMD.EmptyCatchBlock", "PMD.UselessPureMethodCall"})
 public class IsolatorJavaAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IsolatorJavaAgent.class);
