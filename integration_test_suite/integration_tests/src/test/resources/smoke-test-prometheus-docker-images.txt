@@ -1,1 +1,1 @@
-prom/prometheus:v3.6.0
+prom/prometheus:v3.7.1
