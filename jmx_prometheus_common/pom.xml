@@ -55,12 +55,7 @@
         <dependency>
             <groupId>io.github.hakky54</groupId>
             <artifactId>ayza</artifactId>
-            <version>10.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
+            <version>10.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
