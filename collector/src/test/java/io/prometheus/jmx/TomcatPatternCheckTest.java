@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
  * </pre>
  *
  * See <a
- * href="http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html</a>
+ * href="https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex Class Pattern (Java Platform SE 7)</a>
  *
  * <p>or
  *
