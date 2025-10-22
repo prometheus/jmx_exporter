@@ -290,7 +290,7 @@ public class MetricsParser {
     /**
      * Method to read the TYPE line
      *
-     * @param lineReader lineRedaer
+     * @param lineReader lineReader
      * @return the TYPE line
      * @throws IOException IOException
      */
