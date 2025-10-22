@@ -21,7 +21,7 @@ import javax.management.ObjectName;
 
 public interface CassandraMetricsMBean {
     // This how yammer's metrics
-    // http://www.javacodegeeks.com/2012/12/yammer-metrics-a-new-way-to-monitor-your-application.html
+    // https://www.javacodegeeks.com/2012/12/yammer-metrics-a-new-way-to-monitor-your-application.html
     // look through JMX.
 
     float getValue();
