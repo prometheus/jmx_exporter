@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
  * <p>or
  *
  * <p><a
- * href="http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java">http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java</a>
+ * href=""https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java>Regular expression to match URLs in Java</a>
  */
 public class TomcatPatternCheckTest {
 
