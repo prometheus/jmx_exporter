@@ -53,9 +53,9 @@ public class Credentials {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Credentials Credentials = (Credentials) o;
-        return Objects.equals(username, Credentials.username)
-                && Objects.equals(password, Credentials.password);
+        Credentials credentials = (Credentials) o;
+        return Objects.equals(username, credentials.username)
+                && Objects.equals(password, credentials.password);
     }
 
     @Override
