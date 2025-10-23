@@ -60,7 +60,7 @@ public class TomcatPatternCheckTest {
     }
 
     @Test
-    public void testSerlvetName() {
+    public void testServletName() {
         assertThat(validateServletName("C")).isTrue();
         assertThat(validateServletName("Cc")).isTrue();
         assertThat(validateServletName("C$c")).isTrue();
