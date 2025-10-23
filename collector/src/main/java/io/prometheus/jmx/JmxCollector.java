@@ -528,7 +528,7 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
-     * Convert the a name to snake case and lower case.
+     * Convert name to snake case and lower case.
      *
      * @param name the name
      * @return the converted name
