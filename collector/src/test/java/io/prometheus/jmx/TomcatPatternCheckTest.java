@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,12 +29,12 @@ import org.junit.jupiter.api.Test;
  * </pre>
  *
  * See <a
- * href="http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html</a>
+ * href="https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex Class Pattern (Java Platform SE 7)</a>
  *
  * <p>or
  *
  * <p><a
- * href="http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java">http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-in-java</a>
+ * href=""https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java>Regular expression to match URLs in Java</a>
  */
 public class TomcatPatternCheckTest {
 
@@ -60,7 +60,7 @@ public class TomcatPatternCheckTest {
     }
 
     @Test
-    public void testSerlvetName() {
+    public void testServletName() {
         assertThat(validateServletName("C")).isTrue();
         assertThat(validateServletName("Cc")).isTrue();
         assertThat(validateServletName("C$c")).isTrue();

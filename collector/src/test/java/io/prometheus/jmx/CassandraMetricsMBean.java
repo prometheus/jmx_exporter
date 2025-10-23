@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import javax.management.ObjectName;
 
 public interface CassandraMetricsMBean {
     // This how yammer's metrics
-    // http://www.javacodegeeks.com/2012/12/yammer-metrics-a-new-way-to-monitor-your-application.html
+    // https://www.javacodegeeks.com/2012/12/yammer-metrics-a-new-way-to-monitor-your-application.html
     // look through JMX.
 
     float getValue();

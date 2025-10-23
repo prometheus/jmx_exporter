@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #
-# Code to run the test with RedHat UBI images
+# Code to run the test with Red Hat UBI images
 #
-# When running on RedHat UBI images, testcontainers maps
+# When running on Red Hat UBI images, testcontainers maps
 # the files as the current user, but the application runs
 # as "jboss" on UBI8 images and "default" on UBI9 images
 # preventing the chmod commands to change permissions on
