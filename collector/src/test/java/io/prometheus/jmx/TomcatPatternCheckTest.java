@@ -29,12 +29,14 @@ import org.junit.jupiter.api.Test;
  * </pre>
  *
  * See <a
- * href="https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex Class Pattern (Java Platform SE 7)</a>
+ * href="https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex
+ * Class Pattern (Java Platform SE 7)</a>
  *
  * <p>or
  *
  * <p><a
- * href=""https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java>Regular expression to match URLs in Java</a>
+ * href=""https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java>Regular
+ * expression to match URLs in Java</a>
  */
 public class TomcatPatternCheckTest {
 
