@@ -59,14 +59,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLParameters;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509ExtendedTrustManager;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.exception.GenericException;
-import nl.altindag.ssl.util.KeyManagerUtils;
-import nl.altindag.ssl.util.KeyStoreUtils;
-import nl.altindag.ssl.util.SSLSessionUtils;
-import nl.altindag.ssl.util.TrustManagerUtils;
+import nl.altindag.ssl.util.SSLFactoryUtils;
 
 /**
  * Class to create the HTTPServer used by both the Java agent exporter and the Standalone exporter
@@ -740,19 +735,15 @@ public class HTTPServerFactory {
         return sslFactoryBuilder.build();
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private static void reloadSsl(SSLFactory sslFactory, MapAccessor rootMapAccessor) {
         KeyStoreProperties keyProps = getKeyStoreProperties(rootMapAccessor);
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
 
         boolean sslUpdated = false;
-        if (keyStoreProperties.getLastModifiedTime().isBefore(keyProps.lastModifiedTime)) {
-            KeyStore keyStore =
-                    KeyStoreUtils.loadKeyStore(
-                            keyProps.getFilename(), keyProps.getPassword(), keyProps.getType());
-            X509ExtendedKeyManager keyManager =
-                    KeyManagerUtils.createKeyManager(keyStore, keyProps.getPassword());
-            KeyManagerUtils.swapKeyManager(sslFactory.getKeyManager().get(), keyManager);
+        SSLFactory.Builder updatedSslFactory = SSLFactory.builder();
+        if (keyStoreProperties.getLastModifiedTime().isBefore(keyProps.getLastModifiedTime())) {
+            updatedSslFactory.withIdentityMaterial(
+                    keyProps.getFilename(), keyProps.getPassword(), keyProps.getType());
             keyStoreProperties = keyProps;
             sslUpdated = true;
         }
@@ -762,20 +753,17 @@ public class HTTPServerFactory {
                 && getTrustStoreProperties()
                         .get()
                         .getLastModifiedTime()
-                        .isBefore(trustProps.get().lastModifiedTime)) {
-            KeyStore keyStore =
-                    KeyStoreUtils.loadKeyStore(
-                            trustProps.get().getFilename(),
-                            trustProps.get().getPassword(),
-                            trustProps.get().getType());
-            X509ExtendedTrustManager trustManager = TrustManagerUtils.createTrustManager(keyStore);
-            TrustManagerUtils.swapTrustManager(sslFactory.getTrustManager().get(), trustManager);
+                        .isBefore(trustProps.get().getLastModifiedTime())) {
+            updatedSslFactory.withTrustMaterial(
+                    trustProps.get().getFilename(),
+                    trustProps.get().getPassword(),
+                    trustProps.get().getType());
             trustStoreProperties = trustProps.get();
             sslUpdated = true;
         }
 
         if (sslUpdated) {
-            SSLSessionUtils.invalidateCaches(sslFactory);
+            SSLFactoryUtils.reload(sslFactory, updatedSslFactory.build());
         }
     }
 
