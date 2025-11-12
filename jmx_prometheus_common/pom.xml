@@ -53,6 +53,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>ayza</artifactId>
+            <version>10.0.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>6.0.1</version>
