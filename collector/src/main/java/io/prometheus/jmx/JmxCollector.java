@@ -938,7 +938,8 @@ public class JmxCollector implements MultiCollector {
                         jmxMBeanPropertyCache);
 
         long start = System.nanoTime();
-        double error = 0;
+        double error = 1;
+        String errorMsg = "";
 
         if ((config.startDelaySeconds > 0)
                 && ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
@@ -946,11 +947,17 @@ public class JmxCollector implements MultiCollector {
         }
         try {
             scraper.doScrape();
+            error = 0;
+        } catch (java.io.IOException | java.lang.SecurityException e) {
+            errorMsg = e.getMessage();
         } catch (Exception e) {
-            error = 1;
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            LOGGER.error("JMX scrape failed: %s", sw);
+            errorMsg = sw.toString();
+        }
+
+        if (error == 1) {
+            LOGGER.error("JMX scrape failed: %s", errorMsg);
         }
 
         if (config.rulesCache != null) {
