@@ -20,7 +20,6 @@ import static java.lang.String.format;
 
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
@@ -59,7 +58,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLParameters;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.exception.GenericException;
 import nl.altindag.ssl.util.SSLFactoryUtils;
@@ -681,7 +679,6 @@ public class HTTPServerFactory {
             MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
-                boolean mutualTLS = isMutualTls(rootMapAccessor);
                 SSLFactory sslFactory = createSslFactory(rootMapAccessor);
                 Runnable sslUpdater = () -> reloadSsl(sslFactory, rootMapAccessor);
                 // check every hour for file changes and if it has been modified update the ssl
@@ -689,15 +686,7 @@ public class HTTPServerFactory {
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
-                        new HttpsConfigurator(sslFactory.getSslContext()) {
-                            @Override
-                            public void configure(HttpsParameters params) {
-                                SSLParameters sslParameters =
-                                        getSSLContext().getDefaultSSLParameters();
-                                sslParameters.setNeedClientAuth(mutualTLS);
-                                params.setSSLParameters(sslParameters);
-                            }
-                        });
+                        new HttpsConfigurator(sslFactory.getSslContext()));
             } catch (GenericException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
@@ -735,6 +724,7 @@ public class HTTPServerFactory {
                             trustStoreProperties.getType());
         }
 
+        sslFactoryBuilder.withNeedClientAuthentication(isMutualTls(rootMapAccessor));
         getProtocolsProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withProtocols);
         getCiphersProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
 
