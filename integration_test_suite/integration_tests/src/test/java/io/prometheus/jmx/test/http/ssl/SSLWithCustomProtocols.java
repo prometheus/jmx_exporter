@@ -49,7 +49,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
-
 import nl.altindag.ssl.SSLFactory;
 import org.assertj.core.api.ThrowableAssert;
 import org.assertj.core.util.Strings;
@@ -144,16 +143,18 @@ public class SSLWithCustomProtocols {
     }
 
     @Verifyica.Test
-    public void testCallingServerWithNonMatchingSslProtocols(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
+    public void testCallingServerWithNonMatchingSslProtocols(
+            JmxExporterTestEnvironment jmxExporterTestEnvironment) {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        assertThatThrownBy(() ->
-                callWithClientKeyStore(
-                        jmxExporterTestEnvironment,
-                        () -> HttpClient.sendRequest(url),
-                        "TLSv1.2"))
+        assertThatThrownBy(
+                        () ->
+                                callWithClientKeyStore(
+                                        jmxExporterTestEnvironment,
+                                        () -> HttpClient.sendRequest(url),
+                                        "TLSv1.2"))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 

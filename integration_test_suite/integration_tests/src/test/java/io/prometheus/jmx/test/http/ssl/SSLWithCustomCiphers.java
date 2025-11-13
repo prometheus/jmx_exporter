@@ -16,6 +16,13 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
+import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
+import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -27,18 +34,6 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.jmx.test.support.util.TestSupport;
-import nl.altindag.ssl.SSLFactory;
-import org.assertj.core.api.ThrowableAssert;
-import org.assertj.core.util.Strings;
-import org.testcontainers.containers.Network;
-import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Trap;
-import org.verifyica.api.Verifyica;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -50,13 +45,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocketFactory;
+import nl.altindag.ssl.SSLFactory;
+import org.assertj.core.api.ThrowableAssert;
+import org.assertj.core.util.Strings;
+import org.testcontainers.containers.Network;
+import org.verifyica.api.ArgumentContext;
+import org.verifyica.api.Trap;
+import org.verifyica.api.Verifyica;
 
 public class SSLWithCustomCiphers {
 
@@ -145,16 +144,18 @@ public class SSLWithCustomCiphers {
     }
 
     @Verifyica.Test
-    public void testCallingServerWithNonMatchingSslCiphers(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
+    public void testCallingServerWithNonMatchingSslCiphers(
+            JmxExporterTestEnvironment jmxExporterTestEnvironment) {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        assertThatThrownBy(() ->
-                callWithClientKeyStore(
-                        jmxExporterTestEnvironment,
-                        () -> HttpClient.sendRequest(url),
-                        "TLS_AES_128_GCM_SHA256"))
+        assertThatThrownBy(
+                        () ->
+                                callWithClientKeyStore(
+                                        jmxExporterTestEnvironment,
+                                        () -> HttpClient.sendRequest(url),
+                                        "TLS_AES_128_GCM_SHA256"))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 
