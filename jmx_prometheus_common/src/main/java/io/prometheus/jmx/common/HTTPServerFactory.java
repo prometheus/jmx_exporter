@@ -736,7 +736,7 @@ public class HTTPServerFactory {
         }
 
         getProtocolsProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withProtocols);
-        getCipherSuitesProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
+        getCiphersProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
 
         return sslFactoryBuilder.build();
     }
@@ -968,8 +968,8 @@ public class HTTPServerFactory {
         return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "protocols");
     }
 
-    private static Optional<String[]> getCipherSuitesProperties(MapAccessor rootMapAccessor) {
-        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "cipherSuites");
+    private static Optional<String[]> getCiphersProperties(MapAccessor rootMapAccessor) {
+        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "ciphers");
     }
 
     private static Optional<String[]> getPropertiesFromCommaSeparatedStringAsArray(
