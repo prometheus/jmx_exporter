@@ -45,6 +45,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -732,6 +733,9 @@ public class HTTPServerFactory {
                             trustStoreProperties.getType());
         }
 
+        getProtocolsProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withProtocols);
+        getCipherSuitesProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
+
         return sslFactoryBuilder.build();
     }
 
@@ -956,6 +960,36 @@ public class HTTPServerFactory {
                                                 + " /httpServer/ssl/mutualTLS"
                                                 + " must be a boolean")))
                 .orElse(false);
+    }
+
+    private static Optional<String[]> getProtocolsProperties(
+            MapAccessor rootMapAccessor) {
+        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "protocols");
+    }
+
+    private static Optional<String[]> getCipherSuitesProperties(
+            MapAccessor rootMapAccessor) {
+        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "cipherSuites");
+    }
+
+    private static Optional<String[]> getPropertiesFromCommaSeparatedStringAsArray(
+            MapAccessor rootMapAccessor, String property) {
+        return rootMapAccessor
+                .get("/httpServer/ssl/" + property)
+                .map(
+                        new ToString(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/" + property
+                                                + " must be a string")))
+                .map(
+                        new StringIsNotBlank(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/" + property
+                                                + " must not be blank")))
+                .map(value -> value.split(","))
+                .map(values -> Arrays.stream(values).map(String::trim).toArray(String[]::new));
     }
 
     private static Optional<KeyStoreProperties> getTrustStoreProperties() {
