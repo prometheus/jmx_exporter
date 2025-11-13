@@ -96,7 +96,6 @@ public class SSLWithCustomCiphers {
                 .withIdentityMaterial(keyStore, password)
                 .withTrustMaterial(keyStore)
                 .withCiphers(cipher)
-                .withProtocols("TLSv1.3")
                 .build()
                 .getSslContext();
     }
@@ -122,7 +121,7 @@ public class SSLWithCustomCiphers {
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             ThrowableAssert.ThrowingCallable op)
             throws Throwable {
-        callWithClientKeyStore(jmxExporterTestEnvironment, op, "TLS_AES_256_GCM_SHA384");
+        callWithClientKeyStore(jmxExporterTestEnvironment, op, "TLS_RSA_WITH_AES_128_GCM_SHA256");
     }
 
     private void callWithClientKeyStore(
@@ -155,7 +154,7 @@ public class SSLWithCustomCiphers {
                                 callWithClientKeyStore(
                                         jmxExporterTestEnvironment,
                                         () -> HttpClient.sendRequest(url),
-                                        "TLS_AES_128_GCM_SHA256"))
+                                        "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 

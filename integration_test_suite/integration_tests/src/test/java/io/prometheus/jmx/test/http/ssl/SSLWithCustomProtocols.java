@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.net.ssl.HttpsURLConnection;
@@ -121,7 +122,7 @@ public class SSLWithCustomProtocols {
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             ThrowableAssert.ThrowingCallable op)
             throws Throwable {
-        callWithClientKeyStore(jmxExporterTestEnvironment, op, "TLSv1.3");
+        callWithClientKeyStore(jmxExporterTestEnvironment, op, "TLSv1.2");
     }
 
     private void callWithClientKeyStore(
@@ -144,17 +145,24 @@ public class SSLWithCustomProtocols {
 
     @Verifyica.Test
     public void testCallingServerWithNonMatchingSslProtocols(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment) {
+            JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Exception {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
+        SSLContext sslContext = SSLContext.getDefault();
+        Optional<String> anyOtherProtocol =
+                Stream.of(sslContext.getDefaultSSLParameters().getProtocols())
+                        .filter(protocol -> !protocol.equals("TLSv1.2"))
+                        .findAny();
+
+        assertThat(anyOtherProtocol).isPresent();
         assertThatThrownBy(
                         () ->
                                 callWithClientKeyStore(
                                         jmxExporterTestEnvironment,
                                         () -> HttpClient.sendRequest(url),
-                                        "TLSv1.2"))
+                                        anyOtherProtocol.get()))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 

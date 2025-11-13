@@ -11,7 +11,7 @@ httpServer:
       password: changeit
     certificate:
       alias: localhost
-    protocols: TLSv1.3
+    protocols: TLSv1.2
 hostPort: application:9999
 rules:
   - pattern: ".*"
