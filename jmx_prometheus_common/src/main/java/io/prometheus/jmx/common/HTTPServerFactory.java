@@ -95,6 +95,8 @@ public class HTTPServerFactory {
     private static final ScheduledExecutorService EXECUTOR_SERVICE =
             Executors.newSingleThreadScheduledExecutor();
 
+    private static final String COMMA_SEPARATOR = ",";
+
     private static KeyStoreProperties keyStoreProperties;
     private static KeyStoreProperties trustStoreProperties;
 
@@ -988,8 +990,12 @@ public class HTTPServerFactory {
                                         "Invalid configuration for"
                                                 + " /httpServer/ssl/" + property
                                                 + " must not be blank")))
-                .map(value -> value.split(","))
-                .map(values -> Arrays.stream(values).map(String::trim).toArray(String[]::new));
+                .map(value -> value.split(COMMA_SEPARATOR))
+                .map(values -> Arrays.stream(values)
+                        .map(String::trim)
+                        .filter(value -> !value.isEmpty())
+                        .toArray(String[]::new)
+                ).filter(values -> values.length > 0);
     }
 
     private static Optional<KeyStoreProperties> getTrustStoreProperties() {
