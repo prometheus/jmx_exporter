@@ -964,13 +964,11 @@ public class HTTPServerFactory {
                 .orElse(false);
     }
 
-    private static Optional<String[]> getProtocolsProperties(
-            MapAccessor rootMapAccessor) {
+    private static Optional<String[]> getProtocolsProperties(MapAccessor rootMapAccessor) {
         return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "protocols");
     }
 
-    private static Optional<String[]> getCipherSuitesProperties(
-            MapAccessor rootMapAccessor) {
+    private static Optional<String[]> getCipherSuitesProperties(MapAccessor rootMapAccessor) {
         return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "cipherSuites");
     }
 
@@ -982,20 +980,24 @@ public class HTTPServerFactory {
                         new ToString(
                                 ConfigurationException.supplier(
                                         "Invalid configuration for"
-                                                + " /httpServer/ssl/" + property
+                                                + " /httpServer/ssl/"
+                                                + property
                                                 + " must be a string")))
                 .map(
                         new StringIsNotBlank(
                                 ConfigurationException.supplier(
                                         "Invalid configuration for"
-                                                + " /httpServer/ssl/" + property
+                                                + " /httpServer/ssl/"
+                                                + property
                                                 + " must not be blank")))
                 .map(value -> value.split(COMMA_SEPARATOR))
-                .map(values -> Arrays.stream(values)
-                        .map(String::trim)
-                        .filter(value -> !value.isEmpty())
-                        .toArray(String[]::new)
-                ).filter(values -> values.length > 0);
+                .map(
+                        values ->
+                                Arrays.stream(values)
+                                        .map(String::trim)
+                                        .filter(value -> !value.isEmpty())
+                                        .toArray(String[]::new))
+                .filter(values -> values.length > 0);
     }
 
     private static Optional<KeyStoreProperties> getTrustStoreProperties() {
