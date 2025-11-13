@@ -78,7 +78,7 @@ public class SSLWithCustomCiphers {
         TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
-    private SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String cipher)
+    private SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String[] ciphers)
             throws Exception {
         // to verify cert auth with existing test pki resources, use self-signed server cert as
         // client cert and source of trust
@@ -95,7 +95,7 @@ public class SSLWithCustomCiphers {
         return SSLFactory.builder()
                 .withIdentityMaterial(keyStore, password)
                 .withTrustMaterial(keyStore)
-                .withCiphers(cipher)
+                .withCiphers(ciphers)
                 .build()
                 .getSslContext();
     }
@@ -121,20 +121,52 @@ public class SSLWithCustomCiphers {
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             ThrowableAssert.ThrowingCallable op)
             throws Throwable {
-        callWithClientKeyStore(jmxExporterTestEnvironment, op, "TLS_RSA_WITH_AES_128_GCM_SHA256");
+        String[] ciphers = {
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_CHACHA20_POLY1305_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+            "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
+            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
+            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
+            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
+            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+        };
+        callWithClientKeyStore(jmxExporterTestEnvironment, op, ciphers);
     }
 
     private void callWithClientKeyStore(
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             ThrowableAssert.ThrowingCallable op,
-            String cipher)
+            String[] ciphers)
             throws Throwable {
         // set ssl context with client key store and call the operation
         final SSLSocketFactory existing = HttpsURLConnection.getDefaultSSLSocketFactory();
         try {
             HttpsURLConnection.setDefaultSSLSocketFactory(
                     initSSLContextForClientAuth(
-                                    jmxExporterTestEnvironment.getJmxExporterMode(), cipher)
+                                    jmxExporterTestEnvironment.getJmxExporterMode(), ciphers)
                             .getSocketFactory());
             op.call();
         } finally {
@@ -154,7 +186,7 @@ public class SSLWithCustomCiphers {
                                 callWithClientKeyStore(
                                         jmxExporterTestEnvironment,
                                         () -> HttpClient.sendRequest(url),
-                                        "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"))
+                                        new String[] {"TLS_DHE_DSS_WITH_AES_128_CBC_SHA"}))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 
