@@ -45,12 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSocketFactory;
 import nl.altindag.ssl.SSLFactory;
-import org.assertj.core.api.ThrowableAssert;
 import org.assertj.core.util.Strings;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -60,6 +57,38 @@ import org.verifyica.api.Verifyica;
 public class SSLWithCustomCiphers {
 
     private static final String BASE_URL = "https://localhost";
+    private static final String[] DEFAULT_CIPHERS = {
+        "TLS_AES_256_GCM_SHA384",
+        "TLS_AES_128_GCM_SHA256",
+        "TLS_CHACHA20_POLY1305_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+        "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
+        "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+        "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+        "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
+        "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
+        "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+        "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+        "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+        "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+        "TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
+        "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+        "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+    };
 
     @Verifyica.ArgumentSupplier() // not parallel as the static HttpsURLConnection
     // defaultSSLSocketFactory is manipulated
@@ -109,69 +138,12 @@ public class SSLWithCustomCiphers {
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                });
-    }
-
-    private void callWithClientKeyStore(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            ThrowableAssert.ThrowingCallable op)
-            throws Throwable {
-        String[] ciphers = {
-            "TLS_AES_256_GCM_SHA384",
-            "TLS_AES_128_GCM_SHA256",
-            "TLS_CHACHA20_POLY1305_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-            "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
-            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
-        };
-        callWithClientKeyStore(jmxExporterTestEnvironment, op, ciphers);
-    }
-
-    private void callWithClientKeyStore(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            ThrowableAssert.ThrowingCallable op,
-            String[] ciphers)
-            throws Throwable {
-        // set ssl context with client key store and call the operation
-        final SSLSocketFactory existing = HttpsURLConnection.getDefaultSSLSocketFactory();
-        try {
-            HttpsURLConnection.setDefaultSSLSocketFactory(
-                    initSSLContextForClientAuth(
-                                    jmxExporterTestEnvironment.getJmxExporterMode(), ciphers)
-                            .getSocketFactory());
-            op.call();
-        } finally {
-            HttpsURLConnection.setDefaultSSLSocketFactory(existing);
-        }
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        assertHealthyResponse(httpResponse);
     }
 
     @Verifyica.Test
@@ -181,12 +153,14 @@ public class SSLWithCustomCiphers {
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
+        String[] nonMatchingCiphers = {"TLS_DHE_DSS_WITH_AES_128_CBC_SHA"};
         assertThatThrownBy(
                         () ->
-                                callWithClientKeyStore(
-                                        jmxExporterTestEnvironment,
-                                        () -> HttpClient.sendRequest(url),
-                                        new String[] {"TLS_DHE_DSS_WITH_AES_128_CBC_SHA"}))
+                                HttpClient.sendRequest(
+                                        url,
+                                        initSSLContextForClientAuth(
+                                                jmxExporterTestEnvironment.getJmxExporterMode(),
+                                                nonMatchingCiphers)))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 
@@ -197,13 +171,12 @@ public class SSLWithCustomCiphers {
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
-                });
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
@@ -220,20 +193,18 @@ public class SSLWithCustomCiphers {
                                     MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_CIPHERS));
 
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                });
+        assertMetricsResponse(
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -250,20 +221,18 @@ public class SSLWithCustomCiphers {
                                     MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_CIPHERS));
 
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                });
+        assertMetricsResponse(
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -280,20 +249,18 @@ public class SSLWithCustomCiphers {
                                     MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_CIPHERS));
 
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                });
+        assertMetricsResponse(
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll

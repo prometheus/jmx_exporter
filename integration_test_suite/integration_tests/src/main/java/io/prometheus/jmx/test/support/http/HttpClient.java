@@ -19,23 +19,27 @@ package io.prometheus.jmx.test.support.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import javax.net.ssl.HttpsURLConnection;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import nl.altindag.ssl.SSLFactory;
+import nl.altindag.ssl.util.HostnameVerifierUtils;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 
 /** Class to implement HttpClient */
 public class HttpClient {
@@ -46,20 +50,10 @@ public class HttpClient {
     /** Default read timeout */
     public static final int READ_TIMEOUT = 60000;
 
-    static {
-        try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(
-                    null,
-                    new TrustManager[] {new TrustAllCertificates()},
-                    new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new SSLContextException(
-                    "Failed to initialize SSL context for self-signed certificates", e);
-        }
-    }
+    private static final SSLContext UNSAFE_SSLCONTEXT =
+            SSLFactory.builder().withUnsafeTrustMaterial().build().getSslContext();
+    private static final CloseableHttpClient defaultHttpClient =
+            createHttpClient(CONNECT_TIMEOUT, READ_TIMEOUT, UNSAFE_SSLCONTEXT);
 
     /**
      * Send an HTTP request
@@ -70,6 +64,11 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).build());
+    }
+
+    public static HttpResponse sendRequest(String url, SSLContext sslContext) throws IOException {
+        return sendRequest(
+                HttpRequest.builder().url(url).build(), CONNECT_TIMEOUT, READ_TIMEOUT, sslContext);
     }
 
     /**
@@ -84,6 +83,24 @@ public class HttpClient {
     public static HttpResponse sendRequest(String url, String header, String value)
             throws IOException {
         return sendRequest(HttpRequest.builder().url(url).header(header, value).build());
+    }
+
+    /**
+     * Send an HTTP request with a single header
+     *
+     * @param url url
+     * @param header header
+     * @param value value
+     * @return an HttpResponse
+     * @throws IOException IOException
+     */
+    public static HttpResponse sendRequest(
+            String url, String header, String value, SSLContext sslContext) throws IOException {
+        return sendRequest(
+                HttpRequest.builder().url(url).header(header, value).build(),
+                CONNECT_TIMEOUT,
+                READ_TIMEOUT,
+                sslContext);
     }
 
     /**
@@ -121,44 +138,62 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(
             HttpRequest httpRequest, int connectTimeout, int readTimeout) throws IOException {
-        URL url = URI.create(httpRequest.url()).toURL();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        return sendRequest(httpRequest, connectTimeout, readTimeout, null);
+    }
 
-        connection.setConnectTimeout(connectTimeout);
-        connection.setReadTimeout(readTimeout);
+    /**
+     * Send an HttpRequest
+     *
+     * @param httpRequest httpRequest
+     * @param connectTimeout connectTimeout
+     * @param readTimeout readTimeout
+     * @param sslContext sslContext
+     * @return an HttpResponse
+     * @throws IOException IOException
+     */
+    public static HttpResponse sendRequest(
+            HttpRequest httpRequest, int connectTimeout, int readTimeout, SSLContext sslContext)
+            throws IOException {
+
+        CloseableHttpClient httpClient = getHttpClient(connectTimeout, readTimeout, sslContext);
 
         HttpRequest.Method method = httpRequest.method();
-        connection.setRequestMethod(method.toString());
+        ClassicRequestBuilder request = null;
+        switch (method) {
+            case GET:
+                request = ClassicRequestBuilder.get(httpRequest.url());
+                break;
+            case POST:
+            case PUT:
+                request =
+                        ClassicRequestBuilder.get(httpRequest.url())
+                                .setEntity(
+                                        new StringEntity(
+                                                httpRequest.body(), StandardCharsets.UTF_8));
+                break;
+        }
 
         for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
-                connection.addRequestProperty(header.getKey(), value);
+                request.addHeader(header.getKey(), value);
             }
         }
 
-        if (method == HttpRequest.Method.PUT || method == HttpRequest.Method.POST) {
-            connection.setDoOutput(true);
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = httpRequest.body().getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-        }
+        CloseableHttpResponse response = httpClient.execute(request.build());
+        int status = response.getCode();
+        String message = response.getReasonPhrase();
 
-        int status = connection.getResponseCode();
-        String message = connection.getResponseMessage();
-
-        Map<String, List<String>> headerFields = connection.getHeaderFields();
         Map<String, List<String>> headers = new HashMap<>();
-
-        for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
-            if (entry.getKey() != null) {
-                headers.put(entry.getKey().toUpperCase(Locale.US), entry.getValue());
+        for (Header header : response.getHeaders()) {
+            if (header.getName() != null) {
+                headers.put(
+                        header.getName().toUpperCase(Locale.US),
+                        Collections.singletonList(header.getValue()));
             }
         }
 
         byte[] body;
-        try (InputStream inputStream =
-                (status > 299) ? connection.getErrorStream() : connection.getInputStream()) {
+        try (InputStream inputStream = response.getEntity().getContent(); ) {
             if (inputStream == null) {
                 body = null;
             } else {
@@ -166,6 +201,7 @@ public class HttpClient {
             }
         }
 
+        closeClient(httpClient);
         return new HttpResponse(status, message, headers, body);
     }
 
@@ -189,41 +225,39 @@ public class HttpClient {
         return buffer.toByteArray();
     }
 
-    /** Class to implement TrustAllCertificates */
-    private static class TrustAllCertificates implements X509TrustManager {
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
+    private static CloseableHttpClient getHttpClient(
+            int connectTimeout, int readTimeout, SSLContext sslContext) {
+        if (connectTimeout != CONNECT_TIMEOUT || readTimeout != READ_TIMEOUT || sslContext != null) {
+            return createHttpClient(
+                            connectTimeout,
+                            readTimeout,
+                            sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
         }
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+        return defaultHttpClient;
     }
 
-    /** Class to implement SSLContextException */
-    private static class SSLContextException extends RuntimeException {
+    private static CloseableHttpClient createHttpClient(
+            int connectTimeout, int readTimeout, SSLContext sslContext) {
+        ConnectionConfig connConfig =
+                ConnectionConfig.custom()
+                        .setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                        .setSocketTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                        .build();
 
-        /**
-         * Constructor
-         *
-         * @param message message
-         */
-        public SSLContextException(String message) {
-            super(message);
-        }
+        PoolingHttpClientConnectionManager connectionManager =
+                PoolingHttpClientConnectionManagerBuilder.create()
+                        .setTlsSocketStrategy(
+                                new DefaultClientTlsStrategy(
+                                        sslContext, HostnameVerifierUtils.createUnsafe()))
+                        .setDefaultConnectionConfig(connConfig)
+                        .build();
 
-        /**
-         * Constructor
-         *
-         * @param message message
-         * @param throwable throwable
-         */
-        public SSLContextException(String message, Throwable throwable) {
-            super(message, throwable);
+        return HttpClients.custom().setConnectionManager(connectionManager).build();
+    }
+
+    private static void closeClient(CloseableHttpClient httpClient) throws IOException {
+        if (httpClient.hashCode() != defaultHttpClient.hashCode()) {
+            httpClient.close();
         }
     }
 }

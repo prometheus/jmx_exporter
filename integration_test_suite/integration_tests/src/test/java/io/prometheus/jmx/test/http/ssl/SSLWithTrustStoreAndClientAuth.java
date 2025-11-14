@@ -44,12 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.assertj.core.api.ThrowableAssert;
 import org.assertj.core.util.Strings;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
@@ -117,28 +114,12 @@ public class SSLWithTrustStoreAndClientAuth {
                             HttpClient.sendRequest(url);
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                });
-    }
-
-    private void callWithClientKeyStore(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            ThrowableAssert.ThrowingCallable op)
-            throws Throwable {
-        // set ssl context with client key store and call the operation
-        final SSLSocketFactory existing = HttpsURLConnection.getDefaultSSLSocketFactory();
-        try {
-            HttpsURLConnection.setDefaultSSLSocketFactory(
-                    initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode())
-                            .getSocketFactory());
-            op.call();
-        } finally {
-            HttpsURLConnection.setDefaultSSLSocketFactory(existing);
-        }
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode()));
+        assertHealthyResponse(httpResponse);
     }
 
     @Verifyica.Test
@@ -152,13 +133,12 @@ public class SSLWithTrustStoreAndClientAuth {
                             HttpClient.sendRequest(url);
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
-                });
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode()));
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
@@ -175,20 +155,13 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                });
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode()));
     }
 
     @Verifyica.Test
@@ -205,20 +178,18 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode()));
 
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                });
+        assertMetricsResponse(
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -235,20 +206,18 @@ public class SSLWithTrustStoreAndClientAuth {
                                     MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
                         });
 
-        callWithClientKeyStore(
-                jmxExporterTestEnvironment,
-                () -> {
-                    HttpResponse httpResponse =
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(
+                        url,
+                        HttpHeader.ACCEPT,
+                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode()));
 
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                });
+        assertMetricsResponse(
+                jmxExporterTestEnvironment,
+                httpResponse,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
