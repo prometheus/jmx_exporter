@@ -164,9 +164,15 @@ public class HttpClient {
                 request = ClassicRequestBuilder.get(httpRequest.url());
                 break;
             case POST:
+                request =
+                        ClassicRequestBuilder.post(httpRequest.url())
+                                .setEntity(
+                                        new StringEntity(
+                                                httpRequest.body(), StandardCharsets.UTF_8));
+                break;
             case PUT:
                 request =
-                        ClassicRequestBuilder.get(httpRequest.url())
+                        ClassicRequestBuilder.put(httpRequest.url())
                                 .setEntity(
                                         new StringEntity(
                                                 httpRequest.body(), StandardCharsets.UTF_8));
