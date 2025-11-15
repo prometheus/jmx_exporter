@@ -19,15 +19,27 @@ package io.prometheus.jmx.test.support.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import nl.altindag.ssl.SSLFactory;
+import nl.altindag.ssl.util.HostnameVerifierUtils;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 
 /** Class to implement HttpClient */
 public class HttpClient {
@@ -40,7 +52,7 @@ public class HttpClient {
 
     private static final SSLContext UNSAFE_SSLCONTEXT =
             SSLFactory.builder().withUnsafeTrustMaterial().build().getSslContext();
-    private static final java.net.http.HttpClient defaultHttpClient =
+    private static final CloseableHttpClient defaultHttpClient =
             createHttpClient(CONNECT_TIMEOUT, READ_TIMEOUT, UNSAFE_SSLCONTEXT);
 
     /**
@@ -143,51 +155,51 @@ public class HttpClient {
             HttpRequest httpRequest, int connectTimeout, int readTimeout, SSLContext sslContext)
             throws IOException {
 
-        java.net.http.HttpClient httpClient =
-                getHttpClient(connectTimeout, readTimeout, sslContext);
+        CloseableHttpClient httpClient = getHttpClient(connectTimeout, readTimeout, sslContext);
 
         HttpRequest.Method method = httpRequest.method();
-        java.net.http.HttpRequest.Builder requestBuilder =
-                java.net.http.HttpRequest.newBuilder().uri(URI.create(httpRequest.url()));
+        ClassicRequestBuilder request = null;
         switch (method) {
             case GET:
-                requestBuilder = requestBuilder.GET();
+                request = ClassicRequestBuilder.get(httpRequest.url());
                 break;
             case POST:
-                requestBuilder =
-                        requestBuilder.POST(
-                                java.net.http.HttpRequest.BodyPublishers.ofString(
-                                        httpRequest.body(), StandardCharsets.UTF_8));
+                request =
+                        ClassicRequestBuilder.post(httpRequest.url())
+                                .setEntity(
+                                        new StringEntity(
+                                                httpRequest.body(), StandardCharsets.UTF_8));
                 break;
             case PUT:
-                requestBuilder =
-                        requestBuilder.PUT(
-                                java.net.http.HttpRequest.BodyPublishers.ofString(
-                                        httpRequest.body(), StandardCharsets.UTF_8));
+                request =
+                        ClassicRequestBuilder.put(httpRequest.url())
+                                .setEntity(
+                                        new StringEntity(
+                                                httpRequest.body(), StandardCharsets.UTF_8));
                 break;
         }
 
         for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
-                requestBuilder = requestBuilder.header(header.getKey(), value);
+                request.addHeader(header.getKey(), value);
             }
         }
 
-        java.net.http.HttpRequest request = requestBuilder.build();
+        CloseableHttpResponse response = httpClient.execute(request.build());
+        int status = response.getCode();
+        String message = response.getReasonPhrase();
 
-        java.net.http.HttpResponse<InputStream> response;
-        try {
-            response =
-                    httpClient.send(
-                            request, java.net.http.HttpResponse.BodyHandlers.ofInputStream());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        Map<String, List<String>> headers = new HashMap<>();
+        for (Header header : response.getHeaders()) {
+            if (header.getName() != null) {
+                headers.put(
+                        header.getName().toUpperCase(Locale.US),
+                        Collections.singletonList(header.getValue()));
+            }
         }
 
-        int status = response.statusCode();
-
         byte[] body;
-        try (InputStream inputStream = response.body()) {
+        try (InputStream inputStream = response.getEntity().getContent(); ) {
             if (inputStream == null) {
                 body = null;
             } else {
@@ -195,7 +207,8 @@ public class HttpClient {
             }
         }
 
-        return new HttpResponse(status, "hello", response.headers().map(), body);
+        closeClient(httpClient);
+        return new HttpResponse(status, message, headers, body);
     }
 
     /**
@@ -218,28 +231,39 @@ public class HttpClient {
         return buffer.toByteArray();
     }
 
-    private static java.net.http.HttpClient getHttpClient(
+    private static CloseableHttpClient getHttpClient(
             int connectTimeout, int readTimeout, SSLContext sslContext) {
-        if (connectTimeout != CONNECT_TIMEOUT || sslContext != null) {
+        if (connectTimeout != CONNECT_TIMEOUT || readTimeout != READ_TIMEOUT || sslContext != null) {
             return createHttpClient(
-                    connectTimeout,
-                    readTimeout,
-                    sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
+                            connectTimeout,
+                            readTimeout,
+                            sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
         }
         return defaultHttpClient;
     }
 
-    private static java.net.http.HttpClient createHttpClient(
+    private static CloseableHttpClient createHttpClient(
             int connectTimeout, int readTimeout, SSLContext sslContext) {
+        ConnectionConfig connConfig =
+                ConnectionConfig.custom()
+                        .setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                        .setSocketTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                        .build();
 
-        if (defaultHttpClient == null) {
-            System.setProperty(
-                    "jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+        PoolingHttpClientConnectionManager connectionManager =
+                PoolingHttpClientConnectionManagerBuilder.create()
+                        .setTlsSocketStrategy(
+                                new DefaultClientTlsStrategy(
+                                        sslContext, HostnameVerifierUtils.createUnsafe()))
+                        .setDefaultConnectionConfig(connConfig)
+                        .build();
+
+        return HttpClients.custom().setConnectionManager(connectionManager).build();
+    }
+
+    private static void closeClient(CloseableHttpClient httpClient) throws IOException {
+        if (httpClient.hashCode() != defaultHttpClient.hashCode()) {
+            httpClient.close();
         }
-
-        return java.net.http.HttpClient.newBuilder()
-                .connectTimeout(Duration.of(connectTimeout, TimeUnit.MILLISECONDS.toChronoUnit()))
-                .sslContext(sslContext)
-                .build();
     }
 }
