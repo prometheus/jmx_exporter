@@ -1,0 +1,16 @@
+httpServer:
+  ssl:
+    mutualTLS: true
+    keyStore:
+      type: PKCS12
+      filename: localhost.pkcs12
+      password: changeit
+    trustStore:
+      type: PKCS12
+      filename: localhost.pkcs12
+      password: changeit
+    certificate:
+      alias: localhost
+    protocols: TLSv1.2
+rules:
+  - pattern: ".*"
