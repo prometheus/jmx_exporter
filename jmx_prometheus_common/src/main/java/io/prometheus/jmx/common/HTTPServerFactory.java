@@ -20,7 +20,6 @@ import static java.lang.String.format;
 
 import com.sun.net.httpserver.Authenticator;
 import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsParameters;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
@@ -45,6 +44,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -58,7 +58,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLParameters;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.exception.GenericException;
 import nl.altindag.ssl.util.SSLFactoryUtils;
@@ -93,6 +92,8 @@ public class HTTPServerFactory {
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
     private static final ScheduledExecutorService EXECUTOR_SERVICE =
             Executors.newSingleThreadScheduledExecutor();
+
+    private static final String COMMA_SEPARATOR = ",";
 
     private static KeyStoreProperties keyStoreProperties;
     private static KeyStoreProperties trustStoreProperties;
@@ -678,7 +679,6 @@ public class HTTPServerFactory {
             MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
             try {
-                boolean mutualTLS = isMutualTls(rootMapAccessor);
                 SSLFactory sslFactory = createSslFactory(rootMapAccessor);
                 Runnable sslUpdater = () -> reloadSsl(sslFactory, rootMapAccessor);
                 // check every hour for file changes and if it has been modified update the ssl
@@ -686,15 +686,7 @@ public class HTTPServerFactory {
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
                 httpServerBuilder.httpsConfigurator(
-                        new HttpsConfigurator(sslFactory.getSslContext()) {
-                            @Override
-                            public void configure(HttpsParameters params) {
-                                SSLParameters sslParameters =
-                                        getSSLContext().getDefaultSSLParameters();
-                                sslParameters.setNeedClientAuth(mutualTLS);
-                                params.setSSLParameters(sslParameters);
-                            }
-                        });
+                        new HttpsConfigurator(sslFactory.getSslContext()));
             } catch (GenericException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
@@ -731,6 +723,10 @@ public class HTTPServerFactory {
                             trustStoreProperties.getPassword(),
                             trustStoreProperties.getType());
         }
+
+        sslFactoryBuilder.withNeedClientAuthentication(isMutualTls(rootMapAccessor));
+        getProtocolsProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withProtocols);
+        getCiphersProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
 
         return sslFactoryBuilder.build();
     }
@@ -956,6 +952,42 @@ public class HTTPServerFactory {
                                                 + " /httpServer/ssl/mutualTLS"
                                                 + " must be a boolean")))
                 .orElse(false);
+    }
+
+    private static Optional<String[]> getProtocolsProperties(MapAccessor rootMapAccessor) {
+        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "protocols");
+    }
+
+    private static Optional<String[]> getCiphersProperties(MapAccessor rootMapAccessor) {
+        return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "ciphers");
+    }
+
+    private static Optional<String[]> getPropertiesFromCommaSeparatedStringAsArray(
+            MapAccessor rootMapAccessor, String property) {
+        return rootMapAccessor
+                .get("/httpServer/ssl/" + property)
+                .map(
+                        new ToString(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/"
+                                                + property
+                                                + " must be a string")))
+                .map(
+                        new StringIsNotBlank(
+                                ConfigurationException.supplier(
+                                        "Invalid configuration for"
+                                                + " /httpServer/ssl/"
+                                                + property
+                                                + " must not be blank")))
+                .map(value -> value.split(COMMA_SEPARATOR))
+                .map(
+                        values ->
+                                Arrays.stream(values)
+                                        .map(String::trim)
+                                        .filter(value -> !value.isEmpty())
+                                        .toArray(String[]::new))
+                .filter(values -> values.length > 0);
     }
 
     private static Optional<KeyStoreProperties> getTrustStoreProperties() {
