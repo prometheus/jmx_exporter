@@ -16,10 +16,13 @@
 
 package io.prometheus.jmx;
 
+import io.prometheus.jmx.JmxCollector.SslProperties;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
+import io.prometheus.jmx.ssl.EnhanceableSslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.rmi.server.RMIClientSocketFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +52,7 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+import nl.altindag.ssl.SSLFactory;
 
 /** Class to implement JmxScraper */
 class JmxScraper {
@@ -84,7 +88,7 @@ class JmxScraper {
     private final String jmxUrl;
     private final String username;
     private final String password;
-    private final boolean ssl;
+    private final SslProperties sslProperties;
     private final List<ObjectName> includeObjectNames, excludeObjectNames;
     private final List<JmxCollector.MetricCustomizer> metricCustomizers;
     private final ObjectNameAttributeFilter objectNameAttributeFilter;
@@ -96,7 +100,7 @@ class JmxScraper {
      * @param jmxUrl jmxUrl
      * @param username username
      * @param password password
-     * @param ssl ssl
+     * @param sslProperties sslProperties
      * @param includeObjectNames includeObjectNames
      * @param excludeObjectNames excludeObjectNames
      * @param objectNameAttributeFilter objectNameAttributeFilter
@@ -107,7 +111,7 @@ class JmxScraper {
             String jmxUrl,
             String username,
             String password,
-            boolean ssl,
+            SslProperties sslProperties,
             List<ObjectName> includeObjectNames,
             List<ObjectName> excludeObjectNames,
             ObjectNameAttributeFilter objectNameAttributeFilter,
@@ -118,7 +122,7 @@ class JmxScraper {
         this.receiver = receiver;
         this.username = username;
         this.password = password;
-        this.ssl = ssl;
+        this.sslProperties = sslProperties;
         this.includeObjectNames = includeObjectNames;
         this.excludeObjectNames = excludeObjectNames;
         this.metricCustomizers = metricCustomizers;
@@ -145,15 +149,13 @@ class JmxScraper {
                 String[] credent = new String[] {username, password};
                 environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
             }
-            if (ssl) {
+            if (sslProperties.enabled) {
                 environment.put(Context.SECURITY_PROTOCOL, "ssl");
-                SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+                RMIClientSocketFactory socketFactory = createSecureRMIClient();
                 environment.put(
-                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                        clientSocketFactory);
-
+                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
                 if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
-                    environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+                    environment.put("com.sun.jndi.rmi.factory.socket", socketFactory);
                 }
             }
 
@@ -190,6 +192,46 @@ class JmxScraper {
                 jmxc.close();
             }
         }
+    }
+
+    private RMIClientSocketFactory createSecureRMIClient() {
+        if (!sslProperties.getKeyStoreProperties().isPresent()
+                || !sslProperties.getTrustStoreProperties().isPresent()) {
+            return new SslRMIClientSocketFactory();
+        }
+
+        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder();
+        sslProperties
+                .getKeyStoreProperties()
+                .ifPresent(
+                        props ->
+                                sslFactoryBuilder.withIdentityMaterial(
+                                        props.path, props.password.toCharArray(), props.type));
+        sslProperties
+                .getTrustStoreProperties()
+                .ifPresent(
+                        props ->
+                                sslFactoryBuilder.withTrustMaterial(
+                                        props.path, props.password.toCharArray(), props.type));
+        if (!sslProperties.protocols.isEmpty()) {
+            sslFactoryBuilder.withProtocols(sslProperties.protocols.toArray(new String[0]));
+        }
+        if (!sslProperties.ciphers.isEmpty()) {
+            sslFactoryBuilder.withCiphers(sslProperties.ciphers.toArray(new String[0]));
+        }
+
+        try {
+            sslFactoryBuilder.withSystemPropertyDerivedIdentityMaterial();
+        } catch (Exception ignored) {
+        }
+
+        try {
+            sslFactoryBuilder.withSystemPropertyDerivedTrustMaterial();
+        } catch (Exception ignored) {
+        }
+
+        SSLFactory sslFactory = sslFactoryBuilder.build();
+        return new EnhanceableSslRMIClientSocketFactory(sslFactory);
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mBeanName) {
@@ -574,7 +616,9 @@ class JmxScraper {
                             args[0],
                             args[1],
                             args[2],
-                            (args.length > 3 && "ssl".equalsIgnoreCase(args[3])),
+                            (args.length > 3 && "ssl".equalsIgnoreCase(args[3]))
+                                    ? new SslProperties(true)
+                                    : new SslProperties(false),
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,
@@ -587,7 +631,7 @@ class JmxScraper {
                             args[0],
                             "",
                             "",
-                            false,
+                            new SslProperties(false),
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,
@@ -600,7 +644,7 @@ class JmxScraper {
                             "",
                             "",
                             "",
-                            false,
+                            new SslProperties(false),
                             objectNames,
                             new LinkedList<>(),
                             objectNameAttributeFilter,

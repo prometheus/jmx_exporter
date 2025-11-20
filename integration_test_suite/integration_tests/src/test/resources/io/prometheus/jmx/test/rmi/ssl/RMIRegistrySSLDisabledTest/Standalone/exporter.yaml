@@ -1,5 +1,6 @@
 hostPort: application:9999
-ssl: true
+ssl:
+  enabled: true
 username: Prometheus
 password: secret
 rules:
