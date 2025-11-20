@@ -1,6 +1,5 @@
 hostPort: application:9999
-ssl:
-  enabled: true
+ssl: true
 username: ${USERNAME}
 password: ${PASSWORD}
 rules:
