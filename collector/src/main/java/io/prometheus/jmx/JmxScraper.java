@@ -198,15 +198,31 @@ class JmxScraper {
         }
     }
 
+    /**
+     * Attempts to resolve the ssl configuration defined in the yaml file
+     * Next to that it also attempts to read the following system properties:
+     * <p>
+     * <pre>
+     *  - javax.net.ssl.keyStore
+     *  - javax.net.ssl.keyStorePassword
+     *  - javax.net.ssl.keyStoreType
+     *  - javax.net.ssl.keyStoreProvider
+     *  - javax.net.ssl.trustStore
+     *  - javax.net.ssl.trustStorePassword
+     *  - javax.net.ssl.trustStoreType
+     *  - javax.net.ssl.trustStoreProvider
+     *  - https.protocols
+     *  - https.cipherSuites
+     * </pre>
+     */
     private SSLFactory createSslFactory() {
         SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder().withDefaultTrustMaterial();
         sslProperties
                 .getKeyStoreProperties()
                 .ifPresent(
-                        props -> {
-                            sslFactoryBuilder.withIdentityMaterial(
-                                    props.path, props.password.toCharArray(), props.type);
-                        });
+                        props ->
+                                sslFactoryBuilder.withIdentityMaterial(
+                                        props.path, props.password.toCharArray(), props.type));
         sslProperties
                 .getTrustStoreProperties()
                 .ifPresent(
