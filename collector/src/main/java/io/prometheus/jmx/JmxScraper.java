@@ -155,11 +155,11 @@ class JmxScraper {
                 SSLFactory sslFactory = createSslFactory();
                 ProviderUtils.configure(sslFactory);
 
-                RMIClientSocketFactory socketFactory = new SslRMIClientSocketFactory();
+                SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
                 environment.put(
-                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
+                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
                 if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
-                    environment.put("com.sun.jndi.rmi.factory.socket", socketFactory);
+                    environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
                 }
             }
 
