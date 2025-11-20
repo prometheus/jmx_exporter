@@ -19,7 +19,6 @@ package io.prometheus.jmx;
 import io.prometheus.jmx.JmxCollector.SslProperties;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
-import io.prometheus.jmx.ssl.EnhanceableSslRMIClientSocketFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.rmi.server.RMIClientSocketFactory;
@@ -53,6 +52,7 @@ import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import nl.altindag.ssl.SSLFactory;
+import nl.altindag.ssl.util.ProviderUtils;
 
 /** Class to implement JmxScraper */
 class JmxScraper {
@@ -151,7 +151,11 @@ class JmxScraper {
             }
             if (sslProperties.enabled) {
                 environment.put(Context.SECURITY_PROTOCOL, "ssl");
-                RMIClientSocketFactory socketFactory = createSecureRMIClient();
+
+                SSLFactory sslFactory = createSslFactory();
+                ProviderUtils.configure(sslFactory);
+
+                RMIClientSocketFactory socketFactory = new SslRMIClientSocketFactory();
                 environment.put(
                         RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
                 if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
@@ -161,6 +165,7 @@ class JmxScraper {
 
             jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
             beanConn = jmxc.getMBeanServerConnection();
+            ProviderUtils.remove();
         }
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
@@ -194,25 +199,22 @@ class JmxScraper {
         }
     }
 
-    private RMIClientSocketFactory createSecureRMIClient() {
-        if (!sslProperties.getKeyStoreProperties().isPresent()
-                || !sslProperties.getTrustStoreProperties().isPresent()) {
-            return new SslRMIClientSocketFactory();
-        }
-
-        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder();
+    private SSLFactory createSslFactory() {
+        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder().withDefaultTrustMaterial();
         sslProperties
                 .getKeyStoreProperties()
                 .ifPresent(
-                        props ->
-                                sslFactoryBuilder.withIdentityMaterial(
-                                        props.path, props.password.toCharArray(), props.type));
+                        props -> {
+                            sslFactoryBuilder.withIdentityMaterial(
+                                    props.path, props.password.toCharArray(), props.type);
+                        });
         sslProperties
                 .getTrustStoreProperties()
                 .ifPresent(
                         props ->
                                 sslFactoryBuilder.withTrustMaterial(
                                         props.path, props.password.toCharArray(), props.type));
+
         if (!sslProperties.protocols.isEmpty()) {
             sslFactoryBuilder.withProtocols(sslProperties.protocols.toArray(new String[0]));
         }
@@ -230,8 +232,17 @@ class JmxScraper {
         } catch (Exception ignored) {
         }
 
-        SSLFactory sslFactory = sslFactoryBuilder.build();
-        return new EnhanceableSslRMIClientSocketFactory(sslFactory);
+        try {
+            sslFactoryBuilder.withSystemPropertyDerivedProtocols();
+        } catch (Exception ignored) {
+        }
+
+        try {
+            sslFactoryBuilder.withSystemPropertyDerivedCiphers();
+        } catch (Exception ignored) {
+        }
+
+        return sslFactoryBuilder.build();
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mBeanName) {

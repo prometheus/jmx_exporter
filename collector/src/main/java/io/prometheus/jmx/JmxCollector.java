@@ -353,7 +353,6 @@ public class JmxCollector implements MultiCollector {
 
         if (yamlConfig.containsKey("ssl") && yamlConfig.get("ssl") instanceof Map) {
             Map<String, Object> configSsl = (Map<String, Object>) yamlConfig.get("ssl");
-
             if (configSsl.containsKey("enabled")) {
                 cfg.sslProperties.enabled = (Boolean) configSsl.get("enabled");
             }
