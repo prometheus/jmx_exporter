@@ -21,7 +21,6 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.rmi.server.RMIClientSocketFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
