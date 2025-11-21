@@ -246,10 +246,10 @@ class JmxScraper {
         return sslFactoryBuilder.build();
     }
 
-    private void callSafely(Callable<?>... calls) {
-        for (Callable<?> call : calls) {
+    private void callSafely(Callable<?>... callables) {
+        for (Callable<?> callable : callables) {
             try {
-                call.call();
+                callable.call();
             } catch (Exception ignored) {}
         }
     }
