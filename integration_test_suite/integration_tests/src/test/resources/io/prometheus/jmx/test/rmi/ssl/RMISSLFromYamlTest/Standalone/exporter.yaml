@@ -1,0 +1,15 @@
+hostPort: application:9999
+ssl:
+  enabled: true
+  keyStore:
+    type: PKCS12
+    filename: localhost.pkcs12
+    password: changeit
+  trustStore:
+    type: PKCS12
+    filename: localhost.pkcs12
+    password: changeit
+username: ${USERNAME}
+password: ${PASSWORD}
+rules:
+  - pattern: ".*"
