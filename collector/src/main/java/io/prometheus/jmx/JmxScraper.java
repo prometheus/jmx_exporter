@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -237,27 +238,20 @@ class JmxScraper {
             sslFactoryBuilder.withCiphers(sslProperties.ciphers.toArray(new String[0]));
         }
 
-        try {
-            sslFactoryBuilder.withSystemPropertyDerivedIdentityMaterial();
-        } catch (Exception ignored) {
-        }
-
-        try {
-            sslFactoryBuilder.withSystemPropertyDerivedTrustMaterial();
-        } catch (Exception ignored) {
-        }
-
-        try {
-            sslFactoryBuilder.withSystemPropertyDerivedProtocols();
-        } catch (Exception ignored) {
-        }
-
-        try {
-            sslFactoryBuilder.withSystemPropertyDerivedCiphers();
-        } catch (Exception ignored) {
-        }
+        callSafely(sslFactoryBuilder::withSystemPropertyDerivedIdentityMaterial,
+                sslFactoryBuilder::withSystemPropertyDerivedTrustMaterial,
+                sslFactoryBuilder::withSystemPropertyDerivedProtocols,
+                sslFactoryBuilder::withSystemPropertyDerivedCiphers);
 
         return sslFactoryBuilder.build();
+    }
+
+    private void callSafely(Callable<?>... calls) {
+        for (Callable<?> call : calls) {
+            try {
+                call.call();
+            } catch (Exception ignored) {}
+        }
     }
 
     private void scrapeBean(MBeanServerConnection beanConn, ObjectName mBeanName) {
