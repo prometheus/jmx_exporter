@@ -34,16 +34,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
@@ -85,6 +91,34 @@ public class JmxCollector implements MultiCollector {
         ArrayList<String> labelValues;
     }
 
+    static class SslProperties {
+        boolean enabled = false;
+        KeyStoreProperties keyStoreProperties;
+        KeyStoreProperties trustStoreProperties;
+        List<String> protocols = Collections.emptyList();
+        List<String> ciphers = Collections.emptyList();
+
+        public SslProperties() {}
+
+        public SslProperties(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Optional<KeyStoreProperties> getKeyStoreProperties() {
+            return Optional.ofNullable(keyStoreProperties);
+        }
+
+        public Optional<KeyStoreProperties> getTrustStoreProperties() {
+            return Optional.ofNullable(trustStoreProperties);
+        }
+    }
+
+    static class KeyStoreProperties {
+        Path path;
+        String type;
+        String password;
+    }
+
     /** Class to implement MetricCustomizer */
     public static class MetricCustomizer {
         MBeanFilter mbeanFilter;
@@ -114,7 +148,7 @@ public class JmxCollector implements MultiCollector {
         String jmxUrl = "";
         String username = "";
         String password = "";
-        boolean ssl = false;
+        SslProperties sslProperties = new SslProperties();
         boolean lowercaseOutputName;
         boolean lowercaseOutputLabelNames;
         boolean inferCounterTypeFromName;
@@ -317,8 +351,41 @@ public class JmxCollector implements MultiCollector {
             cfg.password = VariableResolver.resolveVariable(password);
         }
 
-        if (yamlConfig.containsKey("ssl")) {
-            cfg.ssl = (Boolean) yamlConfig.get("ssl");
+        if (yamlConfig.containsKey("ssl") && yamlConfig.get("ssl") instanceof Boolean) {
+            cfg.sslProperties.enabled = (Boolean) yamlConfig.get("ssl");
+        }
+
+        if (yamlConfig.containsKey("ssl") && yamlConfig.get("ssl") instanceof Map) {
+            Map<String, Object> configSsl = (Map<String, Object>) yamlConfig.get("ssl");
+            if (configSsl.containsKey("enabled")) {
+                cfg.sslProperties.enabled = (Boolean) configSsl.get("enabled");
+            }
+
+            if (configSsl.containsKey("keyStore")) {
+                Map<String, Object> configKeyStore =
+                        (Map<String, Object>) configSsl.get("keyStore");
+                cfg.sslProperties.keyStoreProperties = getKeyStoreProperties(configKeyStore);
+            }
+
+            if (configSsl.containsKey("trustStore")) {
+                Map<String, Object> configKeyStore =
+                        (Map<String, Object>) configSsl.get("trustStore");
+                cfg.sslProperties.trustStoreProperties = getKeyStoreProperties(configKeyStore);
+            }
+
+            if (configSsl.containsKey("protocols")) {
+                cfg.sslProperties.protocols =
+                        Stream.of(((String) configSsl.get("protocols")).split(","))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+            }
+
+            if (configSsl.containsKey("ciphers")) {
+                cfg.sslProperties.ciphers =
+                        Stream.of(((String) configSsl.get("ciphers")).split(","))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+            }
         }
 
         if (yamlConfig.containsKey("lowercaseOutputName")) {
@@ -525,6 +592,20 @@ public class JmxCollector implements MultiCollector {
         cfg.objectNameAttributeFilter = ObjectNameAttributeFilter.create(yamlConfig);
 
         return cfg;
+    }
+
+    private KeyStoreProperties getKeyStoreProperties(Map<String, Object> configKeyStore) {
+        KeyStoreProperties keyStoreProperties = new KeyStoreProperties();
+        if (configKeyStore.containsKey("filename")) {
+            keyStoreProperties.path = Paths.get((String) configKeyStore.get("filename"));
+        }
+        if (configKeyStore.containsKey("type")) {
+            keyStoreProperties.type = (String) configKeyStore.get("type");
+        }
+        if (configKeyStore.containsKey("password")) {
+            keyStoreProperties.password = (String) configKeyStore.get("password");
+        }
+        return keyStoreProperties;
     }
 
     /**
@@ -929,7 +1010,7 @@ public class JmxCollector implements MultiCollector {
                         config.jmxUrl,
                         config.username,
                         config.password,
-                        config.ssl,
+                        config.sslProperties,
                         config.includeObjectNames,
                         config.excludeObjectNames,
                         config.objectNameAttributeFilter,
