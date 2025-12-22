@@ -233,11 +233,13 @@ public class HttpClient {
 
     private static CloseableHttpClient getHttpClient(
             int connectTimeout, int readTimeout, SSLContext sslContext) {
-        if (connectTimeout != CONNECT_TIMEOUT || readTimeout != READ_TIMEOUT || sslContext != null) {
+        if (connectTimeout != CONNECT_TIMEOUT
+                || readTimeout != READ_TIMEOUT
+                || sslContext != null) {
             return createHttpClient(
-                            connectTimeout,
-                            readTimeout,
-                            sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
+                    connectTimeout,
+                    readTimeout,
+                    sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
         }
         return defaultHttpClient;
     }
