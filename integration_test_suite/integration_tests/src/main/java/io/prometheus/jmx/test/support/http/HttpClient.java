@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.HostnameVerifierUtils;
@@ -37,6 +38,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -52,6 +54,7 @@ public class HttpClient {
 
     private static final SSLContext UNSAFE_SSLCONTEXT =
             SSLFactory.builder().withUnsafeTrustMaterial().build().getSslContext();
+
     private static final CloseableHttpClient defaultHttpClient =
             createHttpClient(CONNECT_TIMEOUT, READ_TIMEOUT, UNSAFE_SSLCONTEXT);
 
@@ -66,6 +69,14 @@ public class HttpClient {
         return sendRequest(HttpRequest.builder().url(url).build());
     }
 
+    /**
+     * Send an HTTP request using a specified SSL context
+     *
+     * @param url url
+     * @param sslContext sslContext
+     * @return an HttpResponse
+     * @throws IOException IOException
+     */
     public static HttpResponse sendRequest(String url, SSLContext sslContext) throws IOException {
         return sendRequest(
                 HttpRequest.builder().url(url).build(), CONNECT_TIMEOUT, READ_TIMEOUT, sslContext);
@@ -208,11 +219,12 @@ public class HttpClient {
         }
 
         closeClient(httpClient);
+
         return new HttpResponse(status, message, headers, body);
     }
 
     /**
-     * Method to read all bytes from an InputStream
+     * Read all bytes from an InputStream
      *
      * @param inputStream inputStream
      * @return a byte array
@@ -231,6 +243,14 @@ public class HttpClient {
         return buffer.toByteArray();
     }
 
+    /**
+     * Get or create an HttpClient
+     *
+     * @param connectTimeout connectTimeout
+     * @param readTimeout readTimeout
+     * @param sslContext sslContext
+     * @return CloseableHttpClient
+     */
     private static CloseableHttpClient getHttpClient(
             int connectTimeout, int readTimeout, SSLContext sslContext) {
         if (connectTimeout != CONNECT_TIMEOUT
@@ -241,9 +261,18 @@ public class HttpClient {
                     readTimeout,
                     sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
         }
+
         return defaultHttpClient;
     }
 
+    /**
+     * Create an HttpClient
+     *
+     * @param connectTimeout connectTimeout
+     * @param readTimeout readTimeout
+     * @param sslContext sslContext
+     * @return CloseableHttpClient
+     */
     private static CloseableHttpClient createHttpClient(
             int connectTimeout, int readTimeout, SSLContext sslContext) {
         ConnectionConfig connConfig =
@@ -252,19 +281,29 @@ public class HttpClient {
                         .setSocketTimeout(readTimeout, TimeUnit.MILLISECONDS)
                         .build();
 
+        HostnameVerifier unsafeVerifier = HostnameVerifierUtils.createUnsafe();
+
         PoolingHttpClientConnectionManager connectionManager =
                 PoolingHttpClientConnectionManagerBuilder.create()
                         .setTlsSocketStrategy(
                                 new DefaultClientTlsStrategy(
-                                        sslContext, HostnameVerifierUtils.createUnsafe()))
+                                        sslContext,
+                                        HostnameVerificationPolicy.CLIENT,
+                                        unsafeVerifier))
                         .setDefaultConnectionConfig(connConfig)
                         .build();
 
         return HttpClients.custom().setConnectionManager(connectionManager).build();
     }
 
+    /**
+     * Close an HttpClient if it is not the default one
+     *
+     * @param httpClient httpClient
+     * @throws IOException IOException
+     */
     private static void closeClient(CloseableHttpClient httpClient) throws IOException {
-        if (httpClient.hashCode() != defaultHttpClient.hashCode()) {
+        if (httpClient != null && httpClient.hashCode() != defaultHttpClient.hashCode()) {
             httpClient.close();
         }
     }
