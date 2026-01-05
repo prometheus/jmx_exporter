@@ -17,12 +17,12 @@
 #
 
 #
-# Bash script to build, package, and run the tests (single Docker container)
+# Bash script to build, package, and run a quick test
 #
 
 (
-  export JAVA_DOCKER_IMAGES="eclipse-temurin:25-alpine"
-  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.7.3"
+  export JAVA_DOCKER_IMAGES="amazoncorretto:25"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.8.1"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
   ./mvnw clean verify
