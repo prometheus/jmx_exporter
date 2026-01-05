@@ -157,7 +157,8 @@ class JmxScraper {
 
                 SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
                 environment.put(
-                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
+                        clientSocketFactory);
                 if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
                     environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
                 }
@@ -200,9 +201,11 @@ class JmxScraper {
     }
 
     /**
-     * Attempts to resolve the ssl configuration defined in the yaml file
-     * Next to that it also attempts to read the following system properties:
+     * Attempts to resolve the ssl configuration defined in the yaml file Next to that it also
+     * attempts to read the following system properties:
+     *
      * <p>
+     *
      * <pre>
      *  - javax.net.ssl.keyStore
      *  - javax.net.ssl.keyStorePassword
@@ -238,7 +241,8 @@ class JmxScraper {
             sslFactoryBuilder.withCiphers(sslProperties.ciphers.toArray(new String[0]));
         }
 
-        callSafely(sslFactoryBuilder::withSystemPropertyDerivedIdentityMaterial,
+        callSafely(
+                sslFactoryBuilder::withSystemPropertyDerivedIdentityMaterial,
                 sslFactoryBuilder::withSystemPropertyDerivedTrustMaterial,
                 sslFactoryBuilder::withSystemPropertyDerivedProtocols,
                 sslFactoryBuilder::withSystemPropertyDerivedCiphers);
@@ -250,7 +254,8 @@ class JmxScraper {
         for (Callable<?> callable : callables) {
             try {
                 callable.call();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
