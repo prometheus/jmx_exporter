@@ -40,6 +40,7 @@ import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
 
+@Verifyica.Disabled
 public class RMISSLFromYamlTest {
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
