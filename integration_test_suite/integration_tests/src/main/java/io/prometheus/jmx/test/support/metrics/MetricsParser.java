@@ -20,7 +20,7 @@ import static java.lang.String.format;
 
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.metrics.expositionformats.generated.com_google_protobuf_4_33_0.Metrics;
+import io.prometheus.metrics.expositionformats.generated.Metrics;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
