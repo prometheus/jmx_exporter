@@ -16,10 +16,9 @@
 
 package io.prometheus.jmx.test.support.http;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.net.UnknownServiceException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,34 +28,51 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.HostnameVerifierUtils;
-import org.apache.hc.client5.http.config.ConnectionConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
-import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /** Class to implement HttpClient */
 public class HttpClient {
 
-    /** Default connect timeout */
+    /** Default connect timeout in milliseconds */
     public static final int CONNECT_TIMEOUT = 60000;
 
-    /** Default read timeout */
+    /** Default read timeout in milliseconds */
+    public static final int WRITE_TIMEOUT = 60000;
+
+    /** Default read timeout in milliseconds */
     public static final int READ_TIMEOUT = 60000;
 
-    private static final SSLContext UNSAFE_SSLCONTEXT =
-            SSLFactory.builder().withUnsafeTrustMaterial().build().getSslContext();
+    /** Default maximum total connections */
+    public static final int MAXIMUM_CONNECTIONS = 200;
 
-    private static final CloseableHttpClient defaultHttpClient =
-            createHttpClient(CONNECT_TIMEOUT, READ_TIMEOUT, UNSAFE_SSLCONTEXT);
+    /** Default eviction timeout in seconds */
+    public static final int EVICTION_TIMEOUT = 30;
+
+    private static final MediaType JSON_MEDIA_TYPE =
+            MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType TEXT_MEDIA_TYPE = MediaType.parse("text/plain; charset=utf-8");
+
+    private static final SSLFactory UNSAFE_SSL_FACTORY =
+            SSLFactory.builder().withUnsafeTrustMaterial().build();
+
+    private static final OkHttpClient defaultHttpClient =
+            createHttpClient(
+                    CONNECT_TIMEOUT,
+                    WRITE_TIMEOUT,
+                    READ_TIMEOUT,
+                    UNSAFE_SSL_FACTORY.getSslContext());
 
     /**
      * Send an HTTP request
@@ -79,7 +95,11 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, SSLContext sslContext) throws IOException {
         return sendRequest(
-                HttpRequest.builder().url(url).build(), CONNECT_TIMEOUT, READ_TIMEOUT, sslContext);
+                HttpRequest.builder().url(url).build(),
+                CONNECT_TIMEOUT,
+                WRITE_TIMEOUT,
+                READ_TIMEOUT,
+                sslContext);
     }
 
     /**
@@ -110,6 +130,7 @@ public class HttpClient {
         return sendRequest(
                 HttpRequest.builder().url(url).header(header, value).build(),
                 CONNECT_TIMEOUT,
+                WRITE_TIMEOUT,
                 READ_TIMEOUT,
                 sslContext);
     }
@@ -135,7 +156,7 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(HttpRequest httpRequest) throws IOException {
-        return sendRequest(httpRequest, CONNECT_TIMEOUT, READ_TIMEOUT);
+        return sendRequest(httpRequest, CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT);
     }
 
     /**
@@ -143,13 +164,15 @@ public class HttpClient {
      *
      * @param httpRequest httpRequest
      * @param connectTimeout connectTimeout
+     * @param writeTimeout writeTimeout
      * @param readTimeout readTimeout
      * @return an HttpResponse
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(
-            HttpRequest httpRequest, int connectTimeout, int readTimeout) throws IOException {
-        return sendRequest(httpRequest, connectTimeout, readTimeout, null);
+            HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout)
+            throws IOException {
+        return sendRequest(httpRequest, connectTimeout, writeTimeout, readTimeout, null);
     }
 
     /**
@@ -157,154 +180,176 @@ public class HttpClient {
      *
      * @param httpRequest httpRequest
      * @param connectTimeout connectTimeout
+     * @param writeTimeout writeTimeout
      * @param readTimeout readTimeout
      * @param sslContext sslContext
      * @return an HttpResponse
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(
-            HttpRequest httpRequest, int connectTimeout, int readTimeout, SSLContext sslContext)
+            HttpRequest httpRequest,
+            int connectTimeout,
+            int writeTimeout,
+            int readTimeout,
+            SSLContext sslContext)
             throws IOException {
 
-        CloseableHttpClient httpClient = getHttpClient(connectTimeout, readTimeout, sslContext);
+        OkHttpClient httpClient =
+                getHttpClient(connectTimeout, writeTimeout, readTimeout, sslContext);
 
         HttpRequest.Method method = httpRequest.method();
-        ClassicRequestBuilder request = null;
-        switch (method) {
-            case GET:
-                request = ClassicRequestBuilder.get(httpRequest.url());
-                break;
-            case POST:
-                request =
-                        ClassicRequestBuilder.post(httpRequest.url())
-                                .setEntity(
-                                        new StringEntity(
-                                                httpRequest.body(), StandardCharsets.UTF_8));
-                break;
-            case PUT:
-                request =
-                        ClassicRequestBuilder.put(httpRequest.url())
-                                .setEntity(
-                                        new StringEntity(
-                                                httpRequest.body(), StandardCharsets.UTF_8));
-                break;
-        }
+        Request.Builder requestBuilder = new Request.Builder().url(httpRequest.url());
 
+        // Add headers
         for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
-                request.addHeader(header.getKey(), value);
+                requestBuilder.addHeader(header.getKey(), value);
             }
         }
 
-        CloseableHttpResponse response = httpClient.execute(request.build());
-        int status = response.getCode();
-        String message = response.getReasonPhrase();
-
-        Map<String, List<String>> headers = new HashMap<>();
-        for (Header header : response.getHeaders()) {
-            if (header.getName() != null) {
-                headers.put(
-                        header.getName().toUpperCase(Locale.US),
-                        Collections.singletonList(header.getValue()));
-            }
-        }
-
-        byte[] body;
-        try (InputStream inputStream = response.getEntity().getContent(); ) {
-            if (inputStream == null) {
-                body = null;
+        // Set method and body
+        RequestBody body = null;
+        if (method == HttpRequest.Method.POST || method == HttpRequest.Method.PUT) {
+            String bodyContent = httpRequest.body();
+            if (bodyContent != null && !bodyContent.isEmpty()) {
+                body = RequestBody.create(bodyContent, TEXT_MEDIA_TYPE);
             } else {
-                body = readBytes(inputStream);
+                body = RequestBody.create("", TEXT_MEDIA_TYPE);
             }
         }
 
-        closeClient(httpClient);
-
-        return new HttpResponse(status, message, headers, body);
-    }
-
-    /**
-     * Read all bytes from an InputStream
-     *
-     * @param inputStream inputStream
-     * @return a byte array
-     * @throws IOException IOException
-     */
-    private static byte[] readBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[10240];
-        int bytesRead;
-
-        while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, bytesRead);
-            buffer.flush();
+        switch (method) {
+            case GET:
+                {
+                    requestBuilder.get();
+                    break;
+                }
+            case POST:
+                {
+                    requestBuilder.post(body);
+                    break;
+                }
+            case PUT:
+                {
+                    requestBuilder.put(body);
+                    break;
+                }
         }
 
-        return buffer.toByteArray();
+        Request request = requestBuilder.build();
+
+        // Execute request with automatic retry handling (OkHttp handles retries internally)
+        try (Response response = httpClient.newCall(request).execute()) {
+            int status = response.code();
+            String message = response.message();
+
+            Map<String, List<String>> headers = new HashMap<>();
+            for (String headerName : response.headers().names()) {
+                headers.put(
+                        headerName.toUpperCase(Locale.US),
+                        Collections.singletonList(response.header(headerName)));
+            }
+
+            byte[] responseBody = null;
+            ResponseBody responseBodyObj = response.body();
+            if (responseBodyObj != null) {
+                responseBody = responseBodyObj.bytes();
+            }
+
+            return new HttpResponse(status, message, headers, responseBody);
+        } catch (UnknownServiceException e) {
+            // Wrap UnknownServiceException as SSLHandshakeException for API compatibility
+            // OkHttp throws UnknownServiceException when cipher suites don't match,
+            // but Apache HttpClient threw SSLHandshakeException
+            throw new SSLHandshakeException("SSL handshake failed: " + e.getMessage());
+        }
     }
 
     /**
-     * Get or create an HttpClient
+     * Get or create an OkHttpClient
      *
      * @param connectTimeout connectTimeout
+     * @param writeTimeout writeTimeout
      * @param readTimeout readTimeout
      * @param sslContext sslContext
-     * @return CloseableHttpClient
+     * @return OkHttpClient
      */
-    private static CloseableHttpClient getHttpClient(
-            int connectTimeout, int readTimeout, SSLContext sslContext) {
+    private static OkHttpClient getHttpClient(
+            int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {
         if (connectTimeout != CONNECT_TIMEOUT
+                || writeTimeout != WRITE_TIMEOUT
                 || readTimeout != READ_TIMEOUT
                 || sslContext != null) {
             return createHttpClient(
                     connectTimeout,
+                    writeTimeout,
                     readTimeout,
-                    sslContext != null ? sslContext : UNSAFE_SSLCONTEXT);
+                    sslContext != null ? sslContext : UNSAFE_SSL_FACTORY.getSslContext());
         }
 
         return defaultHttpClient;
     }
 
     /**
-     * Create an HttpClient
+     * Create an OkHttpClient with improved connection management
      *
      * @param connectTimeout connectTimeout
+     * @param writeTimeout writeTimeout
      * @param readTimeout readTimeout
      * @param sslContext sslContext
-     * @return CloseableHttpClient
+     * @return OkHttpClient
      */
-    private static CloseableHttpClient createHttpClient(
-            int connectTimeout, int readTimeout, SSLContext sslContext) {
-        ConnectionConfig connConfig =
-                ConnectionConfig.custom()
-                        .setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
-                        .setSocketTimeout(readTimeout, TimeUnit.MILLISECONDS)
-                        .build();
+    private static OkHttpClient createHttpClient(
+            int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {
 
-        HostnameVerifier unsafeVerifier = HostnameVerifierUtils.createUnsafe();
+        SSLSocketFactory sslSocketFactory;
+        X509TrustManager trustManager;
 
-        PoolingHttpClientConnectionManager connectionManager =
-                PoolingHttpClientConnectionManagerBuilder.create()
-                        .setTlsSocketStrategy(
-                                new DefaultClientTlsStrategy(
-                                        sslContext,
-                                        HostnameVerificationPolicy.CLIENT,
-                                        unsafeVerifier))
-                        .setDefaultConnectionConfig(connConfig)
-                        .build();
+        // Use SSLFactory only for the default unsafe context
+        if (sslContext == UNSAFE_SSL_FACTORY.getSslContext()) {
+            sslSocketFactory = UNSAFE_SSL_FACTORY.getSslSocketFactory();
+            trustManager =
+                    UNSAFE_SSL_FACTORY
+                            .getTrustManager()
+                            .orElseThrow(
+                                    () -> new IllegalStateException("TrustManager not available"));
+        } else {
+            // For custom SSLContext, extract socket factory and use unsafe trust manager
+            sslSocketFactory = sslContext.getSocketFactory();
 
-        return HttpClients.custom().setConnectionManager(connectionManager).build();
-    }
-
-    /**
-     * Close an HttpClient if it is not the default one
-     *
-     * @param httpClient httpClient
-     * @throws IOException IOException
-     */
-    private static void closeClient(CloseableHttpClient httpClient) throws IOException {
-        if (httpClient != null && httpClient.hashCode() != defaultHttpClient.hashCode()) {
-            httpClient.close();
+            // Reuse the unsafe trust manager from the default SSL factory
+            // This matches the behavior of the original code which used unsafe trust material
+            trustManager =
+                    UNSAFE_SSL_FACTORY
+                            .getTrustManager()
+                            .orElseThrow(
+                                    () -> new IllegalStateException("TrustManager not available"));
         }
+
+        HostnameVerifier hostnameVerifier = HostnameVerifierUtils.createUnsafe();
+
+        // Connection pool with idle connection eviction
+        ConnectionPool connectionPool =
+                new ConnectionPool(MAXIMUM_CONNECTIONS, EVICTION_TIMEOUT, TimeUnit.SECONDS);
+
+        // Use a compatible connection spec that will accept whatever the SSLContext provides
+        // This prevents UnknownServiceException when custom SSLContext has restricted cipher suites
+        List<ConnectionSpec> connectionSpecs =
+                Arrays.asList(
+                        ConnectionSpec.MODERN_TLS,
+                        ConnectionSpec.COMPATIBLE_TLS,
+                        ConnectionSpec.CLEARTEXT);
+
+        return new OkHttpClient.Builder()
+                .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                .writeTimeout(writeTimeout, TimeUnit.MILLISECONDS)
+                .callTimeout(connectTimeout + writeTimeout + readTimeout, TimeUnit.MILLISECONDS)
+                .sslSocketFactory(sslSocketFactory, trustManager)
+                .hostnameVerifier(hostnameVerifier)
+                .connectionSpecs(connectionSpecs)
+                .connectionPool(connectionPool)
+                .retryOnConnectionFailure(true)
+                .build();
     }
 }
