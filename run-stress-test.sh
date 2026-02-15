@@ -21,21 +21,23 @@
 # test suite continuously until there is a failure
 #
 
+set -o pipefail
+
 (
+  export JAVA_DOCKER_IMAGES=all
+  export PROMETHEUS_DOCKER_IMAGES=all
+
   while true;
   do
     DATE=$(date)
     echo "STRESS-TEST-START    ${DATE}"
-
-    export JAVA_DOCKER_IMAGES=all
-    export PROMETHEUS_DOCKER_IMAGES=all
 
     ./mvnw clean verify
     if [[ "$?" -ne 0 ]];
     then
       DATE=$(date)
       echo "STRESS-TEST-FAILED   ${DATE}"
-      break
+      exit 1
     fi
 
     DATE=$(date)

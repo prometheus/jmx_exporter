@@ -20,6 +20,9 @@
 # Bash script to build, package, and run the regression tests (all Docker containers)
 #
 
+set -e
+set -o pipefail
+
 (
   export JAVA_DOCKER_IMAGES=all
   export PROMETHEUS_DOCKER_IMAGES=all
