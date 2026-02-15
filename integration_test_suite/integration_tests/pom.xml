@@ -86,9 +86,9 @@
             <version>1.28.0</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>5.6</version>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
