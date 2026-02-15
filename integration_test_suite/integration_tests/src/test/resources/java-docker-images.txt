@@ -29,11 +29,6 @@ bellsoft/liberica-openjdk-debian:11
 bellsoft/liberica-openjdk-debian:17
 bellsoft/liberica-openjdk-debian:21
 bellsoft/liberica-openjdk-debian:25
-bitnami/java:1.8
-bitnami/java:11
-bitnami/java:17
-bitnami/java:21
-bitnami/java:24
 eclipse-temurin:8
 eclipse-temurin:11
 eclipse-temurin:17
