@@ -25,6 +25,9 @@ if [[ "$#" -ne 2 ]]; then
     exit 1
 fi
 
+set -e
+set -o pipefail
+
 (
   export JAVA_DOCKER_IMAGES="$1"
   export PROMETHEUS_DOCKER_IMAGES="$2"

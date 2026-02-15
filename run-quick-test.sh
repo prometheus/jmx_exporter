@@ -20,6 +20,9 @@
 # Bash script to build, package, and run a quick test
 #
 
+set -e
+set -o pipefail
+
 (
   export JAVA_DOCKER_IMAGES="amazoncorretto:25"
   export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.9.1"

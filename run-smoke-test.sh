@@ -20,6 +20,9 @@
 # Bash script to build, package, and run the smoke tests (smoke test Docker containers)
 #
 
+set -e
+set -o pipefail
+
 (
   unset JAVA_DOCKER_IMAGES
   unset PROMETHEUS_DOCKER_IMAGES
