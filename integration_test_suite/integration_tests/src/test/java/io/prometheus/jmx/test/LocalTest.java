@@ -60,10 +60,12 @@ import org.verifyica.api.Verifyica;
 import org.verifyica.api.util.TemporaryDirectory;
 
 /**
- * LocalTest that verifies the functionality of the JMX Exporter code.
+ * Local (non-Docker) test that verifies the functionality of the JMX Exporter code.
  *
  * <p>Implements multiple, simultaneous HTTP client requests to test the JMX Exporter.
  */
+// Disabled as this test is not intended to be run as part of the regular test suite
+@Verifyica.Disabled
 public class LocalTest {
 
     /** The number of clients to simulate. */
