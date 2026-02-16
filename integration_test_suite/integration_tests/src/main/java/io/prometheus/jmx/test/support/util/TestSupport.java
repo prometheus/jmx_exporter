@@ -45,14 +45,14 @@ public class TestSupport {
      * @return a Network
      */
     public static Network getOrCreateNetwork(ArgumentContext argumentContext) {
-        Network network = argumentContext.classContext().map().getAs(NETWORK);
+        Network network = argumentContext.getClassContext().getMap().getAs(NETWORK);
         if (network == null) {
             // Create the network at the test argument scope
             // Get the id to force the network creation
             network = Network.newNetwork();
             network.getId();
 
-            argumentContext.map().put(NETWORK, network);
+            argumentContext.getMap().put(NETWORK, network);
         }
         return network;
     }
@@ -67,8 +67,8 @@ public class TestSupport {
     public static void initializeExporterTestEnvironment(
             ArgumentContext argumentContext, Network network, Class<?> testClass) {
         argumentContext
-                .testArgument(JmxExporterTestEnvironment.class)
-                .payload()
+                .getArgumentAs(JmxExporterTestEnvironment.class)
+                .getPayload()
                 .initialize(testClass, network);
     }
 
@@ -82,8 +82,8 @@ public class TestSupport {
     public static void initializeIsolatorExporterTestEnvironment(
             ArgumentContext argumentContext, Network network, Class<?> testClass) {
         argumentContext
-                .testArgument(IsolatorExporterTestEnvironment.class)
-                .payload()
+                .getArgumentAs(IsolatorExporterTestEnvironment.class)
+                .getPayload()
                 .initialize(testClass, network);
     }
 
@@ -93,10 +93,10 @@ public class TestSupport {
      * @param argumentContext argumentContext
      */
     public static void destroyExporterTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(JmxExporterTestEnvironment.class))
+        Optional.ofNullable(argumentContext.getArgumentAs(JmxExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.payload().destroy());
+                                exporterTestEnvironmentArgument.getPayload().destroy());
     }
 
     /**
@@ -105,10 +105,10 @@ public class TestSupport {
      * @param argumentContext argumentContext
      */
     public static void destroyIsolatorExporterTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.testArgument(IsolatorExporterTestEnvironment.class))
+        Optional.ofNullable(argumentContext.getArgumentAs(IsolatorExporterTestEnvironment.class))
                 .ifPresent(
                         exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.payload().destroy());
+                                exporterTestEnvironmentArgument.getPayload().destroy());
     }
 
     /**
@@ -117,7 +117,7 @@ public class TestSupport {
      * @param argumentContext argumentContext
      */
     public static void destroyNetwork(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.map().removeAs(NETWORK, Network.class))
+        Optional.ofNullable(argumentContext.getMap().removeAs(NETWORK, Network.class))
                 .ifPresent(Network::close);
     }
 

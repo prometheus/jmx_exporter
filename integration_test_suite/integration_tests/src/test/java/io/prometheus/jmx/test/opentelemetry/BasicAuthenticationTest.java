@@ -30,14 +30,12 @@ import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
+import org.verifyica.api.util.CleanupExecutor;
 
 /** Class to implement BasicAuthenticationTest */
 public class BasicAuthenticationTest {
@@ -53,15 +51,15 @@ public class BasicAuthenticationTest {
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.classContext().testClass();
+        Class<?> testClass = argumentContext.getClassContext().getTestClass();
 
         Network network = Network.newNetwork();
         network.getId();
 
-        argumentContext.map().put(NETWORK, network);
+        argumentContext.getMap().put(NETWORK, network);
 
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.testArgument().payload(OpenTelemetryTestEnvironment.class);
+                argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
         PrometheusTestEnvironment prometheusTestEnvironment =
                 openTelemetryTestEnvironment.prometheusTestEnvironment();
@@ -77,7 +75,7 @@ public class BasicAuthenticationTest {
     @Verifyica.Test
     public void testPrometheusHasMetrics(ArgumentContext argumentContext) throws IOException {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.testArgument().payload(OpenTelemetryTestEnvironment.class);
+                argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
         JmxExporterTestEnvironment jmxExporterTestEnvironment =
                 openTelemetryTestEnvironment.exporterTestEnvironment();
@@ -106,7 +104,7 @@ public class BasicAuthenticationTest {
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.testArgument().payload(OpenTelemetryTestEnvironment.class);
+                argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
         JmxExporterTestEnvironment jmxExporterTestEnvironment =
                 openTelemetryTestEnvironment.exporterTestEnvironment();
@@ -114,23 +112,23 @@ public class BasicAuthenticationTest {
         PrometheusTestEnvironment prometheusTestEnvironment =
                 openTelemetryTestEnvironment.prometheusTestEnvironment();
 
-        Network network = argumentContext.map().getAs(NETWORK);
+        Network network = argumentContext.getMap().getAs(NETWORK);
 
-        List<Trap> traps = new ArrayList<>();
+        CleanupExecutor cleanupExecutor = new CleanupExecutor();
 
         if (jmxExporterTestEnvironment != null) {
-            traps.add(new Trap(jmxExporterTestEnvironment::destroy));
+            cleanupExecutor.addTask(jmxExporterTestEnvironment::destroy);
         }
 
         if (prometheusTestEnvironment != null) {
-            traps.add(new Trap(prometheusTestEnvironment::destroy));
+            cleanupExecutor.addTask(prometheusTestEnvironment::destroy);
         }
 
         if (network != null) {
-            traps.add(new Trap(network::close));
+            cleanupExecutor.addTask(network::close);
         }
 
-        Trap.assertEmpty(traps);
+        cleanupExecutor.execute().throwIfFailed();
     }
 
     /**

@@ -32,15 +32,13 @@ import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
+import org.verifyica.api.util.CleanupExecutor;
 
 public class BasicAuthenticationSHA256Test {
 
@@ -61,7 +59,7 @@ public class BasicAuthenticationSHA256Test {
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.classContext().testClass();
+        Class<?> testClass = argumentContext.getClassContext().getTestClass();
         Network network = TestSupport.getOrCreateNetwork(argumentContext);
         TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
@@ -234,12 +232,11 @@ public class BasicAuthenticationSHA256Test {
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
-        List<Trap> traps = new ArrayList<>();
-
-        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
-
-        Trap.assertEmpty(traps);
+        new CleanupExecutor()
+                .addTask(() -> TestSupport.destroyExporterTestEnvironment(argumentContext))
+                .addTask(() -> TestSupport.destroyNetwork(argumentContext))
+                .execute()
+                .throwIfFailed();
     }
 
     private void assertMetricsResponse(

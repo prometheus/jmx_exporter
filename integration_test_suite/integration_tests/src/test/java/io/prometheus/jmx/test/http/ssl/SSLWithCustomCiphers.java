@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -51,8 +50,8 @@ import nl.altindag.ssl.SSLFactory;
 import org.assertj.core.util.Strings;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Trap;
 import org.verifyica.api.Verifyica;
+import org.verifyica.api.util.CleanupExecutor;
 
 public class SSLWithCustomCiphers {
 
@@ -102,7 +101,7 @@ public class SSLWithCustomCiphers {
 
     @Verifyica.BeforeAll
     public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.classContext().testClass();
+        Class<?> testClass = argumentContext.getClassContext().getTestClass();
         Network network = TestSupport.getOrCreateNetwork(argumentContext);
         TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
@@ -265,12 +264,11 @@ public class SSLWithCustomCiphers {
 
     @Verifyica.AfterAll
     public void afterAll(ArgumentContext argumentContext) throws Throwable {
-        List<Trap> traps = new ArrayList<>();
-
-        traps.add(new Trap(() -> TestSupport.destroyExporterTestEnvironment(argumentContext)));
-        traps.add(new Trap(() -> TestSupport.destroyNetwork(argumentContext)));
-
-        Trap.assertEmpty(traps);
+        new CleanupExecutor()
+                .addTask(() -> TestSupport.destroyExporterTestEnvironment(argumentContext))
+                .addTask(() -> TestSupport.destroyNetwork(argumentContext))
+                .execute()
+                .throwIfFailed();
     }
 
     private void assertMetricsResponse(

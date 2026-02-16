@@ -56,8 +56,8 @@ import javax.management.MalformedObjectNameException;
 import org.verifyica.api.Argument;
 import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.ClassContext;
-import org.verifyica.api.TemporaryDirectory;
 import org.verifyica.api.Verifyica;
+import org.verifyica.api.util.TemporaryDirectory;
 
 /**
  * LocalTest that verifies the functionality of the JMX Exporter code.
@@ -98,7 +98,8 @@ public class LocalTest {
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) throws Throwable {
         // Derive the resource path based on the test class name
-        String resource = (classContext.testClass().getName().replace(".", "/") + "/exporter.yaml");
+        String resource =
+                (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
 
         // Create a temporary directory
         TemporaryDirectory temporaryDirectory = TemporaryDirectory.newDirectory();
@@ -144,14 +145,15 @@ public class LocalTest {
                                     }
                                 }));
 
-        classContext.map().put(HTTP_SERVER, httpServer);
-        classContext.map().put(URL, BASE_URL + httpServer.getPort());
+        classContext.getMap().put(HTTP_SERVER, httpServer);
+        classContext.getMap().put(URL, BASE_URL + httpServer.getPort());
     }
 
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.HEALTHY;
+        String url =
+                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.HEALTHY;
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -160,7 +162,8 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
+        String url =
+                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -176,7 +179,8 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
+        String url =
+                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -198,7 +202,8 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
+        String url =
+                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -219,7 +224,8 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.classContext().map().getAs(URL) + JmxExporterPath.METRICS;
+        String url =
+                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
@@ -243,7 +249,7 @@ public class LocalTest {
     public static void conclude(ClassContext classContext)
             throws IOException, MalformedObjectNameException {
         // Clean up the HTTP server
-        HTTPServer httpServer = classContext.map().removeAs(HTTP_SERVER);
+        HTTPServer httpServer = classContext.getMap().removeAs(HTTP_SERVER);
         if (httpServer != null) {
             httpServer.stop();
         }
