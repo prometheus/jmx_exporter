@@ -24,6 +24,7 @@ import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
 import io.prometheus.jmx.test.support.throttle.Throttle;
+import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -225,13 +226,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                         .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                         .withExposedPorts(9090)
                         .withLogConsumer(
-                                outputFrame -> {
-                                    String string =
-                                            outputFrame.getUtf8StringWithoutLineEnding().trim();
-                                    if (!string.isBlank()) {
-                                        System.out.println("> " + string);
-                                    }
-                                })
+                                new TestContainerLogger("PROMETHEUS", prometheusDockerImage))
                         .withNetwork(network)
                         .withNetworkAliases("prometheus")
                         .waitingFor(
