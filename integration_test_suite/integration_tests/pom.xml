@@ -29,7 +29,7 @@
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <prometheus.metrics.version>1.5.0</prometheus.metrics.version>
-        <verifyica.version>1.0.1</verifyica.version>
+        <verifyica.version>1.0.2</verifyica.version>
         <automatic.module.name>io.prometheus.jmx.test</automatic.module.name>
     </properties>
 
