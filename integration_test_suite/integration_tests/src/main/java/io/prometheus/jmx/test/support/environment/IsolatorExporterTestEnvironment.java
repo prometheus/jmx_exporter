@@ -152,7 +152,8 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
-                .withLogConsumer(TestContainerLogger.getInstance())
+                .withLogConsumer(
+                        new TestContainerLogger("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*\\n", 1))

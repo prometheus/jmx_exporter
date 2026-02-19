@@ -19,15 +19,21 @@ package io.prometheus.jmx.test.support.util;
 import java.util.function.Consumer;
 import org.testcontainers.containers.output.OutputFrame;
 
-/** Class to implement SystemOutOutputFrameLogger */
+/** Class to implement TestContainerLogger */
 public class TestContainerLogger implements Consumer<OutputFrame> {
 
-    /** Singleton instance */
-    private static final TestContainerLogger SINGLETON = new TestContainerLogger();
+    private final String prefix;
+    private final String dockerImage;
 
-    /** Constructor */
-    private TestContainerLogger() {
-        // INTENTIONALLY BLANK
+    /**
+     * Constructor
+     *
+     * @param prefix the prefix to use for the log messages
+     * @param dockerImage the docker image to use for the log messages
+     */
+    public TestContainerLogger(String prefix, String dockerImage) {
+        this.prefix = prefix;
+        this.dockerImage = dockerImage;
     }
 
     @Override
@@ -35,17 +41,8 @@ public class TestContainerLogger implements Consumer<OutputFrame> {
         if (outputFrame != null) {
             String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
             if (!string.isBlank()) {
-                System.out.println("> " + string);
+                System.out.println("[" + prefix + "] " + dockerImage + " | " + string);
             }
         }
-    }
-
-    /**
-     * Method to get the singleton instance of SystemOutOutputFrameLogger
-     *
-     * @return the singleton instance of SystemOutOutputFrameLogger
-     */
-    public static TestContainerLogger getInstance() {
-        return SINGLETON;
     }
 }
