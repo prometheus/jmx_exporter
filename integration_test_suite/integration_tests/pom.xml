@@ -29,7 +29,7 @@
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <prometheus.metrics.version>1.5.0</prometheus.metrics.version>
-        <verifyica.version>1.0.3</verifyica.version>
+        <verifyica.version>1.0.4</verifyica.version>
         <automatic.module.name>io.prometheus.jmx.test</automatic.module.name>
     </properties>
 
@@ -167,7 +167,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
+                <version>3.5.5</version>
                 <configuration>
                     <skipTests>true</skipTests>
                 </configuration>
