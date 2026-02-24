@@ -41,8 +41,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: 17
-          distribution: temurin
+          java-version: '25'
+          distribution: 'corretto'
           cache: 'maven'
       - name: Install Hugo CLI
         run: |
