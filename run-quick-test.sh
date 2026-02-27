@@ -25,7 +25,7 @@ set -o pipefail
 
 (
   export JAVA_DOCKER_IMAGES="amazoncorretto:25"
-  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.9.1"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.10.0"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
   ./mvnw clean verify
