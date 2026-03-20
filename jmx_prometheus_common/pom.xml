@@ -55,7 +55,7 @@
         <dependency>
             <groupId>io.github.hakky54</groupId>
             <artifactId>ayza</artifactId>
-            <version>10.0.3</version>
+            <version>10.0.4</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -84,7 +84,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.0</version>
                 <configuration>
                     <java>
                         <palantirJavaFormat>
