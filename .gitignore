@@ -17,3 +17,4 @@ quick-test.log
 smoke-test.log
 regression-test.log
 RELEASE
+__pycache__/
