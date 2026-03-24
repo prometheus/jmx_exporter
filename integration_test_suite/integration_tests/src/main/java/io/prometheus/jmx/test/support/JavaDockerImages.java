@@ -29,15 +29,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/** Class to implement JavaDockerImages */
+/**
+ * Class to implement JavaDockerImages
+ */
 public final class JavaDockerImages {
 
     private static final String ALL = "ALL";
 
     private static final String DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
-    public static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE =
-            "/smoke-test-java-docker-images.txt";
+    public static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE = "/smoke-test-java-docker-images.txt";
 
     private static final List<String> SMOKE_TEST_DOCKER_IMAGES =
             Collections.unmodifiableList(load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE));
@@ -47,7 +48,9 @@ public final class JavaDockerImages {
     private static final List<String> ALL_DOCKER_IMAGE_NAMES =
             Collections.unmodifiableList(load(ALL_DOCKER_IMAGES_RESOURCE));
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private JavaDockerImages() {
         // INTENTIONALLY BLANK
     }
@@ -58,9 +61,8 @@ public final class JavaDockerImages {
      * @return the collection of Docker image names
      */
     public static Collection<String> names() {
-        String configurationValues =
-                System.getenv(
-                        DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
+        String configurationValues = System.getenv(
+                DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
         if (configurationValues == null || configurationValues.trim().isEmpty()) {
             configurationValues = System.getProperty(DOCKER_IMAGES_CONFIGURATION);
@@ -105,8 +107,7 @@ public final class JavaDockerImages {
                 throw new IOException("Resource not found");
             }
 
-            bufferedReader =
-                    new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
             while (true) {
                 String line = bufferedReader.readLine();

@@ -16,10 +16,14 @@
 
 package io.prometheus.jmx.variable;
 
-/** Class to resolves variables. */
+/**
+ * Class to resolves variables.
+ */
 public final class VariableResolver {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private VariableResolver() {
         // INTENTIONALLY BLANK
     }
@@ -60,12 +64,12 @@ public final class VariableResolver {
      */
     private static String resolveEnvironmentVariable(String variable) {
         // Remove the ${ and } from the variable
-        String environmentVariableName = variable.substring(2, variable.length() - 1).trim();
+        String environmentVariableName =
+                variable.substring(2, variable.length() - 1).trim();
 
         // If the environment variable name is empty after trimming, return null
         if (environmentVariableName.isEmpty()) {
-            throw new VariableResolverException(
-                    "Invalid environment variable name '" + variable + "'");
+            throw new VariableResolverException("Invalid environment variable name '" + variable + "'");
         }
 
         // Retrieve the value of the environment variable
@@ -73,8 +77,7 @@ public final class VariableResolver {
 
         // If the value is null, throw an exception
         if (value == null) {
-            throw new VariableResolverException(
-                    "Environment variable '" + variable + "' not defined");
+            throw new VariableResolverException("Environment variable '" + variable + "' not defined");
         }
 
         // Trim the value to remove leading and trailing whitespace

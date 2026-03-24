@@ -42,7 +42,9 @@ public class JarClassLoader extends ClassLoader {
 
     private final Map<String, String> manifestMap = new HashMap<>();
 
-    /** A map to hold the class name and its bytecode. */
+    /**
+     * A map to hold the class name and its bytecode.
+     */
     private final Map<String, byte[]> classBytes = new HashMap<>();
 
     /**
@@ -89,10 +91,9 @@ public class JarClassLoader extends ClassLoader {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (entry.getName().endsWith(".class")) {
-                    String className =
-                            entry.getName()
-                                    .replace('/', '.')
-                                    .substring(0, entry.getName().length() - 6);
+                    String className = entry.getName()
+                            .replace('/', '.')
+                            .substring(0, entry.getName().length() - 6);
 
                     byte[] classData = readAllBytes(jis);
                     classBytes.put(className, classData);

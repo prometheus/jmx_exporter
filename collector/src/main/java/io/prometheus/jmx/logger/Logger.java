@@ -46,10 +46,7 @@ public class Logger {
         // Override the default formatter for the logger if it is SimpleFormatter
         for (Handler handler : LOGGER.getHandlers()) {
             if (null != handler.getFormatter()
-                    && handler.getFormatter()
-                            .getClass()
-                            .getName()
-                            .endsWith(SimpleFormatter.class.getName())) {
+                    && handler.getFormatter().getClass().getName().endsWith(SimpleFormatter.class.getName())) {
                 handler.setFormatter(new LoggerFormatter());
             }
         }
@@ -229,9 +226,7 @@ public class Logger {
             String loggerName = LOGGER.getName();
             String message = format(format, objects);
 
-            System.out.printf(
-                    "%s | %s | %s | %s | %s%n",
-                    timestamp, threadName, Level.TRACE, loggerName, message);
+            System.out.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, Level.TRACE, loggerName, message);
         }
     }
 
@@ -245,30 +240,25 @@ public class Logger {
         java.util.logging.Level julLevel;
 
         switch (level) {
-            case TRACE:
-                {
-                    julLevel = java.util.logging.Level.FINEST;
-                    break;
-                }
-            case INFO:
-                {
-                    julLevel = java.util.logging.Level.INFO;
-                    break;
-                }
-            case WARN:
-                {
-                    julLevel = java.util.logging.Level.WARNING;
-                    break;
-                }
-            case ERROR:
-                {
-                    julLevel = java.util.logging.Level.SEVERE;
-                    break;
-                }
-            default:
-                {
-                    julLevel = null;
-                }
+            case TRACE: {
+                julLevel = java.util.logging.Level.FINEST;
+                break;
+            }
+            case INFO: {
+                julLevel = java.util.logging.Level.INFO;
+                break;
+            }
+            case WARN: {
+                julLevel = java.util.logging.Level.WARNING;
+                break;
+            }
+            case ERROR: {
+                julLevel = java.util.logging.Level.SEVERE;
+                break;
+            }
+            default: {
+                julLevel = null;
+            }
         }
 
         return julLevel;

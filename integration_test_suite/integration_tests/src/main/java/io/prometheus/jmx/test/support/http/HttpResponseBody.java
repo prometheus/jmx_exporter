@@ -19,7 +19,9 @@ package io.prometheus.jmx.test.support.http;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-/** Class to implement HttpResponseBody */
+/**
+ * Class to implement HttpResponseBody
+ */
 public class HttpResponseBody {
 
     private final byte[] bytes;

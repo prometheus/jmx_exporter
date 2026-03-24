@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/** Class to implement ExpectedMetricsNames */
+/**
+ * Class to implement ExpectedMetricsNames
+ */
 public class ExpectedMetricsNames {
 
     private static final Collection<String> METRIC_NAMES;
@@ -40,12 +42,9 @@ public class ExpectedMetricsNames {
         metricNames.add("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent");
         metricNames.add("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_size");
         metricNames.add("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_used");
-        metricNames.add(
-                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions");
-        metricNames.add(
-                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps");
-        metricNames.add(
-                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred");
+        metricNames.add("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions");
+        metricNames.add("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps");
+        metricNames.add("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred");
         metricNames.add("java_lang_ClassLoading_LoadedClassCount");
         metricNames.add("java_lang_ClassLoading_TotalLoadedClassCount");
         metricNames.add("java_lang_ClassLoading_UnloadedClassCount");
@@ -200,7 +199,9 @@ public class ExpectedMetricsNames {
         METRIC_NAMES = Collections.unmodifiableCollection(metricNames);
     }
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private ExpectedMetricsNames() {
         // INTENTIONALLY BLANK
     }

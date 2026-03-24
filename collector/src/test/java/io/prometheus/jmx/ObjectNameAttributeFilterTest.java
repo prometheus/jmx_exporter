@@ -50,23 +50,28 @@ public class ObjectNameAttributeFilterTest {
     public void nonEmptyConfigShouldInitializeConfigExcludeMap() throws Exception {
         ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
 
-        Map<ObjectName, Set<String>> configExcludeMap =
-                getInternalMapValue(filter, CONFIG_EXCLUDE_MAP_FIELD);
-        Map<ObjectName, Set<String>> dynamicMap =
-                getInternalMapValue(filter, DYNAMIC_EXCLUDE_MAP_FIELD);
-        Map<ObjectName, Set<String>> configIncludeMap =
-                getInternalMapValue(filter, CONFIG_INCLUDE_MAP_FIELD);
+        Map<ObjectName, Set<String>> configExcludeMap = getInternalMapValue(filter, CONFIG_EXCLUDE_MAP_FIELD);
+        Map<ObjectName, Set<String>> dynamicMap = getInternalMapValue(filter, DYNAMIC_EXCLUDE_MAP_FIELD);
+        Map<ObjectName, Set<String>> configIncludeMap = getInternalMapValue(filter, CONFIG_INCLUDE_MAP_FIELD);
 
         assertThat(configExcludeMap.size()).isEqualTo(2);
-        assertThat(configExcludeMap.get(new ObjectName("java.lang:type=OperatingSystem")).size())
+        assertThat(configExcludeMap
+                        .get(new ObjectName("java.lang:type=OperatingSystem"))
+                        .size())
                 .isEqualTo(1);
-        assertThat(configExcludeMap.get(new ObjectName("java.lang:type=Runtime")).size())
+        assertThat(configExcludeMap
+                        .get(new ObjectName("java.lang:type=Runtime"))
+                        .size())
                 .isEqualTo(2);
         assertThat(dynamicMap.size()).isEqualTo(0);
         assertThat(configIncludeMap.size()).isEqualTo(2);
-        assertThat(configIncludeMap.get(new ObjectName("java.lang:type=Threading")).size())
+        assertThat(configIncludeMap
+                        .get(new ObjectName("java.lang:type=Threading"))
+                        .size())
                 .isEqualTo(1);
-        assertThat(configIncludeMap.get(new ObjectName("java.lang:type=ClassLoading")).size())
+        assertThat(configIncludeMap
+                        .get(new ObjectName("java.lang:type=ClassLoading"))
+                        .size())
                 .isEqualTo(1);
     }
 
@@ -102,8 +107,7 @@ public class ObjectNameAttributeFilterTest {
             filter.add(objectName, "Value");
         }
 
-        Map<ObjectName, Set<String>> dynamicMap =
-                getInternalMapValue(filter, DYNAMIC_EXCLUDE_MAP_FIELD);
+        Map<ObjectName, Set<String>> dynamicMap = getInternalMapValue(filter, DYNAMIC_EXCLUDE_MAP_FIELD);
 
         Iterator<ObjectName> iterator = aliveMBeans.iterator();
         ObjectName unregisteredObjectName = iterator.next();
@@ -115,15 +119,11 @@ public class ObjectNameAttributeFilterTest {
         for (ObjectName objectName : aliveMBeans) {
             assertThat(filter.exclude(objectName, "Value"))
                     .withFailMessage(
-                            objectName
-                                    + "<>Value should still be excluded dynamically after"
-                                    + " onlyKeepMBeans")
+                            objectName + "<>Value should still be excluded dynamically after" + " onlyKeepMBeans")
                     .isTrue();
         }
         assertThat(filter.exclude(unregisteredObjectName, "Value"))
-                .withFailMessage(
-                        unregisteredObjectName
-                                + "<>Value should not be excluded dynamically before add")
+                .withFailMessage(unregisteredObjectName + "<>Value should not be excluded dynamically before add")
                 .isFalse();
     }
 
@@ -141,27 +141,21 @@ public class ObjectNameAttributeFilterTest {
         Map<ObjectName, Set<String>> dynamicExcludeObjectNameAttributesMap =
                 getInternalMapValue(objectNameAttributeFilter, DYNAMIC_EXCLUDE_MAP_FIELD);
         assertThat(configExcludeObjectNameAttributesMap.size())
-                .withFailMessage(
-                        "configExcludeObjectNameAttributesMap should be left untouched after"
-                                + " onlyKeepMBeans(emptyList())")
+                .withFailMessage("configExcludeObjectNameAttributesMap should be left untouched after"
+                        + " onlyKeepMBeans(emptyList())")
                 .isEqualTo(2);
         assertThat(dynamicExcludeObjectNameAttributesMap.size())
                 .withFailMessage(
-                        "dynamicExcludeObjectNameAttributesMap should be empty after"
-                                + " onlyKeepMBeans(emptyList())")
+                        "dynamicExcludeObjectNameAttributesMap should be empty after" + " onlyKeepMBeans(emptyList())")
                 .isEqualTo(0);
-        assertThat(
-                        objectNameAttributeFilter.exclude(
-                                new ObjectName("java.lang:type=Runtime"), "ClassPath"))
-                .withFailMessage(
-                        "java.lang:type=Runtime<>ClassPath should be excluded by config and not"
-                                + " removed by onlyKeepMBeans")
+        assertThat(objectNameAttributeFilter.exclude(new ObjectName("java.lang:type=Runtime"), "ClassPath"))
+                .withFailMessage("java.lang:type=Runtime<>ClassPath should be excluded by config and not"
+                        + " removed by onlyKeepMBeans")
                 .isTrue();
         for (ObjectName objectName : aliveMBeans) {
             assertThat(objectNameAttributeFilter.exclude(objectName, "Value"))
-                    .withFailMessage(
-                            "java.lang:type=Runtime<>ClassPath should be excluded by config and not"
-                                    + " removed by onlyKeepMBeans")
+                    .withFailMessage("java.lang:type=Runtime<>ClassPath should be excluded by config and not"
+                            + " removed by onlyKeepMBeans")
                     .isFalse();
         }
     }
@@ -173,45 +167,37 @@ public class ObjectNameAttributeFilterTest {
         boolean result = filter.include(new ObjectName("java.lang:type=Threading"), "ThreadCount");
 
         assertThat(result)
-                .withFailMessage(
-                        "java.lang:type=Threading<>ThreadCount should be included by config")
+                .withFailMessage("java.lang:type=Threading<>ThreadCount should be included by config")
                 .isTrue();
     }
 
     private static ObjectNameAttributeFilter initEmptyConfigFilter() {
         return ObjectNameAttributeFilter.create(
-                new Yaml()
-                        .load(
-                                "---\n"
-                                        + "excludeObjectNameAttributes: {}\n"
-                                        + "includeObjectNameAttributes: {}\n"));
+                new Yaml().load("---\n" + "excludeObjectNameAttributes: {}\n" + "includeObjectNameAttributes: {}\n"));
     }
 
     private static ObjectNameAttributeFilter initNonEmptyConfigFilter() {
-        return ObjectNameAttributeFilter.create(
-                new Yaml()
-                        .load(
-                                "---\n"
-                                        + "excludeObjectNameAttributes:\n"
-                                        + "  \"java.lang:type=OperatingSystem\":\n"
-                                        + "    - \"ObjectName\"\n"
-                                        + "  \"java.lang:type=Runtime\":\n"
-                                        + "    - \"ClassPath\"\n"
-                                        + "    - \"SystemProperties\"\n"
-                                        + "includeObjectNameAttributes:\n"
-                                        + "  \"java.lang:type=Threading\":\n"
-                                        + "    - \"ThreadCount\"\n"
-                                        + "  \"java.lang:type=ClassLoading\":\n"
-                                        + "    - \"LoadedClassCount\"\n"));
+        return ObjectNameAttributeFilter.create(new Yaml()
+                .load("---\n"
+                        + "excludeObjectNameAttributes:\n"
+                        + "  \"java.lang:type=OperatingSystem\":\n"
+                        + "    - \"ObjectName\"\n"
+                        + "  \"java.lang:type=Runtime\":\n"
+                        + "    - \"ClassPath\"\n"
+                        + "    - \"SystemProperties\"\n"
+                        + "includeObjectNameAttributes:\n"
+                        + "  \"java.lang:type=Threading\":\n"
+                        + "    - \"ThreadCount\"\n"
+                        + "  \"java.lang:type=ClassLoading\":\n"
+                        + "    - \"LoadedClassCount\"\n"));
     }
 
     private static Set<ObjectName> getAliveMBeans() throws MalformedObjectNameException {
-        return new HashSet<>(
-                Arrays.asList(
-                        new ObjectName("boolean:Type=Test1"),
-                        new ObjectName("boolean:Type=Test2"),
-                        new ObjectName("boolean:Type=Test3"),
-                        new ObjectName("boolean:Type=Test4")));
+        return new HashSet<>(Arrays.asList(
+                new ObjectName("boolean:Type=Test1"),
+                new ObjectName("boolean:Type=Test2"),
+                new ObjectName("boolean:Type=Test3"),
+                new ObjectName("boolean:Type=Test4")));
     }
 
     private int excludeMapSize(ObjectNameAttributeFilter filter, String mapName) throws Exception {
@@ -222,14 +208,13 @@ public class ObjectNameAttributeFilterTest {
         return getInternalMapValue(filter, CONFIG_INCLUDE_MAP_FIELD).size();
     }
 
-    private Map getInternalMapValue(ObjectNameAttributeFilter filter, String mapName)
-            throws Exception {
+    private Map getInternalMapValue(ObjectNameAttributeFilter filter, String mapName) throws Exception {
         return getInternalFieldValue(filter, mapName, Map.class);
     }
 
     @SuppressWarnings("java:S1172")
-    private static <T> T getInternalFieldValue(
-            Object object, String fieldName, Class<T> ignoredFieldType) throws Exception {
+    private static <T> T getInternalFieldValue(Object object, String fieldName, Class<T> ignoredFieldType)
+            throws Exception {
         Field field = object.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         return (T) field.get(object);

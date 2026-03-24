@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/** Class to get a sample value from a PrometheusRegistry */
+/**
+ * Class to get a sample value from a PrometheusRegistry
+ */
 public class PrometheusRegistryUtils {
 
     private final PrometheusRegistry prometheusRegistry;
@@ -93,18 +95,11 @@ public class PrometheusRegistryUtils {
 
         prometheusRegistry.scrape(s -> s.equals(name)).stream()
                 .filter(metricSnapshot -> metricSnapshot.getMetadata().getName().equals(name))
-                .forEach(
-                        metricSnapshot ->
-                                metricSnapshot.getDataPoints().stream()
-                                        .filter(
-                                                (Predicate<DataPointSnapshot>)
-                                                        dataPointSnapshot ->
-                                                                dataPointSnapshot
-                                                                                .getLabels()
-                                                                                .compareTo(labels)
-                                                                        == 0)
-                                        .findFirst()
-                                        .ifPresent(dataPoints::add));
+                .forEach(metricSnapshot -> metricSnapshot.getDataPoints().stream()
+                        .filter((Predicate<DataPointSnapshot>) dataPointSnapshot ->
+                                dataPointSnapshot.getLabels().compareTo(labels) == 0)
+                        .findFirst()
+                        .ifPresent(dataPoints::add));
 
         return !dataPoints.isEmpty() ? dataPoints.get(0) : null;
     }

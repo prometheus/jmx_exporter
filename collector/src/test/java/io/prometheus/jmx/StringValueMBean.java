@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.prometheus.jmx;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Class to implement StringValueMBean */
+/**
+ * Class to implement StringValueMBean
+ */
 public interface StringValueMBean {
 
     /**
@@ -29,7 +32,9 @@ public interface StringValueMBean {
     String getText();
 }
 
-/** Class to implement StringValue */
+/**
+ * Class to implement StringValue
+ */
 class StringValue implements StringValueMBean {
 
     @Override

@@ -21,27 +21,29 @@ import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-/** Class to implement LoggerFormatter */
+/**
+ * Class to implement LoggerFormatter
+ */
 class LoggerFormatter extends Formatter {
 
     private static final ThreadLocal<SimpleDateFormat> SIMPLE_DATE_FORMAT_THREAD_LOCAL =
             ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public LoggerFormatter() {
         super();
     }
 
     @Override
     public String format(LogRecord record) {
-        String timestamp =
-                SIMPLE_DATE_FORMAT_THREAD_LOCAL.get().format(new Date(record.getMillis()));
+        String timestamp = SIMPLE_DATE_FORMAT_THREAD_LOCAL.get().format(new Date(record.getMillis()));
         String threadName = Thread.currentThread().getName();
         String level = record.getLevel().getName();
         String loggerName = record.getLoggerName();
         String message = formatMessage(record);
 
-        return String.format(
-                "%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
+        return String.format("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
     }
 }

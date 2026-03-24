@@ -65,31 +65,28 @@ public class StartupDelayIsolatorTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
-            throws Throwable {
+    public void testHealthy(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws Throwable {
         for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.HEALTHY);
 
             new Repeater(REPEAT_COUNT)
                     .throttle(REPEAT_INTERVAL_MILLISECONDS)
-                    .test(
-                            () -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(url);
-                                assertHealthyResponse(httpResponse);
-                            })
-                    .accept(
-                            (iteration, throwable) -> {
-                                if (throwable == null) {
-                                    Repeater.abort();
-                                }
-                            })
+                    .test(() -> {
+                        HttpResponse httpResponse = HttpClient.sendRequest(url);
+                        assertHealthyResponse(httpResponse);
+                    })
+                    .accept((iteration, throwable) -> {
+                        if (throwable == null) {
+                            Repeater.abort();
+                        }
+                    })
                     .run();
         }
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws Throwable {
+    public void testDefaultTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws Throwable {
         for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
@@ -100,48 +97,39 @@ public class StartupDelayIsolatorTest {
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws Throwable {
+    public void testOpenMetricsTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws Throwable {
         for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse =
-                    sendRequestWithRetry(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+            HttpResponse httpResponse = sendRequestWithRetry(
+                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
             assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
         }
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws Throwable {
+    public void testPrometheusTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws Throwable {
         for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse =
-                    sendRequestWithRetry(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                    sendRequestWithRetry(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
             assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
         }
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws Throwable {
+    public void testPrometheusProtobufMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws Throwable {
         for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse =
-                    sendRequestWithRetry(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+            HttpResponse httpResponse = sendRequestWithRetry(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
             assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
         }
@@ -160,48 +148,40 @@ public class StartupDelayIsolatorTest {
         return sendRequestWithRetry(url, null, null);
     }
 
-    private HttpResponse sendRequestWithRetry(String url, String header, String value)
-            throws Throwable {
+    private HttpResponse sendRequestWithRetry(String url, String header, String value) throws Throwable {
         final HttpResponse[] responseHolder = new HttpResponse[1];
 
         new Repeater(REPEAT_COUNT)
                 .throttle(REPEAT_INTERVAL_MILLISECONDS)
-                .test(
-                        () -> {
-                            HttpResponse httpResponse =
-                                    (header != null)
-                                            ? HttpClient.sendRequest(url, header, value)
-                                            : HttpClient.sendRequest(url);
-                            responseHolder[0] = httpResponse;
-                        })
-                .accept(
-                        (iteration, throwable) -> {
-                            if (throwable == null && responseHolder[0] != null) {
-                                Repeater.abort();
-                            }
-                        })
+                .test(() -> {
+                    HttpResponse httpResponse =
+                            (header != null) ? HttpClient.sendRequest(url, header, value) : HttpClient.sendRequest(url);
+                    responseHolder[0] = httpResponse;
+                })
+                .accept((iteration, throwable) -> {
+                    if (throwable == null && responseHolder[0] != null) {
+                        Repeater.abort();
+                    }
+                })
                 .run();
 
         return responseHolder[0];
     }
 
-    private void assertMetricsResponse(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -248,22 +228,19 @@ public class StartupDelayIsolatorTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
     }

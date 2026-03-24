@@ -43,9 +43,7 @@ public class BuildInfoMetricsTest {
         expectedVersion = expectedVersion != null ? expectedVersion : "unknown";
 
         List<MetricSnapshot> metricSnapshots =
-                PrometheusRegistry.defaultRegistry
-                        .scrape(s -> s.equals("jmx_exporter_build"))
-                        .stream()
+                PrometheusRegistry.defaultRegistry.scrape(s -> s.equals("jmx_exporter_build")).stream()
                         .collect(Collectors.toList());
 
         assertThat(metricSnapshots).isNotNull();
@@ -56,8 +54,7 @@ public class BuildInfoMetricsTest {
         assertThat(metricSnapshot).isInstanceOf(InfoSnapshot.class);
 
         InfoSnapshot infoSnapshot = (InfoSnapshot) metricSnapshot;
-        List<InfoSnapshot.InfoDataPointSnapshot> infoDataPointSnapshots =
-                infoSnapshot.getDataPoints();
+        List<InfoSnapshot.InfoDataPointSnapshot> infoDataPointSnapshots = infoSnapshot.getDataPoints();
 
         assertThat(infoDataPointSnapshots).isNotNull();
         assertThat(infoDataPointSnapshots.size()).isEqualTo(1);

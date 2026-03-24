@@ -36,7 +36,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class HTTPServerFactoryTest {
 
-    @TempDir File temporaryFolder;
+    @TempDir
+    File temporaryFolder;
 
     HTTPServer httpServer;
 
@@ -48,16 +49,13 @@ public class HTTPServerFactoryTest {
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClass451RoundTrip()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClass451RoundTrip() throws Exception {
         File config = new File(temporaryFolder, "ok");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
         writer.println("    plugin:");
-        writer.println(
-                "      class:"
-                        + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticator451");
+        writer.println("      class:" + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticator451");
         writer.close();
 
         httpServer = startServer(config);
@@ -66,16 +64,13 @@ public class HTTPServerFactoryTest {
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectOkRoundTrip()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectOkRoundTrip() throws Exception {
         File config = new File(temporaryFolder, "ok");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
         writer.println("    plugin:");
-        writer.println(
-                "      class:"
-                    + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
+        writer.println("      class:" + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
         writer.println("      subjectAttributeName: custom.subject");
 
         writer.close();
@@ -86,16 +81,13 @@ public class HTTPServerFactoryTest {
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectNotMatchingRoundTrip()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectNotMatchingRoundTrip() throws Exception {
         File config = new File(temporaryFolder, "unmatched_subjectAttributeName");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
         writer.println("    plugin:");
-        writer.println(
-                "      class:"
-                    + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
+        writer.println("      class:" + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticatorWithSubject");
         writer.println("      subjectAttributeName: not.the.correct.custom.subject.attribute");
 
         writer.close();
@@ -105,15 +97,12 @@ public class HTTPServerFactoryTest {
         verifyExpectedResponse(httpServer, "HTTP/1.1 403");
     }
 
-    private void verifyExpectedResponse(HTTPServer httpServer, String expectedResponseSubString)
-            throws Exception {
+    private void verifyExpectedResponse(HTTPServer httpServer, String expectedResponseSubString) throws Exception {
         try (Socket socket = new Socket()) {
             socket.setSoTimeout(1000);
             socket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
-            socket.getOutputStream()
-                    .write("GET /metrics HTTP/1.1 \r\n".getBytes(StandardCharsets.UTF_8));
-            socket.getOutputStream()
-                    .write("HOST: localhost \r\n\r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().write("GET /metrics HTTP/1.1 \r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().write("HOST: localhost \r\n\r\n".getBytes(StandardCharsets.UTF_8));
             socket.getOutputStream().flush();
 
             String actualResponse = "";
@@ -127,19 +116,16 @@ public class HTTPServerFactoryTest {
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNOkNoConstructor()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNOkNoConstructor() throws Exception {
         File config = new File(temporaryFolder, "error_no_constructor");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
         writer.println("  authentication:");
         writer.println("    plugin:");
-        writer.println(
-                "      class:" + " io.prometheus.jmx.common.authenticator.PlaintextAuthenticator");
+        writer.println("      class:" + " io.prometheus.jmx.common.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class)
-                .isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
@@ -149,17 +135,14 @@ public class HTTPServerFactoryTest {
         writer.println("httpServer:");
         writer.println("  authentication:");
         writer.println("    plugin:");
-        writer.println(
-                "      class:" + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
+        writer.println("      class:" + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class)
-                .isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotString()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotString() throws Exception {
         File config = new File(temporaryFolder, "as_int");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -168,13 +151,11 @@ public class HTTPServerFactoryTest {
         writer.println("       class: 10");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class)
-                .isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
     @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokMissingString()
-            throws Exception {
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokMissingString() throws Exception {
         File config = new File(temporaryFolder, "missing");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -183,8 +164,7 @@ public class HTTPServerFactoryTest {
         writer.println("      class:");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class)
-                .isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
     private HTTPServer startServer(File config) throws IOException {

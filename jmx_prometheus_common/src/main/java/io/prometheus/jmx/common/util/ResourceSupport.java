@@ -28,10 +28,14 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-/** Class to implement ResourceSupport */
+/**
+ * Class to implement ResourceSupport
+ */
 public class ResourceSupport {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private ResourceSupport() {
         // INTENTIONALLY BLANK
     }
@@ -118,8 +122,7 @@ public class ResourceSupport {
                 throw new IOException(format("Resource [%s] not found", resource));
             }
 
-            try (OutputStream outputStream =
-                    new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
+            try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {
                 byte[] buffer = new byte[8192];
                 int count;
 

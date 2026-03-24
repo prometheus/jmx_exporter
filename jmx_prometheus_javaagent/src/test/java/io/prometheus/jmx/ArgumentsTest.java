@@ -306,8 +306,7 @@ public class ArgumentsTest {
                 assertThat(arguments.getPort()).isEqualTo(port);
                 assertThat(arguments.getFilename()).isEqualTo(filename);
             } else {
-                assertThatExceptionOfType(ConfigurationException.class)
-                        .isThrownBy(() -> Arguments.parse(argument));
+                assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> Arguments.parse(argument));
             }
         }
     }

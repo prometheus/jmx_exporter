@@ -116,23 +116,21 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
         this.network = network;
 
         switch (jmxExporterMode) {
-            case JavaAgent:
-                {
-                    javaAgentApplicationContainer = createJavaAgentApplicationContainer();
-                    javaAgentApplicationContainer.start();
+            case JavaAgent: {
+                javaAgentApplicationContainer = createJavaAgentApplicationContainer();
+                javaAgentApplicationContainer.start();
 
-                    break;
-                }
-            case Standalone:
-                {
-                    standaloneApplicationContainer = createStandaloneApplicationContainer();
-                    standaloneApplicationContainer.start();
+                break;
+            }
+            case Standalone: {
+                standaloneApplicationContainer = createStandaloneApplicationContainer();
+                standaloneApplicationContainer.start();
 
-                    standaloneExporterContainer = createStandaloneExporterContainer();
-                    standaloneExporterContainer.start();
+                standaloneExporterContainer = createStandaloneExporterContainer();
+                standaloneExporterContainer.start();
 
-                    break;
-                }
+                break;
+            }
         }
     }
 
@@ -155,16 +153,14 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
         int port = 0;
 
         switch (jmxExporterMode) {
-            case JavaAgent:
-                {
-                    port = javaAgentApplicationContainer.getMappedPort(8888);
-                    break;
-                }
-            case Standalone:
-                {
-                    port = standaloneExporterContainer.getMappedPort(8888);
-                    break;
-                }
+            case JavaAgent: {
+                port = javaAgentApplicationContainer.getMappedPort(8888);
+                break;
+            }
+            case Standalone: {
+                port = standaloneExporterContainer.getMappedPort(8888);
+                break;
+            }
         }
 
         return baseUrl + ":" + port;
@@ -198,9 +194,7 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
                 .waitingFor(Wait.forListeningPort())
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/JavaAgent",
-                        "/temp",
-                        BindMode.READ_ONLY)
+                        testClass.getName().replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
@@ -222,9 +216,7 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone",
-                        "/temp",
-                        BindMode.READ_ONLY)
+                        testClass.getName().replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
@@ -246,14 +238,11 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
                 .waitingFor(Wait.forLogMessage(".*Running.*", 1))
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone",
-                        "/temp",
-                        BindMode.READ_ONLY)
+                        testClass.getName().replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(
-                        new TestContainerLogger("JMX_EXPORTER_STANDALONE", javaDockerImage))
+                .withLogConsumer(new TestContainerLogger("JMX_EXPORTER_STANDALONE", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
@@ -268,15 +257,11 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
     public static Stream<JmxExporterTestEnvironment> createEnvironments() {
         Collection<JmxExporterTestEnvironment> collection = new ArrayList<>();
 
-        JavaDockerImages.names()
-                .forEach(
-                        dockerImageName -> {
-                            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
-                                collection.add(
-                                        new JmxExporterTestEnvironment(
-                                                dockerImageName, jmxExporterMode));
-                            }
-                        });
+        JavaDockerImages.names().forEach(dockerImageName -> {
+            for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                collection.add(new JmxExporterTestEnvironment(dockerImageName, jmxExporterMode));
+            }
+        });
 
         return collection.stream();
     }

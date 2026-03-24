@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.prometheus.jmx;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Class to implement CustomValueMBean */
+/**
+ * Class to implement CustomValueMBean
+ */
 public interface CustomValueMBean {
 
     /**
@@ -36,7 +39,9 @@ public interface CustomValueMBean {
     String getText();
 }
 
-/** Class to implement CustomValue */
+/**
+ * Class to implement CustomValue
+ */
 class CustomValue implements CustomValueMBean {
 
     @Override

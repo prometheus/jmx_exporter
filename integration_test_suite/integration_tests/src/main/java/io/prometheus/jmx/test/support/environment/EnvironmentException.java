@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx.test.support.environment;
 
-/** Class to implement EnvironmentException */
+/**
+ * Class to implement EnvironmentException
+ */
 public class EnvironmentException extends RuntimeException {
 
     /**

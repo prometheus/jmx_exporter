@@ -19,7 +19,9 @@ package io.prometheus.jmx.common.authenticator;
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
 
-/** Class to implement a username / plaintext password BasicAuthenticator */
+/**
+ * Class to implement a username / plaintext password BasicAuthenticator
+ */
 public class PlaintextAuthenticator extends BasicAuthenticator {
 
     private final String username;

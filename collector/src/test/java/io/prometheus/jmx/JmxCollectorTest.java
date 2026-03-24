@@ -36,9 +36,7 @@ public class JmxCollectorTest {
 
     @BeforeAll
     public static void classSetUp() throws Exception {
-        LogManager.getLogManager()
-                .readConfiguration(
-                        JmxCollectorTest.class.getResourceAsStream("/logging.properties"));
+        LogManager.getLogManager().readConfiguration(JmxCollectorTest.class.getResourceAsStream("/logging.properties"));
 
         // Get the Platform MBean Server.
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -69,20 +67,17 @@ public class JmxCollectorTest {
 
     @Test
     public void testRulesMustHaveNameWithHelp() {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JmxCollector("---\nrules:\n- help: foo"));
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---\nrules:\n- help: foo"));
     }
 
     @Test
     public void testRulesMustHaveNameWithLabels() {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JmxCollector("---\nrules:\n- labels: {}"));
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---\nrules:\n- labels: {}"));
     }
 
     @Test
     public void testRulesMustHavePatternWithName() {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JmxCollector("---\nrules:\n- name: foo"));
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---\nrules:\n- name: foo"));
     }
 
     @Test
@@ -91,8 +86,7 @@ public class JmxCollectorTest {
                         "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(getSampleValue("foo", new String[] {}, new String[] {}))
-                .isCloseTo(200, within(0.001));
+        assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isCloseTo(200, within(0.001));
     }
 
     @Test
@@ -101,8 +95,7 @@ public class JmxCollectorTest {
                         "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replace_block_op_min_time:`\n  name: foo\n  attrNameSnakeCase: true"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(getSampleValue("foo", new String[] {}, new String[] {}))
-                .isCloseTo(200, within(0.001));
+        assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isCloseTo(200, within(0.001));
     }
 
     @Test
@@ -121,8 +114,7 @@ public class JmxCollectorTest {
                         "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: foo\n  labels:\n    '': v\n    l: ''"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(getSampleValue("foo", new String[] {}, new String[] {}))
-                .isCloseTo(200, within(0.001));
+        assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isCloseTo(200, within(0.001));
     }
 
     @Test
@@ -131,8 +123,7 @@ public class JmxCollectorTest {
                         "\n---\nlowercaseOutputName: true\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: Foo"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(getSampleValue("foo", new String[] {}, new String[] {}))
-                .isCloseTo(200, within(0.001));
+        assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isCloseTo(200, within(0.001));
     }
 
     @Test
@@ -151,11 +142,7 @@ public class JmxCollectorTest {
                         "\n---\nrules:\n- pattern: `^hadoop<(service)=(DataNode), name=DataNodeActivity-ams-hdd001-50010><>(replaceBlockOpMinTime):`\n  name: hadoop_$3\n  labels:\n    `$1`: `$2`"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "hadoop_replaceBlockOpMinTime",
-                                new String[] {"service"},
-                                new String[] {"DataNode"}))
+        assertThat(getSampleValue("hadoop_replaceBlockOpMinTime", new String[] {"service"}, new String[] {"DataNode"}))
                 .isCloseTo(200, within(0.001));
     }
 
@@ -165,11 +152,9 @@ public class JmxCollectorTest {
                         "\n---\nrules:\n- pattern: `^(hadoop<service=DataNode, )name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: `$1`\n  labels:\n    `$1`: `$1`"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "hadoop_service_DataNode_",
-                                new String[] {"hadoop_service_DataNode_"},
-                                new String[] {"hadoop<service=DataNode, "}))
+        assertThat(getSampleValue("hadoop_service_DataNode_", new String[] {"hadoop_service_DataNode_"}, new String[] {
+                    "hadoop<service=DataNode, "
+                }))
                 .isCloseTo(200, within(0.001));
     }
 
@@ -179,11 +164,7 @@ public class JmxCollectorTest {
                         "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=customValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: customValue\n     attributesAsLabels:\n        - Text"
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "io_prometheus_jmx_customValue_Value",
-                                new String[] {"Text"},
-                                new String[] {"value"}))
+        assertThat(getSampleValue("io_prometheus_jmx_customValue_Value", new String[] {"Text"}, new String[] {"value"}))
                 .isCloseTo(345, within(0.001));
     }
 
@@ -193,11 +174,7 @@ public class JmxCollectorTest {
                         "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=stringValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: stringValue\n     extraMetrics:\n        - name: isActive\n          value: true\n          description: This is a boolean value indicating if the scenario is still active or is completed."
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "io_prometheus_jmx_stringValue_isActive",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("io_prometheus_jmx_stringValue_isActive", new String[] {}, new String[] {}))
                 .isCloseTo(1.0, within(0.001));
     }
 
@@ -207,11 +184,8 @@ public class JmxCollectorTest {
                         "\n---\nincludeObjectNames: [`io.prometheus.jmx:type=stringValue`]\nmetricCustomizers:\n   - mbeanFilter:\n        domain: io.prometheus.jmx\n        properties:\n           type: stringValue\n     attributesAsLabels:\n        - Text\n     extraMetrics:\n        - name: isActive\n          value: true\n          description: This is a boolean value indicating if the scenario is still active or is completed."
                                 .replace('`', '"'))
                 .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "io_prometheus_jmx_stringValue_isActive",
-                                new String[] {"Text"},
-                                new String[] {"value"}))
+        assertThat(getSampleValue(
+                        "io_prometheus_jmx_stringValue_isActive", new String[] {"Text"}, new String[] {"value"}))
                 .isCloseTo(1.0, within(0.001));
     }
 
@@ -246,9 +220,7 @@ public class JmxCollectorTest {
 
     @Test
     public void stopsOnEmptyName() throws Exception {
-        new JmxCollector(
-                        "\n---\nrules:\n- pattern: `.*`\n  name: ''\n- pattern: `.*`\n  name: foo"
-                                .replace('`', '"'))
+        new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: ''\n- pattern: `.*`\n  name: foo".replace('`', '"'))
                 .register(prometheusRegistry);
         assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isNull();
     }
@@ -258,258 +230,195 @@ public class JmxCollectorTest {
         new JmxCollector("---").register(prometheusRegistry);
 
         // Test JVM bean.
-        assertThat(
-                        getSampleValue(
-                                "java_lang_OperatingSystem_ProcessCpuTime",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
 
         // Test Cassandra Bean.
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue(
+                        "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
+                        new String[] {},
+                        new String[] {}))
                 .isCloseTo(100, within(0.001));
 
         // Test Cassandra Metrics.
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_metrics_Compaction_Value",
-                                new String[] {"name"},
-                                new String[] {"CompletedTasks"}))
+        assertThat(getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[] {"name"}, new String[] {
+                    "CompletedTasks"
+                }))
                 .isCloseTo(0.2, within(0.001));
 
         // Test Hadoop Metrics.
-        assertThat(
-                        getSampleValue(
-                                "hadoop_DataNode_replaceBlockOpMinTime",
-                                new String[] {"name"},
-                                new String[] {"DataNodeActivity-ams-hdd001-50010"}))
+        assertThat(getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[] {"name"}, new String[] {
+                    "DataNodeActivity-ams-hdd001-50010"
+                }))
                 .isCloseTo(200, within(0.001));
     }
 
     @Test
     public void nestedTabularDataTest() throws Exception {
         JmxCollector jc = new JmxCollector("---").register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "Hadoop_DataNodeInfo_DatanodeNetworkCounts",
-                                new String[] {"service", "key", "key_"},
-                                new String[] {"DataNode", "1.2.3.4", "networkErrors"}))
+        assertThat(getSampleValue(
+                        "Hadoop_DataNodeInfo_DatanodeNetworkCounts",
+                        new String[] {"service", "key", "key_"},
+                        new String[] {"DataNode", "1.2.3.4", "networkErrors"}))
                 .isCloseTo(338, within(0.001));
     }
 
     @Test
     public void tabularDataCompositeKeyTest() throws Exception {
         JmxCollector jc = new JmxCollector("---").register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "org_exist_management_exist_ProcessReport_RunningQueries_id",
-                                new String[] {"key_id", "key_path"},
-                                new String[] {"1", "/db/query1.xq"}))
+        assertThat(getSampleValue(
+                        "org_exist_management_exist_ProcessReport_RunningQueries_id",
+                        new String[] {"key_id", "key_path"},
+                        new String[] {"1", "/db/query1.xq"}))
                 .isCloseTo(1, within(0.001));
 
-        assertThat(
-                        getSampleValue(
-                                "org_exist_management_exist_ProcessReport_RunningQueries_id",
-                                new String[] {"key_id", "key_path"},
-                                new String[] {"2", "/db/query2.xq"}))
+        assertThat(getSampleValue(
+                        "org_exist_management_exist_ProcessReport_RunningQueries_id",
+                        new String[] {"key_id", "key_path"},
+                        new String[] {"2", "/db/query2.xq"}))
                 .isCloseTo(2, within(0.001));
     }
 
     @Test
     public void testIncludeObjectNames() throws Exception {
-        new JmxCollector(
-                        "\n"
-                                + "---\n"
-                                + "includeObjectNames:\n"
-                                + "- java.lang:*\n"
-                                + "- java.lang:*\n"
-                                + "- org.apache.cassandra.concurrent:*")
+        new JmxCollector("\n"
+                        + "---\n"
+                        + "includeObjectNames:\n"
+                        + "- java.lang:*\n"
+                        + "- java.lang:*\n"
+                        + "- org.apache.cassandra.concurrent:*")
                 .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
-        assertThat(
-                        getSampleValue(
-                                "java_lang_OperatingSystem_ProcessCpuTime",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue(
+                        "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
+                        new String[] {},
+                        new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_metrics_Compaction_Value",
-                                new String[] {"name"},
-                                new String[] {"CompletedTasks"}))
+        assertThat(getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[] {"name"}, new String[] {
+                    "CompletedTasks"
+                }))
                 .isNull();
 
-        assertThat(
-                        getSampleValue(
-                                "hadoop_DataNode_replaceBlockOpMinTime",
-                                new String[] {"name"},
-                                new String[] {"DataNodeActivity-ams-hdd001-50010"}))
+        assertThat(getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[] {"name"}, new String[] {
+                    "DataNodeActivity-ams-hdd001-50010"
+                }))
                 .isNull();
     }
 
     @Test
     public void testWhitelist() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n"
-                                        + "---\n"
-                                        + "whitelistObjectNames:\n"
-                                        + "- java.lang:*\n"
-                                        + "- java.lang:*\n"
-                                        + "- org.apache.cassandra.concurrent:*")
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("\n"
+                        + "---\n"
+                        + "whitelistObjectNames:\n"
+                        + "- java.lang:*\n"
+                        + "- java.lang:*\n"
+                        + "- org.apache.cassandra.concurrent:*")
+                .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
-        assertThat(
-                        getSampleValue(
-                                "java_lang_OperatingSystem_ProcessCpuTime",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue(
+                        "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
+                        new String[] {},
+                        new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_metrics_Compaction_Value",
-                                new String[] {"name"},
-                                new String[] {"CompletedTasks"}))
+        assertThat(getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[] {"name"}, new String[] {
+                    "CompletedTasks"
+                }))
                 .isNull();
 
-        assertThat(
-                        getSampleValue(
-                                "hadoop_DataNode_replaceBlockOpMinTime",
-                                new String[] {"name"},
-                                new String[] {"DataNodeActivity-ams-hdd001-50010"}))
+        assertThat(getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[] {"name"}, new String[] {
+                    "DataNodeActivity-ams-hdd001-50010"
+                }))
                 .isNull();
     }
 
     @Test
     public void testExcludeObjectNames() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n"
-                                        + "---\n"
-                                        + "includeObjectNames:\n"
-                                        + "- java.lang:*\n"
-                                        + "- org.apache.cassandra.concurrent:*\n"
-                                        + "excludeObjectNames:\n"
-                                        + "- org.apache.cassandra.concurrent:*")
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("\n"
+                        + "---\n"
+                        + "includeObjectNames:\n"
+                        + "- java.lang:*\n"
+                        + "- org.apache.cassandra.concurrent:*\n"
+                        + "excludeObjectNames:\n"
+                        + "- org.apache.cassandra.concurrent:*")
+                .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
-        assertThat(
-                        getSampleValue(
-                                "java_lang_OperatingSystem_ProcessCpuTime",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue(
+                        "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
+                        new String[] {},
+                        new String[] {}))
                 .isNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_metrics_Compaction_Value",
-                                new String[] {"name"},
-                                new String[] {"CompletedTasks"}))
+        assertThat(getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[] {"name"}, new String[] {
+                    "CompletedTasks"
+                }))
                 .isNull();
 
-        assertThat(
-                        getSampleValue(
-                                "hadoop_DataNode_replaceBlockOpMinTime",
-                                new String[] {"name"},
-                                new String[] {"DataNodeActivity-ams-hdd001-50010"}))
+        assertThat(getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[] {"name"}, new String[] {
+                    "DataNodeActivity-ams-hdd001-50010"
+                }))
                 .isNull();
     }
 
     @Test
     public void testBlacklist() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n"
-                                        + "---\n"
-                                        + "whitelistObjectNames:\n"
-                                        + "- java.lang:*\n"
-                                        + "- org.apache.cassandra.concurrent:*\n"
-                                        + "blacklistObjectNames:\n"
-                                        + "- org.apache.cassandra.concurrent:*")
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("\n"
+                        + "---\n"
+                        + "whitelistObjectNames:\n"
+                        + "- java.lang:*\n"
+                        + "- org.apache.cassandra.concurrent:*\n"
+                        + "blacklistObjectNames:\n"
+                        + "- org.apache.cassandra.concurrent:*")
+                .register(prometheusRegistry);
 
         // Test what should and shouldn't be present.
-        assertThat(
-                        getSampleValue(
-                                "java_lang_OperatingSystem_ProcessCpuTime",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
 
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
-                                new String[] {},
-                                new String[] {}))
+        assertThat(getSampleValue(
+                        "org_apache_cassandra_concurrent_CONSISTENCY_MANAGER_ActiveCount",
+                        new String[] {},
+                        new String[] {}))
                 .isNull();
-        assertThat(
-                        getSampleValue(
-                                "org_apache_cassandra_metrics_Compaction_Value",
-                                new String[] {"name"},
-                                new String[] {"CompletedTasks"}))
+        assertThat(getSampleValue("org_apache_cassandra_metrics_Compaction_Value", new String[] {"name"}, new String[] {
+                    "CompletedTasks"
+                }))
                 .isNull();
-        assertThat(
-                        getSampleValue(
-                                "hadoop_DataNode_replaceBlockOpMinTime",
-                                new String[] {"name"},
-                                new String[] {"DataNodeActivity-ams-hdd001-50010"}))
+        assertThat(getSampleValue("hadoop_DataNode_replaceBlockOpMinTime", new String[] {"name"}, new String[] {
+                    "DataNodeActivity-ams-hdd001-50010"
+                }))
                 .isNull();
     }
 
     @Test
     public void testDefaultExportLowercaseOutputName() throws Exception {
-        JmxCollector jc =
-                new JmxCollector("---\nlowercaseOutputName: true").register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "java_lang_operatingsystem_processcputime",
-                                new String[] {},
-                                new String[] {}))
+        JmxCollector jc = new JmxCollector("---\nlowercaseOutputName: true").register(prometheusRegistry);
+        assertThat(getSampleValue("java_lang_operatingsystem_processcputime", new String[] {}, new String[] {}))
                 .isNotNull();
     }
 
     @Test
     public void testServletRequestPattern() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: 'Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),\n    name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, \nJ2EEServer=none><>RequestCount:'\n  name: tomcat_request_servlet_count\n  labels:\n    module: `$1`\n    servlet: `$2`\n  help: Tomcat servlet request count\n  type: COUNTER\n  attrNameSnakeCase: false"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
-        assertThat(
-                        getSampleValue(
-                                "tomcat_request_servlet_count",
-                                new String[] {"module", "servlet"},
-                                new String[] {"localhost/host-manager", "HTMLHostManager"}))
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nrules:\n- pattern: 'Catalina<j2eeType=Servlet, WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),\n    name=([-a-zA-Z0-9+/$%~_-|!.]*), J2EEApplication=none, \nJ2EEServer=none><>RequestCount:'\n  name: tomcat_request_servlet_count\n  labels:\n    module: `$1`\n    servlet: `$2`\n  help: Tomcat servlet request count\n  type: COUNTER\n  attrNameSnakeCase: false"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+        assertThat(getSampleValue("tomcat_request_servlet_count", new String[] {"module", "servlet"}, new String[] {
+                    "localhost/host-manager", "HTMLHostManager"
+                }))
                 .isCloseTo(1.0, within(0.001));
     }
 
@@ -525,11 +434,8 @@ public class JmxCollectorTest {
 
     @Test
     public void testValueEmpty() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value:".replace('`', '"'))
+                .register(prometheusRegistry);
         assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isNull();
     }
 
@@ -567,22 +473,16 @@ public class JmxCollectorTest {
 
     @Test
     public void testValueCaptureGroup() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: `^hadoop<.+-500(10)>`\n  name: foo\n  value: $1"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
-        assertThat(getSampleValue("foo", new String[] {}, new String[] {}))
-                .isCloseTo(10.0, within(.001));
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nrules:\n- pattern: `^hadoop<.+-500(10)>`\n  name: foo\n  value: $1".replace('`', '"'))
+                .register(prometheusRegistry);
+        assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isCloseTo(10.0, within(.001));
     }
 
     @Test
     public void testValueIgnoreNonNumber() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: a"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("\n---\nrules:\n- pattern: `.*`\n  name: foo\n  value: a".replace('`', '"'))
+                .register(prometheusRegistry);
         assertThat(getSampleValue("foo", new String[] {}, new String[] {})).isNull();
     }
 
@@ -612,24 +512,19 @@ public class JmxCollectorTest {
 
     @Test
     public void testEnumValue() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: `org.bean.enum<type=StateMetrics.*>State: RUNNING`\n  name: bean_running\n  value: 1"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nrules:\n- pattern: `org.bean.enum<type=StateMetrics.*>State: RUNNING`\n  name: bean_running\n  value: 1"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
         assertThat(getSampleValue("bean_running", new String[] {}, new String[] {}))
                 .isCloseTo(1.0, within(.001));
     }
 
     @Test
     public void testDelayedStartNotReady() throws Exception {
-        JmxCollector jc =
-                new JmxCollector("---\nstartDelaySeconds: 1").register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("---\nstartDelaySeconds: 1").register(prometheusRegistry);
         assertThatIllegalStateException()
-                .isThrownBy(
-                        () ->
-                                getSampleValue(
-                                        "boolean_Test_True", new String[] {}, new String[] {}));
+                .isThrownBy(() -> getSampleValue("boolean_Test_True", new String[] {}, new String[] {}));
     }
 
     @Test
@@ -645,25 +540,23 @@ public class JmxCollectorTest {
 
     @Test
     public void testCamelLastExchangeFailureTimestamp() throws Exception {
-        String rulePattern =
-                "\n"
-                        + "---\n"
-                        + "rules:\n"
-                        + "- pattern: 'org.apache.camel<context=([^,]+), type=routes,"
-                        + " name=\"([^\"]+)\"><>LastExchangeFailureTimestamp'\n"
-                        + "  name: org.apache.camel.LastExchangeFailureTimestamp\n"
-                        + "  help: Exchanges Last Failure Timestamps\n"
-                        + "  type: UNTYPED\n"
-                        + "  labels:\n"
-                        + "    context: \"$1\"\n"
-                        + "    route: \"$2\"\n"
-                        + "    type: routes";
+        String rulePattern = "\n"
+                + "---\n"
+                + "rules:\n"
+                + "- pattern: 'org.apache.camel<context=([^,]+), type=routes,"
+                + " name=\"([^\"]+)\"><>LastExchangeFailureTimestamp'\n"
+                + "  name: org.apache.camel.LastExchangeFailureTimestamp\n"
+                + "  help: Exchanges Last Failure Timestamps\n"
+                + "  type: UNTYPED\n"
+                + "  labels:\n"
+                + "    context: \"$1\"\n"
+                + "    route: \"$2\"\n"
+                + "    type: routes";
         JmxCollector jc = new JmxCollector(rulePattern).register(prometheusRegistry);
-        Double actual =
-                getSampleValue(
-                        "org_apache_camel_LastExchangeFailureTimestamp",
-                        new String[] {"context", "route", "type"},
-                        new String[] {"my-camel-context", "my-route-name", "routes"});
+        Double actual = getSampleValue(
+                "org_apache_camel_LastExchangeFailureTimestamp",
+                new String[] {"context", "route", "type"},
+                new String[] {"my-camel-context", "my-route-name", "routes"});
         assertThat(actual).isEqualTo(Camel.EXPECTED_SECONDS);
     }
 
@@ -716,58 +609,51 @@ public class JmxCollectorTest {
 
     @Test
     public void testCompositeData() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "\n---\nrules:\n- pattern: `io.prometheus.jmx.test<name=PerformanceMetricsMBean><PerformanceMetrics>.*`\n  attrNameSnakeCase: true"
-                                        .replace('`', '"'))
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nrules:\n- pattern: `io.prometheus.jmx.test<name=PerformanceMetricsMBean><PerformanceMetrics>.*`\n  attrNameSnakeCase: true"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
 
-        Double value =
-                getSampleValue(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_active_sessions",
-                        new String[] {},
-                        new String[] {});
+        Double value = getSampleValue(
+                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_active_sessions",
+                new String[] {},
+                new String[] {});
 
         assertThat(value).isEqualTo(Double.valueOf(2));
 
-        value =
-                getSampleValue(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps",
-                        new String[] {},
-                        new String[] {});
+        value = getSampleValue(
+                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps",
+                new String[] {},
+                new String[] {});
 
         assertThat(value).isEqualTo(Double.valueOf(4));
 
-        value =
-                getSampleValue(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps_deferred",
-                        new String[] {},
-                        new String[] {});
+        value = getSampleValue(
+                "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_bootstraps_deferred",
+                new String[] {},
+                new String[] {});
 
         assertThat(value).isEqualTo(Double.valueOf(6));
     }
 
     @Test
     public void testInferCounterTypeFromNameEnabled() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "---\n"
-                                        + "inferCounterTypeFromName: true\n"
-                                        + "rules:\n"
-                                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
-                                        + " node-id=(.+)><>(.+):'\n"
-                                        + "  name: kafka_consumer_$3\n"
-                                        + "  labels:\n"
-                                        + "    client_id: $1\n"
-                                        + "    node_id: $2")
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("---\n"
+                        + "inferCounterTypeFromName: true\n"
+                        + "rules:\n"
+                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
+                        + " node-id=(.+)><>(.+):'\n"
+                        + "  name: kafka_consumer_$3\n"
+                        + "  labels:\n"
+                        + "    client_id: $1\n"
+                        + "    node_id: $2")
+                .register(prometheusRegistry);
 
-        String totalType =
-                getSampleType(
-                        // the `-total` (or `_total`) suffix in `request-total` attribute is lost
-                        "kafka_consumer_request",
-                        new String[] {"client_id", "node_id"},
-                        new String[] {"my-app-consumer", "node-1"});
+        String totalType = getSampleType(
+                // the `-total` (or `_total`) suffix in `request-total` attribute is lost
+                "kafka_consumer_request",
+                new String[] {"client_id", "node_id"},
+                new String[] {"my-app-consumer", "node-1"});
 
         // But with the inferCounterTypeFromName=true, the type of `kafka_consumer_request` is
         // COUNTER which will re-add the `_total` suffix
@@ -775,35 +661,31 @@ public class JmxCollectorTest {
 
         // inferCounterTypeFromName has no influence on the request-rate attribute
         String rateType =
-                getSampleType(
-                        "kafka_consumer_request_rate",
-                        new String[] {"client_id", "node_id"},
-                        new String[] {"my-app-consumer", "node-1"});
+                getSampleType("kafka_consumer_request_rate", new String[] {"client_id", "node_id"}, new String[] {
+                    "my-app-consumer", "node-1"
+                });
 
         assertThat(rateType).isEqualTo("UNKNOWN");
     }
 
     @Test
     public void testInferCounterTypeFromNameDisabled() throws Exception {
-        JmxCollector jc =
-                new JmxCollector(
-                                "---\n"
-                                        + "inferCounterTypeFromName: false\n"
-                                        + "rules:\n"
-                                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
-                                        + " node-id=(.+)><>(.+):'\n"
-                                        + "  name: kafka_consumer_$3\n"
-                                        + "  labels:\n"
-                                        + "    client_id: $1\n"
-                                        + "    node_id: $2")
-                        .register(prometheusRegistry);
+        JmxCollector jc = new JmxCollector("---\n"
+                        + "inferCounterTypeFromName: false\n"
+                        + "rules:\n"
+                        + "- pattern: 'kafka.consumer<type=.+, client-id=(.+),"
+                        + " node-id=(.+)><>(.+):'\n"
+                        + "  name: kafka_consumer_$3\n"
+                        + "  labels:\n"
+                        + "    client_id: $1\n"
+                        + "    node_id: $2")
+                .register(prometheusRegistry);
 
-        String totalType =
-                getSampleType(
-                        // the `-total` (or `_total`) suffix in `request-total` attribute is lost
-                        "kafka_consumer_request",
-                        new String[] {"client_id", "node_id"},
-                        new String[] {"my-app-consumer", "node-1"});
+        String totalType = getSampleType(
+                // the `-total` (or `_total`) suffix in `request-total` attribute is lost
+                "kafka_consumer_request",
+                new String[] {"client_id", "node_id"},
+                new String[] {"my-app-consumer", "node-1"});
 
         // With inferCounterTypeFromName=false, the type of `kafka_consumer_request` is UNKNOWN, so
         // the final name will be `kafka_consumer_request`
@@ -811,10 +693,9 @@ public class JmxCollectorTest {
 
         // inferCounterTypeFromName has no influence on the request-rate attribute
         String rateType =
-                getSampleType(
-                        "kafka_consumer_request_rate",
-                        new String[] {"client_id", "node_id"},
-                        new String[] {"my-app-consumer", "node-1"});
+                getSampleType("kafka_consumer_request_rate", new String[] {"client_id", "node_id"}, new String[] {
+                    "my-app-consumer", "node-1"
+                });
 
         assertThat(rateType).isEqualTo("UNKNOWN");
     }

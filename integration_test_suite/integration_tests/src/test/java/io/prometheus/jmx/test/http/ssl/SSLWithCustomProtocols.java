@@ -76,15 +76,13 @@ public class SSLWithCustomProtocols {
         TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
     }
 
-    private SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String protocol)
-            throws Exception {
+    private SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String protocol) throws Exception {
         // to verify cert auth with existing test pki resources, use self-signed server cert as
         // client cert and source of trust
         final String type = "PKCS12";
         final char[] password = "changeit".toCharArray();
         final String keyStoreResource =
-                Strings.formatIfArgs(
-                        "%s/%s/localhost.pkcs12", this.getClass().getSimpleName(), mode.toString());
+                Strings.formatIfArgs("%s/%s/localhost.pkcs12", this.getClass().getSimpleName(), mode.toString());
         KeyStore keyStore = KeyStore.getInstance(type);
         try (InputStream inputStream = this.getClass().getResourceAsStream(keyStoreResource)) {
             keyStore.load(inputStream, password);
@@ -100,147 +98,100 @@ public class SSLWithCustomProtocols {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
 
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        initSSLContextForClientAuth(
-                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                DEFAULT_TLS_PROTOCOL));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
         assertHealthyResponse(httpResponse);
     }
 
     @Verifyica.Test
-    public void testCallingServerWithNonMatchingSslProtocols(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Exception {
+    public void testCallingServerWithNonMatchingSslProtocols(JmxExporterTestEnvironment jmxExporterTestEnvironment)
+            throws Exception {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
         SSLContext sslContext = SSLContext.getDefault();
-        Optional<String> anyOtherProtocol =
-                Stream.of(sslContext.getDefaultSSLParameters().getProtocols())
-                        .filter(protocol -> !protocol.equals("TLSv1.2"))
-                        .findAny();
+        Optional<String> anyOtherProtocol = Stream.of(
+                        sslContext.getDefaultSSLParameters().getProtocols())
+                .filter(protocol -> !protocol.equals("TLSv1.2"))
+                .findAny();
 
         assertThat(anyOtherProtocol).isPresent();
-        assertThatThrownBy(
-                        () ->
-                                HttpClient.sendRequest(
-                                        url,
-                                        initSSLContextForClientAuth(
-                                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                                anyOtherProtocol.get())))
+        assertThatThrownBy(() -> HttpClient.sendRequest(
+                        url,
+                        initSSLContextForClientAuth(
+                                jmxExporterTestEnvironment.getJmxExporterMode(), anyOtherProtocol.get())))
                 .isInstanceOf(SSLHandshakeException.class);
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        initSSLContextForClientAuth(
-                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                DEFAULT_TLS_PROTOCOL));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
         assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        assertThatExceptionOfType(IOException.class)
-                .isThrownBy(
-                        () -> {
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                        });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        });
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
-                        initSSLContextForClientAuth(
-                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                DEFAULT_TLS_PROTOCOL));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        assertThatExceptionOfType(IOException.class)
-                .isThrownBy(
-                        () -> {
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                        });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        });
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
-                        initSSLContextForClientAuth(
-                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                DEFAULT_TLS_PROTOCOL));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        assertThatExceptionOfType(IOException.class)
-                .isThrownBy(
-                        () -> {
-                            HttpClient.sendRequest(
-                                    url,
-                                    HttpHeader.ACCEPT,
-                                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                        });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        });
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
-                        initSSLContextForClientAuth(
-                                jmxExporterTestEnvironment.getJmxExporterMode(),
-                                DEFAULT_TLS_PROTOCOL));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
+                initSSLContextForClientAuth(jmxExporterTestEnvironment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
@@ -263,24 +214,21 @@ public class SSLWithCustomProtocols {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -341,22 +289,19 @@ public class SSLWithCustomProtocols {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
     }

@@ -22,17 +22,18 @@ import io.prometheus.jmx.common.ConfigurationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Class to implement Arguments */
+/**
+ * Class to implement Arguments
+ */
 public class Arguments {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
 
-    private static final String CONFIGURATION_REGEX =
-            "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?"
-                    + // host name, or ipv4, or ipv6 address in brackets
-                    "(?:(\\d{1,5}):)"
-                    // port
-                    + "(.+)"; // config file
+    private static final String CONFIGURATION_REGEX = "^(?:((?:[\\w.-]+)|(?:\\[.+])):)?"
+            + // host name, or ipv4, or ipv6 address in brackets
+            "(?:(\\d{1,5}):)"
+            // port
+            + "(.+)"; // config file
 
     private final boolean httpEnabled;
     private final String host;
@@ -111,43 +112,37 @@ public class Arguments {
 
         if (matcher.matches()) {
             switch (matcher.groupCount()) {
-                case 2:
-                    {
-                        httpEnabled = true;
-                        host = DEFAULT_HOST;
+                case 2: {
+                    httpEnabled = true;
+                    host = DEFAULT_HOST;
 
-                        try {
-                            port = Integer.parseInt(matcher.group(1));
-                        } catch (NumberFormatException e) {
-                            throw new ConfigurationException(
-                                    format("Malformed arguments [%s]", agentArgument));
-                        }
-                        filename = matcher.group(2);
-                        break;
+                    try {
+                        port = Integer.parseInt(matcher.group(1));
+                    } catch (NumberFormatException e) {
+                        throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
                     }
-                case 3:
-                    {
-                        httpEnabled = true;
-                        host = matcher.group(1) != null ? matcher.group(1) : DEFAULT_HOST;
+                    filename = matcher.group(2);
+                    break;
+                }
+                case 3: {
+                    httpEnabled = true;
+                    host = matcher.group(1) != null ? matcher.group(1) : DEFAULT_HOST;
 
-                        if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
-                            host = host.substring(1, host.length() - 1);
-                        }
+                    if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
+                        host = host.substring(1, host.length() - 1);
+                    }
 
-                        port = Integer.parseInt(matcher.group(2));
-                        filename = matcher.group(3);
-                        break;
-                    }
-                default:
-                    {
-                        throw new ConfigurationException(
-                                format("Malformed arguments [%s]", agentArgument));
-                    }
+                    port = Integer.parseInt(matcher.group(2));
+                    filename = matcher.group(3);
+                    break;
+                }
+                default: {
+                    throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
+                }
             }
 
             if (host.trim().isEmpty()) {
-                throw new ConfigurationException(
-                        format("Malformed arguments for [%s]", agentArgument));
+                throw new ConfigurationException(format("Malformed arguments for [%s]", agentArgument));
             }
         } else {
             filename = agentArgument;

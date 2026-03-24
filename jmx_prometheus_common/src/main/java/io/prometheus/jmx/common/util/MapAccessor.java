@@ -28,7 +28,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** MapAccessor to work with Maps using a path style syntax for value access */
+/**
+ * MapAccessor to work with Maps using a path style syntax for value access
+ */
 @SuppressWarnings("unchecked")
 public class MapAccessor {
 

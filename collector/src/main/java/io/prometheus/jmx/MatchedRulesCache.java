@@ -28,7 +28,9 @@ public class MatchedRulesCache {
 
     private final Map<CacheKey, MatchedRule> cache;
 
-    /** Constructs an empty cache */
+    /**
+     * Constructs an empty cache
+     */
     public MatchedRulesCache() {
         this.cache = new ConcurrentHashMap<>();
     }
@@ -75,7 +77,9 @@ public class MatchedRulesCache {
 
         private final Set<CacheKey> freshEntries;
 
-        /** Constructor */
+        /**
+         * Constructor
+         */
         public StalenessTracker() {
             this.freshEntries = new HashSet<>();
         }

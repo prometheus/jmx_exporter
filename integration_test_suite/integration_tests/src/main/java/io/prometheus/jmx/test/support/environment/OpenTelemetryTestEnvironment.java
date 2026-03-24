@@ -24,7 +24,9 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.verifyica.api.Named;
 
-/** Class to implement Environment */
+/**
+ * Class to implement Environment
+ */
 public class OpenTelemetryTestEnvironment implements Named {
 
     private final String id;
@@ -90,22 +92,13 @@ public class OpenTelemetryTestEnvironment implements Named {
         List<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
 
         PrometheusDockerImages.names()
-                .forEach(
-                        prometheusDockerImage ->
-                                JavaDockerImages.names()
-                                        .forEach(
-                                                javaDockerImage -> {
-                                                    for (JmxExporterMode jmxExporterMode :
-                                                            JmxExporterMode.values()) {
-                                                        openTelemetryTestEnvironments.add(
-                                                                new OpenTelemetryTestEnvironment(
-                                                                        new PrometheusTestEnvironment(
-                                                                                prometheusDockerImage),
-                                                                        new JmxExporterTestEnvironment(
-                                                                                javaDockerImage,
-                                                                                jmxExporterMode)));
-                                                    }
-                                                }));
+                .forEach(prometheusDockerImage -> JavaDockerImages.names().forEach(javaDockerImage -> {
+                    for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
+                        openTelemetryTestEnvironments.add(new OpenTelemetryTestEnvironment(
+                                new PrometheusTestEnvironment(prometheusDockerImage),
+                                new JmxExporterTestEnvironment(javaDockerImage, jmxExporterMode)));
+                    }
+                }));
 
         return openTelemetryTestEnvironments.stream();
     }

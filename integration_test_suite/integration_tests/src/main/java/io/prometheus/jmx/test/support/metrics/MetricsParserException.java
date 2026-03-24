@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx.test.support.metrics;
 
-/** Class to implement MetricsParserException */
+/**
+ * Class to implement MetricsParserException
+ */
 public class MetricsParserException extends RuntimeException {
 
     /**

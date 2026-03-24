@@ -27,21 +27,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-/** Class to implement filtering of an MBean's attributes based on the attribute's name */
+/**
+ * Class to implement filtering of an MBean's attributes based on the attribute's name
+ */
 @SuppressWarnings("unchecked")
 public class ObjectNameAttributeFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectNameAttributeFilter.class);
 
-    /** Configuration constant to define a mapping of ObjectNames to attribute names to exclude */
+    /**
+     * Configuration constant to define a mapping of ObjectNames to attribute names to exclude
+     */
     public static final String EXCLUDE_OBJECT_NAME_ATTRIBUTES = "excludeObjectNameAttributes";
 
-    /** Configuration constant to define a mapping of ObjectNames to attribute names to include */
+    /**
+     * Configuration constant to define a mapping of ObjectNames to attribute names to include
+     */
     public static final String INCLUDE_OBJECT_NAME_ATTRIBUTES = "includeObjectNameAttributes";
 
-    /** Configuration constant to enable auto ObjectName attributes filtering */
-    public static final String AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES =
-            "autoExcludeObjectNameAttributes";
+    /**
+     * Configuration constant to enable auto ObjectName attributes filtering
+     */
+    public static final String AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES = "autoExcludeObjectNameAttributes";
 
     private final Map<ObjectName, Set<String>> configExcludeObjectNameAttributesMap;
     private final Map<ObjectName, Set<String>> dynamicExcludeObjectNameAttributesMap;
@@ -49,7 +56,9 @@ public class ObjectNameAttributeFilter {
 
     private boolean autoExcludeObjectNameAttributes;
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private ObjectNameAttributeFilter() {
         configExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
         dynamicExcludeObjectNameAttributesMap = new ConcurrentHashMap<>();
@@ -63,15 +72,12 @@ public class ObjectNameAttributeFilter {
      * @return an ObjectNameAttributeFilter
      * @throws MalformedObjectNameException MalformedObjectNameException
      */
-    private ObjectNameAttributeFilter initialize(Map<String, Object> yamlConfig)
-            throws MalformedObjectNameException {
+    private ObjectNameAttributeFilter initialize(Map<String, Object> yamlConfig) throws MalformedObjectNameException {
         initializeObjectNameAttributes(
                 yamlConfig, EXCLUDE_OBJECT_NAME_ATTRIBUTES, configExcludeObjectNameAttributesMap);
-        initializeObjectNameAttributes(
-                yamlConfig, INCLUDE_OBJECT_NAME_ATTRIBUTES, includeObjectNameAttributesMap);
+        initializeObjectNameAttributes(yamlConfig, INCLUDE_OBJECT_NAME_ATTRIBUTES, includeObjectNameAttributesMap);
         if (yamlConfig.containsKey(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES)) {
-            autoExcludeObjectNameAttributes =
-                    (Boolean) yamlConfig.get(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES);
+            autoExcludeObjectNameAttributes = (Boolean) yamlConfig.get(AUTO_EXCLUDE_OBJECT_NAME_ATTRIBUTES);
         } else {
             autoExcludeObjectNameAttributes = true;
         }
@@ -88,9 +94,7 @@ public class ObjectNameAttributeFilter {
      * @throws MalformedObjectNameException MalformedObjectNameException
      */
     private void initializeObjectNameAttributes(
-            Map<String, Object> yamlConfig,
-            String key,
-            Map<ObjectName, Set<String>> objectNameAttributesMap)
+            Map<String, Object> yamlConfig, String key, Map<ObjectName, Set<String>> objectNameAttributesMap)
             throws MalformedObjectNameException {
         if (yamlConfig.containsKey(key)) {
             Map<Object, Object> objectNameAttributeMap = (Map<Object, Object>) yamlConfig.get(key);
@@ -100,9 +104,8 @@ public class ObjectNameAttributeFilter {
 
                 List<String> attributeNames = (List<String>) entry.getValue();
 
-                Set<String> attributeNameSet =
-                        objectNameAttributesMap.computeIfAbsent(
-                                objectName, o -> Collections.synchronizedSet(new HashSet<>()));
+                Set<String> attributeNameSet = objectNameAttributesMap.computeIfAbsent(
+                        objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
                 attributeNameSet.addAll(attributeNames);
             }
@@ -117,9 +120,8 @@ public class ObjectNameAttributeFilter {
      */
     public void add(ObjectName objectName, String attributeName) {
         if (autoExcludeObjectNameAttributes) {
-            Set<String> attributeNameSet =
-                    dynamicExcludeObjectNameAttributesMap.computeIfAbsent(
-                            objectName, o -> Collections.synchronizedSet(new HashSet<>()));
+            Set<String> attributeNameSet = dynamicExcludeObjectNameAttributesMap.computeIfAbsent(
+                    objectName, o -> Collections.synchronizedSet(new HashSet<>()));
 
             LOGGER.trace(
                     "auto adding exclusion of object name [%s] attribute name [%s]",
@@ -156,10 +158,7 @@ public class ObjectNameAttributeFilter {
                 || exclude(dynamicExcludeObjectNameAttributesMap, objectName, attributeName);
     }
 
-    private boolean exclude(
-            Map<ObjectName, Set<String>> exclusionMap,
-            ObjectName objectName,
-            String attributeName) {
+    private boolean exclude(Map<ObjectName, Set<String>> exclusionMap, ObjectName objectName, String attributeName) {
         boolean result = false;
         if (!exclusionMap.isEmpty()) {
             Set<String> attributeNameSet = exclusionMap.get(objectName);
@@ -207,8 +206,7 @@ public class ObjectNameAttributeFilter {
         try {
             return new ObjectNameAttributeFilter().initialize(yamlConfig);
         } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(
-                    "Invalid configuration format for excludeObjectNameAttributes", e);
+            throw new RuntimeException("Invalid configuration format for excludeObjectNameAttributes", e);
         }
     }
 }

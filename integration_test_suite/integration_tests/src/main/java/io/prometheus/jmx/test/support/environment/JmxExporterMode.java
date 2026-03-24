@@ -16,10 +16,16 @@
 
 package io.prometheus.jmx.test.support.environment;
 
-/** Enum of the two operational modes */
+/**
+ * Enum of the two operational modes
+ */
 public enum JmxExporterMode {
-    /** JavaAgent */
+    /**
+     * JavaAgent
+     */
     JavaAgent,
-    /** Standalone */
+    /**
+     * Standalone
+     */
     Standalone
 }

@@ -19,7 +19,9 @@ package io.prometheus.jmx;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 
-/** Interface to implement PerformanceMetricsMBean */
+/**
+ * Interface to implement PerformanceMetricsMBean
+ */
 public interface PerformanceMetricsMBean {
 
     /**

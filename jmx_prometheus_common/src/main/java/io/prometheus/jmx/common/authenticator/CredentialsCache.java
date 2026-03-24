@@ -63,8 +63,7 @@ public class CredentialsCache {
         }
 
         // Purge old cache entries until we have space or the cache is empty
-        while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes)
-                && (currentCacheSizeBytes > 0)) {
+        while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes) && (currentCacheSizeBytes > 0)) {
             Credentials c = linkedList.removeLast();
             linkedHashMap.remove(c);
             currentCacheSizeBytes -= credentialSizeBytes;

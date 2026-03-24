@@ -41,7 +41,9 @@ public class CustomServiceTransformer implements ResourceTransformer {
 
     private final Map<String, List<String>> serviceEntries = new HashMap<>();
 
-    /** Default constructor for CustomServiceTransformer. */
+    /**
+     * Default constructor for CustomServiceTransformer.
+     */
     public CustomServiceTransformer() {
         // INTENTIONALLY BLANK
     }
@@ -52,25 +54,21 @@ public class CustomServiceTransformer implements ResourceTransformer {
     }
 
     @Override
-    public void processResource(String resource, InputStream is, List<Relocator> relocators)
-            throws IOException {
-        try (BufferedReader reader =
-                new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             List<String> entries = serviceEntries.computeIfAbsent(resource, k -> new ArrayList<>());
             reader.lines()
                     .map(String::trim)
                     .filter(line -> !line.isEmpty())
-                    .map(
-                            line -> {
-                                // Avoid double prefixing
-                                return line.startsWith(PREFIX) ? line : PREFIX + line;
-                            })
-                    .forEach(
-                            line -> {
-                                if (!entries.contains(line)) {
-                                    entries.add(line);
-                                }
-                            });
+                    .map(line -> {
+                        // Avoid double prefixing
+                        return line.startsWith(PREFIX) ? line : PREFIX + line;
+                    })
+                    .forEach(line -> {
+                        if (!entries.contains(line)) {
+                            entries.add(line);
+                        }
+                    });
         }
     }
 

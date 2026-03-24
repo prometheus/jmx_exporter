@@ -24,7 +24,9 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-/** Class to implement a username / salted message digest password BasicAuthenticator */
+/**
+ * Class to implement a username / salted message digest password BasicAuthenticator
+ */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
     private static final char[] HEXADECIMAL_CHARACTERS = {
@@ -108,11 +110,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             return false;
         }
 
-        boolean isValid =
-                this.username.equals(username)
-                        && this.passwordHash.equals(
-                                generatePasswordHash(
-                                        algorithm, salt, iterations, keyLength, password));
+        boolean isValid = this.username.equals(username)
+                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, iterations, keyLength, password));
 
         if (isValid) {
             validCredentialsCache.add(credentials);
@@ -136,12 +135,8 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     private static String generatePasswordHash(
             String algorithm, String salt, int iterations, int keyLength, String password) {
         try {
-            PBEKeySpec pbeKeySpec =
-                    new PBEKeySpec(
-                            password.toCharArray(),
-                            salt.getBytes(StandardCharsets.UTF_8),
-                            iterations,
-                            keyLength * 8);
+            PBEKeySpec pbeKeySpec = new PBEKeySpec(
+                    password.toCharArray(), salt.getBytes(StandardCharsets.UTF_8), iterations, keyLength * 8);
             SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithm);
             byte[] secretKeyBytes = secretKeyFactory.generateSecret(pbeKeySpec).getEncoded();
 

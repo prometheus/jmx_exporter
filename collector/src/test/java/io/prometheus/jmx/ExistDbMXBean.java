@@ -112,10 +112,8 @@ class ExistDb implements ExistDbMXBean {
     public Map<QueryKey, RunningQuery> getRunningQueries() {
         final Map<QueryKey, RunningQuery> queries = new TreeMap<>();
 
-        final RunningQuery runningQuery1 =
-                new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
-        final RunningQuery runningQuery2 =
-                new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
+        final RunningQuery runningQuery1 = new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
+        final RunningQuery runningQuery2 = new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
 
         queries.put(new QueryKey(runningQuery1.getId(), runningQuery1.getPath()), runningQuery1);
         queries.put(new QueryKey(runningQuery2.getId(), runningQuery2.getPath()), runningQuery2);

@@ -29,8 +29,7 @@ public interface CamelMBean {
 class Camel implements CamelMBean {
     public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
         ObjectName mbeanName =
-                new ObjectName(
-                        "org.apache.camel:context=my-camel-context,type=routes,name=\"my-route-name\"");
+                new ObjectName("org.apache.camel:context=my-camel-context,type=routes,name=\"my-route-name\"");
         Camel mbean = new Camel();
         mbs.registerMBean(mbean, mbeanName);
     }

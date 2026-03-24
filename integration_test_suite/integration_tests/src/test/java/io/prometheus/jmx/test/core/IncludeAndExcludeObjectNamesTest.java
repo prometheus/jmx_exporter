@@ -53,8 +53,7 @@ public class IncludeAndExcludeObjectNamesTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -63,8 +62,7 @@ public class IncludeAndExcludeObjectNamesTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -73,29 +71,21 @@ public class IncludeAndExcludeObjectNamesTest {
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
         assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
@@ -105,11 +95,8 @@ public class IncludeAndExcludeObjectNamesTest {
             throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
@@ -123,8 +110,7 @@ public class IncludeAndExcludeObjectNamesTest {
                 .throwIfFailed();
     }
 
-    private void assertMetricsResponse(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
@@ -134,7 +120,6 @@ public class IncludeAndExcludeObjectNamesTest {
          *
          * name = java_lang*
          */
-        metrics.forEach(
-                metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
+        metrics.forEach(metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
     }
 }

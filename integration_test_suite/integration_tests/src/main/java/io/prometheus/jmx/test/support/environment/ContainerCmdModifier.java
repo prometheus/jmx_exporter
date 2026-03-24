@@ -33,7 +33,9 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
 
     private static final ContainerCmdModifier SINGLETON = new ContainerCmdModifier();
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private ContainerCmdModifier() {
         // INTENTIONALLY BLANK
     }

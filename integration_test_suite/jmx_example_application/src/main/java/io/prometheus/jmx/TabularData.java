@@ -69,91 +69,71 @@ public class TabularData implements DynamicMBean {
      */
     public TabularData() throws OpenDataException {
         String[] columnNames = {"source", "target", "size", "used", "avail", "pcent"};
-        String[] columnDescriptions = {
-            "filesystem", "mounted on", "size", "used", "available", "use %"
-        };
+        String[] columnDescriptions = {"filesystem", "mounted on", "size", "used", "available", "use %"};
 
         OpenType<?>[] columnTypes = {STRING, STRING, BIGINTEGER, BIGINTEGER, BIGINTEGER, DOUBLE};
 
-        CompositeType rowType =
-                new CompositeType(
-                        "Disk Usage Row",
-                        "Row Type for File System Disk Space Usage Tables",
-                        columnNames,
-                        columnDescriptions,
-                        columnTypes);
+        CompositeType rowType = new CompositeType(
+                "Disk Usage Row",
+                "Row Type for File System Disk Space Usage Tables",
+                columnNames,
+                columnDescriptions,
+                columnTypes);
 
-        TabularType tabularType =
-                new TabularType(
-                        "Disk Usage Table",
-                        "Tabular Type for File System Disk Space Usage Tables",
-                        rowType,
-                        new String[] {"source"});
+        TabularType tabularType = new TabularType(
+                "Disk Usage Table", "Tabular Type for File System Disk Space Usage Tables", rowType, new String[] {
+                    "source"
+                });
 
-        MBeanAttributeInfo server1info =
-                new OpenMBeanAttributeInfoSupport(
-                        "Server 1 Disk Usage Table",
-                        "File System Disk Space Usage of Server 1",
-                        tabularType,
-                        true,
-                        false,
-                        false);
+        MBeanAttributeInfo server1info = new OpenMBeanAttributeInfoSupport(
+                "Server 1 Disk Usage Table",
+                "File System Disk Space Usage of Server 1",
+                tabularType,
+                true,
+                false,
+                false);
 
-        MBeanAttributeInfo server2info =
-                new OpenMBeanAttributeInfoSupport(
-                        "Server 2 Disk Usage Table",
-                        "File System Disk Space Usage of Server 2",
-                        tabularType,
-                        true,
-                        false,
-                        false);
+        MBeanAttributeInfo server2info = new OpenMBeanAttributeInfoSupport(
+                "Server 2 Disk Usage Table",
+                "File System Disk Space Usage of Server 2",
+                tabularType,
+                true,
+                false,
+                false);
 
-        mBeanInfo =
-                new MBeanInfo(
-                        getClass().getName(),
-                        "File System Disk Usages",
-                        new MBeanAttributeInfo[] {server1info, server2info},
-                        null,
-                        null,
-                        null);
+        mBeanInfo = new MBeanInfo(
+                getClass().getName(),
+                "File System Disk Usages",
+                new MBeanAttributeInfo[] {server1info, server2info},
+                null,
+                null,
+                null);
 
         data = new HashMap<>();
 
-        data.put(
-                "Server 1 Disk Usage Table",
-                generateServer1Data(tabularType, rowType, columnNames));
+        data.put("Server 1 Disk Usage Table", generateServer1Data(tabularType, rowType, columnNames));
 
-        data.put(
-                "Server 2 Disk Usage Table",
-                generateServer2Data(tabularType, rowType, columnNames));
+        data.put("Server 2 Disk Usage Table", generateServer2Data(tabularType, rowType, columnNames));
     }
 
-    private TabularDataSupport generateServer1Data(
-            TabularType tabularType, CompositeType rowType, String[] columnNames)
+    private TabularDataSupport generateServer1Data(TabularType tabularType, CompositeType rowType, String[] columnNames)
             throws OpenDataException {
         TabularDataSupport tableData = new TabularDataSupport(tabularType);
 
-        tableData.put(
-                new CompositeDataSupport(
-                        rowType, columnNames, rowData("/dev/sda1", "/home", 7, 6)));
+        tableData.put(new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda1", "/home", 7, 6)));
 
-        tableData.put(
-                new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 14, 8)));
+        tableData.put(new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 14, 8)));
 
         return tableData;
     }
 
-    private TabularDataSupport generateServer2Data(
-            TabularType tabularType, CompositeType rowType, String[] columnNames)
+    private TabularDataSupport generateServer2Data(TabularType tabularType, CompositeType rowType, String[] columnNames)
             throws OpenDataException {
         TabularDataSupport tableData = new TabularDataSupport(tabularType);
 
-        tableData.put(
-                new CompositeDataSupport(
-                        rowType, columnNames, rowData("/dev/sda1", "/home", 24, 13)));
+        tableData.put(new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda1", "/home", 24, 13)));
 
-        tableData.put(
-                new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 100, 80)));
+        tableData.put(new CompositeDataSupport(rowType, columnNames, rowData("/dev/sda2", "/", 100, 80)));
 
         return tableData;
     }
@@ -181,8 +161,8 @@ public class TabularData implements DynamicMBean {
             return data.get(attribute);
         }
 
-        throw new AttributeNotFoundException(
-                "MBean attribute " + attribute + " not exposed for " + getClass().getName());
+        throw new AttributeNotFoundException("MBean attribute " + attribute + " not exposed for "
+                + getClass().getName());
     }
 
     @Override
@@ -222,7 +202,6 @@ public class TabularData implements DynamicMBean {
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        mBeanServer.registerMBean(
-                new TabularData(), new ObjectName("io.prometheus.jmx:type=tabularData"));
+        mBeanServer.registerMBean(new TabularData(), new ObjectName("io.prometheus.jmx:type=tabularData"));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Verifyica project authors and contributors
+ * Copyright (C) The Prometheus jmx_exporter Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-// package org.verifyica.test.support;
 package io.prometheus.jmx.test.support.util;
 
 import static java.lang.String.format;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Class to implement Repeater */
+/**
+ * Class to implement Repeater
+ */
 @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
 public class Repeater {
 
@@ -39,8 +40,7 @@ public class Repeater {
      */
     public Repeater(int iterations) {
         if (iterations < 1) {
-            throw new IllegalArgumentException(
-                    format("iterations [%d] is less than 1", iterations));
+            throw new IllegalArgumentException(format("iterations [%d] is less than 1", iterations));
         }
 
         this.iterations = iterations;
@@ -260,11 +260,9 @@ public class Repeater {
 
         @Override
         public void throttle() {
-            long sleep =
-                    (minMilliseconds == maxMilliseconds)
-                            ? minMilliseconds
-                            : ThreadLocalRandom.current()
-                                    .nextLong(minMilliseconds, maxMilliseconds + 1);
+            long sleep = (minMilliseconds == maxMilliseconds)
+                    ? minMilliseconds
+                    : ThreadLocalRandom.current().nextLong(minMilliseconds, maxMilliseconds + 1);
             if (sleep > 0) {
                 try {
                     Thread.sleep(sleep);

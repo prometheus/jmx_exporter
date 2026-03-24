@@ -18,7 +18,9 @@ package io.prometheus.jmx;
 
 import java.util.Map;
 
-/** Interface to implement ExistDbMXBean */
+/**
+ * Interface to implement ExistDbMXBean
+ */
 public interface ExistDbMXBean {
 
     /**
@@ -28,7 +30,9 @@ public interface ExistDbMXBean {
      */
     Map<QueryKey, RunningQuery> getRunningQueries();
 
-    /** Class to implement QueryKey */
+    /**
+     * Class to implement QueryKey
+     */
     class QueryKey implements Comparable<QueryKey> {
 
         private final int id;
@@ -96,7 +100,9 @@ public interface ExistDbMXBean {
         }
     }
 
-    /** Class to implement RunningQuery */
+    /**
+     * Class to implement RunningQuery
+     */
     class RunningQuery {
 
         private final int id;

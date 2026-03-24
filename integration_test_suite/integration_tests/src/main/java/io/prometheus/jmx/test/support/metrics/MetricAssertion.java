@@ -27,7 +27,9 @@ import io.prometheus.jmx.test.support.metrics.impl.MetricMapAssertion;
 import java.util.Collection;
 import java.util.Map;
 
-/** Class to implement MetricAssertion */
+/**
+ * Class to implement MetricAssertion
+ */
 public interface MetricAssertion {
 
     /**
@@ -127,8 +129,7 @@ public interface MetricAssertion {
      * @param httpResponse httpResponse
      * @param metricsContentType metricsContentType
      */
-    static void assertMetricsContentType(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    static void assertMetricsContentType(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertThat(httpResponse).isNotNull();
 
         int statusCode = httpResponse.statusCode();
@@ -136,19 +137,15 @@ public interface MetricAssertion {
             HttpResponseBody body = httpResponse.body();
             if (body != null) {
                 throw new AssertionError(
-                        format(
-                                "Expected statusCode [%d] but was [%d] body [%s]",
-                                200, statusCode, body.string()));
+                        format("Expected statusCode [%d] but was [%d] body [%s]", 200, statusCode, body.string()));
             } else {
-                throw new AssertionError(
-                        format("Expected statusCode [%d] but was [%d] no body", 200, statusCode));
+                throw new AssertionError(format("Expected statusCode [%d] but was [%d] no body", 200, statusCode));
             }
         }
 
         assertThat(httpResponse.headers()).isNotNull();
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
-        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
-                .isEqualTo(metricsContentType.toString());
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).isEqualTo(metricsContentType.toString());
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().bytes()).isNotNull();
         assertThat(httpResponse.body().bytes().length).isGreaterThan(0);

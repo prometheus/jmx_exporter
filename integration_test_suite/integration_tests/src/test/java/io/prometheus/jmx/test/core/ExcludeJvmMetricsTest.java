@@ -52,10 +52,8 @@ public class ExcludeJvmMetricsTest {
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<JmxExporterTestEnvironment> arguments() throws Throwable {
         return JmxExporterTestEnvironment.createEnvironments()
-                .filter(
-                        exporterTestEnvironment ->
-                                exporterTestEnvironment.getJmxExporterMode()
-                                        == JmxExporterMode.JavaAgent);
+                .filter(exporterTestEnvironment ->
+                        exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent);
     }
 
     @Verifyica.BeforeAll
@@ -67,8 +65,7 @@ public class ExcludeJvmMetricsTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -77,92 +74,64 @@ public class ExcludeJvmMetricsTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+                .test(() -> {
+                    String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-                            HttpResponse httpResponse = HttpClient.sendRequest(url);
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-                            assertMetricsResponse(
-                                    jmxExporterTestEnvironment,
-                                    httpResponse,
-                                    MetricsContentType.DEFAULT);
-                        })
+                    assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                })
                 .run();
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+                .test(() -> {
+                    String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.OPEN_METRICS_TEXT_METRICS
-                                                    .toString());
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    jmxExporterTestEnvironment,
-                                    httpResponse,
-                                    MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                        })
+                    assertMetricsResponse(
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                })
                 .run();
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+                .test(() -> {
+                    String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    jmxExporterTestEnvironment,
-                                    httpResponse,
-                                    MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                        })
+                    assertMetricsResponse(
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                })
                 .run();
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws Throwable {
+    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+                .test(() -> {
+                    String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS
-                                                    .toString());
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    jmxExporterTestEnvironment,
-                                    httpResponse,
-                                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                        })
+                    assertMetricsResponse(
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                })
                 .run();
     }
 
@@ -188,21 +157,18 @@ public class ExcludeJvmMetricsTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -239,22 +205,19 @@ public class ExcludeJvmMetricsTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
 

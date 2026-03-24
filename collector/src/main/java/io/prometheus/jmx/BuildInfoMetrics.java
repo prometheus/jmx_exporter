@@ -42,7 +42,9 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
  */
 public class BuildInfoMetrics {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public BuildInfoMetrics() {
         // INTENTIONALLY BLANK
     }
@@ -63,12 +65,11 @@ public class BuildInfoMetrics {
      * @return this BuildInfoMetrics
      */
     public BuildInfoMetrics register(PrometheusRegistry prometheusRegistry) {
-        Info info =
-                Info.builder()
-                        .name("jmx_exporter_build_info")
-                        .help("JMX Exporter build information")
-                        .labelNames("name", "version")
-                        .register(prometheusRegistry);
+        Info info = Info.builder()
+                .name("jmx_exporter_build_info")
+                .help("JMX Exporter build information")
+                .labelNames("name", "version")
+                .register(prometheusRegistry);
 
         Package pkg = this.getClass().getPackage();
         String name = pkg.getImplementationTitle();

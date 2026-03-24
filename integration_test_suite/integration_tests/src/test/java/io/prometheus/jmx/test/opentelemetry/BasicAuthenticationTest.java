@@ -37,7 +37,9 @@ import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.Verifyica;
 import org.verifyica.api.util.CleanupExecutor;
 
-/** Class to implement BasicAuthenticationTest */
+/**
+ * Class to implement BasicAuthenticationTest
+ */
 public class BasicAuthenticationTest {
 
     private static final String NETWORK = "network";
@@ -61,13 +63,11 @@ public class BasicAuthenticationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
         prometheusTestEnvironment.initialize(testClass, network);
         prometheusTestEnvironment.waitForReady(VALID_USER, VALUE_PASSWORD);
 
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
         jmxExporterTestEnvironment.initialize(testClass, network);
     }
 
@@ -77,23 +77,17 @@ public class BasicAuthenticationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
 
         boolean isJmxExporterModeJavaStandalone =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
 
-        for (String metricName :
-                ExpectedMetricsNames.getMetricsNames().stream()
-                        .filter(
-                                metricName ->
-                                        !isJmxExporterModeJavaStandalone
-                                                || (!metricName.startsWith("jvm_")
-                                                        && !metricName.startsWith("process_")))
-                        .collect(Collectors.toList())) {
+        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
+                .filter(metricName -> !isJmxExporterModeJavaStandalone
+                        || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
+                .collect(Collectors.toList())) {
             Double value = getPrometheusMetric(prometheusTestEnvironment, metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
@@ -106,11 +100,9 @@ public class BasicAuthenticationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
 
         Network network = argumentContext.getMap().getAs(NETWORK);
 
@@ -138,8 +130,7 @@ public class BasicAuthenticationTest {
      * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
-    protected Double getPrometheusMetric(
-            PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
+    protected Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         Double value = null;
@@ -170,11 +161,10 @@ public class BasicAuthenticationTest {
      * @param query query
      * @return an HttpResponse
      */
-    protected HttpResponse sendPrometheusQuery(
-            PrometheusTestEnvironment prometheusTestEnvironment, String query) throws IOException {
+    protected HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)
+            throws IOException {
         return sendRequest(
-                prometheusTestEnvironment,
-                "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
+                prometheusTestEnvironment, "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
     /**
@@ -184,12 +174,11 @@ public class BasicAuthenticationTest {
      * @param path path
      * @return an HttpResponse
      */
-    protected HttpResponse sendRequest(
-            PrometheusTestEnvironment prometheusTestEnvironment, String path) throws IOException {
-        return HttpClient.sendRequest(
-                HttpRequest.builder()
-                        .url(prometheusTestEnvironment.getPrometheusUrl(path))
-                        .basicAuthentication(VALID_USER, VALUE_PASSWORD)
-                        .build());
+    protected HttpResponse sendRequest(PrometheusTestEnvironment prometheusTestEnvironment, String path)
+            throws IOException {
+        return HttpClient.sendRequest(HttpRequest.builder()
+                .url(prometheusTestEnvironment.getPrometheusUrl(path))
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build());
     }
 }

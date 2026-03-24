@@ -54,30 +54,42 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement JmxCollector */
+/**
+ * Class to implement JmxCollector
+ */
 @SuppressWarnings("unchecked")
 public class JmxCollector implements MultiCollector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxCollector.class);
 
-    /** Enum to implement Mode */
+    /**
+     * Enum to implement Mode
+     */
     public enum Mode {
-        /** Agent mode */
+        /**
+         * Agent mode
+         */
         AGENT,
-        /** Standalone mode */
+        /**
+         * Standalone mode
+         */
         STANDALONE
     }
 
     private final Mode mode;
 
-    /** Class to implement ExtraMetric */
+    /**
+     * Class to implement ExtraMetric
+     */
     static class ExtraMetric {
         String name;
         Object value;
         String description;
     }
 
-    /** Class to implement Rule */
+    /**
+     * Class to implement Rule
+     */
     static class Rule {
         Pattern pattern;
         String name;
@@ -119,30 +131,40 @@ public class JmxCollector implements MultiCollector {
         String password;
     }
 
-    /** Class to implement MetricCustomizer */
+    /**
+     * Class to implement MetricCustomizer
+     */
     public static class MetricCustomizer {
         MBeanFilter mbeanFilter;
         List<String> attributesAsLabels;
         List<ExtraMetric> extraMetrics;
 
-        /** Constructor */
+        /**
+         * Constructor
+         */
         public MetricCustomizer() {
             // INTENTIONALLY BLANK
         }
     }
 
-    /** Class to implement MBeanFilter */
+    /**
+     * Class to implement MBeanFilter
+     */
     public static class MBeanFilter {
         String domain;
         Map<String, String> properties;
 
-        /** Constructor */
+        /**
+         * Constructor
+         */
         public MBeanFilter() {
             // INTENTIONALLY BLANK
         }
     }
 
-    /** Class to implement Config */
+    /**
+     * Class to implement Config
+     */
     private static class Config {
         Integer startDelaySeconds = 0;
         String jmxUrl = "";
@@ -238,36 +260,31 @@ public class JmxCollector implements MultiCollector {
      * @return the JmxCollector
      */
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
-        configReloadSuccess =
-                Counter.builder()
-                        .name("jmx_config_reload_success_total")
-                        .help("Number of times configuration have successfully been reloaded.")
-                        .register(prometheusRegistry);
+        configReloadSuccess = Counter.builder()
+                .name("jmx_config_reload_success_total")
+                .help("Number of times configuration have successfully been reloaded.")
+                .register(prometheusRegistry);
 
-        configReloadFailure =
-                Counter.builder()
-                        .name("jmx_config_reload_failure_total")
-                        .help("Number of times configuration have failed to be reloaded.")
-                        .register(prometheusRegistry);
+        configReloadFailure = Counter.builder()
+                .name("jmx_config_reload_failure_total")
+                .help("Number of times configuration have failed to be reloaded.")
+                .register(prometheusRegistry);
 
-        jmxScrapeDurationSeconds =
-                Gauge.builder()
-                        .name("jmx_scrape_duration_seconds")
-                        .help("Time this JMX scrape took, in seconds.")
-                        .unit(Unit.SECONDS)
-                        .register(prometheusRegistry);
+        jmxScrapeDurationSeconds = Gauge.builder()
+                .name("jmx_scrape_duration_seconds")
+                .help("Time this JMX scrape took, in seconds.")
+                .unit(Unit.SECONDS)
+                .register(prometheusRegistry);
 
-        jmxScrapeError =
-                Gauge.builder()
-                        .name("jmx_scrape_error")
-                        .help("Non-zero if this scrape failed.")
-                        .register(prometheusRegistry);
+        jmxScrapeError = Gauge.builder()
+                .name("jmx_scrape_error")
+                .help("Non-zero if this scrape failed.")
+                .register(prometheusRegistry);
 
-        jmxScrapeCachedBeans =
-                Gauge.builder()
-                        .name("jmx_scrape_cached_beans")
-                        .help("Number of beans with their matching rule cached")
-                        .register(prometheusRegistry);
+        jmxScrapeCachedBeans = Gauge.builder()
+                .name("jmx_scrape_cached_beans")
+                .help("Number of beans with their matching rule cached")
+                .register(prometheusRegistry);
 
         prometheusRegistry.register(this);
 
@@ -276,17 +293,15 @@ public class JmxCollector implements MultiCollector {
 
     private void exitOnConfigError() {
         if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
-            LOGGER.error(
-                    "Configuration error: When running jmx_exporter as a Java agent, you must not"
-                        + " configure 'jmxUrl' or 'hostPort' because you don't want to monitor a"
-                        + " remote JVM.");
+            LOGGER.error("Configuration error: When running jmx_exporter as a Java agent, you must not"
+                    + " configure 'jmxUrl' or 'hostPort' because you don't want to monitor a"
+                    + " remote JVM.");
             System.exit(-1);
         }
         if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
-            LOGGER.error(
-                    "Configuration error: When running jmx_exporter in standalone mode (using"
-                            + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
-                            + " 'hostPort'.");
+            LOGGER.error("Configuration error: When running jmx_exporter in standalone mode (using"
+                    + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
+                    + " 'hostPort'.");
             System.exit(-1);
         }
     }
@@ -330,14 +345,12 @@ public class JmxCollector implements MultiCollector {
                     throw new IllegalArgumentException("startDelaySeconds must be non-negative");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Invalid number provided for startDelaySeconds", e);
+                throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
             }
         }
         if (yamlConfig.containsKey("hostPort")) {
             if (yamlConfig.containsKey("jmxUrl")) {
-                throw new IllegalArgumentException(
-                        "At most one of hostPort and jmxUrl must be provided");
+                throw new IllegalArgumentException("At most one of hostPort and jmxUrl must be provided");
             }
             cfg.jmxUrl = "service:jmx:rmi:///jndi/rmi://" + yamlConfig.get("hostPort") + "/jmxrmi";
         } else if (yamlConfig.containsKey("jmxUrl")) {
@@ -365,29 +378,25 @@ public class JmxCollector implements MultiCollector {
             }
 
             if (configSsl.containsKey("keyStore")) {
-                Map<String, Object> configKeyStore =
-                        (Map<String, Object>) configSsl.get("keyStore");
+                Map<String, Object> configKeyStore = (Map<String, Object>) configSsl.get("keyStore");
                 cfg.sslProperties.keyStoreProperties = getKeyStoreProperties(configKeyStore);
             }
 
             if (configSsl.containsKey("trustStore")) {
-                Map<String, Object> configKeyStore =
-                        (Map<String, Object>) configSsl.get("trustStore");
+                Map<String, Object> configKeyStore = (Map<String, Object>) configSsl.get("trustStore");
                 cfg.sslProperties.trustStoreProperties = getKeyStoreProperties(configKeyStore);
             }
 
             if (configSsl.containsKey("protocols")) {
-                cfg.sslProperties.protocols =
-                        Stream.of(((String) configSsl.get("protocols")).split(","))
-                                .map(String::trim)
-                                .collect(Collectors.toList());
+                cfg.sslProperties.protocols = Stream.of(((String) configSsl.get("protocols")).split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
             }
 
             if (configSsl.containsKey("ciphers")) {
-                cfg.sslProperties.ciphers =
-                        Stream.of(((String) configSsl.get("ciphers")).split(","))
-                                .map(String::trim)
-                                .collect(Collectors.toList());
+                cfg.sslProperties.ciphers = Stream.of(((String) configSsl.get("ciphers")).split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
             }
         }
 
@@ -456,33 +465,27 @@ public class JmxCollector implements MultiCollector {
                     (List<Map<String, Object>>) yamlConfig.get("metricCustomizers");
             if (metricCustomizersYaml != null) {
                 for (Map<String, Object> metricCustomizerYaml : metricCustomizersYaml) {
-                    Map<String, Object> mbeanFilterYaml =
-                            (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
+                    Map<String, Object> mbeanFilterYaml = (Map<String, Object>) metricCustomizerYaml.get("mbeanFilter");
                     if (mbeanFilterYaml == null) {
                         throw new IllegalArgumentException(
-                                "Must provide mbeanFilter, if metricCustomizers is given: "
-                                        + metricCustomizersYaml);
+                                "Must provide mbeanFilter, if metricCustomizers is given: " + metricCustomizersYaml);
                     }
                     MBeanFilter mbeanFilter = new MBeanFilter();
                     mbeanFilter.domain = (String) mbeanFilterYaml.get("domain");
                     if (mbeanFilter.domain == null) {
                         throw new IllegalArgumentException(
-                                "Must provide domain, if metricCustomizers is given: "
-                                        + metricCustomizersYaml);
+                                "Must provide domain, if metricCustomizers is given: " + metricCustomizersYaml);
                     }
                     mbeanFilter.properties =
-                            (Map<String, String>)
-                                    mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
+                            (Map<String, String>) mbeanFilterYaml.getOrDefault("properties", new HashMap<>());
 
-                    List<String> attributesAsLabelsYaml =
-                            (List<String>) metricCustomizerYaml.get("attributesAsLabels");
+                    List<String> attributesAsLabelsYaml = (List<String>) metricCustomizerYaml.get("attributesAsLabels");
                     List<Map<String, Object>> extraMetricsYaml =
                             (List<Map<String, Object>>) metricCustomizerYaml.get("extraMetrics");
                     if (attributesAsLabelsYaml == null && extraMetricsYaml == null) {
-                        throw new IllegalArgumentException(
-                                "Must provide attributesAsLabels or extraMetrics, if"
-                                        + " metricCustomizers is given: "
-                                        + metricCustomizersYaml);
+                        throw new IllegalArgumentException("Must provide attributesAsLabels or extraMetrics, if"
+                                + " metricCustomizers is given: "
+                                + metricCustomizersYaml);
                     }
                     MetricCustomizer metricCustomizer = new MetricCustomizer();
                     metricCustomizer.mbeanFilter = mbeanFilter;
@@ -495,14 +498,12 @@ public class JmxCollector implements MultiCollector {
                             extraMetric.name = (String) extraMetricYaml.get("name");
                             if (extraMetric.name == null) {
                                 throw new IllegalArgumentException(
-                                        "Must provide name, if extraMetric is given: "
-                                                + extraMetricsYaml);
+                                        "Must provide name, if extraMetric is given: " + extraMetricsYaml);
                             }
                             extraMetric.value = extraMetricYaml.get("value");
                             if (extraMetric.value == null) {
                                 throw new IllegalArgumentException(
-                                        "Must provide value, if extraMetric is given: "
-                                                + extraMetricsYaml);
+                                        "Must provide value, if extraMetric is given: " + extraMetricsYaml);
                             }
                             extraMetric.description = (String) extraMetricYaml.get("description");
                             extraMetrics.add(extraMetric);
@@ -512,14 +513,12 @@ public class JmxCollector implements MultiCollector {
                     cfg.metricCustomizers.add(metricCustomizer);
                 }
             } else {
-                throw new IllegalArgumentException(
-                        "Must provide mbeanFilter, if metricCustomizers is given ");
+                throw new IllegalArgumentException("Must provide mbeanFilter, if metricCustomizers is given ");
             }
         }
 
         if (yamlConfig.containsKey("rules")) {
-            List<Map<String, Object>> configRules =
-                    (List<Map<String, Object>>) yamlConfig.get("rules");
+            List<Map<String, Object>> configRules = (List<Map<String, Object>>) yamlConfig.get("rules");
             for (Map<String, Object> yamlRule : configRules) {
                 Rule rule = new Rule();
                 cfg.rules.add(rule);
@@ -558,8 +557,7 @@ public class JmxCollector implements MultiCollector {
                     rule.help = (String) yamlRule.get("help");
                 }
                 if (yamlRule.containsKey("labels")) {
-                    TreeMap<String, Object> labels =
-                            new TreeMap<>((Map<String, Object>) yamlRule.get("labels"));
+                    TreeMap<String, Object> labels = new TreeMap<>((Map<String, Object>) yamlRule.get("labels"));
                     rule.labelNames = new ArrayList<>();
                     rule.labelValues = new ArrayList<>();
                     for (Map.Entry<String, Object> entry : labels.entrySet()) {
@@ -570,12 +568,10 @@ public class JmxCollector implements MultiCollector {
 
                 // Validation.
                 if ((rule.labelNames != null || rule.help != null) && rule.name == null) {
-                    throw new IllegalArgumentException(
-                            "Must provide name, if help or labels are given: " + yamlRule);
+                    throw new IllegalArgumentException("Must provide name, if help or labels are given: " + yamlRule);
                 }
                 if (rule.name != null && rule.pattern == null) {
-                    throw new IllegalArgumentException(
-                            "Must provide pattern, if name is given: " + yamlRule);
+                    throw new IllegalArgumentException("Must provide pattern, if name is given: " + yamlRule);
                 }
             }
         } else {
@@ -624,11 +620,9 @@ public class JmxCollector implements MultiCollector {
 
         char firstChar = name.charAt(0);
 
-        boolean prevCharIsUpperCaseOrUnderscore =
-                Character.isUpperCase(firstChar) || firstChar == '_';
+        boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
 
-        StringBuilder stringBuilder =
-                new StringBuilder(name.length()).append(Character.toLowerCase(firstChar));
+        StringBuilder stringBuilder = new StringBuilder(name.length()).append(Character.toLowerCase(firstChar));
 
         for (int i = 1; i < name.length(); i++) {
             char c = name.charAt(i);
@@ -753,7 +747,8 @@ public class JmxCollector implements MultiCollector {
             List<String> labelNames = new ArrayList<>();
             List<String> labelValues = new ArrayList<>();
             if (beanProperties.size() > 1) {
-                Iterator<Map.Entry<String, String>> iter = beanProperties.entrySet().iterator();
+                Iterator<Map.Entry<String, String>> iter =
+                        beanProperties.entrySet().iterator();
                 // Skip the first one, it's been used in the name.
                 iter.next();
                 while (iter.hasNext()) {
@@ -766,11 +761,9 @@ public class JmxCollector implements MultiCollector {
                     labelValues.add(entry.getValue());
                 }
             }
-            addAttributesAsLabelsWithValuesToLabels(
-                    config, attributesAsLabelsWithValues, labelNames, labelValues);
+            addAttributesAsLabelsWithValuesToLabels(config, attributesAsLabelsWithValues, labelNames, labelValues);
 
-            return new MatchedRule(
-                    fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
+            return new MatchedRule(fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
         }
 
         public void recordBean(
@@ -799,19 +792,16 @@ public class JmxCollector implements MultiCollector {
 
             if (matchedRule.isUnmatched()) {
                 String beanName =
-                        domain
-                                + angleBrackets(beanProperties.toString())
-                                + angleBrackets(attrKeys.toString());
+                        domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
 
                 // Build the HELP string from the bean metadata.
-                String help =
-                        domain
-                                + ":name="
-                                + beanProperties.get("name")
-                                + ",type="
-                                + beanProperties.get("type")
-                                + ",attribute="
-                                + attrName;
+                String help = domain
+                        + ":name="
+                        + beanProperties.get("name")
+                        + ",type="
+                        + beanProperties.get("type")
+                        + ",attribute="
+                        + attrName;
                 // Add the attrDescription to the HELP if it exists and is useful.
                 if (attrDescription != null && !attrDescription.equals(attrName)) {
                     help = attrDescription + " " + help;
@@ -855,8 +845,7 @@ public class JmxCollector implements MultiCollector {
                             value = Double.valueOf(val);
                         } catch (NumberFormatException e) {
                             LOGGER.trace(
-                                    "Unable to parse configured value '%s' to number for bean:"
-                                            + " %s%s: %s",
+                                    "Unable to parse configured value '%s' to number for bean:" + " %s%s: %s",
                                     val, beanName, attrName, beanValue);
                             return;
                         }
@@ -864,18 +853,17 @@ public class JmxCollector implements MultiCollector {
 
                     // If there's no name provided, use default export format.
                     if (rule.name == null) {
-                        matchedRule =
-                                defaultExport(
-                                        matchName,
-                                        domain,
-                                        beanProperties,
-                                        attrKeys,
-                                        attributeName,
-                                        help,
-                                        value,
-                                        rule.valueFactor,
-                                        rule.type,
-                                        attributesAsLabelsWithValues);
+                        matchedRule = defaultExport(
+                                matchName,
+                                domain,
+                                beanProperties,
+                                attrKeys,
+                                attributeName,
+                                help,
+                                value,
+                                rule.valueFactor,
+                                rule.type,
+                                attributesAsLabelsWithValues);
                         if (rule.cache) {
                             addToCache(cacheKey, matchedRule);
                         }
@@ -930,16 +918,8 @@ public class JmxCollector implements MultiCollector {
                         }
                     }
 
-                    matchedRule =
-                            new MatchedRule(
-                                    name,
-                                    matchName,
-                                    type,
-                                    help,
-                                    labelNames,
-                                    labelValues,
-                                    value,
-                                    rule.valueFactor);
+                    matchedRule = new MatchedRule(
+                            name, matchName, type, help, labelNames, labelValues, value, rule.valueFactor);
                     if (rule.cache) {
                         addToCache(cacheKey, matchedRule);
                     }
@@ -973,9 +953,7 @@ public class JmxCollector implements MultiCollector {
             }
 
             // Add to samples.
-            LOGGER.trace(
-                    "add metric sample: %s %s %s",
-                    matchedRule.name, matchedRule.labels, value.doubleValue());
+            LOGGER.trace("add metric sample: %s %s %s", matchedRule.name, matchedRule.labels, value.doubleValue());
 
             matchedRules.add(matchedRule.withValue(value.doubleValue()));
         }
@@ -986,15 +964,14 @@ public class JmxCollector implements MultiCollector {
             Map<String, String> attributesAsLabelsWithValues,
             List<String> labelNames,
             List<String> labelValues) {
-        attributesAsLabelsWithValues.forEach(
-                (attributeAsLabelName, attributeValue) -> {
-                    String labelName = toSafeName(attributeAsLabelName);
-                    if (config.lowercaseOutputLabelNames) {
-                        labelName = labelName.toLowerCase();
-                    }
-                    labelNames.add(labelName);
-                    labelValues.add(attributeValue);
-                });
+        attributesAsLabelsWithValues.forEach((attributeAsLabelName, attributeValue) -> {
+            String labelName = toSafeName(attributeAsLabelName);
+            if (config.lowercaseOutputLabelNames) {
+                labelName = labelName.toLowerCase();
+            }
+            labelNames.add(labelName);
+            labelValues.add(attributeValue);
+        });
     }
 
     @Override
@@ -1003,23 +980,21 @@ public class JmxCollector implements MultiCollector {
         // (to avoid race conditions in case another thread reloads the config in the meantime)
         Config config = getLatestConfig();
 
-        MatchedRulesCache.StalenessTracker stalenessTracker =
-                new MatchedRulesCache.StalenessTracker();
+        MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
 
         Receiver receiver = new Receiver(config, stalenessTracker);
 
-        JmxScraper scraper =
-                new JmxScraper(
-                        config.jmxUrl,
-                        config.username,
-                        config.password,
-                        config.sslProperties,
-                        config.includeObjectNames,
-                        config.excludeObjectNames,
-                        config.objectNameAttributeFilter,
-                        config.metricCustomizers,
-                        receiver,
-                        jmxMBeanPropertyCache);
+        JmxScraper scraper = new JmxScraper(
+                config.jmxUrl,
+                config.username,
+                config.password,
+                config.sslProperties,
+                config.includeObjectNames,
+                config.excludeObjectNames,
+                config.objectNameAttributeFilter,
+                config.metricCustomizers,
+                receiver,
+                jmxMBeanPropertyCache);
 
         long start = System.nanoTime();
         double error = 1;

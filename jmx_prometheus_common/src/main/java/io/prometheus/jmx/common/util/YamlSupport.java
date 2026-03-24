@@ -23,10 +23,14 @@ import java.io.Reader;
 import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 
-/** Class to implement YamlSupport */
+/**
+ * Class to implement YamlSupport
+ */
 public class YamlSupport {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private YamlSupport() {
         // INTENTIONALLY BLANK
     }

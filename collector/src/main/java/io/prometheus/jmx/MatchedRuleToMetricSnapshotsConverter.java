@@ -31,15 +31,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Class to implement MatchedRuleToMetricSnapshotsConverter */
+/**
+ * Class to implement MatchedRuleToMetricSnapshotsConverter
+ */
 public class MatchedRuleToMetricSnapshotsConverter {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(MatchedRuleToMetricSnapshotsConverter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchedRuleToMetricSnapshotsConverter.class);
 
     private static final String OBJECTNAME = "_objectname";
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public MatchedRuleToMetricSnapshotsConverter() {
         // INTENTIONALLY BLANK
     }
@@ -55,19 +58,15 @@ public class MatchedRuleToMetricSnapshotsConverter {
 
         for (MatchedRule matchedRule : matchedRules) {
             List<MatchedRule> matchedRulesWithSameName =
-                    rulesByPrometheusMetricName.computeIfAbsent(
-                            matchedRule.name, name -> new ArrayList<>());
+                    rulesByPrometheusMetricName.computeIfAbsent(matchedRule.name, name -> new ArrayList<>());
             matchedRulesWithSameName.add(matchedRule);
         }
 
         if (LOGGER.isTraceEnabled()) {
             rulesByPrometheusMetricName
                     .values()
-                    .forEach(
-                            matchedRules1 ->
-                                    matchedRules1.forEach(
-                                            matchedRule ->
-                                                    LOGGER.trace("matchedRule %s", matchedRule)));
+                    .forEach(matchedRules1 ->
+                            matchedRules1.forEach(matchedRule -> LOGGER.trace("matchedRule %s", matchedRule)));
         }
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
@@ -81,75 +80,59 @@ public class MatchedRuleToMetricSnapshotsConverter {
         boolean labelsUnique = isLabelsUnique(rulesWithSameName);
         switch (getType(rulesWithSameName)) {
             case "COUNTER":
-                CounterSnapshot.Builder counterBuilder =
-                        CounterSnapshot.builder()
-                                .name(rulesWithSameName.get(0).name)
-                                .help(rulesWithSameName.get(0).help);
+                CounterSnapshot.Builder counterBuilder = CounterSnapshot.builder()
+                        .name(rulesWithSameName.get(0).name)
+                        .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels =
-                                labels.merge(
-                                        Labels.of(
-                                                OBJECTNAME,
-                                                rule.matchName.substring(
-                                                        0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(
+                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
                     }
-                    counterBuilder.dataPoint(
-                            CounterSnapshot.CounterDataPointSnapshot.builder()
-                                    .labels(labels)
-                                    .value(rule.value)
-                                    .build());
+                    counterBuilder.dataPoint(CounterSnapshot.CounterDataPointSnapshot.builder()
+                            .labels(labels)
+                            .value(rule.value)
+                            .build());
                 }
                 return counterBuilder.build();
             case "GAUGE":
-                GaugeSnapshot.Builder gaugeBuilder =
-                        GaugeSnapshot.builder()
-                                .name(rulesWithSameName.get(0).name)
-                                .help(rulesWithSameName.get(0).help);
+                GaugeSnapshot.Builder gaugeBuilder = GaugeSnapshot.builder()
+                        .name(rulesWithSameName.get(0).name)
+                        .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels =
-                                labels.merge(
-                                        Labels.of(
-                                                OBJECTNAME,
-                                                rule.matchName.substring(
-                                                        0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(
+                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
                     }
-                    gaugeBuilder.dataPoint(
-                            GaugeSnapshot.GaugeDataPointSnapshot.builder()
-                                    .labels(labels)
-                                    .value(rule.value)
-                                    .build());
+                    gaugeBuilder.dataPoint(GaugeSnapshot.GaugeDataPointSnapshot.builder()
+                            .labels(labels)
+                            .value(rule.value)
+                            .build());
                 }
                 return gaugeBuilder.build();
             default:
-                UnknownSnapshot.Builder unknownBuilder =
-                        UnknownSnapshot.builder()
-                                .name(rulesWithSameName.get(0).name)
-                                .help(rulesWithSameName.get(0).help);
+                UnknownSnapshot.Builder unknownBuilder = UnknownSnapshot.builder()
+                        .name(rulesWithSameName.get(0).name)
+                        .help(rulesWithSameName.get(0).help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels =
-                                labels.merge(
-                                        Labels.of(
-                                                OBJECTNAME,
-                                                rule.matchName.substring(
-                                                        0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(
+                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
                     }
-                    unknownBuilder.dataPoint(
-                            UnknownSnapshot.UnknownDataPointSnapshot.builder()
-                                    .labels(labels)
-                                    .value(rule.value)
-                                    .build());
+                    unknownBuilder.dataPoint(UnknownSnapshot.UnknownDataPointSnapshot.builder()
+                            .labels(labels)
+                            .value(rule.value)
+                            .build());
                 }
                 return unknownBuilder.build();
         }
     }
 
-    /** If all rules have the same type, that type is returned. Otherwise, "UNKNOWN" is returned. */
+    /**
+     * If all rules have the same type, that type is returned. Otherwise, "UNKNOWN" is returned.
+     */
     private static String getType(List<MatchedRule> rulesWithSameName) {
         if (rulesWithSameName.stream().map(rule -> rule.type).distinct().count() == 1) {
             return rulesWithSameName.get(0).type;

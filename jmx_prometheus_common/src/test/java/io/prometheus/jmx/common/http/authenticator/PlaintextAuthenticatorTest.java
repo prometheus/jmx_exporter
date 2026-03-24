@@ -26,15 +26,12 @@ public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
 
     @Test
     public void test() {
-        BasicAuthenticator plainTextAuthenticator =
-                new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
+        BasicAuthenticator plainTextAuthenticator = new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
 
         for (String username : TEST_USERNAMES) {
             for (String password : TEST_PASSWORDS) {
-                boolean expectedIsAuthenticated =
-                        VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                boolean actualIsAuthenticated =
-                        plainTextAuthenticator.checkCredentials(username, password);
+                boolean expectedIsAuthenticated = VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+                boolean actualIsAuthenticated = plainTextAuthenticator.checkCredentials(username, password);
                 assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
             }
         }

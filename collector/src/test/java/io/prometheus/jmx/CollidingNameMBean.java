@@ -42,9 +42,7 @@ class CollidingName implements CollidingNameMBean {
         for (int i = 0; i < 127; i++) {
             try {
                 // Create and try to register an MBean with the name
-                ObjectName objectName =
-                        new ObjectName(
-                                "io.prometheus.jmx.test:type=Colliding" + ((char) i) + "Name");
+                ObjectName objectName = new ObjectName("io.prometheus.jmx.test:type=Colliding" + ((char) i) + "Name");
                 CollidingName collidingName = new CollidingName(i);
                 mbs.registerMBean(collidingName, objectName);
             } catch (Throwable t) {

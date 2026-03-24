@@ -122,9 +122,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
      * @return a Prometheus URL
      */
     public String getPrometheusUrl(String path) {
-        return !path.startsWith("/")
-                ? getPrometheusBaseUrl() + "/" + path
-                : getPrometheusBaseUrl() + path;
+        return !path.startsWith("/") ? getPrometheusBaseUrl() + "/" + path : getPrometheusBaseUrl() + path;
     }
 
     /**
@@ -154,8 +152,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
 
         for (int i = 0; i < maximumRetryCount; i++) {
             try {
-                HttpRequest.Builder httpRequestBuilder =
-                        HttpRequest.builder().url(getPrometheusBaseUrl() + "/-/ready");
+                HttpRequest.Builder httpRequestBuilder = HttpRequest.builder().url(getPrometheusBaseUrl() + "/-/ready");
 
                 if (username != null && password != null) {
                     httpRequestBuilder.basicAuthentication(username, password);
@@ -173,11 +170,9 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
             }
         }
 
-        throw new EnvironmentException(
-                format(
-                        "Prometheus [%s] not ready have after %d milliseconds",
-                        prometheusContainer.getDockerImageName(),
-                        System.currentTimeMillis() - startMilliseconds));
+        throw new EnvironmentException(format(
+                "Prometheus [%s] not ready have after %d milliseconds",
+                prometheusContainer.getDockerImageName(), System.currentTimeMillis() - startMilliseconds));
     }
 
     /** Method to destroy the test environment */
@@ -215,28 +210,23 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
             commands.add("--web.config.file=/etc/prometheus/web.yaml");
         }
 
-        GenericContainer<?> genericContainer =
-                new GenericContainer<>(prometheusDockerImage)
-                        .withClasspathResourceMapping(
-                                testClass.getName().replace(".", "/") + "/prometheus.yaml",
-                                "/etc/prometheus/prometheus.yaml",
-                                BindMode.READ_ONLY)
-                        .withWorkingDirectory("/prometheus")
-                        .withCommand(commands.toArray(new String[0]))
-                        .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                        .withExposedPorts(9090)
-                        .withLogConsumer(
-                                new TestContainerLogger("PROMETHEUS", prometheusDockerImage))
-                        .withNetwork(network)
-                        .withNetworkAliases("prometheus")
-                        .waitingFor(
-                                Wait.forLogMessage(
-                                        ".*Server is ready to receive web requests.*", 1))
-                        .withStartupTimeout(Duration.ofMillis(60000));
+        GenericContainer<?> genericContainer = new GenericContainer<>(prometheusDockerImage)
+                .withClasspathResourceMapping(
+                        testClass.getName().replace(".", "/") + "/prometheus.yaml",
+                        "/etc/prometheus/prometheus.yaml",
+                        BindMode.READ_ONLY)
+                .withWorkingDirectory("/prometheus")
+                .withCommand(commands.toArray(new String[0]))
+                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
+                .withExposedPorts(9090)
+                .withLogConsumer(new TestContainerLogger("PROMETHEUS", prometheusDockerImage))
+                .withNetwork(network)
+                .withNetworkAliases("prometheus")
+                .waitingFor(Wait.forLogMessage(".*Server is ready to receive web requests.*", 1))
+                .withStartupTimeout(Duration.ofMillis(60000));
 
         if (hasWebYaml) {
-            genericContainer.withClasspathResourceMapping(
-                    webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
+            genericContainer.withClasspathResourceMapping(webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
         }
 
         return genericContainer;

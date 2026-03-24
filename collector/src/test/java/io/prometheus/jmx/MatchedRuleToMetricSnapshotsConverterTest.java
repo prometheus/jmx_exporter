@@ -32,47 +32,39 @@ public class MatchedRuleToMetricSnapshotsConverterTest {
     public void testMatchedRuleAggregation() {
         List<MatchedRule> matchedRules = new ArrayList<>();
 
-        matchedRules.add(
-                new MatchedRule(
-                        "jvm_memory_committed_bytes",
-                        "java.lang<type=Memory><HeapMemoryUsage>committed: 16252928",
-                        "UNKNOWN",
-                        "java.lang.management.MemoryUsage"
-                                + " java.lang:name=null,type=Memory,attribute=committed",
-                        of("area"),
-                        of("heap"),
-                        1.6252928E7,
-                        1.0));
+        matchedRules.add(new MatchedRule(
+                "jvm_memory_committed_bytes",
+                "java.lang<type=Memory><HeapMemoryUsage>committed: 16252928",
+                "UNKNOWN",
+                "java.lang.management.MemoryUsage" + " java.lang:name=null,type=Memory,attribute=committed",
+                of("area"),
+                of("heap"),
+                1.6252928E7,
+                1.0));
 
-        matchedRules.add(
-                new MatchedRule(
-                        "jvm_memory_committed_bytes",
-                        "java.lang<type=Memory><NonHeapMemoryUsage>committed: 17170432",
-                        "UNKNOWN",
-                        "java.lang.management.MemoryUsage"
-                                + " java.lang:name=null,type=Memory,attribute=committed",
-                        of("area"),
-                        of("nonheap"),
-                        2.1757952E7,
-                        1.0));
+        matchedRules.add(new MatchedRule(
+                "jvm_memory_committed_bytes",
+                "java.lang<type=Memory><NonHeapMemoryUsage>committed: 17170432",
+                "UNKNOWN",
+                "java.lang.management.MemoryUsage" + " java.lang:name=null,type=Memory,attribute=committed",
+                of("area"),
+                of("nonheap"),
+                2.1757952E7,
+                1.0));
 
-        MetricSnapshots metricSnapshots =
-                MatchedRuleToMetricSnapshotsConverter.convert(matchedRules);
+        MetricSnapshots metricSnapshots = MatchedRuleToMetricSnapshotsConverter.convert(matchedRules);
 
         assertThat(metricSnapshots).hasSize(1);
 
-        metricSnapshots.forEach(
-                metricSnapshot -> {
-                    MetricMetadata metricMetadata = metricSnapshot.getMetadata();
+        metricSnapshots.forEach(metricSnapshot -> {
+            MetricMetadata metricMetadata = metricSnapshot.getMetadata();
 
-                    assertThat(metricMetadata.getName()).isEqualTo("jvm_memory_committed_bytes");
-                    assertThat(metricMetadata.getPrometheusName())
-                            .isEqualTo("jvm_memory_committed_bytes");
+            assertThat(metricMetadata.getName()).isEqualTo("jvm_memory_committed_bytes");
+            assertThat(metricMetadata.getPrometheusName()).isEqualTo("jvm_memory_committed_bytes");
 
-                    List<? extends DataPointSnapshot> dataPointSnapshots =
-                            metricSnapshot.getDataPoints();
-                    assertThat(dataPointSnapshots).hasSize(2);
-                });
+            List<? extends DataPointSnapshot> dataPointSnapshots = metricSnapshot.getDataPoints();
+            assertThat(dataPointSnapshots).hasSize(2);
+        });
     }
 
     private static List<String> of(String... strings) {

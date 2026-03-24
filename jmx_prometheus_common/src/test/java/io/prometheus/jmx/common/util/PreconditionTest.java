@@ -29,8 +29,7 @@ public class PreconditionTest {
 
     @Test
     public void testNotNull2() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> Precondition.notNull(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> Precondition.notNull(null));
     }
 
     @Test
@@ -45,14 +44,12 @@ public class PreconditionTest {
 
     @Test
     public void testNotNull1NotEmpty3() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> Precondition.notNullOrEmpty(" "));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> Precondition.notNullOrEmpty(" "));
     }
 
     @Test
     public void testNotNull1NotEmpty4() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> Precondition.notNullOrEmpty("   "));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> Precondition.notNullOrEmpty("   "));
     }
 
     @Test
@@ -63,8 +60,7 @@ public class PreconditionTest {
 
     @Test
     public void testNotNull1NotEmpty6() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> Precondition.notNullOrEmpty("\t"));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> Precondition.notNullOrEmpty("\t"));
     }
 
     @Test

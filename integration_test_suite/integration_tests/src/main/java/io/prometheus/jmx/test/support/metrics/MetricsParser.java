@@ -36,10 +36,14 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-/** Class to parse Metrics from an HttpResponse */
+/**
+ * Class to parse Metrics from an HttpResponse
+ */
 public class MetricsParser {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private MetricsParser() {
         // INTENTIONALLY BLANK
     }
@@ -52,9 +56,7 @@ public class MetricsParser {
      */
     public static Map<String, Collection<Metric>> parseMap(HttpResponse httpResponse) {
         return parseCollection(httpResponse).stream()
-                .collect(
-                        Collectors.groupingBy(
-                                Metric::name, Collectors.toCollection(ArrayList::new)));
+                .collect(Collectors.groupingBy(Metric::name, Collectors.toCollection(ArrayList::new)));
     }
 
     /**
@@ -79,9 +81,7 @@ public class MetricsParser {
             return parseProtobufMetrics(httpResponse.body().bytes());
         } else {
             throw new MetricsParserException(
-                    format(
-                            "Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]",
-                            contentType));
+                    format("Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]", contentType));
         }
     }
 
@@ -193,8 +193,7 @@ public class MetricsParser {
 
         try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
             while (true) {
-                Metrics.MetricFamily metricFamily =
-                        Metrics.MetricFamily.parseDelimitedFrom(inputStream);
+                Metrics.MetricFamily metricFamily = Metrics.MetricFamily.parseDelimitedFrom(inputStream);
                 if (metricFamily == null) {
                     break;
                 }
@@ -205,61 +204,48 @@ public class MetricsParser {
 
                 for (Metrics.Metric metric : metricFamily.getMetricList()) {
                     switch (metricType) {
-                        case COUNTER:
-                            {
-                                Metrics.Counter counter = metric.getCounter();
+                        case COUNTER: {
+                            Metrics.Counter counter = metric.getCounter();
 
-                                collection.add(
-                                        new Metric(
-                                                Metric.Type.COUNTER,
-                                                help,
-                                                name,
-                                                toLabels(metric.getLabelList()),
-                                                counter.getValue()));
+                            collection.add(new Metric(
+                                    Metric.Type.COUNTER,
+                                    help,
+                                    name,
+                                    toLabels(metric.getLabelList()),
+                                    counter.getValue()));
 
-                                break;
-                            }
-                        case GAUGE:
-                            {
-                                Metrics.Gauge gauge = metric.getGauge();
+                            break;
+                        }
+                        case GAUGE: {
+                            Metrics.Gauge gauge = metric.getGauge();
 
-                                collection.add(
-                                        new Metric(
-                                                Metric.Type.GAUGE,
-                                                help,
-                                                name,
-                                                toLabels(metric.getLabelList()),
-                                                gauge.getValue()));
+                            collection.add(new Metric(
+                                    Metric.Type.GAUGE, help, name, toLabels(metric.getLabelList()), gauge.getValue()));
 
-                                break;
-                            }
-                        case UNTYPED:
-                            {
-                                Metrics.Untyped untyped = metric.getUntyped();
+                            break;
+                        }
+                        case UNTYPED: {
+                            Metrics.Untyped untyped = metric.getUntyped();
 
-                                collection.add(
-                                        new Metric(
-                                                Metric.Type.UNTYPED,
-                                                help,
-                                                name,
-                                                toLabels(metric.getLabelList()),
-                                                untyped.getValue()));
+                            collection.add(new Metric(
+                                    Metric.Type.UNTYPED,
+                                    help,
+                                    name,
+                                    toLabels(metric.getLabelList()),
+                                    untyped.getValue()));
 
-                                break;
-                            }
-                        case SUMMARY:
-                            {
-                                // TODO refactor to support Summary metrics
-                                break;
-                            }
-                        default:
-                            {
-                                throw new MetricsParserException(
-                                        format(
-                                                "Exception parsing Protobuf metrics. MetricsParser"
-                                                        + " doesn't support metric type [%s]",
-                                                metricType));
-                            }
+                            break;
+                        }
+                        case SUMMARY: {
+                            // TODO refactor to support Summary metrics
+                            break;
+                        }
+                        default: {
+                            throw new MetricsParserException(format(
+                                    "Exception parsing Protobuf metrics. MetricsParser"
+                                            + " doesn't support metric type [%s]",
+                                    metricType));
+                        }
                     }
                 }
             }
@@ -330,9 +316,7 @@ public class MetricsParser {
         int curlyBraceIndex = metricLine.indexOf("{");
         if (curlyBraceIndex > 1) {
             name = metricLine.substring(0, curlyBraceIndex);
-            labels =
-                    parseLabels(
-                            metricLine.substring(curlyBraceIndex, metricLine.lastIndexOf("}") + 1));
+            labels = parseLabels(metricLine.substring(curlyBraceIndex, metricLine.lastIndexOf("}") + 1));
         } else {
             name = metricLine.substring(0, metricLine.indexOf(" "));
         }

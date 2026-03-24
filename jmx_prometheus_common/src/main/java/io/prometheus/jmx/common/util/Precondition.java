@@ -18,10 +18,14 @@ package io.prometheus.jmx.common.util;
 
 import static java.lang.String.format;
 
-/** Class to implement Precondition */
+/**
+ * Class to implement Precondition
+ */
 public class Precondition {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private Precondition() {
         // INTENTIONALLY BLANK
     }
@@ -76,9 +80,7 @@ public class Precondition {
      */
     public static void isGreaterThanOrEqualTo(int value, int minimumValue) {
         isGreaterThanOrEqualTo(
-                value,
-                minimumValue,
-                format("value [%s] is less than minimum value [%s]", value, minimumValue));
+                value, minimumValue, format("value [%s] is less than minimum value [%s]", value, minimumValue));
     }
 
     /**

@@ -54,12 +54,16 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.ProviderUtils;
 
-/** Class to implement JmxScraper */
+/**
+ * Class to implement JmxScraper
+ */
 class JmxScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
 
-    /** Interface to implement MBeanReceiver */
+    /**
+     * Interface to implement MBeanReceiver
+     */
     public interface MBeanReceiver {
 
         /**
@@ -142,10 +146,7 @@ class JmxScraper {
             beanConn = ManagementFactory.getPlatformMBeanServer();
         } else {
             Map<String, Object> environment = new HashMap<>();
-            if (username != null
-                    && !username.isEmpty()
-                    && password != null
-                    && !password.isEmpty()) {
+            if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
                 String[] credent = new String[] {username, password};
                 environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
             }
@@ -156,9 +157,7 @@ class JmxScraper {
                 ProviderUtils.configure(sslFactory);
 
                 SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
-                environment.put(
-                        RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                        clientSocketFactory);
+                environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
                 if (!"true".equalsIgnoreCase(System.getenv("RMI_REGISTRY_SSL_DISABLED"))) {
                     environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
                 }
@@ -223,16 +222,12 @@ class JmxScraper {
         SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder().withDefaultTrustMaterial();
         sslProperties
                 .getKeyStoreProperties()
-                .ifPresent(
-                        props ->
-                                sslFactoryBuilder.withIdentityMaterial(
-                                        props.path, props.password.toCharArray(), props.type));
+                .ifPresent(props ->
+                        sslFactoryBuilder.withIdentityMaterial(props.path, props.password.toCharArray(), props.type));
         sslProperties
                 .getTrustStoreProperties()
-                .ifPresent(
-                        props ->
-                                sslFactoryBuilder.withTrustMaterial(
-                                        props.path, props.password.toCharArray(), props.type));
+                .ifPresent(props ->
+                        sslFactoryBuilder.withTrustMaterial(props.path, props.password.toCharArray(), props.type));
 
         if (!sslProperties.protocols.isEmpty()) {
             sslFactoryBuilder.withProtocols(sslProperties.protocols.toArray(new String[0]));
@@ -303,16 +298,14 @@ class JmxScraper {
 
         try {
             // bulk load all attributes
-            attributes =
-                    beanConn.getAttributes(
-                            mBeanName, name2MBeanAttributeInfo.keySet().toArray(new String[0]));
+            attributes = beanConn.getAttributes(
+                    mBeanName, name2MBeanAttributeInfo.keySet().toArray(new String[0]));
             if (attributes == null) {
                 LOGGER.trace("%s getMBeanInfo Fail: attributes are null", mBeanName);
                 return;
             }
         } catch (Exception e) {
-            LOGGER.warn(
-                    "%s getAttributes Fail: processing one by one: %s", mBeanName, e.getMessage());
+            LOGGER.warn("%s getAttributes Fail: processing one by one: %s", mBeanName, e.getMessage());
 
             // couldn't get them all in one go, try them 1 by 1
             processAttributesOneByOne(beanConn, mBeanName, name2MBeanAttributeInfo);
@@ -325,8 +318,7 @@ class JmxScraper {
         Map<String, String> attributesAsLabelsWithValues = Collections.emptyMap();
         if (metricCustomizer != null) {
             if (metricCustomizer.attributesAsLabels != null) {
-                attributesAsLabelsWithValues =
-                        getAttributesAsLabelsWithValues(metricCustomizer, attributes);
+                attributesAsLabelsWithValues = getAttributesAsLabelsWithValues(metricCustomizer, attributes);
             }
             for (JmxCollector.ExtraMetric extraMetric : getExtraMetrics(metricCustomizer)) {
                 processBeanValue(
@@ -361,8 +353,7 @@ class JmxScraper {
                     continue;
                 }
 
-                MBeanAttributeInfo mBeanAttributeInfo =
-                        name2MBeanAttributeInfo.get(attribute.getName());
+                MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attribute.getName());
                 LOGGER.trace("%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
                         mBeanName,
@@ -375,9 +366,7 @@ class JmxScraper {
                         mBeanAttributeInfo.getDescription(),
                         attribute.getValue());
             } else if (object == null) {
-                LOGGER.trace(
-                        "%s object is NULL, not an instance javax.management.Attribute, skipping",
-                        mBeanName);
+                LOGGER.trace("%s object is NULL, not an instance javax.management.Attribute, skipping", mBeanName);
             } else {
                 LOGGER.trace(
                         "%s object [%s] isn't an instance javax.management.Attribute, skipping",
@@ -386,18 +375,14 @@ class JmxScraper {
         }
     }
 
-    private List<JmxCollector.ExtraMetric> getExtraMetrics(
-            JmxCollector.MetricCustomizer metricCustomizer) {
-        return metricCustomizer.extraMetrics != null
-                ? metricCustomizer.extraMetrics
-                : Collections.emptyList();
+    private List<JmxCollector.ExtraMetric> getExtraMetrics(JmxCollector.MetricCustomizer metricCustomizer) {
+        return metricCustomizer.extraMetrics != null ? metricCustomizer.extraMetrics : Collections.emptyList();
     }
 
     private Map<String, String> getAttributesAsLabelsWithValues(
             JmxCollector.MetricCustomizer metricCustomizer, AttributeList attributes) {
         Map<String, Object> attributeMap =
-                attributes.asList().stream()
-                        .collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+                attributes.asList().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
         Map<String, String> attributesAsLabelsWithValues = new HashMap<>();
         for (String attributeAsLabel : metricCustomizer.attributesAsLabels) {
             Object attrValue = attributeMap.get(attributeAsLabel);
@@ -429,9 +414,7 @@ class JmxScraper {
     }
 
     private void processAttributesOneByOne(
-            MBeanServerConnection beanConn,
-            ObjectName mbeanName,
-            Map<String, MBeanAttributeInfo> name2AttrInfo) {
+            MBeanServerConnection beanConn, ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
         Object value;
         for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
             try {
@@ -630,10 +613,11 @@ class JmxScraper {
         }
     }
 
-    /** Convenience function to run standalone. */
+    /**
+     * Convenience method to run standalone.
+     */
     public static void main(String[] args) throws Exception {
-        ObjectNameAttributeFilter objectNameAttributeFilter =
-                ObjectNameAttributeFilter.create(new HashMap<>());
+        ObjectNameAttributeFilter objectNameAttributeFilter = ObjectNameAttributeFilter.create(new HashMap<>());
         List<ObjectName> objectNames = new LinkedList<>();
         objectNames.add(null);
         if (args.length >= 3) {

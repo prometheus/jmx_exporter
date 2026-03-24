@@ -22,7 +22,9 @@ import java.net.URI;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to validate a String is a URL */
+/**
+ * Function to validate a String is a URL
+ */
 public class IsURL implements Function<String, String> {
 
     private final Supplier<? extends RuntimeException> supplier;

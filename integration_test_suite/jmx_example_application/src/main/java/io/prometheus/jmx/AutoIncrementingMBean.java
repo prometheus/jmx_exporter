@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx;
 
-/** Interface to implement AutoIncrementingMBean */
+/**
+ * Interface to implement AutoIncrementingMBean
+ */
 public interface AutoIncrementingMBean {
 
     /**

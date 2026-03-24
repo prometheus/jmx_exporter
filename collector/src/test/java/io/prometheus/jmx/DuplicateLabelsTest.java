@@ -38,46 +38,33 @@ public class DuplicateLabelsTest {
 
     @Test
     public void testDuplicateLabels() {
-        UnknownSnapshot.Builder unknownBuilder =
-                unknownMap.computeIfAbsent(
-                        "test",
-                        name ->
-                                UnknownSnapshot.builder()
-                                        .name("test_metric")
-                                        .help("test_metric help"));
-        unknownBuilder.dataPoint(
-                UnknownSnapshot.UnknownDataPointSnapshot.builder()
-                        .value(1.12345678)
-                        .labels(Labels.of("label1", "value1"))
-                        .build());
+        UnknownSnapshot.Builder unknownBuilder = unknownMap.computeIfAbsent(
+                "test", name -> UnknownSnapshot.builder().name("test_metric").help("test_metric help"));
+        unknownBuilder.dataPoint(UnknownSnapshot.UnknownDataPointSnapshot.builder()
+                .value(1.12345678)
+                .labels(Labels.of("label1", "value1"))
+                .build());
 
         unknownMap.put("test", unknownBuilder);
 
-        unknownBuilder =
-                unknownMap.computeIfAbsent(
-                        "test",
-                        name ->
-                                UnknownSnapshot.builder()
-                                        .name("test_metric")
-                                        .help("test_metric help"));
-        unknownBuilder.dataPoint(
-                UnknownSnapshot.UnknownDataPointSnapshot.builder()
-                        .value(2.2468)
-                        .labels(Labels.of("label1", "value1"))
-                        .build());
+        unknownBuilder = unknownMap.computeIfAbsent(
+                "test", name -> UnknownSnapshot.builder().name("test_metric").help("test_metric help"));
+        unknownBuilder.dataPoint(UnknownSnapshot.UnknownDataPointSnapshot.builder()
+                .value(2.2468)
+                .labels(Labels.of("label1", "value1"))
+                .build());
 
         unknownMap.put("test2", unknownBuilder);
 
         MetricSnapshots.Builder result = MetricSnapshots.builder();
 
         assertThatExceptionOfType(DuplicateLabelsException.class)
-                .isThrownBy(
-                        () -> {
-                            for (UnknownSnapshot.Builder unknown : unknownMap.values()) {
-                                UnknownSnapshot unknownSnapshot = unknown.build();
-                                result.metricSnapshot(unknownSnapshot);
-                            }
-                        })
+                .isThrownBy(() -> {
+                    for (UnknownSnapshot.Builder unknown : unknownMap.values()) {
+                        UnknownSnapshot unknownSnapshot = unknown.build();
+                        result.metricSnapshot(unknownSnapshot);
+                    }
+                })
                 .withMessage("Duplicate labels for metric \"test_metric\": {label1=\"value1\"}");
     }
 }

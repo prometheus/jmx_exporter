@@ -20,7 +20,9 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to convert an Object to a Boolean */
+/**
+ * Function to convert an Object to a Boolean
+ */
 public class ToBoolean implements Function<Object, Boolean> {
 
     private final Supplier<? extends RuntimeException> supplier;
