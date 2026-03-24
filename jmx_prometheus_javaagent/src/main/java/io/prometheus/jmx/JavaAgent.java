@@ -21,6 +21,7 @@ import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
+import io.prometheus.jmx.common.util.functions.IntegerInRange;
 import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.logger.Logger;
@@ -77,15 +78,17 @@ public class JavaAgent {
                                     new ToInteger(
                                             ConfigurationException.supplier(
                                                     "/startDelaySeconds must be an integer")))
+                            .map(
+                                    new IntegerInRange(
+                                            0,
+                                            Integer.MAX_VALUE,
+                                            ConfigurationException.supplier(
+                                                    "/startDelaySeconds must be non-negative")))
                             .orElse(0);
-
-            if (startDelaySeconds < 0) {
-                throw new ConfigurationException("/startDelaySeconds must be non-negative");
-            }
 
             if (startDelaySeconds > 0) {
                 LOGGER.info("Start delay [%d] seconds", startDelaySeconds);
-                startAsync(startDelaySeconds, arguments, file);
+                startAsync(startDelaySeconds, arguments, file, mapAccessor);
             } else {
                 start(arguments, file, mapAccessor);
             }
@@ -100,15 +103,15 @@ public class JavaAgent {
      * @param startDelaySeconds the delay in seconds
      * @param arguments the arguments
      * @param file the configuration file
+     * @param mapAccessor the map accessor
      */
-    private static void startAsync(int startDelaySeconds, Arguments arguments, File file) {
+    private static void startAsync(
+            int startDelaySeconds, Arguments arguments, File file, MapAccessor mapAccessor) {
         Thread thread =
                 new Thread(
                         () -> {
                             try {
                                 Thread.sleep(startDelaySeconds * 1000L);
-                                MapAccessor mapAccessor =
-                                        MapAccessor.of(YamlSupport.loadYaml(file));
                                 start(arguments, file, mapAccessor);
                             } catch (Throwable t) {
                                 handleError(t, null, null);
