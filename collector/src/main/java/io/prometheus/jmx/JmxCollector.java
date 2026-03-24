@@ -326,6 +326,9 @@ public class JmxCollector implements MultiCollector {
         if (yamlConfig.containsKey("startDelaySeconds")) {
             try {
                 cfg.startDelaySeconds = (Integer) yamlConfig.get("startDelaySeconds");
+                if (cfg.startDelaySeconds < 0) {
+                    throw new IllegalArgumentException("startDelaySeconds must be non-negative");
+                }
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(
                         "Invalid number provided for startDelaySeconds", e);
@@ -1022,7 +1025,8 @@ public class JmxCollector implements MultiCollector {
         double error = 1;
         String errorMsg = "";
 
-        if ((config.startDelaySeconds > 0)
+        if (mode != Mode.AGENT
+                && (config.startDelaySeconds > 0)
                 && ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
             throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
         }

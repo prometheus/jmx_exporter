@@ -21,7 +21,9 @@ import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
+import io.prometheus.jmx.common.util.functions.IntegerInRange;
 import io.prometheus.jmx.common.util.functions.ToBoolean;
+import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
@@ -40,11 +42,7 @@ public class JavaAgent {
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
-    static {
-        // Get the platform MBean server to ensure that
-        // it's initialized prior to the application
-        ManagementFactory.getPlatformMBeanServer();
-    }
+    private static final String THREAD_NAME = "jmx-exporter-startup";
 
     /** Constructor */
     public JavaAgent() {
@@ -52,7 +50,7 @@ public class JavaAgent {
     }
 
     /**
-     * Java agent main
+     * Java agent main.
      *
      * @param agentArgument the agent argument
      * @param instrumentation the instrumentation
@@ -62,21 +60,88 @@ public class JavaAgent {
     }
 
     /**
-     * Java agent premain
+     * Java agent premain.
      *
      * @param agentArgument the agent argument
      * @param instrumentation the instrumentation
      */
     public static void premain(String agentArgument, Instrumentation instrumentation) {
-        LOGGER.info("Starting ...");
-
-        HTTPServer httpServer = null;
-        OpenTelemetryExporter openTelemetryExporter = null;
-
         try {
             Arguments arguments = Arguments.parse(agentArgument);
             File file = new File(arguments.getFilename());
             MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
+
+            int startDelaySeconds =
+                    mapAccessor
+                            .get("/startDelaySeconds")
+                            .map(
+                                    new ToInteger(
+                                            ConfigurationException.supplier(
+                                                    "/startDelaySeconds must be an integer")))
+                            .map(
+                                    new IntegerInRange(
+                                            0,
+                                            Integer.MAX_VALUE,
+                                            ConfigurationException.supplier(
+                                                    "/startDelaySeconds must be non-negative")))
+                            .orElse(0);
+
+            if (startDelaySeconds > 0) {
+                LOGGER.info("Start delay [%d] seconds", startDelaySeconds);
+                startAsync(startDelaySeconds, arguments, file, mapAccessor);
+            } else {
+                start(arguments, file, mapAccessor);
+            }
+        } catch (Throwable t) {
+            handleError(t, null, null);
+        }
+    }
+
+    /**
+     * Starts the exporter asynchronously after a delay.
+     *
+     * @param startDelaySeconds the delay in seconds
+     * @param arguments the arguments
+     * @param file the configuration file
+     * @param mapAccessor the map accessor
+     */
+    private static void startAsync(
+            int startDelaySeconds, Arguments arguments, File file, MapAccessor mapAccessor) {
+        Thread thread =
+                new Thread(
+                        () -> {
+                            try {
+                                Thread.sleep(startDelaySeconds * 1000L);
+                                start(arguments, file, mapAccessor);
+                            } catch (Throwable t) {
+                                handleError(t, null, null);
+                            }
+                        },
+                        THREAD_NAME);
+
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Start the exporter synchronously.
+     *
+     * @param arguments the arguments
+     * @param file the configuration value
+     * @param mapAccessor the map accessor
+     */
+    private static void start(Arguments arguments, File file, MapAccessor mapAccessor) {
+        HTTPServer httpServer = null;
+        OpenTelemetryExporter openTelemetryExporter = null;
+
+        try {
+            LOGGER.info("Starting ...");
+
+            // Force the ManagementFactory to get the platform MBean server
+            // now to work around potential classloader issues later when
+            // the JmxCollector tries to access it.
+            ManagementFactory.getPlatformMBeanServer();
+
             boolean httpEnabled = arguments.isHttpEnabled();
             boolean openTelemetryEnabled = mapAccessor.containsPath("/openTelemetry");
 
@@ -103,7 +168,6 @@ public class JavaAgent {
                 LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
                 LOGGER.info("Starting HTTPServer ...");
 
-                // Create and start the HTTP server
                 httpServer =
                         HTTPServerFactory.createAndStartHTTPServer(
                                 PrometheusRegistry.defaultRegistry,
@@ -113,7 +177,6 @@ public class JavaAgent {
 
                 LOGGER.info("HTTPServer started");
 
-                // Add shutdown hook
                 Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(httpServer));
             }
 
@@ -122,40 +185,50 @@ public class JavaAgent {
             if (openTelemetryEnabled) {
                 LOGGER.info("Starting OpenTelemetry ...");
 
-                // Create and start the OpenTelemetry exporter
                 openTelemetryExporter =
                         OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
                                 PrometheusRegistry.defaultRegistry, file);
 
                 LOGGER.info("OpenTelemetry started");
 
-                // Add shutdown hook
                 Runtime.getRuntime()
                         .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
             LOGGER.info("Running ...");
         } catch (Throwable t) {
-            synchronized (System.err) {
-                System.err.println("Failed to start Prometheus JMX Exporter ...");
-                System.err.println();
-                t.printStackTrace(System.err);
-                System.err.println();
-                System.err.println("Prometheus JMX Exporter exiting");
-                System.err.flush();
-            }
-
-            close(openTelemetryExporter);
-            close(httpServer);
-
-            System.exit(1);
+            handleError(t, openTelemetryExporter, httpServer);
         }
     }
 
     /**
-     * Close the given AutoCloseable resource.
+     * Handles errors during startup by logging the error, closing resources, and exiting.
      *
-     * @param autoCloseable The AutoCloseable resource to close
+     * @param t the throwable
+     * @param openTelemetryExporter the open telemetry exporter
+     * @param httpServer the http server
+     */
+    private static void handleError(
+            Throwable t, OpenTelemetryExporter openTelemetryExporter, HTTPServer httpServer) {
+        synchronized (System.err) {
+            System.err.println("Failed to start Prometheus JMX Exporter ...");
+            System.err.println();
+            t.printStackTrace(System.err);
+            System.err.println();
+            System.err.println("Prometheus JMX Exporter exiting");
+            System.err.flush();
+        }
+
+        close(openTelemetryExporter);
+        close(httpServer);
+
+        System.exit(1);
+    }
+
+    /**
+     * Close the auto closable.
+     *
+     * @param autoCloseable the auto closable
      */
     private static void close(AutoCloseable autoCloseable) {
         if (autoCloseable != null) {
