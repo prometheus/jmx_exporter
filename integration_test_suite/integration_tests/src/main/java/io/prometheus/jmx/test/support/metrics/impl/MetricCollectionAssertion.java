@@ -101,8 +101,7 @@ public class MetricCollectionAssertion implements MetricAssertion {
      */
     public MetricCollectionAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
-            throw new IllegalArgumentException(
-                    format("Label name [%s] or value [%s] is null", name, value));
+            throw new IllegalArgumentException(format("Label name [%s] or value [%s] is null", name, value));
         }
 
         if (labels == null) {
@@ -140,41 +139,29 @@ public class MetricCollectionAssertion implements MetricAssertion {
      * @return this MetricAssertion
      */
     public MetricCollectionAssertion isPresentWhen(boolean condition) {
-        List<Metric> metrics =
-                this.metrics.stream()
-                        .filter(metric -> type == null || metric.type().equals(type))
-                        .filter(metric -> name == null || metric.name().equals(name))
-                        .filter(metric -> help == null || metric.help().equals(help))
-                        .filter(
-                                metric ->
-                                        labels == null
-                                                || metric.labels()
-                                                        .entrySet()
-                                                        .containsAll(labels.entrySet()))
-                        .filter(metric -> value == null || metric.value() == value)
-                        .collect(Collectors.toList());
+        List<Metric> metrics = this.metrics.stream()
+                .filter(metric -> type == null || metric.type().equals(type))
+                .filter(metric -> name == null || metric.name().equals(name))
+                .filter(metric -> help == null || metric.help().equals(help))
+                .filter(metric -> labels == null || metric.labels().entrySet().containsAll(labels.entrySet()))
+                .filter(metric -> value == null || metric.value() == value)
+                .collect(Collectors.toList());
 
         if (condition) {
             if (metrics.size() > 1) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
-                                        + " matches multiple metrics",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]" + " matches multiple metrics",
+                        type, help, name, labels, value));
             } else if (metrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
-                                        + " present",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not" + " present",
+                        type, help, name, labels, value));
             }
         } else {
             if (!metrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
-                                        + " present",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is" + " present",
+                        type, help, name, labels, value));
             }
         }
 
@@ -226,8 +213,7 @@ public class MetricCollectionAssertion implements MetricAssertion {
      * @param httpResponse httpResponse
      * @param metricsContentType metricsContentType
      */
-    public static void assertCommonMetricsResponse(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    public static void assertCommonMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertThat(httpResponse).isNotNull();
 
         int statusCode = httpResponse.statusCode();
@@ -235,19 +221,15 @@ public class MetricCollectionAssertion implements MetricAssertion {
             HttpResponseBody body = httpResponse.body();
             if (body != null) {
                 throw new AssertionError(
-                        format(
-                                "Expected statusCode [%d] but was [%d] body [%s]",
-                                200, statusCode, body.string()));
+                        format("Expected statusCode [%d] but was [%d] body [%s]", 200, statusCode, body.string()));
             } else {
-                throw new AssertionError(
-                        format("Expected statusCode [%d] but was [%d] no body", 200, statusCode));
+                throw new AssertionError(format("Expected statusCode [%d] but was [%d] no body", 200, statusCode));
             }
         }
 
         assertThat(httpResponse.headers()).isNotNull();
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
-        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
-                .isEqualTo(metricsContentType.toString());
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).isEqualTo(metricsContentType.toString());
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().bytes()).isNotNull();
         assertThat(httpResponse.body().bytes().length).isGreaterThan(0);

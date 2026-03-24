@@ -68,22 +68,34 @@ import org.verifyica.api.util.TemporaryDirectory;
 @Verifyica.Disabled
 public class LocalTest {
 
-    /** The number of clients to simulate. */
+    /**
+     * The number of clients to simulate.
+     */
     private static final int CLIENT_COUNT = 10;
 
-    /** The number of iterations for the repeated tests. */
+    /**
+     * The number of iterations for the repeated tests.
+     */
     private static final int ITERATIONS = 10;
 
-    /** The URL of the HTTP server. */
+    /**
+     * The URL of the HTTP server.
+     */
     private static final String BASE_URL = "http://localhost:";
 
-    /** The key for the base test URL (protocol + hostname + port). */
+    /**
+     * The key for the base test URL (protocol + hostname + port).
+     */
     private static final String URL = "url";
 
-    /** The key for the HTTP server. */
+    /**
+     * The key for the HTTP server.
+     */
     private static final String HTTP_SERVER = "httpServer";
 
-    /** The default Prometheus registry. */
+    /**
+     * The default Prometheus registry.
+     */
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
@@ -100,8 +112,7 @@ public class LocalTest {
     @Verifyica.Prepare
     public static void prepare(ClassContext classContext) throws Throwable {
         // Derive the resource path based on the test class name
-        String resource =
-                (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
+        String resource = (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
 
         // Create a temporary directory
         TemporaryDirectory temporaryDirectory = TemporaryDirectory.newDirectory();
@@ -130,22 +141,18 @@ public class LocalTest {
         new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
 
         // Create an HTTP server to serve the metrics
-        final HTTPServer httpServer =
-                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
+        final HTTPServer httpServer = HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
 
         // Add a shutdown hook to stop the HTTP server when the JVM exits
-        Runtime.getRuntime()
-                .addShutdownHook(
-                        new Thread(
-                                () -> {
-                                    if (httpServer != null) {
-                                        try {
-                                            httpServer.stop();
-                                        } catch (Throwable t) {
-                                            // INTENTIONALLY BLANK
-                                        }
-                                    }
-                                }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (httpServer != null) {
+                try {
+                    httpServer.stop();
+                } catch (Throwable t) {
+                    // INTENTIONALLY BLANK
+                }
+            }
+        }));
 
         classContext.getMap().put(HTTP_SERVER, httpServer);
         classContext.getMap().put(URL, BASE_URL + httpServer.getPort());
@@ -154,8 +161,7 @@ public class LocalTest {
     @Verifyica.Test
     @Verifyica.Order(1)
     public void testHealthy(ArgumentContext argumentContext) throws Throwable {
-        String url =
-                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.HEALTHY;
+        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.HEALTHY;
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -164,92 +170,69 @@ public class LocalTest {
 
     @Verifyica.Test
     public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url =
-                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            HttpResponse httpResponse = HttpClient.sendRequest(url);
+                .test(() -> {
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-                            assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-                        })
+                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                })
                 .run();
     }
 
     @Verifyica.Test
     public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url =
-                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.OPEN_METRICS_TEXT_METRICS
-                                                    .toString());
+                .test(() -> {
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                        })
+                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                })
                 .run();
     }
 
     @Verifyica.Test
     public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url =
-                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                .test(() -> {
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                        })
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                })
                 .run();
     }
 
     @Verifyica.Test
     public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url =
-                argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
 
         // Run the test code multiple times
         new Repeater(ITERATIONS)
                 .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(
-                        () -> {
-                            HttpResponse httpResponse =
-                                    HttpClient.sendRequest(
-                                            url,
-                                            HttpHeader.ACCEPT,
-                                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS
-                                                    .toString());
+                .test(() -> {
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-                            assertMetricsResponse(
-                                    httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                        })
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                })
                 .run();
     }
 
     @Verifyica.Conclude
-    public static void conclude(ClassContext classContext)
-            throws IOException, MalformedObjectNameException {
+    public static void conclude(ClassContext classContext) throws IOException, MalformedObjectNameException {
         // Clean up the HTTP server
         HTTPServer httpServer = classContext.getMap().removeAs(HTTP_SERVER);
         if (httpServer != null) {
@@ -263,8 +246,7 @@ public class LocalTest {
      * @param httpResponse the HTTP response
      * @param metricsContentType the metrics content type
      */
-    private void assertMetricsResponse(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -273,16 +255,14 @@ public class LocalTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
@@ -314,22 +294,19 @@ public class LocalTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
 

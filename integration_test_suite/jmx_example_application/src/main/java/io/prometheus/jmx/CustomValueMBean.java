@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx;
 
-/** Class to implement CustomValueMBean */
+/**
+ * Class to implement CustomValueMBean
+ */
 public interface CustomValueMBean {
 
     /**

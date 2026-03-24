@@ -44,7 +44,9 @@ public class IsolatorJavaAgent {
 
     private static final String THREAD_NAME = "isolator-javaagent";
 
-    /** Default constructor for IsolatorJavaAgent. */
+    /**
+     * Default constructor for IsolatorJavaAgent.
+     */
     public IsolatorJavaAgent() {
         // INTENTIONALLY BLANK
     }
@@ -75,13 +77,10 @@ public class IsolatorJavaAgent {
 
         try {
             List<String> javaAgentArguments =
-                    Arrays.stream(agentArgument.split(","))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
+                    Arrays.stream(agentArgument.split(",")).map(String::trim).collect(Collectors.toList());
 
             LOGGER.info(
-                    "%s JMX Exporter%s defined",
-                    javaAgentArguments.size(), javaAgentArguments.size() == 1 ? "" : "s");
+                    "%s JMX Exporter%s defined", javaAgentArguments.size(), javaAgentArguments.size() == 1 ? "" : "s");
 
             for (int i = 0; i < javaAgentArguments.size(); i++) {
                 int index = i + 1;
@@ -95,8 +94,7 @@ public class IsolatorJavaAgent {
 
                 LOGGER.info("Starting JMX Exporter[%d] ...", index);
 
-                ClassLoader classLoader =
-                        new JarClassLoader(jarPath, ClassLoader.getSystemClassLoader());
+                ClassLoader classLoader = new JarClassLoader(jarPath, ClassLoader.getSystemClassLoader());
 
                 runJavaAgent(options, instrumentation, classLoader);
 
@@ -126,36 +124,29 @@ public class IsolatorJavaAgent {
      * @param classLoader the ClassLoader to use for loading the Java agent
      * @throws Throwable if an error occurs during Java agent execution
      */
-    private static void runJavaAgent(
-            String agentArgument, Instrumentation instrumentation, ClassLoader classLoader)
+    private static void runJavaAgent(String agentArgument, Instrumentation instrumentation, ClassLoader classLoader)
             throws Throwable {
         final AtomicReference<Throwable> throwableAtomicReference = new AtomicReference<>();
 
-        Thread thread =
-                new Thread(
-                        () -> {
-                            try {
-                                // Set the context class loader to the new URLClassLoader
-                                // so that any spawned threads have the correct classloader
-                                Thread.currentThread().setContextClassLoader(classLoader);
+        Thread thread = new Thread(() -> {
+            try {
+                // Set the context class loader to the new URLClassLoader
+                // so that any spawned threads have the correct classloader
+                Thread.currentThread().setContextClassLoader(classLoader);
 
-                                // Load the Java agent class
-                                Class<?> javaAgentClass =
-                                        classLoader.loadClass(JAVA_AGENT_CLASS_NAME);
+                // Load the Java agent class
+                Class<?> javaAgentClass = classLoader.loadClass(JAVA_AGENT_CLASS_NAME);
 
-                                // Resolve the Java agent main method
-                                Method javaAgentMainMethod =
-                                        javaAgentClass.getMethod(
-                                                AGENT_MAIN_METHOD,
-                                                String.class,
-                                                Instrumentation.class);
+                // Resolve the Java agent main method
+                Method javaAgentMainMethod =
+                        javaAgentClass.getMethod(AGENT_MAIN_METHOD, String.class, Instrumentation.class);
 
-                                // Invoke the Java agent main method
-                                javaAgentMainMethod.invoke(null, agentArgument, instrumentation);
-                            } catch (Throwable t) {
-                                throwableAtomicReference.set(t);
-                            }
-                        });
+                // Invoke the Java agent main method
+                javaAgentMainMethod.invoke(null, agentArgument, instrumentation);
+            } catch (Throwable t) {
+                throwableAtomicReference.set(t);
+            }
+        });
 
         thread.setName(THREAD_NAME);
         thread.start();

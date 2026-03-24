@@ -27,7 +27,9 @@ import java.util.Base64;
 import java.util.Objects;
 import javax.security.auth.Subject;
 
-/** Example custom authenticator */
+/**
+ * Example custom authenticator
+ */
 public class AuthenticatorPlugin extends Authenticator {
 
     private static final String AUTHORIZATION = "Authorization";
@@ -36,7 +38,9 @@ public class AuthenticatorPlugin extends Authenticator {
     private static final String USERNAME = "Prometheus";
     private static final String PASSWORD = "secret";
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public AuthenticatorPlugin() {
         // INTENTIONALLY BLANK
     }
@@ -56,8 +60,7 @@ public class AuthenticatorPlugin extends Authenticator {
             return new Authenticator.Failure(401);
         }
 
-        byte[] usernamePasswordBytes =
-                Base64.getDecoder().decode(authorization.substring(space + 1));
+        byte[] usernamePasswordBytes = Base64.getDecoder().decode(authorization.substring(space + 1));
         String usernamePassword = new String(usernamePasswordBytes, StandardCharsets.UTF_8);
         int colon = usernamePassword.indexOf(':');
         String username = usernamePassword.substring(0, colon);
@@ -67,8 +70,7 @@ public class AuthenticatorPlugin extends Authenticator {
             Subject subject = new Subject();
             subject.getPrincipals().add(new UserPrincipal(username));
             // to communicate an authenticated subject for subsequent handler calls via Subject.doAs
-            httpExchange.setAttribute(
-                    "io.prometheus.jmx.CustomAuthenticatorSubjectAttribute", subject);
+            httpExchange.setAttribute("io.prometheus.jmx.CustomAuthenticatorSubjectAttribute", subject);
             return new Authenticator.Success(new HttpPrincipal(username, "/"));
         } else {
             return new Authenticator.Failure(401);

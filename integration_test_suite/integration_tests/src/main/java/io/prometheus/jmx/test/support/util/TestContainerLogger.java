@@ -19,7 +19,9 @@ package io.prometheus.jmx.test.support.util;
 import java.util.function.Consumer;
 import org.testcontainers.containers.output.OutputFrame;
 
-/** Class to implement TestContainerLogger */
+/**
+ * Class to implement TestContainerLogger
+ */
 public class TestContainerLogger implements Consumer<OutputFrame> {
 
     private final String prefix;

@@ -57,14 +57,12 @@ class PerformanceMetrics implements PerformanceMetricsMBean {
         OpenType<?>[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
 
         CompositeType compositeType =
-                new CompositeType(
-                        "PerformanceMetrics", "Example composite data", names, descriptions, types);
+                new CompositeType("PerformanceMetrics", "Example composite data", names, descriptions, types);
         return new CompositeDataSupport(compositeType, data);
     }
 
     static void registerBean(MBeanServer mbs) throws JMException {
-        ObjectName objectName =
-                new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean");
+        ObjectName objectName = new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean");
         PerformanceMetrics bean = new PerformanceMetrics();
         mbs.registerMBean(bean, objectName);
     }

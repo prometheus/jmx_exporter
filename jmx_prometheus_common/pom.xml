@@ -82,27 +82,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.4.0</version>
-                <configuration>
-                    <java>
-                        <palantirJavaFormat>
-                            <version>2.86.0</version>
-                            <style>PALANTIR</style>
-                        </palantirJavaFormat>
-                    </java>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>apply</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.6.2</version>

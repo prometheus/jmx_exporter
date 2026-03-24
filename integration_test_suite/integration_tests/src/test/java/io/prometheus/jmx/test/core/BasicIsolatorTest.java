@@ -67,149 +67,120 @@ public class BasicIsolatorTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.HEALTHY);
 
             switch (test) {
                 case LOWER_CASE_TEST:
-                case DEFAULT_TEST:
-                    {
-                        HttpResponse httpResponse = HttpClient.sendRequest(url);
+                case DEFAULT_TEST: {
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-                        assertHealthyResponse(httpResponse);
-                    }
+                    assertHealthyResponse(httpResponse);
+                }
             }
         }
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
+    public void testDefaultTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
             HttpResponse httpResponse = HttpClient.sendRequest(url);
 
             switch (test) {
-                case DEFAULT_TEST:
-                    {
-                        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-                        break;
-                    }
-                case LOWER_CASE_TEST:
-                    {
-                        assertMetricsResponseLowerCase(httpResponse, MetricsContentType.DEFAULT);
-                        break;
-                    }
-                case FAILED_AUTHENTICATION_TEST:
-                    {
-                        assertThat(httpResponse.statusCode()).isEqualTo(401);
-                        break;
-                    }
+                case DEFAULT_TEST: {
+                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                    break;
+                }
+                case LOWER_CASE_TEST: {
+                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.DEFAULT);
+                    break;
+                }
+                case FAILED_AUTHENTICATION_TEST: {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    break;
+                }
             }
         }
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
+    public void testOpenMetricsTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse =
-                    HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
             switch (test) {
-                case DEFAULT_TEST:
-                    {
-                        assertMetricsResponse(
-                                httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                        break;
-                    }
-                case LOWER_CASE_TEST:
-                    {
-                        assertMetricsResponseLowerCase(
-                                httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                        break;
-                    }
-                case FAILED_AUTHENTICATION_TEST:
-                    {
-                        assertThat(httpResponse.statusCode()).isEqualTo(401);
-                        break;
-                    }
+                case DEFAULT_TEST: {
+                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    break;
+                }
+                case LOWER_CASE_TEST: {
+                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    break;
+                }
+                case FAILED_AUTHENTICATION_TEST: {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    break;
+                }
             }
         }
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
+    public void testPrometheusTextMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse =
-                    HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
             switch (test) {
-                case DEFAULT_TEST:
-                    {
-                        assertMetricsResponse(
-                                httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                        break;
-                    }
-                case LOWER_CASE_TEST:
-                    {
-                        assertMetricsResponseLowerCase(
-                                httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                        break;
-                    }
-                case FAILED_AUTHENTICATION_TEST:
-                    {
-                        assertThat(httpResponse.statusCode()).isEqualTo(401);
-                        break;
-                    }
+                case DEFAULT_TEST: {
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    break;
+                }
+                case LOWER_CASE_TEST: {
+                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    break;
+                }
+                case FAILED_AUTHENTICATION_TEST: {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    break;
+                }
             }
         }
     }
 
     @Verifyica.Test
-    public void testPrometheusProtobufMetrics(
-            IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) throws IOException {
+    public void testPrometheusProtobufMetrics(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws IOException {
         for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
             String url = isolatorExporterTestEnvironment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse =
-                    HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
             switch (test) {
-                case DEFAULT_TEST:
-                    {
-                        assertMetricsResponse(
-                                httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                        break;
-                    }
-                case LOWER_CASE_TEST:
-                    {
-                        assertMetricsResponseLowerCase(
-                                httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                        break;
-                    }
-                case FAILED_AUTHENTICATION_TEST:
-                    {
-                        assertThat(httpResponse.statusCode()).isEqualTo(401);
-                        break;
-                    }
+                case DEFAULT_TEST: {
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    break;
+                }
+                case LOWER_CASE_TEST: {
+                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    break;
+                }
+                case FAILED_AUTHENTICATION_TEST: {
+                    assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    break;
+                }
             }
         }
     }
@@ -223,8 +194,7 @@ public class BasicIsolatorTest {
                 .throwIfFailed();
     }
 
-    private void assertMetricsResponse(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -233,16 +203,14 @@ public class BasicIsolatorTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
@@ -301,28 +269,24 @@ public class BasicIsolatorTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
     }
 
-    private void assertMetricsResponseLowerCase(
-            HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponseLowerCase(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -331,16 +295,14 @@ public class BasicIsolatorTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
@@ -385,43 +347,35 @@ public class BasicIsolatorTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size"
-                                .toLowerCase())
+                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size".toLowerCase())
                 .withLabel("source", "/dev/sda1")
                 .withValue(7.516192768E9d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent"
-                                .toLowerCase())
+                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent".toLowerCase())
                 .withLabel("source", "/dev/sda2")
                 .withValue(0.8d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions"
-                                .toLowerCase())
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions"
+                        .toLowerCase())
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps"
-                                .toLowerCase())
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps".toLowerCase())
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred"
-                                .toLowerCase())
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred"
+                        .toLowerCase())
                 .withValue(6.0d)
                 .isPresent();
     }

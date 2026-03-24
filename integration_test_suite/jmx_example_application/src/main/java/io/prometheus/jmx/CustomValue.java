@@ -20,10 +20,14 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Class to implement CustomValue */
+/**
+ * Class to implement CustomValue
+ */
 public class CustomValue implements CustomValueMBean {
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public CustomValue() {
         // INTENTIONALLY BLANK
     }
@@ -40,7 +44,6 @@ public class CustomValue implements CustomValueMBean {
 
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        mBeanServer.registerMBean(
-                new CustomValue(), new ObjectName("io.prometheus.jmx:type=customValue"));
+        mBeanServer.registerMBean(new CustomValue(), new ObjectName("io.prometheus.jmx:type=customValue"));
     }
 }

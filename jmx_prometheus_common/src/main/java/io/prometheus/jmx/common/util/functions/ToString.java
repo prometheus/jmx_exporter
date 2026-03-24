@@ -20,7 +20,9 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to convert an Object to a String */
+/**
+ * Function to convert an Object to a String
+ */
 public class ToString implements Function<Object, String> {
 
     private final Supplier<? extends RuntimeException> supplier;

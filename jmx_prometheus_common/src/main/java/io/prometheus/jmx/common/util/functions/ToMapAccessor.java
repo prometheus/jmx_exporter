@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to create a MapAccessor from an Object */
+/**
+ * Function to create a MapAccessor from an Object
+ */
 @SuppressWarnings("unchecked")
 public class ToMapAccessor implements Function<Object, MapAccessor> {
 

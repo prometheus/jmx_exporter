@@ -62,8 +62,7 @@ public class AutoIncrementingMBeanTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -72,8 +71,7 @@ public class AutoIncrementingMBeanTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -82,37 +80,23 @@ public class AutoIncrementingMBeanTest {
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -120,16 +104,10 @@ public class AutoIncrementingMBeanTest {
             throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
@@ -142,8 +120,7 @@ public class AutoIncrementingMBeanTest {
     }
 
     @Verifyica.Test
-    public void testAutoIncrementingMBean(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testAutoIncrementingMBean(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         // Collect the auto incrementing MBean values
@@ -170,24 +147,21 @@ public class AutoIncrementingMBeanTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -248,22 +222,19 @@ public class AutoIncrementingMBeanTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
     }
@@ -280,21 +251,16 @@ public class AutoIncrementingMBeanTest {
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
-        Optional<Double> optionalValue =
-                metrics.stream()
-                        .filter(
-                                metric ->
-                                        metric.name()
-                                                .startsWith("io_prometheus_jmx_autoIncrementing"))
-                        .map(Metric::value)
-                        .limit(1)
-                        .findFirst();
+        Optional<Double> optionalValue = metrics.stream()
+                .filter(metric -> metric.name().startsWith("io_prometheus_jmx_autoIncrementing"))
+                .map(Metric::value)
+                .limit(1)
+                .findFirst();
 
         if (optionalValue.isPresent()) {
             return optionalValue.get();
         }
 
-        throw new AssertionFailedError(
-                "Metric name [io_prometheus_jmx_autoIncrementing] s not present");
+        throw new AssertionFailedError("Metric name [io_prometheus_jmx_autoIncrementing] s not present");
     }
 }

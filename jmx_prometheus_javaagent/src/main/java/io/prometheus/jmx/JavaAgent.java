@@ -35,7 +35,9 @@ import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
-/** Class to implement JavaAgent */
+/**
+ * Class to implement JavaAgent
+ */
 public class JavaAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JavaAgent.class);
@@ -44,7 +46,9 @@ public class JavaAgent {
 
     private static final String THREAD_NAME = "jmx-exporter-startup";
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public JavaAgent() {
         // INTENTIONALLY BLANK
     }
@@ -71,20 +75,14 @@ public class JavaAgent {
             File file = new File(arguments.getFilename());
             MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
 
-            int startDelaySeconds =
-                    mapAccessor
-                            .get("/startDelaySeconds")
-                            .map(
-                                    new ToInteger(
-                                            ConfigurationException.supplier(
-                                                    "/startDelaySeconds must be an integer")))
-                            .map(
-                                    new IntegerInRange(
-                                            0,
-                                            Integer.MAX_VALUE,
-                                            ConfigurationException.supplier(
-                                                    "/startDelaySeconds must be non-negative")))
-                            .orElse(0);
+            int startDelaySeconds = mapAccessor
+                    .get("/startDelaySeconds")
+                    .map(new ToInteger(ConfigurationException.supplier("/startDelaySeconds must be an integer")))
+                    .map(new IntegerInRange(
+                            0,
+                            Integer.MAX_VALUE,
+                            ConfigurationException.supplier("/startDelaySeconds must be non-negative")))
+                    .orElse(0);
 
             if (startDelaySeconds > 0) {
                 LOGGER.info("Start delay [%d] seconds", startDelaySeconds);
@@ -105,19 +103,17 @@ public class JavaAgent {
      * @param file the configuration file
      * @param mapAccessor the map accessor
      */
-    private static void startAsync(
-            int startDelaySeconds, Arguments arguments, File file, MapAccessor mapAccessor) {
-        Thread thread =
-                new Thread(
-                        () -> {
-                            try {
-                                Thread.sleep(startDelaySeconds * 1000L);
-                                start(arguments, file, mapAccessor);
-                            } catch (Throwable t) {
-                                handleError(t, null, null);
-                            }
-                        },
-                        THREAD_NAME);
+    private static void startAsync(int startDelaySeconds, Arguments arguments, File file, MapAccessor mapAccessor) {
+        Thread thread = new Thread(
+                () -> {
+                    try {
+                        Thread.sleep(startDelaySeconds * 1000L);
+                        start(arguments, file, mapAccessor);
+                    } catch (Throwable t) {
+                        handleError(t, null, null);
+                    }
+                },
+                THREAD_NAME);
 
         thread.setDaemon(true);
         thread.start();
@@ -147,14 +143,10 @@ public class JavaAgent {
 
             new BuildInfoMetrics().register(DEFAULT_REGISTRY);
 
-            boolean excludeJvmMetrics =
-                    mapAccessor
-                            .get("/excludeJvmMetrics")
-                            .map(
-                                    new ToBoolean(
-                                            ConfigurationException.supplier(
-                                                    "/excludeJvmMetrics must be a boolean")))
-                            .orElse(false);
+            boolean excludeJvmMetrics = mapAccessor
+                    .get("/excludeJvmMetrics")
+                    .map(new ToBoolean(ConfigurationException.supplier("/excludeJvmMetrics must be a boolean")))
+                    .orElse(false);
 
             if (!excludeJvmMetrics) {
                 JvmMetrics.builder().register(DEFAULT_REGISTRY);
@@ -168,12 +160,11 @@ public class JavaAgent {
                 LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
                 LOGGER.info("Starting HTTPServer ...");
 
-                httpServer =
-                        HTTPServerFactory.createAndStartHTTPServer(
-                                PrometheusRegistry.defaultRegistry,
-                                InetAddress.getByName(arguments.getHost()),
-                                arguments.getPort(),
-                                file);
+                httpServer = HTTPServerFactory.createAndStartHTTPServer(
+                        PrometheusRegistry.defaultRegistry,
+                        InetAddress.getByName(arguments.getHost()),
+                        arguments.getPort(),
+                        file);
 
                 LOGGER.info("HTTPServer started");
 
@@ -185,14 +176,12 @@ public class JavaAgent {
             if (openTelemetryEnabled) {
                 LOGGER.info("Starting OpenTelemetry ...");
 
-                openTelemetryExporter =
-                        OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
-                                PrometheusRegistry.defaultRegistry, file);
+                openTelemetryExporter = OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
+                        PrometheusRegistry.defaultRegistry, file);
 
                 LOGGER.info("OpenTelemetry started");
 
-                Runtime.getRuntime()
-                        .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
+                Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
             LOGGER.info("Running ...");
@@ -208,8 +197,7 @@ public class JavaAgent {
      * @param openTelemetryExporter the open telemetry exporter
      * @param httpServer the http server
      */
-    private static void handleError(
-            Throwable t, OpenTelemetryExporter openTelemetryExporter, HTTPServer httpServer) {
+    private static void handleError(Throwable t, OpenTelemetryExporter openTelemetryExporter, HTTPServer httpServer) {
         synchronized (System.err) {
             System.err.println("Failed to start Prometheus JMX Exporter ...");
             System.err.println();

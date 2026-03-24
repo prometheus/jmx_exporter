@@ -23,17 +23,23 @@ import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.verifyica.api.ArgumentContext;
 
-/** Class to implement TestSupport */
+/**
+ * Class to implement TestSupport
+ */
 public class TestSupport {
 
-    /** Network configuration constant */
+    /**
+     * Network configuration constant
+     */
     public static final String NETWORK = "network";
 
     private static final String BUILD_INFO_JAVAAGENT = "jmx_prometheus_javaagent";
 
     private static final String BUILD_INFO_STANDALONE = "jmx_prometheus_standalone";
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private TestSupport() {
         // INTENTIONALLY BLANK
     }
@@ -94,9 +100,8 @@ public class TestSupport {
      */
     public static void destroyExporterTestEnvironment(ArgumentContext argumentContext) {
         Optional.ofNullable(argumentContext.getArgumentAs(JmxExporterTestEnvironment.class))
-                .ifPresent(
-                        exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.getPayload().destroy());
+                .ifPresent(exporterTestEnvironmentArgument ->
+                        exporterTestEnvironmentArgument.getPayload().destroy());
     }
 
     /**
@@ -106,9 +111,8 @@ public class TestSupport {
      */
     public static void destroyIsolatorExporterTestEnvironment(ArgumentContext argumentContext) {
         Optional.ofNullable(argumentContext.getArgumentAs(IsolatorExporterTestEnvironment.class))
-                .ifPresent(
-                        exporterTestEnvironmentArgument ->
-                                exporterTestEnvironmentArgument.getPayload().destroy());
+                .ifPresent(exporterTestEnvironmentArgument ->
+                        exporterTestEnvironmentArgument.getPayload().destroy());
     }
 
     /**
@@ -128,8 +132,6 @@ public class TestSupport {
      * @return the build info name
      */
     public static String getBuildInfoName(JmxExporterMode jmxExporterMode) {
-        return jmxExporterMode == JmxExporterMode.JavaAgent
-                ? BUILD_INFO_JAVAAGENT
-                : BUILD_INFO_STANDALONE;
+        return jmxExporterMode == JmxExporterMode.JavaAgent ? BUILD_INFO_JAVAAGENT : BUILD_INFO_STANDALONE;
     }
 }

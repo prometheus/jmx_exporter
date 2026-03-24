@@ -35,8 +35,7 @@ public class MapAccessorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        mapAccessor =
-                MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
+        mapAccessor = MapAccessor.of(YamlSupport.loadYaml(ResourceSupport.load("/MapAccessorTest.yaml")));
     }
 
     @Test
@@ -57,142 +56,89 @@ public class MapAccessorTest {
     @Test
     public void testGet() {
         Optional<Object> optional = mapAccessor.get("/");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/httpServer");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/httpServer/authentication");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/httpServer/authentication/basic");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/httpServer/authentication/basic/username");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value)
-                                    .isNotNull()
-                                    .isInstanceOf(String.class)
-                                    .isEqualTo("Prometheus");
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(String.class).isEqualTo("Prometheus");
+        });
 
         optional = mapAccessor.get("/httpServer/authentication/basic/password");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value)
-                                    .isNotNull()
-                                    .isInstanceOf(String.class)
-                                    .isEqualTo(
-                                            "c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9");
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value)
+                    .isNotNull()
+                    .isInstanceOf(String.class)
+                    .isEqualTo("c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9");
+        });
 
         optional = mapAccessor.get("/httpServer/threads");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/httpServer/threads/minimum");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Integer.class).isEqualTo(1);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Integer.class).isEqualTo(1);
+        });
 
         optional = mapAccessor.get("/httpServer/threads/maximum");
-        assertThat(optional)
-                .isNotNull()
-                .isPresent()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Integer.class).isEqualTo(10);
-                        });
+        assertThat(optional).isNotNull().isPresent().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Integer.class).isEqualTo(10);
+        });
 
         optional = mapAccessor.get("/httpServer/threads/keepAlive");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value)
-                                    .isNotNull()
-                                    .isInstanceOf(Integer.class)
-                                    .isEqualTo(120);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Integer.class).isEqualTo(120);
+        });
 
         optional = mapAccessor.get("/key");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/key/subkey");
         assertThat(optional).isNotNull().isNotPresent();
 
         optional = mapAccessor.get("/key2");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull();
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull();
+        });
 
         assertThat(mapAccessor.containsPath("/key2/subkey2")).isTrue();
         optional = mapAccessor.get("/key2/subkey2");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
 
         optional = mapAccessor.get("/key2/subkey2/foo");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isNotNull().isInstanceOf(String.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(String.class);
+        });
 
         optional = mapAccessor.get("/key2/subkey2/foo/bar");
         assertThat(optional).isNotNull().isNotPresent();
 
         optional = mapAccessor.get("/key3");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isInstanceOf(String.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isInstanceOf(String.class);
+        });
 
         assertThat(mapAccessor.containsPath("/key4")).isTrue();
         optional = mapAccessor.get("/key4");
@@ -203,22 +149,9 @@ public class MapAccessorTest {
 
     @Test
     public void testInvalidPaths() {
-        String[] paths =
-                new String[] {
-                    null,
-                    "",
-                    " ",
-                    "foo",
-                    "//",
-                    "/ /",
-                    " /",
-                    "/ ",
-                    "/foo/",
-                    "/ foo/",
-                    "/ foo / ",
-                    "/foo /",
-                    "/foo/ /",
-                };
+        String[] paths = new String[] {
+            null, "", " ", "foo", "//", "/ /", " /", "/ ", "/foo/", "/ foo/", "/ foo / ", "/foo /", "/foo/ /",
+        };
 
         for (String path : paths) {
             String finalPath = path;
@@ -233,14 +166,11 @@ public class MapAccessorTest {
         MapAccessor mapAccessor = MapAccessor.of(new LinkedHashMap<>());
 
         Optional<Object> optional = mapAccessor.get("/");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isInstanceOf(Map.class);
-                            Map<Object, Object> map = (Map<Object, Object>) value;
-                            assertThat(map).isEmpty();
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isInstanceOf(Map.class);
+            Map<Object, Object> map = (Map<Object, Object>) value;
+            assertThat(map).isEmpty();
+        });
 
         optional = mapAccessor.get("/foo");
         assertThat(optional).isNotNull().isNotPresent();
@@ -252,28 +182,20 @@ public class MapAccessorTest {
     @Test
     public void testUnmodifiable() {
         Optional<Object> optional = mapAccessor.get("/");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isInstanceOf(Map.class);
+        });
 
         Map<Object, Object> map = (Map<Object, Object>) optional.get();
 
-        assertThatExceptionOfType(UnsupportedOperationException.class)
-                .isThrownBy(() -> map.put("abc", "123"));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> map.put("abc", "123"));
 
         optional = mapAccessor.get("/key");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isInstanceOf(Map.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isInstanceOf(Map.class);
+        });
 
-        assertThatExceptionOfType(UnsupportedOperationException.class)
-                .isThrownBy(() -> map.put("abc", "123"));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> map.put("abc", "123"));
 
         List<String> list = new ArrayList<>();
         list.add("abc");
@@ -283,17 +205,13 @@ public class MapAccessorTest {
 
         MapAccessor mapAccessor2 = MapAccessor.of(map2);
         optional = mapAccessor2.get("/list");
-        assertThat(optional)
-                .isNotNull()
-                .hasValueSatisfying(
-                        value -> {
-                            assertThat(value).isInstanceOf(List.class);
-                        });
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isInstanceOf(List.class);
+        });
 
         List<String> list2 = (List<String>) optional.get();
         assertThat(list2).isNotEmpty();
 
-        assertThatExceptionOfType(UnsupportedOperationException.class)
-                .isThrownBy(() -> list2.add("123"));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> list2.add("123"));
     }
 }

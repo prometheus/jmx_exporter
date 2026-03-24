@@ -20,7 +20,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-/** Class to implement a Metric */
+/**
+ * Class to implement a Metric
+ */
 public class Metric {
 
     private final Type type;
@@ -29,13 +31,21 @@ public class Metric {
     private final TreeMap<String, String> labels;
     private final double value;
 
-    /** Metric types */
+    /**
+     * Metric types
+     */
     public enum Type {
-        /** Gauge */
+        /**
+         * Gauge
+         */
         GAUGE,
-        /** Counter */
+        /**
+         * Counter
+         */
         COUNTER,
-        /** Untyped */
+        /**
+         * Untyped
+         */
         UNTYPED
     }
 
@@ -48,8 +58,7 @@ public class Metric {
      * @param labels labels
      * @param value value
      */
-    public Metric(
-            Type type, String help, String name, TreeMap<String, String> labels, double value) {
+    public Metric(Type type, String help, String name, TreeMap<String, String> labels, double value) {
         this.type = type;
         this.help = help;
         this.name = name;

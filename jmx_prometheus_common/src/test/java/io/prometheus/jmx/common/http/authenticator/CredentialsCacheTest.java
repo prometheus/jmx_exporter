@@ -37,13 +37,14 @@ public class CredentialsCacheTest {
         credentialsCache.add(credentials);
 
         assertThat(credentialsCache.contains(credentials)).isTrue();
-        assertThat(credentialsCache.contains(new Credentials(username, password))).isTrue();
+        assertThat(credentialsCache.contains(new Credentials(username, password)))
+                .isTrue();
         assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
-        assertThat(credentialsCache.getCurrentCacheSizeBytes())
-                .isEqualTo(credentialsCache.getMaximumCacheSizeBytes());
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialsCache.getMaximumCacheSizeBytes());
 
         assertThat(credentialsCache.remove(new Credentials(username, password))).isTrue();
-        assertThat(credentialsCache.contains(new Credentials(username, password))).isFalse();
+        assertThat(credentialsCache.contains(new Credentials(username, password)))
+                .isFalse();
     }
 
     @Test
@@ -61,12 +62,14 @@ public class CredentialsCacheTest {
             credentialsCache.add(credentials);
 
             assertThat(credentialsCache.contains(credentials)).isTrue();
-            assertThat(credentialsCache.contains(new Credentials(username + i, password))).isTrue();
+            assertThat(credentialsCache.contains(new Credentials(username + i, password)))
+                    .isTrue();
             assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
             assertThat(credentialsCache.getCurrentCacheSizeBytes())
                     .isEqualTo(credentialsCache.getMaximumCacheSizeBytes());
 
-            assertThat(credentialsCache.remove(new Credentials(username + i, password))).isTrue();
+            assertThat(credentialsCache.remove(new Credentials(username + i, password)))
+                    .isTrue();
             assertThat(credentialsCache.contains(new Credentials(username + 1, password)))
                     .isFalse();
 
@@ -94,16 +97,17 @@ public class CredentialsCacheTest {
             credentialsCache.add(credentials);
 
             assertThat(credentialsCache.contains(credentials)).isTrue();
-            assertThat(credentialsCache.contains(new Credentials(username + i, password))).isTrue();
-            assertThat(credentialsCache.getCurrentCacheSizeBytes())
-                    .isEqualTo(credentialSizeBytes * (i + 1));
+            assertThat(credentialsCache.contains(new Credentials(username + i, password)))
+                    .isTrue();
+            assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes * (i + 1));
         }
 
         assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(maximumCacheSizeBytes);
 
         credentialsCache.add(new Credentials(username + 0, password));
 
-        assertThat(credentialsCache.contains(new Credentials(username + 0, password))).isTrue();
+        assertThat(credentialsCache.contains(new Credentials(username + 0, password)))
+                .isTrue();
         assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(maximumCacheSizeBytes);
     }
 

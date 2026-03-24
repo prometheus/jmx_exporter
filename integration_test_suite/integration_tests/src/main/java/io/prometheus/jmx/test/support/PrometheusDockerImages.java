@@ -29,15 +29,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/** Class to implement PrometheusDockerImages */
+/**
+ * Class to implement PrometheusDockerImages
+ */
 public final class PrometheusDockerImages {
 
     private static final String ALL = "ALL";
 
     private static final String DOCKER_IMAGES_CONFIGURATION = "prometheus.docker.images";
 
-    private static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE =
-            "/smoke-test-prometheus-docker-images.txt";
+    private static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE = "/smoke-test-prometheus-docker-images.txt";
 
     private static final List<String> SMOKE_TEST_DOCKER_IMAGES =
             Collections.unmodifiableList(load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE));
@@ -47,7 +48,9 @@ public final class PrometheusDockerImages {
     private static final List<String> ALL_DOCKER_IMAGE_NAMES =
             Collections.unmodifiableList(load(ALL_DOCKER_IMAGES_RESOURCE));
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private PrometheusDockerImages() {
         // INTENTIONALLY BLANK
     }
@@ -58,9 +61,8 @@ public final class PrometheusDockerImages {
      * @return the collection of Docker image names
      */
     public static Collection<String> names() {
-        String configurationValue =
-                System.getenv(
-                        DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
+        String configurationValue = System.getenv(
+                DOCKER_IMAGES_CONFIGURATION.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
         if (configurationValue == null || configurationValue.trim().isEmpty()) {
             configurationValue = System.getProperty(DOCKER_IMAGES_CONFIGURATION);
@@ -105,8 +107,7 @@ public final class PrometheusDockerImages {
                 throw new IOException("Resource not found");
             }
 
-            bufferedReader =
-                    new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
             while (true) {
                 String line = bufferedReader.readLine();

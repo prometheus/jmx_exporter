@@ -21,12 +21,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Class to implement AutoIncrementing */
+/**
+ * Class to implement AutoIncrementing
+ */
 public class AutoIncrementing implements AutoIncrementingMBean {
 
     private final AtomicInteger atomicInteger;
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public AutoIncrementing() {
         atomicInteger = new AtomicInteger(0);
     }

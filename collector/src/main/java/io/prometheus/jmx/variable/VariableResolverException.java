@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx.variable;
 
-/** Class to implement VariableResolverException */
+/**
+ * Class to implement VariableResolverException
+ */
 public class VariableResolverException extends RuntimeException {
 
     /**

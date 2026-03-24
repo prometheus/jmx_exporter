@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to convert an Object to a Map */
+/**
+ * Function to convert an Object to a Map
+ */
 @SuppressWarnings("unchecked")
 public class ToMap implements Function<Object, Map<String, String>> {
 
@@ -44,7 +46,8 @@ public class ToMap implements Function<Object, Map<String, String>> {
             Map<String, String> result = new LinkedHashMap<>();
             Map<Object, Object> map = (Map<Object, Object>) o;
 
-            map.forEach((o1, o2) -> result.put(o1.toString().trim(), o2.toString().trim()));
+            map.forEach(
+                    (o1, o2) -> result.put(o1.toString().trim(), o2.toString().trim()));
 
             return result;
         } catch (Throwable t) {

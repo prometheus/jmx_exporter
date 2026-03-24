@@ -42,37 +42,44 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-/** Class to implement HttpClient */
+/**
+ * Class to implement HttpClient
+ */
 public class HttpClient {
 
-    /** Default connect timeout in milliseconds */
+    /**
+     * Default connect timeout in milliseconds
+     */
     public static final int CONNECT_TIMEOUT = 60000;
 
-    /** Default read timeout in milliseconds */
+    /**
+     * Default read timeout in milliseconds
+     */
     public static final int WRITE_TIMEOUT = 60000;
 
-    /** Default read timeout in milliseconds */
+    /**
+     * Default read timeout in milliseconds
+     */
     public static final int READ_TIMEOUT = 60000;
 
-    /** Default maximum total connections */
+    /**
+     * Default maximum total connections
+     */
     public static final int MAXIMUM_CONNECTIONS = 200;
 
-    /** Default eviction timeout in seconds */
+    /**
+     * Default eviction timeout in seconds
+     */
     public static final int EVICTION_TIMEOUT = 30;
 
-    private static final MediaType JSON_MEDIA_TYPE =
-            MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType TEXT_MEDIA_TYPE = MediaType.parse("text/plain; charset=utf-8");
 
     private static final SSLFactory UNSAFE_SSL_FACTORY =
             SSLFactory.builder().withUnsafeTrustMaterial().build();
 
     private static final OkHttpClient defaultHttpClient =
-            createHttpClient(
-                    CONNECT_TIMEOUT,
-                    WRITE_TIMEOUT,
-                    READ_TIMEOUT,
-                    UNSAFE_SSL_FACTORY.getSslContext());
+            createHttpClient(CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT, UNSAFE_SSL_FACTORY.getSslContext());
 
     /**
      * Send an HTTP request
@@ -95,11 +102,7 @@ public class HttpClient {
      */
     public static HttpResponse sendRequest(String url, SSLContext sslContext) throws IOException {
         return sendRequest(
-                HttpRequest.builder().url(url).build(),
-                CONNECT_TIMEOUT,
-                WRITE_TIMEOUT,
-                READ_TIMEOUT,
-                sslContext);
+                HttpRequest.builder().url(url).build(), CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT, sslContext);
     }
 
     /**
@@ -111,8 +114,7 @@ public class HttpClient {
      * @return an HttpResponse
      * @throws IOException IOException
      */
-    public static HttpResponse sendRequest(String url, String header, String value)
-            throws IOException {
+    public static HttpResponse sendRequest(String url, String header, String value) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).header(header, value).build());
     }
 
@@ -125,8 +127,8 @@ public class HttpClient {
      * @return an HttpResponse
      * @throws IOException IOException
      */
-    public static HttpResponse sendRequest(
-            String url, String header, String value, SSLContext sslContext) throws IOException {
+    public static HttpResponse sendRequest(String url, String header, String value, SSLContext sslContext)
+            throws IOException {
         return sendRequest(
                 HttpRequest.builder().url(url).header(header, value).build(),
                 CONNECT_TIMEOUT,
@@ -143,8 +145,7 @@ public class HttpClient {
      * @return an HttpResponse
      * @throws IOException IOException
      */
-    public static HttpResponse sendRequest(String url, Map<String, Collection<String>> headers)
-            throws IOException {
+    public static HttpResponse sendRequest(String url, Map<String, Collection<String>> headers) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).headers(headers).build());
     }
 
@@ -170,8 +171,7 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(
-            HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout)
-            throws IOException {
+            HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout) throws IOException {
         return sendRequest(httpRequest, connectTimeout, writeTimeout, readTimeout, null);
     }
 
@@ -187,15 +187,10 @@ public class HttpClient {
      * @throws IOException IOException
      */
     public static HttpResponse sendRequest(
-            HttpRequest httpRequest,
-            int connectTimeout,
-            int writeTimeout,
-            int readTimeout,
-            SSLContext sslContext)
+            HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext)
             throws IOException {
 
-        OkHttpClient httpClient =
-                getHttpClient(connectTimeout, writeTimeout, readTimeout, sslContext);
+        OkHttpClient httpClient = getHttpClient(connectTimeout, writeTimeout, readTimeout, sslContext);
 
         HttpRequest.Method method = httpRequest.method();
         Request.Builder requestBuilder = new Request.Builder().url(httpRequest.url());
@@ -219,21 +214,18 @@ public class HttpClient {
         }
 
         switch (method) {
-            case GET:
-                {
-                    requestBuilder.get();
-                    break;
-                }
-            case POST:
-                {
-                    requestBuilder.post(body);
-                    break;
-                }
-            case PUT:
-                {
-                    requestBuilder.put(body);
-                    break;
-                }
+            case GET: {
+                requestBuilder.get();
+                break;
+            }
+            case POST: {
+                requestBuilder.post(body);
+                break;
+            }
+            case PUT: {
+                requestBuilder.put(body);
+                break;
+            }
         }
 
         Request request = requestBuilder.build();
@@ -245,9 +237,7 @@ public class HttpClient {
 
             Map<String, List<String>> headers = new HashMap<>();
             for (String headerName : response.headers().names()) {
-                headers.put(
-                        headerName.toUpperCase(Locale.US),
-                        Collections.singletonList(response.header(headerName)));
+                headers.put(headerName.toUpperCase(Locale.US), Collections.singletonList(response.header(headerName)));
             }
 
             byte[] responseBody = null;
@@ -308,37 +298,29 @@ public class HttpClient {
         // Use SSLFactory only for the default unsafe context
         if (sslContext == UNSAFE_SSL_FACTORY.getSslContext()) {
             sslSocketFactory = UNSAFE_SSL_FACTORY.getSslSocketFactory();
-            trustManager =
-                    UNSAFE_SSL_FACTORY
-                            .getTrustManager()
-                            .orElseThrow(
-                                    () -> new IllegalStateException("TrustManager not available"));
+            trustManager = UNSAFE_SSL_FACTORY
+                    .getTrustManager()
+                    .orElseThrow(() -> new IllegalStateException("TrustManager not available"));
         } else {
             // For custom SSLContext, extract socket factory and use unsafe trust manager
             sslSocketFactory = sslContext.getSocketFactory();
 
             // Reuse the unsafe trust manager from the default SSL factory
             // This matches the behavior of the original code which used unsafe trust material
-            trustManager =
-                    UNSAFE_SSL_FACTORY
-                            .getTrustManager()
-                            .orElseThrow(
-                                    () -> new IllegalStateException("TrustManager not available"));
+            trustManager = UNSAFE_SSL_FACTORY
+                    .getTrustManager()
+                    .orElseThrow(() -> new IllegalStateException("TrustManager not available"));
         }
 
         HostnameVerifier hostnameVerifier = HostnameVerifierUtils.createUnsafe();
 
         // Connection pool with idle connection eviction
-        ConnectionPool connectionPool =
-                new ConnectionPool(MAXIMUM_CONNECTIONS, EVICTION_TIMEOUT, TimeUnit.SECONDS);
+        ConnectionPool connectionPool = new ConnectionPool(MAXIMUM_CONNECTIONS, EVICTION_TIMEOUT, TimeUnit.SECONDS);
 
         // Use a compatible connection spec that will accept whatever the SSLContext provides
         // This prevents UnknownServiceException when custom SSLContext has restricted cipher suites
         List<ConnectionSpec> connectionSpecs =
-                Arrays.asList(
-                        ConnectionSpec.MODERN_TLS,
-                        ConnectionSpec.COMPATIBLE_TLS,
-                        ConnectionSpec.CLEARTEXT);
+                Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
 
         return new OkHttpClient.Builder()
                 .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)

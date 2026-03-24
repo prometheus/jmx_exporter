@@ -22,7 +22,9 @@ import java.util.TreeMap;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Class to implement ExitDb */
+/**
+ * Class to implement ExitDb
+ */
 public class ExistDb implements ExistDbMXBean {
 
     private final Map<QueryKey, RunningQuery> queries;
@@ -39,11 +41,9 @@ public class ExistDb implements ExistDbMXBean {
     private Map<QueryKey, RunningQuery> build() {
         Map<QueryKey, RunningQuery> queries = new TreeMap<>();
 
-        RunningQuery runningQuery1 =
-                new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
+        RunningQuery runningQuery1 = new RunningQuery(1, "/db/query1.xq", System.currentTimeMillis());
 
-        RunningQuery runningQuery2 =
-                new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
+        RunningQuery runningQuery2 = new RunningQuery(2, "/db/query2.xq", System.currentTimeMillis());
 
         queries.put(new QueryKey(runningQuery1.getId(), runningQuery1.getPath()), runningQuery1);
         queries.put(new QueryKey(runningQuery2.getId(), runningQuery2.getPath()), runningQuery2);
@@ -58,7 +58,6 @@ public class ExistDb implements ExistDbMXBean {
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        mBeanServer.registerMBean(
-                new ExistDb(), new ObjectName("org.exist.management.exist:type=ProcessReport"));
+        mBeanServer.registerMBean(new ExistDb(), new ObjectName("org.exist.management.exist:type=ProcessReport"));
     }
 }

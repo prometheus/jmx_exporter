@@ -46,11 +46,9 @@ public class BasicAuthenticationSHA512Test {
 
     private final String VALID_PASSWORD = "secret";
 
-    private final String[] TEST_USERNAMES =
-            new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+    private final String[] TEST_USERNAMES = new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
 
-    private final String[] TEST_PASSWORDS =
-            new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
+    private final String[] TEST_PASSWORDS = new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
     @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
     public static Stream<JmxExporterTestEnvironment> arguments() {
@@ -66,8 +64,7 @@ public class BasicAuthenticationSHA512Test {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         for (String username : TEST_USERNAMES) {
@@ -78,11 +75,10 @@ public class BasicAuthenticationSHA512Test {
                     expectedStatusCode = 200;
                 }
 
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .basicAuthentication(username, password)
-                                .build();
+                HttpRequest httpRequest = HttpRequest.builder()
+                        .url(url)
+                        .basicAuthentication(username, password)
+                        .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -92,8 +88,7 @@ public class BasicAuthenticationSHA512Test {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
@@ -104,27 +99,24 @@ public class BasicAuthenticationSHA512Test {
                     expectedStatusCode = 200;
                 }
 
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .basicAuthentication(username, password)
-                                .build();
+                HttpRequest httpRequest = HttpRequest.builder()
+                        .url(url)
+                        .basicAuthentication(username, password)
+                        .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
                 if (expectedStatusCode == 401) {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                    assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
                 }
             }
         }
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
@@ -135,14 +127,11 @@ public class BasicAuthenticationSHA512Test {
                     expectedStatusCode = 200;
                 }
 
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .basicAuthentication(username, password)
-                                .header(
-                                        HttpHeader.ACCEPT,
-                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
-                                .build();
+                HttpRequest httpRequest = HttpRequest.builder()
+                        .url(url)
+                        .basicAuthentication(username, password)
+                        .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
+                        .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -150,17 +139,14 @@ public class BasicAuthenticationSHA512Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
                 }
             }
         }
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         for (String username : TEST_USERNAMES) {
@@ -171,14 +157,11 @@ public class BasicAuthenticationSHA512Test {
                     expectedStatusCode = 200;
                 }
 
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .basicAuthentication(username, password)
-                                .header(
-                                        HttpHeader.ACCEPT,
-                                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
-                                .build();
+                HttpRequest httpRequest = HttpRequest.builder()
+                        .url(url)
+                        .basicAuthentication(username, password)
+                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
+                        .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -186,9 +169,7 @@ public class BasicAuthenticationSHA512Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
                 }
             }
         }
@@ -207,14 +188,11 @@ public class BasicAuthenticationSHA512Test {
                     expectedStatusCode = 200;
                 }
 
-                HttpRequest httpRequest =
-                        HttpRequest.builder()
-                                .url(url)
-                                .basicAuthentication(username, password)
-                                .header(
-                                        HttpHeader.ACCEPT,
-                                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
-                                .build();
+                HttpRequest httpRequest = HttpRequest.builder()
+                        .url(url)
+                        .basicAuthentication(username, password)
+                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
+                        .build();
 
                 HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
@@ -222,9 +200,7 @@ public class BasicAuthenticationSHA512Test {
                     assertThat(httpResponse.statusCode()).isEqualTo(401);
                 } else {
                     assertMetricsResponse(
-                            jmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
                 }
             }
         }
@@ -250,8 +226,7 @@ public class BasicAuthenticationSHA512Test {
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

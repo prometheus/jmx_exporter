@@ -55,8 +55,7 @@ public class ThreadsConfigurationTest {
 
     @Verifyica.Test
     @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -65,8 +64,7 @@ public class ThreadsConfigurationTest {
     }
 
     @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -75,37 +73,23 @@ public class ThreadsConfigurationTest {
     }
 
     @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
     @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
+    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
         HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
     @Verifyica.Test
@@ -113,16 +97,10 @@ public class ThreadsConfigurationTest {
             throws IOException {
         String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
 
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(
-                        url,
-                        HttpHeader.ACCEPT,
-                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-        assertMetricsResponse(
-                jmxExporterTestEnvironment,
-                httpResponse,
-                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     @Verifyica.AfterAll
@@ -145,8 +123,7 @@ public class ThreadsConfigurationTest {
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

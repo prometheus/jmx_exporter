@@ -93,8 +93,7 @@ public class MetricMapAssertion implements MetricAssertion {
      */
     public MetricMapAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
-            throw new IllegalArgumentException(
-                    format("Label name [%s] or value [%s] is null", name, value));
+            throw new IllegalArgumentException(format("Label name [%s] or value [%s] is null", name, value));
         }
         if (labels == null) {
             labels = new TreeMap<>();
@@ -134,11 +133,9 @@ public class MetricMapAssertion implements MetricAssertion {
 
         if (condition) {
             if (metrics == null) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
-                                        + " present",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not" + " present",
+                        type, help, name, labels, value));
             }
         } else {
             if (metrics == null) {
@@ -146,40 +143,28 @@ public class MetricMapAssertion implements MetricAssertion {
             }
         }
 
-        Collection<Metric> subMetrics =
-                metrics.stream()
-                        .filter(metric -> type == null || metric.type().equals(type))
-                        .filter(metric -> help == null || metric.help().equals(help))
-                        .filter(
-                                metric ->
-                                        labels == null
-                                                || metric.labels()
-                                                        .entrySet()
-                                                        .containsAll(labels.entrySet()))
-                        .filter(metric -> value == null || metric.value() == value)
-                        .collect(Collectors.toList());
+        Collection<Metric> subMetrics = metrics.stream()
+                .filter(metric -> type == null || metric.type().equals(type))
+                .filter(metric -> help == null || metric.help().equals(help))
+                .filter(metric -> labels == null || metric.labels().entrySet().containsAll(labels.entrySet()))
+                .filter(metric -> value == null || metric.value() == value)
+                .collect(Collectors.toList());
 
         if (condition) {
             if (subMetrics.size() > 1) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]"
-                                        + " matches multiple metrics",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f]" + " matches multiple metrics",
+                        type, help, name, labels, value));
             } else if (subMetrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not"
-                                        + " present",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is not" + " present",
+                        type, help, name, labels, value));
             }
         } else {
             if (!subMetrics.isEmpty()) {
-                throw new AssertionFailedError(
-                        format(
-                                "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is"
-                                        + " present",
-                                type, help, name, labels, value));
+                throw new AssertionFailedError(format(
+                        "Metric type [%s] help [%s] name [%s] labels [%s] value [%f] is" + " present",
+                        type, help, name, labels, value));
             }
         }
 

@@ -21,29 +21,34 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Handler;
 import java.util.logging.SimpleFormatter;
 
-/** Class to implement LoggerFactory */
+/**
+ * Class to implement LoggerFactory
+ */
 public class LoggerFactory {
 
-    /** The root logger name */
+    /**
+     * The root logger name
+     */
     private static final String ROOT_LOGGER = "";
 
-    /** Cache for Logger instances */
+    /**
+     * Cache for Logger instances
+     */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
     static {
         // Override the default formatter for the root logger if it is SimpleFormatter
         for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
             if (null != handler.getFormatter()
-                    && handler.getFormatter()
-                            .getClass()
-                            .getName()
-                            .endsWith(SimpleFormatter.class.getName())) {
+                    && handler.getFormatter().getClass().getName().endsWith(SimpleFormatter.class.getName())) {
                 handler.setFormatter(new LoggerFormatter());
             }
         }
     }
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private LoggerFactory() {
         // INTENTIONALLY BLANK
     }

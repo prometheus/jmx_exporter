@@ -45,9 +45,8 @@ public class TomcatPatternCheckTest {
 
     private static final Pattern VALID_SERVLET_NAME = Pattern.compile("([-a-zA-Z0-9+/$%~_-|!.]*)");
 
-    private static final Pattern VALID_WEBMODULE =
-            Pattern.compile(
-                    "^.*j2eeType=Servlet,WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),name=([-a-zA-Z0-9+/$%~_-|!.]*),J2EEApplication=none,J2EEServer=none.*$");
+    private static final Pattern VALID_WEBMODULE = Pattern.compile(
+            "^.*j2eeType=Servlet,WebModule=//([-a-zA-Z0-9+&@#/%?=~_|!:.,;]*[-a-zA-Z0-9+&@#/%=~_|]),name=([-a-zA-Z0-9+/$%~_-|!.]*),J2EEApplication=none,J2EEServer=none.*$");
 
     public static boolean validateTomcatPath(String identifier) {
         return VALID_TOMCAT_PATH.matcher(identifier).matches();

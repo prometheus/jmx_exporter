@@ -24,7 +24,9 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/** Class to implement a username / salted message digest password BasicAuthenticator */
+/**
+ * Class to implement a username / salted message digest password BasicAuthenticator
+ */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
     private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
@@ -47,8 +49,7 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @param salt salt
      * @throws NoSuchAlgorithmException NoSuchAlgorithmException
      */
-    public MessageDigestAuthenticator(
-            String realm, String username, String passwordHash, String algorithm, String salt)
+    public MessageDigestAuthenticator(String realm, String username, String passwordHash, String algorithm, String salt)
             throws GeneralSecurityException {
         super(realm);
 
@@ -89,10 +90,8 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        boolean isValid =
-                this.username.equals(username)
-                        && this.passwordHash.equals(
-                                generatePasswordHash(algorithm, salt, password));
+        boolean isValid = this.username.equals(username)
+                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, password));
 
         if (isValid) {
             validCredentialsCache.add(credentials);

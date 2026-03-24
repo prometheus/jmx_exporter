@@ -48,7 +48,9 @@ import org.verifyica.api.ArgumentContext;
 import org.verifyica.api.Verifyica;
 import org.verifyica.api.util.CleanupExecutor;
 
-/** Class to implement CompleteTest */
+/**
+ * Class to implement CompleteTest
+ */
 public class ConfigurationTest {
 
     private static final String NETWORK = "network";
@@ -70,37 +72,28 @@ public class ConfigurationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
         prometheusTestEnvironment.initialize(testClass, network);
         prometheusTestEnvironment.waitForReady();
 
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
         jmxExporterTestEnvironment.initialize(testClass, network);
     }
 
     /** Method to test that metrics exist in Prometheus */
     @Verifyica.Test
-    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
 
         boolean isJmxExporterModeJavaStandalone =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
 
-        for (String metricName :
-                ExpectedMetricsNames.getMetricsNames().stream()
-                        .filter(
-                                metricName ->
-                                        !isJmxExporterModeJavaStandalone
-                                                || (!metricName.startsWith("jvm_")
-                                                        && !metricName.startsWith("process_")))
-                        .collect(Collectors.toList())) {
+        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
+                .filter(metricName -> !isJmxExporterModeJavaStandalone
+                        || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
+                .collect(Collectors.toList())) {
             Double value = getPrometheusMetric(prometheusTestEnvironment, metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
@@ -113,11 +106,9 @@ public class ConfigurationTest {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
                 argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
 
-        JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                openTelemetryTestEnvironment.exporterTestEnvironment();
+        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
 
-        PrometheusTestEnvironment prometheusTestEnvironment =
-                openTelemetryTestEnvironment.prometheusTestEnvironment();
+        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
 
         Network network = argumentContext.getMap().getAs(NETWORK);
 
@@ -150,24 +141,21 @@ public class ConfigurationTest {
         // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse)
-                .forEach(
-                        metric -> {
-                            String name = metric.name();
-                            Map<String, String> labels = metric.labels();
-                            String compositeName = name + " " + labels;
-                            assertThat(compositeNameSet).doesNotContain(compositeName);
-                            compositeNameSet.add(compositeName);
-                            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-                        });
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName =
-                TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -228,22 +216,19 @@ public class ConfigurationTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
                 .withValue(2.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
                 .withValue(4.0d)
                 .isPresent();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.UNTYPED)
-                .withName(
-                        "io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
+                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
                 .withValue(6.0d)
                 .isPresent();
     }
@@ -255,8 +240,7 @@ public class ConfigurationTest {
      * @param metricName metricName
      * @return the metric value, or null if it doesn't exist
      */
-    protected Double getPrometheusMetric(
-            PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
+    protected Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         Double value = null;
@@ -287,11 +271,10 @@ public class ConfigurationTest {
      * @param query query
      * @return an HttpResponse
      */
-    protected HttpResponse sendPrometheusQuery(
-            PrometheusTestEnvironment prometheusTestEnvironment, String query) throws IOException {
+    protected HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)
+            throws IOException {
         return sendRequest(
-                prometheusTestEnvironment,
-                "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
+                prometheusTestEnvironment, "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
     /**
@@ -301,8 +284,8 @@ public class ConfigurationTest {
      * @param path path
      * @return an HttpResponse
      */
-    protected HttpResponse sendRequest(
-            PrometheusTestEnvironment prometheusTestEnvironment, String path) throws IOException {
+    protected HttpResponse sendRequest(PrometheusTestEnvironment prometheusTestEnvironment, String path)
+            throws IOException {
         return HttpClient.sendRequest(prometheusTestEnvironment.getPrometheusUrl(path));
     }
 }

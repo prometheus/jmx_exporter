@@ -18,7 +18,9 @@ package io.prometheus.jmx.common;
 
 import java.util.function.Supplier;
 
-/** Class to implement ConfigurationException */
+/**
+ * Class to implement ConfigurationException
+ */
 public class ConfigurationException extends RuntimeException {
 
     /**

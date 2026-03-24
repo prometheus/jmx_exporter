@@ -20,7 +20,9 @@ import io.prometheus.jmx.common.util.Precondition;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to convert an Object to an Integer */
+/**
+ * Function to convert an Object to an Integer
+ */
 public class ToInteger implements Function<Object, Integer> {
 
     private final Supplier<? extends RuntimeException> supplier;

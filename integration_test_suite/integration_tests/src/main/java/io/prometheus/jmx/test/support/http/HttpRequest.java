@@ -27,16 +27,26 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Class to implement HttpRequest */
+/**
+ * Class to implement HttpRequest
+ */
 public class HttpRequest {
 
-    /** Enum to represent HTTP methods */
+    /**
+     * Enum to represent HTTP methods
+     */
     public enum Method {
-        /** GET method */
+        /**
+         * GET method
+         */
         GET,
-        /** POST method */
+        /**
+         * POST method
+         */
         POST,
-        /** PUT method */
+        /**
+         * PUT method
+         */
         PUT
     }
 
@@ -110,7 +120,9 @@ public class HttpRequest {
         private final Map<String, List<String>> headers = new HashMap<>();
         private String body;
 
-        /** Constructor */
+        /**
+         * Constructor
+         */
         private Builder() {
             // INTENTIONALLY BLANK
         }
@@ -145,7 +157,8 @@ public class HttpRequest {
          * @return the Builder
          */
         public Builder header(String name, String value) {
-            headers.computeIfAbsent(name.toUpperCase(Locale.US), k -> new ArrayList<>()).add(value);
+            headers.computeIfAbsent(name.toUpperCase(Locale.US), k -> new ArrayList<>())
+                    .add(value);
             return this;
         }
 
@@ -191,9 +204,7 @@ public class HttpRequest {
                     format(
                             "Basic %s",
                             Base64.getEncoder()
-                                    .encodeToString(
-                                            (principal + ":" + credential)
-                                                    .getBytes(StandardCharsets.UTF_8))));
+                                    .encodeToString((principal + ":" + credential).getBytes(StandardCharsets.UTF_8))));
         }
 
         /**

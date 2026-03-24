@@ -38,7 +38,9 @@ public class MatchedRule {
 
     private static final MatchedRule _unmatched = new MatchedRule();
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private MatchedRule() {
         this.name = null;
         this.matchName = null;
@@ -115,14 +117,7 @@ public class MatchedRule {
      * @return a MatchedRule with a value
      */
     public MatchedRule withValue(double value) {
-        return new MatchedRule(
-                this.name,
-                this.matchName,
-                this.type,
-                this.help,
-                this.labels,
-                value,
-                this.valueFactor);
+        return new MatchedRule(this.name, this.matchName, this.type, this.help, this.labels, value, this.valueFactor);
     }
 
     /**

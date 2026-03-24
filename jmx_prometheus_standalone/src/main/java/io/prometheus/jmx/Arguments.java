@@ -20,7 +20,9 @@ import static java.lang.String.format;
 
 import io.prometheus.jmx.common.ConfigurationException;
 
-/** Class to implement Arguments */
+/**
+ * Class to implement Arguments
+ */
 public class Arguments {
 
     private static final String DEFAULT_HOST = "0.0.0.0";
@@ -94,8 +96,7 @@ public class Arguments {
 
         for (String argument : arguments) {
             if (argument == null || argument.trim().isEmpty()) {
-                throw new ConfigurationException(
-                        format("Malformed arguments [%s]", toString(arguments)));
+                throw new ConfigurationException(format("Malformed arguments [%s]", toString(arguments)));
             }
         }
 
@@ -118,8 +119,7 @@ public class Arguments {
                     hostname = arguments[0].substring(0, colonIndex);
                 }
             } catch (NumberFormatException e) {
-                throw new ConfigurationException(
-                        format("Malformed arguments [%s]", toString(arguments)));
+                throw new ConfigurationException(format("Malformed arguments [%s]", toString(arguments)));
             }
 
             filename = arguments[1];

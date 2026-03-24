@@ -16,16 +16,24 @@
 
 package io.prometheus.jmx.test.support.http;
 
-/** Class to implement HttpHeader */
+/**
+ * Class to implement HttpHeader
+ */
 public class HttpHeader {
 
-    /** Accept header */
+    /**
+     * Accept header
+     */
     public static final String ACCEPT = "ACCEPT";
 
-    /** Content-Type header */
+    /**
+     * Content-Type header
+     */
     public static final String CONTENT_TYPE = "CONTENT-TYPE";
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private HttpHeader() {
         // INTENTIONALLY BLANK
     }

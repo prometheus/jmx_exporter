@@ -19,13 +19,16 @@ package io.prometheus.jmx;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/** Class to implement JmxExampleApplication */
+/**
+ * Class to implement JmxExampleApplication
+ */
 public class JmxExampleApplication {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private JmxExampleApplication() {
         // INTENTIONALLY BLANK
     }

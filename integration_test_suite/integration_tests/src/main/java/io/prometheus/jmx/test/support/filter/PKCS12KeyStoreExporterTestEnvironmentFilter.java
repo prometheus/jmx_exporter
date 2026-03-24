@@ -21,13 +21,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** Class to implement PKCS12KeyStoreExporterContextFilter */
-public class PKCS12KeyStoreExporterTestEnvironmentFilter
-        implements Predicate<JmxExporterTestEnvironment> {
+/**
+ * Class to implement PKCS12KeyStoreExporterContextFilter
+ */
+public class PKCS12KeyStoreExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public PKCS12KeyStoreExporterTestEnvironmentFilter() {
         filteredDockerImages = new HashSet<>();
         filteredDockerImages.add("eclipse-temurin:8-alpine");

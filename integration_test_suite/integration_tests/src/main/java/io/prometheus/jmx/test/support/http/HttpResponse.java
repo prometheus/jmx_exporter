@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Class to implement HttpResponse */
+/**
+ * Class to implement HttpResponse
+ */
 public class HttpResponse {
 
     private final int statusCode;
@@ -38,8 +40,7 @@ public class HttpResponse {
      * @param headers headers
      * @param body body
      */
-    public HttpResponse(
-            int statusCode, String statusMessage, Map<String, List<String>> headers, byte[] body) {
+    public HttpResponse(int statusCode, String statusMessage, Map<String, List<String>> headers, byte[] body) {
         this.statusCode = statusCode;
         this.statusMessage = statusMessage;
         this.headers = headers;
@@ -101,8 +102,7 @@ public class HttpResponse {
         assertThat(httpResponse).isNotNull();
         assertThat(httpResponse.statusCode()).isEqualTo(200);
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
-        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0))
-                .contains("text/plain");
+        assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).contains("text/plain");
         assertThat(httpResponse.body()).isNotNull();
         assertThat(httpResponse.body().string()).isNotBlank();
         assertThat(httpResponse.body().string()).contains("Exporter is healthy.");

@@ -28,7 +28,9 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
-/** Class to implement PerformanceMetrics */
+/**
+ * Class to implement PerformanceMetrics
+ */
 public class PerformanceMetrics implements PerformanceMetricsMBean {
 
     private final CompositeData compositeData;
@@ -59,8 +61,7 @@ public class PerformanceMetrics implements PerformanceMetricsMBean {
         OpenType<?>[] types = {SimpleType.LONG, SimpleType.LONG, SimpleType.LONG};
 
         CompositeType compositeType =
-                new CompositeType(
-                        "PerformanceMetrics", "Example composite data", names, descriptions, types);
+                new CompositeType("PerformanceMetrics", "Example composite data", names, descriptions, types);
 
         return new CompositeDataSupport(compositeType, data);
     }
@@ -73,7 +74,6 @@ public class PerformanceMetrics implements PerformanceMetricsMBean {
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
         mBeanServer.registerMBean(
-                new PerformanceMetrics(),
-                new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean"));
+                new PerformanceMetrics(), new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean"));
     }
 }

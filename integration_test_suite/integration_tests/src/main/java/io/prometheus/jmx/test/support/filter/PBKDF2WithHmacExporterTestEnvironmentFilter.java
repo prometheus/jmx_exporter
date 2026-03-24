@@ -21,13 +21,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** Class to implement PBKDF2WithHmacTestArgumentFilter */
-public class PBKDF2WithHmacExporterTestEnvironmentFilter
-        implements Predicate<JmxExporterTestEnvironment> {
+/**
+ * Class to implement PBKDF2WithHmacTestArgumentFilter
+ */
+public class PBKDF2WithHmacExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     public PBKDF2WithHmacExporterTestEnvironmentFilter() {
         // Filter out Docker image names that don't support PBKDF2 with HMAC
         filteredDockerImages = new HashSet<>();

@@ -29,31 +29,29 @@ import javax.management.ObjectName;
  * of it is to reduce the frequency with which we invoke PROPERTY_PATTERN when discovering mBeans.
  */
 class JmxMBeanPropertyCache {
-    private static final Pattern PROPERTY_PATTERN =
-            Pattern.compile(
-                    "([^,=:\\*\\?]+)"
-                            + // Name - non-empty, anything but comma, equals, colon, star, or
-                            // question mark
-                            "="
-                            + // Equals
-                            "("
-                            + // Either
-                            "\""
-                            + // Quoted
-                            "(?:"
-                            + // A possibly empty sequence of
-                            "[^\\\\\"]*"
-                            + // Greedily match anything but backslash or quote
-                            "(?:\\\\.)?"
-                            + // Greedily see if we can match an escaped sequence
-                            ")*"
-                            + "\""
-                            + "|"
-                            + // Or
-                            "[^,=:\"]*"
-                            + // Unquoted - can be empty, anything but comma, equals, colon, or
-                            // quote
-                            ")");
+    private static final Pattern PROPERTY_PATTERN = Pattern.compile("([^,=:\\*\\?]+)"
+            + // Name - non-empty, anything but comma, equals, colon, star, or
+            // question mark
+            "="
+            + // Equals
+            "("
+            + // Either
+            "\""
+            + // Quoted
+            "(?:"
+            + // A possibly empty sequence of
+            "[^\\\\\"]*"
+            + // Greedily match anything but backslash or quote
+            "(?:\\\\.)?"
+            + // Greedily see if we can match an escaped sequence
+            ")*"
+            + "\""
+            + "|"
+            + // Or
+            "[^,=:\"]*"
+            + // Unquoted - can be empty, anything but comma, equals, colon, or
+            // quote
+            ")");
 
     // Implement a version of ObjectName.getKeyPropertyList that returns the
     // properties in the ordered they were added (the ObjectName stores them

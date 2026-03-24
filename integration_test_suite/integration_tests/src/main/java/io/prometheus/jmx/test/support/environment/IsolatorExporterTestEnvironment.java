@@ -146,14 +146,11 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
                 .waitingFor(Wait.forListeningPort())
                 .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
                 .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/JavaAgent",
-                        "/temp",
-                        BindMode.READ_ONLY)
+                        testClass.getName().replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
-                .withLogConsumer(
-                        new TestContainerLogger("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
+                .withLogConsumer(new TestContainerLogger("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*\\n", 1))
@@ -169,11 +166,9 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
     public static Stream<IsolatorExporterTestEnvironment> createEnvironments() {
         Collection<IsolatorExporterTestEnvironment> collection = new ArrayList<>();
 
-        JavaDockerImages.names()
-                .forEach(
-                        dockerImageName -> {
-                            collection.add(new IsolatorExporterTestEnvironment(dockerImageName));
-                        });
+        JavaDockerImages.names().forEach(dockerImageName -> {
+            collection.add(new IsolatorExporterTestEnvironment(dockerImageName));
+        });
 
         return collection.stream();
     }

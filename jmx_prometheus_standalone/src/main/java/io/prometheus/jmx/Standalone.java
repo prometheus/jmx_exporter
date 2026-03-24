@@ -29,14 +29,18 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.net.InetAddress;
 
-/** Class to implement Standalone */
+/**
+ * Class to implement Standalone
+ */
 public class Standalone {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Standalone.class);
 
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
-    /** Constructor */
+    /**
+     * Constructor
+     */
     private Standalone() {
         // INTENTIONALLY BLANK
     }
@@ -77,12 +81,11 @@ public class Standalone {
                 LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
                 LOGGER.info("Starting HTTPServer ...");
 
-                httpServer =
-                        HTTPServerFactory.createAndStartHTTPServer(
-                                PrometheusRegistry.defaultRegistry,
-                                InetAddress.getByName(arguments.getHost()),
-                                arguments.getPort(),
-                                file);
+                httpServer = HTTPServerFactory.createAndStartHTTPServer(
+                        PrometheusRegistry.defaultRegistry,
+                        InetAddress.getByName(arguments.getHost()),
+                        arguments.getPort(),
+                        file);
 
                 LOGGER.info("HTTPServer started");
 
@@ -95,15 +98,13 @@ public class Standalone {
             if (openTelemetryEnabled) {
                 LOGGER.info("Starting OpenTelemetry ...");
 
-                openTelemetryExporter =
-                        OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
-                                PrometheusRegistry.defaultRegistry, file);
+                openTelemetryExporter = OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
+                        PrometheusRegistry.defaultRegistry, file);
 
                 LOGGER.info("OpenTelemetry started");
 
                 // Add shutdown hook
-                Runtime.getRuntime()
-                        .addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
+                Runtime.getRuntime().addShutdownHook(new AutoClosableShutdownHook(openTelemetryExporter));
             }
 
             LOGGER.info("Running ...");

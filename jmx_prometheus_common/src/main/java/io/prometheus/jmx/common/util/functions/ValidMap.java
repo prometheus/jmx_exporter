@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Function to validate a map contains valid keys and values */
+/**
+ * Function to validate a map contains valid keys and values
+ */
 public class ValidMap implements Function<Map<String, String>, Map<String, String>> {
 
     private final Supplier<? extends RuntimeException> supplier;

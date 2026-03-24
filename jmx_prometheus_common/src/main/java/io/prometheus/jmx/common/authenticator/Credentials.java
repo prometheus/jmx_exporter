@@ -18,7 +18,9 @@ package io.prometheus.jmx.common.authenticator;
 
 import java.util.Objects;
 
-/** Class to implement credentials */
+/**
+ * Class to implement credentials
+ */
 public class Credentials {
 
     private final String username;
@@ -54,8 +56,7 @@ public class Credentials {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Credentials credentials = (Credentials) o;
-        return Objects.equals(username, credentials.username)
-                && Objects.equals(password, credentials.password);
+        return Objects.equals(username, credentials.username) && Objects.equals(password, credentials.password);
     }
 
     @Override

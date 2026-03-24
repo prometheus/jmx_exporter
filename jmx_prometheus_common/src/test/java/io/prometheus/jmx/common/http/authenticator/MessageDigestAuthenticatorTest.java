@@ -41,8 +41,7 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
                 for (String password : TEST_PASSWORDS) {
                     boolean expectedIsAuthenticated =
                             VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                    boolean actualIsAuthenticated =
-                            messageDigestAuthenticator.checkCredentials(username, password);
+                    boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
                     assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
                 }
             }
@@ -63,16 +62,14 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
                 for (String password : TEST_PASSWORDS) {
                     boolean expectedIsAuthenticated =
                             VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
-                    boolean actualIsAuthenticated =
-                            messageDigestAuthenticator.checkCredentials(username, password);
+                    boolean actualIsAuthenticated = messageDigestAuthenticator.checkCredentials(username, password);
                     assertThat(actualIsAuthenticated).isEqualTo(expectedIsAuthenticated);
                 }
             }
         }
     }
 
-    private static String hash(String algorithm, String value, String salt)
-            throws NoSuchAlgorithmException {
+    private static String hash(String algorithm, String value, String salt) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         byte[] hashedBytes = digest.digest((salt + ":" + value).getBytes(StandardCharsets.UTF_8));
         BigInteger number = new BigInteger(1, hashedBytes);
