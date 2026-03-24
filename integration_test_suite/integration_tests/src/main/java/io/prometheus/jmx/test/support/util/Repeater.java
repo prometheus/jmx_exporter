@@ -131,6 +131,7 @@ public class Repeater {
         Throwable throwable = null;
 
         for (int i = 1; i <= iterations; i++) {
+            throwable = null;
             try {
                 if (beforeEach != null) {
                     beforeEach.run();

@@ -19,7 +19,6 @@ package io.prometheus.jmx;
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.lang.instrument.Instrumentation;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -44,12 +43,6 @@ public class IsolatorJavaAgent {
     private static final String AGENT_MAIN_METHOD = "agentmain";
 
     private static final String THREAD_NAME = "isolator-javaagent";
-
-    static {
-        // Get the platform MBean server to ensure that
-        // it's initialized prior to the application
-        ManagementFactory.getPlatformMBeanServer();
-    }
 
     /** Default constructor for IsolatorJavaAgent. */
     public IsolatorJavaAgent() {
