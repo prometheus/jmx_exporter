@@ -12,30 +12,14 @@
     <description>See https://github.com/prometheus/jmx_exporter/blob/main/README.md</description>
     <url>https://github.com/prometheus/jmx_exporter</url>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>collector</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>jmx_prometheus_common</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
@@ -47,37 +31,7 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.15.0</version>
-                <configuration>
-                    <compilerArgument>-Xbootclasspath/a:${env.JAVA_HOME}/lib/</compilerArgument>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
-                <executions>
-                    <execution>
-                        <id>enforce-maven</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireMavenVersion>
-                                    <version>3.9.6</version>
-                                </requireMavenVersion>
-                            </rules>
-                            <fail>true</fail>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -85,7 +39,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- Exclude entire dependencies -->
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.apache.maven.plugins:maven-shade-plugin</exclude>
@@ -102,7 +55,6 @@
                                     <exclude>org.vafer:jdependency</exclude>
                                 </excludes>
                             </artifactSet>
-                            <!-- Exclude files from all included dependencies -->
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -131,7 +83,6 @@
                                         <exclude>module-info.class</exclude>
                                     </excludes>
                                 </filter>
-                                <!-- Exclude specific files from OpenTelemetry -->
                                 <filter>
                                     <artifact>io.opentelemetry.instrumentation:opentelemetry-resources</artifact>
                                     <excludes>
@@ -139,7 +90,6 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                            <!-- Relocate packages -->
                             <relocations>
                                 <relocation>
                                     <shadedPattern>e1723a08afd7bca35570fd31a7656f59.</shadedPattern>
@@ -163,7 +113,6 @@
                                     <shadedPattern>e1723a08afd7bca35570fd31a7656f59.io.prometheus.metrics.shaded</shadedPattern>
                                 </relocation>
                             </relocations>
-                            <!-- Transform resources -->
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
@@ -172,13 +121,11 @@
                                         <Implementation-Title>${project.artifactId}</Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
-                                <!-- Use a custom transformer to correctly handled shaded resources -->
                                 <transformer implementation="io.prometheus.jmx.common.tools.CustomServiceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
                 </executions>
-                <!-- Add local project dependency -->
                 <dependencies>
                     <dependency>
                         <groupId>io.prometheus.jmx</groupId>
@@ -197,64 +144,15 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <encoding>UTF-8</encoding>
-                            <docencoding>UTF-8</docencoding>
-                            <charset>UTF-8</charset>
-                            <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <dependencySourceInclude>${project.groupId}:*</dependencySourceInclude>
                             </dependencySourceIncludes>
+                            <excludePackageNames>io.prometheus.jmx.common.tools</excludePackageNames>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-            <!-- .deb has been deprecated, keeping the configuration in the scenario we want to reintroduce it -->
-            <!--
-            <plugin>
-                <artifactId>jdeb</artifactId>
-                <groupId>org.vafer</groupId>
-                <version>1.12</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jdeb</goal>
-                        </goals>
-                        <configuration>
-                            <dataSet>
-                                <data>
-                                    <src>${project.build.directory}/${project.build.finalName}.jar</src>
-                                    <type>file</type>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <prefix>/usr/share/jmx_exporter</prefix>
-                                        <filemode>644</filemode>
-                                    </mapper>
-                                </data>
-                                <data>
-                                    <src>${basedir}/src/deb/config</src>
-                                    <type>directory</type>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <prefix>/etc/jmx_exporter</prefix>
-                                    </mapper>
-                                </data>
-                                <data>
-                                    <src>${basedir}/src/deb/bin/jmx_exporter</src>
-                                    <type>file</type>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <prefix>/usr/bin</prefix>
-                                        <filemode>755</filemode>
-                                    </mapper>
-                                </data>
-                            </dataSet>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
             <plugin>
                 <groupId>com.coderplus.maven.plugins</groupId>
                 <artifactId>copy-rename-maven-plugin</artifactId>
@@ -278,23 +176,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <version>3.1.4</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
