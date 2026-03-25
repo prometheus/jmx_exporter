@@ -231,7 +231,8 @@ public class MetricCollectionAssertion implements MetricAssertion {
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).isEqualTo(metricsContentType.toString());
         assertThat(httpResponse.body()).isNotNull();
-        assertThat(httpResponse.body().bytes()).isNotNull();
-        assertThat(httpResponse.body().bytes().length).isGreaterThan(0);
+        byte[] bodyBytes = httpResponse.body().bytes();
+        assertThat(bodyBytes).isNotNull();
+        assertThat(bodyBytes.length).isGreaterThan(0);
     }
 }

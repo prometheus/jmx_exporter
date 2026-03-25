@@ -167,6 +167,12 @@ public class MetricsParser {
                         lineReader.unreadLine(line);
                         break;
                     } else {
+                        if (type == null) {
+                            throw new MetricsParserException(format(
+                                    "Exception parsing OpenMetrics text metrics. No TYPE found for metric with HELP [%s]",
+                                    help));
+                        }
+
                         if (type.equals("INFO")) {
                             type = "GAUGE";
                         }
@@ -177,6 +183,8 @@ public class MetricsParser {
             }
 
             return metrics;
+        } catch (MetricsParserException e) {
+            throw e;
         } catch (Throwable t) {
             throw new MetricsParserException("Exception parsing OpenMetrics text metrics", t);
         }
