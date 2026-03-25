@@ -1008,7 +1008,7 @@ public class JmxCollector implements MultiCollector {
         try {
             scraper.doScrape();
             error = 0;
-        } catch (java.io.IOException | java.lang.SecurityException e) {
+        } catch (IOException | SecurityException e) {
             errorMsg = e.getMessage();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();

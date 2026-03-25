@@ -20,6 +20,7 @@ import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
+import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
@@ -28,7 +29,7 @@ import javax.management.ObjectName;
 
 class KafkaClient implements DynamicMBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName =
                 new ObjectName("kafka.consumer:type=consumer-node-metrics,client-id=my-app-consumer,node-id=node-1");
         KafkaClient mbean = new KafkaClient();

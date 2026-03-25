@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import java.util.Map;
 import java.util.TreeMap;
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -103,7 +104,7 @@ public interface ExistDbMXBean {
 
 class ExistDb implements ExistDbMXBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mxbeanName = new ObjectName("org.exist.management.exist:type=ProcessReport");
         ExistDb mxbean = new ExistDb();
         mbs.registerMBean(mxbean, mxbeanName);

@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -42,7 +43,7 @@ class StringValue implements StringValueMBean {
         return "value";
     }
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx:type=stringValue");
         StringValueMBean mbean = new StringValue();
         mbs.registerMBean(mbean, mbeanName);

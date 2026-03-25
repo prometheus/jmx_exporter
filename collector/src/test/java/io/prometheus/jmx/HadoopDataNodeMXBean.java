@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -28,7 +29,7 @@ public interface HadoopDataNodeMXBean {
 
 class HadoopDataNode implements HadoopDataNodeMXBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("Hadoop:name=DataNodeInfo,service=DataNode");
         HadoopDataNode mbean = new HadoopDataNode();
         mbs.registerMBean(mbean, mbeanName);

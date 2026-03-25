@@ -22,6 +22,7 @@ import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -148,7 +149,7 @@ class JmxScraper {
             Map<String, Object> environment = new HashMap<>();
             if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
                 String[] credent = new String[] {username, password};
-                environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credent);
+                environment.put(JMXConnector.CREDENTIALS, credent);
             }
             if (sslProperties.enabled) {
                 environment.put(Context.SECURITY_PROTOCOL, "ssl");
@@ -366,10 +367,10 @@ class JmxScraper {
                         mBeanAttributeInfo.getDescription(),
                         attribute.getValue());
             } else if (object == null) {
-                LOGGER.trace("%s object is NULL, not an instance javax.management.Attribute, skipping", mBeanName);
+                LOGGER.trace("%s object is NULL, not an instance Attribute, skipping", mBeanName);
             } else {
                 LOGGER.trace(
-                        "%s object [%s] isn't an instance javax.management.Attribute, skipping",
+                        "%s object [%s] isn't an instance Attribute, skipping",
                         mBeanName, object.getClass().getName());
             }
         }
@@ -458,10 +459,10 @@ class JmxScraper {
         } else if (value instanceof Number
                 || value instanceof String
                 || value instanceof Boolean
-                || value instanceof java.util.Date) {
-            if (value instanceof java.util.Date) {
+                || value instanceof Date) {
+            if (value instanceof Date) {
                 attrType = "java.lang.Double";
-                value = ((java.util.Date) value).getTime() / 1000.0;
+                value = ((Date) value).getTime() / 1000.0;
             }
             LOGGER.trace("%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             this.receiver.recordBean(
@@ -567,7 +568,7 @@ class JmxScraper {
         } else if (value.getClass().isArray()) {
             LOGGER.trace("%s scrape: arrays are unsupported", domain);
         } else if (value instanceof Optional) {
-            LOGGER.trace("%s%s%s scrape: java.util.Optional", domain, beanProperties, attrName);
+            LOGGER.trace("%s%s%s scrape: Optional", domain, beanProperties, attrName);
             Optional<?> optional = (Optional<?>) value;
             if (optional.isPresent()) {
                 processBeanValue(
