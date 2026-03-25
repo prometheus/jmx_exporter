@@ -1,0 +1,15 @@
+openTelemetry:
+  endpoint: http://localhost:4317
+  protocol: grpc
+  interval: 60000
+  timeoutSeconds: 30
+  headers:
+    key1: value1
+    key2: value2
+  resourceAttributes:
+    service.name: jmx-exporter
+    service.version: "1.0.0"
+  serviceInstanceId: "instance-001"
+  serviceNamespace: prometheus
+  serviceName: jmx-exporter
+  serviceVersion: "2.0.0"
