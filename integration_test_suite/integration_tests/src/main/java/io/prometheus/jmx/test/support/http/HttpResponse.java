@@ -104,7 +104,8 @@ public class HttpResponse {
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE)).hasSize(1);
         assertThat(httpResponse.headers().get(HttpHeader.CONTENT_TYPE).get(0)).contains("text/plain");
         assertThat(httpResponse.body()).isNotNull();
-        assertThat(httpResponse.body().string()).isNotBlank();
-        assertThat(httpResponse.body().string()).contains("Exporter is healthy.");
+        String body = httpResponse.body().string();
+        assertThat(body).isNotBlank();
+        assertThat(body).contains("Exporter is healthy.");
     }
 }
