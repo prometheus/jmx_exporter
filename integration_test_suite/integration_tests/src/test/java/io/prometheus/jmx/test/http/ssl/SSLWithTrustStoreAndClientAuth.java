@@ -36,6 +36,7 @@ import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -91,7 +92,7 @@ public class SSLWithTrustStoreAndClientAuth {
         TrustManagerFactory tm = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tm.init(keyStore);
 
-        sslContext.init(km.getKeyManagers(), tm.getTrustManagers(), new java.security.SecureRandom());
+        sslContext.init(km.getKeyManagers(), tm.getTrustManagers(), new SecureRandom());
 
         return sslContext;
     }

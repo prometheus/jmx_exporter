@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -26,7 +27,7 @@ public interface TomcatServletMBean {
 
 class TomcatServlet implements TomcatServletMBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName(
                 "Catalina:j2eeType=Servlet,WebModule=//localhost/host-manager,name=HTMLHostManager,J2EEApplication=none,J2EEServer=none");
         TomcatServlet mbean = new TomcatServlet();

@@ -17,6 +17,7 @@
 package io.prometheus.jmx;
 
 import java.util.Date;
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -27,7 +28,7 @@ public interface CamelMBean {
 }
 
 class Camel implements CamelMBean {
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName =
                 new ObjectName("org.apache.camel:context=my-camel-context,type=routes,name=\"my-route-name\"");
         Camel mbean = new Camel();

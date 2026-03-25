@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -35,7 +36,7 @@ class TotalValue implements TotalValueMBean {
         return 345;
     }
 
-    static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mxbeanName = new ObjectName("io.prometheus.jmx.test:type=Total-Value");
         TotalValue mxbean = new TotalValue();
         mbs.registerMBean(mxbean, mxbeanName);

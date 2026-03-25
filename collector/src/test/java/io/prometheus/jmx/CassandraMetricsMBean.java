@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -29,7 +30,7 @@ public interface CassandraMetricsMBean {
 
 class CassandraMetrics implements CassandraMetricsMBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks");
         CassandraMetricsMBean mbean = new CassandraMetrics();
         mbs.registerMBean(mbean, mbeanName);

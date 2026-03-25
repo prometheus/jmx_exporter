@@ -16,6 +16,7 @@
 
 package io.prometheus.jmx;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -28,7 +29,7 @@ public interface BoolMBean {
 
 class Bool implements BoolMBean {
 
-    public static void registerBean(MBeanServer mbs) throws javax.management.JMException {
+    public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("boolean:Type=Test");
         Bool mbean = new Bool();
         mbs.registerMBean(mbean, mbeanName);
