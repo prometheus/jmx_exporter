@@ -21,20 +21,46 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to validate an Integer is in a range
+ * Function that validates an Integer is within a specified range.
+ *
+ * <p>This function checks if an integer value is within the inclusive range [minimum, maximum].
+ * If validation fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Integer, Integer> validator = new IntegerInRange(1, 100, () -> new ConfigurationException("Value out of range"));
+ * Integer result = validator.apply(50);  // Returns 50
+ * validator.apply(200);  // Throws ConfigurationException
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class IntegerInRange implements Function<Integer, Integer> {
 
+    /**
+     * The minimum allowed value (inclusive).
+     */
     private final int minimum;
+
+    /**
+     * The maximum allowed value (inclusive).
+     */
     private final int maximum;
+
+    /**
+     * Supplier for the exception to throw when validation fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs an IntegerInRange validator with the specified range and exception supplier.
      *
-     * @param minimum minimum
-     * @param maximum maximum
-     * @param supplier supplier
+     * @param minimum the minimum allowed value (inclusive)
+     * @param maximum the maximum allowed value (inclusive)
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public IntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

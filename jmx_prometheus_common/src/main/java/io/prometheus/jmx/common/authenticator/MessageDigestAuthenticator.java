@@ -22,32 +22,76 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
- * Class to implement a username / salted message digest password BasicAuthenticator
+ * Basic authenticator that validates credentials using salted message digest password hashing.
+ *
+ * <p>Supports SHA-1, SHA-256, and SHA-512 algorithms. Passwords are hashed using the formula:
+ * {@code hash(algorithm, salt + ":" + password)}.
+ *
+ * <p>This authenticator caches both valid and invalid credentials to improve authentication
+ * performance. Credentials are cached up to 1 MB for valid credentials and 10 MB for invalid
+ * credentials.
+ *
+ * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
+ *
+ * @see PlaintextAuthenticator
+ * @see PBKDF2Authenticator
  */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
+    /**
+     * Maximum cache size for valid credentials in bytes (1 MB).
+     */
     private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+
+    /**
+     * Maximum cache size for invalid credentials in bytes (10 MB).
+     */
     private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
 
+    /**
+     * The expected username for authentication.
+     */
     private final String username;
+
+    /**
+     * The expected password hash for authentication.
+     */
     private final String passwordHash;
+
+    /**
+     * The hashing algorithm (SHA-1, SHA-256, or SHA-512).
+     */
     private final String algorithm;
+
+    /**
+     * The salt used in password hashing.
+     */
     private final String salt;
+
+    /**
+     * Cache for valid credentials.
+     */
     private final CredentialsCache validCredentialsCache;
+
+    /**
+     * Cache for invalid credentials.
+     */
     private final CredentialsCache invalidCredentialsCache;
 
     /**
-     * Constructor
+     * Constructs a message digest authenticator with the specified parameters.
      *
-     * @param realm realm
-     * @param username username
-     * @param passwordHash passwordHash
-     * @param algorithm algorithm
-     * @param salt salt
-     * @throws NoSuchAlgorithmException NoSuchAlgorithmException
+     * @param realm the HTTP authentication realm, must not be {@code null} or blank
+     * @param username the expected username, must not be {@code null} or blank
+     * @param passwordHash the expected password hash, must not be {@code null} or blank
+     * @param algorithm the hashing algorithm (SHA-1, SHA-256, or SHA-512), must not be {@code null}
+     *     or blank
+     * @param salt the salt used in hashing, must not be {@code null} or blank
+     * @throws GeneralSecurityException if the algorithm is not supported
+     * @throws NullPointerException if any parameter is {@code null}
+     * @throws IllegalArgumentException if any parameter is blank
      */
     public MessageDigestAuthenticator(String realm, String username, String passwordHash, String algorithm, String salt)
             throws GeneralSecurityException {
@@ -68,15 +112,6 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
     }
 
-    /**
-     * called for each incoming request to verify the given name and password in the context of this
-     * Authenticator's realm. Any caching of credentials must be done by the implementation of this
-     * method
-     *
-     * @param username the username from the request
-     * @param password the password from the request
-     * @return <code>true</code> if the credentials are valid, <code>false</code> otherwise.
-     */
     @Override
     public boolean checkCredentials(String username, String password) {
         if (username == null || password == null) {
@@ -103,12 +138,13 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     }
 
     /**
-     * Method to generate a hash based on the configured message digest algorithm
+     * Generates a password hash using the configured message digest algorithm.
      *
-     * @param algorithm algorithm
-     * @param salt salt
-     * @param password password
-     * @return the hash
+     * @param algorithm the hashing algorithm
+     * @param salt the salt
+     * @param password the password to hash
+     * @return the lowercase hexadecimal hash
+     * @throws RuntimeException if the algorithm is not supported
      */
     private static String generatePasswordHash(String algorithm, String salt, String password) {
         try {

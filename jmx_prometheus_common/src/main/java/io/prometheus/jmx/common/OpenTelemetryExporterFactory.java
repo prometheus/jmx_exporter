@@ -34,24 +34,48 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Class to create an OpenTelemetryExporter
+ * Factory for creating and configuring OpenTelemetry exporters for the JMX exporter.
+ *
+ * <p>This factory creates OpenTelemetry exporters with support for:
+ *
+ * <ul>
+ *   <li>Configurable endpoint URL
+ *   <li>Configurable protocol (grpc, http/protobuf, http/json)
+ *   <li>Configurable export interval and timeout
+ *   <li>Custom headers for authentication/authorization
+ *   <li>Service metadata (name, namespace, version, instance ID)
+ *   <li>Resource attributes for telemetry correlation
+ * </ul>
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe.
  */
 public class OpenTelemetryExporterFactory {
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
      */
     private OpenTelemetryExporterFactory() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to create an OpenTelemetryExporter using the supplied arguments
+     * Creates and starts an OpenTelemetry exporter with the specified configuration.
      *
-     * @param prometheusRegistry prometheusRegistry
-     * @param exporterYamlFile exporterYamlFile
-     * @return OpenTelemetryExporter OpenTelemetryExporter
-     * @throws ConfigurationException ConfigurationException
+     * <p>The OpenTelemetry exporter is configured based on the YAML configuration file under
+     * the {@code openTelemetry} path. If the path is not present, this method returns
+     * {@code null}.
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param exporterYamlFile the YAML configuration file, must not be {@code null}
+     * @return the started OpenTelemetry exporter instance, or {@code null} if OpenTelemetry is
+     *     not configured
+     * @throws ConfigurationException if the configuration is invalid
+     * @throws IllegalArgumentException if {@code exporterYamlFile} is {@code null}
      */
     public static OpenTelemetryExporter createAndStartOpenTelemetryExporter(
             PrometheusRegistry prometheusRegistry, File exporterYamlFile) throws ConfigurationException {

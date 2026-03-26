@@ -21,16 +21,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to convert an Object to a String
+ * Function that converts an Object to a String.
+ *
+ * <p>This function handles String values directly and calls {@link Object#toString()} on other
+ * objects. If conversion fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Object, String> toString = new ToString(() -> new ConfigurationException("Invalid string"));
+ * String result = toString.apply("hello");  // Returns "hello"
+ * String result2 = toString.apply(42);  // Returns "42"
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class ToString implements Function<Object, String> {
 
+    /**
+     * Supplier for the exception to throw when conversion fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ToString function with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ToString(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

@@ -17,19 +17,35 @@
 package io.prometheus.jmx;
 
 /**
- * ShutdownHook class to handle the shutdown of an auto-closeable resource.
+ * Shutdown hook for closing AutoCloseable resources during JVM shutdown.
  *
- * <p>This class extends the Thread class and implements a shutdown hook that closes an
- * AutoCloseable resource when the application is shutting down.
+ * <p>This class extends {@link Thread} and implements a shutdown hook that ensures AutoCloseable
+ * resources (such as HTTP servers and OpenTelemetry exporters) are properly closed when the JVM
+ * terminates. Instances should be registered with {@link Runtime#addShutdownHook(Thread)}.
+ *
+ * <p>Thread-safety: This class is thread-safe. The shutdown hook may be called concurrently with
+ * other shutdown hooks.
  */
 public class AutoClosableShutdownHook extends Thread {
 
+    /**
+     * The AutoCloseable resource to be closed on shutdown.
+     *
+     * <p>May be any resource that implements {@link AutoCloseable}, such as {@code HTTPServer} or
+     * {@code OpenTelemetryExporter}.
+     */
     private final AutoCloseable autoCloseable;
 
     /**
-     * Constructor for ShutdownHook.
+     * Constructs a shutdown hook for the specified AutoCloseable resource.
      *
-     * @param autoCloseable The AutoCloseable resource to be closed on shutdown
+     * <p>The shutdown hook will call {@link AutoCloseable#close()} on the resource when the JVM
+     * shuts down. Any exceptions thrown during closure are silently ignored to ensure other
+     * shutdown hooks can complete.
+     *
+     * @param autoCloseable the AutoCloseable resource to close on shutdown, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code autoCloseable} is {@code null}
      */
     public AutoClosableShutdownHook(AutoCloseable autoCloseable) {
         this.autoCloseable = autoCloseable;

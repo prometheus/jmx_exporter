@@ -174,7 +174,9 @@ public class Repeater {
         }
     }
 
-    /** Method to abort a test */
+    /**
+     * Method to abort a test.
+     */
     public static void abort() {
         throw new RuntimeException("4dbf35e7-415c-4e66-a61e-f6a7057e382e");
     }
@@ -191,25 +193,33 @@ public class Repeater {
         }
     }
 
-    /** Interface to define code */
+    /**
+     * Interface to define code.
+     */
     public interface ThrowableRunnable {
 
         void run() throws Throwable;
     }
 
-    /** Interface to consume the result */
+    /**
+     * Interface to consume the result.
+     */
     public interface ThrowableConsumer {
 
         void accept(int counter, Throwable throwable) throws Throwable;
     }
 
-    /** Interface to implement a Throttle */
+    /**
+     * Interface to implement a Throttle.
+     */
     public interface Throttle {
 
         void throttle();
     }
 
-    /** Class to implement a fixed throttle */
+    /**
+     * Class to implement a fixed throttle.
+     */
     public static class FixedThrottle implements Throttle {
 
         private final long milliseconds;
@@ -233,7 +243,9 @@ public class Repeater {
         }
     }
 
-    /** Class to implement a random throttle */
+    /**
+     * Class to implement a random throttle.
+     */
     public static class RandomThrottle implements Throttle {
 
         private final long minMilliseconds;
@@ -273,7 +285,9 @@ public class Repeater {
         }
     }
 
-    /** Class to implement an exponential backoff throttle */
+    /**
+     * Class to implement an exponential backoff throttle.
+     */
     public static class ExponentialBackoffThrottle implements Throttle {
 
         private final long maxMilliseconds;

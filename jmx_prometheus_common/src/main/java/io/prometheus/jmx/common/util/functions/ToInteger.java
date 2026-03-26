@@ -21,16 +21,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to convert an Object to an Integer
+ * Function that converts an Object to an Integer.
+ *
+ * <p>This function handles Integer values and String representations of integers.
+ * If conversion fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Object, Integer> toInteger = new ToInteger(() -> new ConfigurationException("Invalid integer"));
+ * Integer result = toInteger.apply("42");  // Returns 42
+ * Integer result2 = toInteger.apply(100);  // Returns 100
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class ToInteger implements Function<Object, Integer> {
 
+    /**
+     * Supplier for the exception to throw when conversion fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ToInteger function with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ToInteger(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

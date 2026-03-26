@@ -30,29 +30,50 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
- * ClassLoader for loading classes from a JAR file.
+ * Isolating classloader that loads classes from a JAR file.
  *
- * <p>This class extends the ClassLoader and allows loading classes from a JAR file.
+ * <p>Extends the standard classloader to load classes directly from a JAR file into memory.
+ * This allows multiple versions of the same library to coexist in different classloaders,
+ * enabling isolation between JMX exporter instances.
+ *
+ * <p>The classloader reads all .class files from the JAR at construction time and stores them
+ * in memory. Package metadata is preserved, including implementation title and version from
+ * the JAR manifest.
+ *
+ * <p>Thread-safety: This class is thread-safe. Class loading operations are synchronized by
+ * the parent ClassLoader.
  */
 public class JarClassLoader extends ClassLoader {
 
+    /**
+     * Manifest attribute name for implementation title.
+     */
     private static final String IMPLEMENTATION_TITLE = "Implementation-Title";
 
+    /**
+     * Manifest attribute name for implementation version.
+     */
     private static final String IMPLEMENTATION_VERSION = "Implementation-Version";
 
+    /**
+     * Manifest attributes extracted from the JAR.
+     */
     private final Map<String, String> manifestMap = new HashMap<>();
 
     /**
-     * A map to hold the class name and its bytecode.
+     * Map of class names to their bytecode.
      */
     private final Map<String, byte[]> classBytes = new HashMap<>();
 
     /**
-     * Constructor for JarClassLoader.
+     * Constructs a classloader that loads classes from the specified JAR file.
      *
-     * @param jarPath Path to the JAR file
-     * @param parent Parent classloader
-     * @throws IOException If an I/O error occurs while loading the JAR
+     * <p>Reads the JAR manifest and all class files into memory. Classes are loaded lazily
+     * on demand.
+     *
+     * @param jarPath path to the JAR file, must not be {@code null} and must exist
+     * @param parent the parent classloader for delegation, must not be {@code null}
+     * @throws IOException if the JAR cannot be read or parsed
      */
     public JarClassLoader(String jarPath, ClassLoader parent) throws IOException {
         super(parent);
@@ -64,8 +85,10 @@ public class JarClassLoader extends ClassLoader {
     /**
      * Loads the JAR file's manifest and extracts attributes.
      *
-     * @param jarPath Path to the JAR file
-     * @throws IOException If an I/O error occurs while loading the JAR
+     * <p>Extracts implementation title and version from the manifest for package metadata.
+     *
+     * @param jarPath path to the JAR file
+     * @throws IOException if the JAR cannot be read
      */
     private void loadManifest(String jarPath) throws IOException {
         try (JarFile jarFile = new JarFile(jarPath)) {
@@ -80,10 +103,13 @@ public class JarClassLoader extends ClassLoader {
     }
 
     /**
-     * Loads the JAR file and extracts class bytecode.
+     * Loads the JAR file and extracts class bytecode into memory.
      *
-     * @param jarPath Path to the JAR file
-     * @throws IOException If an I/O error occurs while loading the JAR
+     * <p>All .class files found in the JAR are read and stored in the classBytes map for lazy
+     * loading.
+     *
+     * @param jarPath path to the JAR file
+     * @throws IOException if the JAR cannot be read
      */
     private void loadJar(String jarPath) throws IOException {
         try (InputStream jarStream = Files.newInputStream(Paths.get(jarPath));
@@ -123,11 +149,11 @@ public class JarClassLoader extends ClassLoader {
     }
 
     /**
-     * Reads all bytes from the given InputStream.
+     * Reads all bytes from an input stream into a byte array.
      *
-     * @param inputStream InputStream to read from
-     * @return byte array containing all bytes read
-     * @throws IOException If an I/O error occurs
+     * @param inputStream the input stream to read from
+     * @return byte array containing all bytes from the stream
+     * @throws IOException if an I/O error occurs
      */
     private byte[] readAllBytes(InputStream inputStream) throws IOException {
         int bufferSize = 8192;
@@ -144,9 +170,12 @@ public class JarClassLoader extends ClassLoader {
     }
 
     /**
-     * Ensures that the package for the given class name is defined.
+     * Ensures that the package for a class is defined before loading.
      *
-     * @param className The name of the class
+     * <p>For classes with the shading prefix, the package is defined with implementation
+     * title and version from the JAR manifest.
+     *
+     * @param className the fully qualified class name
      */
     private void ensurePackageDefined(String className) {
         int index = className.lastIndexOf('.');

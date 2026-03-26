@@ -29,17 +29,43 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * MapAccessor to work with Maps using a path style syntax for value access
+ * Immutable accessor for nested map structures using path-based syntax.
+ *
+ * <p>Provides a type-safe way to traverse and access values in nested {@link Map} structures
+ * using a Unix-style path syntax (e.g., {@code /root/child/key}).
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Map<Object, Object> config = Map.of(
+ *     "server", Map.of(
+ *         "port", 8080,
+ *         "host", "localhost"
+ *     )
+ * );
+ * MapAccessor accessor = MapAccessor.of(config);
+ * Optional<Object> port = accessor.get("/server/port");  // Returns Optional[8080]
+ * boolean hasHost = accessor.containsPath("/server/host");  // Returns true
+ * }</pre>
+ *
+ * <p>This class is immutable and thread-safe. All operations return new instances or
+ * immutable views.
  */
 @SuppressWarnings("unchecked")
 public class MapAccessor {
 
+    /**
+     * The underlying map, stored as an unmodifiable map.
+     */
     private final Map<Object, Object> map;
 
     /**
-     * Constructor
+     * Constructs a MapAccessor wrapping the given map.
      *
-     * @param map the map
+     * <p>The map is wrapped in an unmodifiable view to ensure immutability.
+     *
+     * @param map the map to wrap, must not be {@code null}
+     * @throws IllegalArgumentException if {@code map} is {@code null}
      */
     private MapAccessor(Map<Object, Object> map) {
         if (map == null) {
@@ -50,10 +76,14 @@ public class MapAccessor {
     }
 
     /**
-     * Method to determine if a path exists. A path can be valid even if the value is null.
+     * Checks if a path exists in the map.
      *
-     * @param path the path
-     * @return true if the path exists, else false
+     * <p>A path exists if all intermediate keys are present in the nested map structure.
+     * A path can exist even if the value at that path is {@code null}.
+     *
+     * @param path the path to check, must start with {@code /}, must not be {@code null} or blank
+     * @return {@code true} if the path exists, {@code false} otherwise
+     * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
      */
     public boolean containsPath(String path) {
         if (path == null || path.trim().isEmpty()) {
@@ -86,11 +116,15 @@ public class MapAccessor {
     }
 
     /**
-     * Method to get a value by path
+     * Gets the value at the specified path.
      *
-     * @param path the path
-     * @return an Optional containing the path Object or an empty Optional if the path doesn't exist
-     *     or value is null
+     * <p>Returns an {@link Optional} containing the value if the path exists and the value is
+     * non-null, or an empty {@link Optional} if the path does not exist or the value is
+     * {@code null}.
+     *
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @return an {@link Optional} containing the value, or an empty {@link Optional}
+     * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
      */
     public Optional<Object> get(String path) {
         if (path == null || path.trim().isEmpty()) {
@@ -123,10 +157,13 @@ public class MapAccessor {
     }
 
     /**
-     * Method to create a MapAccessor
+     * Creates a MapAccessor from a map.
      *
-     * @param map the map
-     * @return a MapAccessor
+     * <p>The map is wrapped in an unmodifiable view to ensure immutability.
+     *
+     * @param map the map to wrap, must not be {@code null}
+     * @return a new MapAccessor instance
+     * @throws IllegalArgumentException if {@code map} is {@code null}
      */
     public static MapAccessor of(Map<Object, Object> map) {
         if (map == null) {
@@ -137,10 +174,20 @@ public class MapAccessor {
     }
 
     /**
-     * Method to validate a path
+     * Validates and normalizes a path string.
      *
-     * @param path the path
-     * @return the return value
+     * <p>A valid path must:
+     *
+     * <ul>
+     *   <li>Start with {@code /}
+     *   <li>Not end with {@code /} (except for the root path)
+     *   <li>Not contain empty segments (e.g., {@code //})
+     *   <li>Not contain whitespace-only segments
+     * </ul>
+     *
+     * @param path the path to validate, must not be {@code null}
+     * @return the validated path
+     * @throws IllegalArgumentException if the path is invalid
      */
     private String validatePath(String path) {
         if (path == null) {
@@ -177,10 +224,13 @@ public class MapAccessor {
     }
 
     /**
-     * Method to create an unmodifiable version of the value
+     * Creates an unmodifiable deep copy of the given value.
      *
-     * @param value the value
-     * @return the unmodifiable value
+     * <p>Recursively converts maps, lists, sets, and collections to their unmodifiable
+     * counterparts. Other values are returned unchanged.
+     *
+     * @param value the value to make unmodifiable
+     * @return an unmodifiable version of the value
      */
     private Object createUnmodifiable(Object value) {
         if (value instanceof Map) {

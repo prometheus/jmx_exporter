@@ -166,7 +166,9 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
         return baseUrl + ":" + port;
     }
 
-    /** Method to destroy the test environment */
+    /**
+     * Method to destroy the test environment.
+     */
     public void destroy() {
         if (javaAgentApplicationContainer != null) {
             javaAgentApplicationContainer.stop();

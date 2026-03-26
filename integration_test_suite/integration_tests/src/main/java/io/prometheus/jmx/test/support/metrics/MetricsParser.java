@@ -409,7 +409,9 @@ public class MetricsParser {
         return labels;
     }
 
-    /** Class to read a Reader line by line with the ability to push a line back to the Reader */
+    /**
+     * Class to read a Reader line by line with the ability to push a line back to the Reader.
+     */
     private static class LineReader implements AutoCloseable {
 
         private final LinkedList<String> lineBuffer;

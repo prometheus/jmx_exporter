@@ -63,37 +63,132 @@ import nl.altindag.ssl.exception.GenericException;
 import nl.altindag.ssl.util.SSLFactoryUtils;
 
 /**
- * Class to create the HTTPServer used by both the Java agent exporter and the Standalone exporter
+ * Factory for creating and configuring HTTP servers for the JMX exporter.
+ *
+ * <p>This factory creates HTTP servers with support for:
+ *
+ * <ul>
+ *   <li>Configurable thread pools
+ *   <li>Basic authentication (plaintext, SHA, or PBKDF2)
+ *   <li>Custom authenticator plugins
+ *   <li>SSL/TLS with automatic certificate reloading
+ *   <li>Two-way TLS (mTLS) client authentication
+ * </ul>
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe. Configuration loading and SSL certificate reloading
+ * use synchronization where necessary.
  */
 public class HTTPServerFactory {
 
+    /**
+     * System property for keystore path.
+     */
     private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
+
+    /**
+     * System property for keystore type.
+     */
     private static final String JAVAX_NET_SSL_KEY_STORE_TYPE = "javax.net.ssl.keyStoreType";
+
+    /**
+     * System property for keystore password.
+     */
     private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
 
+    /**
+     * Default keystore type, determined from system property or platform default.
+     */
     private static final String DEFAULT_KEYSTORE_TYPE;
 
+    /**
+     * System property for truststore path.
+     */
     private static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
+
+    /**
+     * System property for truststore type.
+     */
     private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
+
+    /**
+     * System property for truststore password.
+     */
     private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
 
+    /**
+     * Default truststore type, determined from system property or platform default.
+     */
     private static final String DEFAULT_TRUST_STORE_TYPE;
 
+    /**
+     * Default minimum thread pool size.
+     */
     private static final int DEFAULT_MINIMUM_THREADS = 1;
+
+    /**
+     * Default maximum thread pool size.
+     */
     private static final int DEFAULT_MAXIMUM_THREADS = 10;
+
+    /**
+     * Default thread keep-alive time in seconds.
+     */
     private static final int DEFAULT_KEEP_ALIVE_TIME_SECONDS = 120;
 
+    /**
+     * HTTP authentication realm.
+     */
     private static final String REALM = "/";
+
+    /**
+     * Plaintext algorithm identifier for basic authentication.
+     */
     private static final String PLAINTEXT = "plaintext";
+
+    /**
+     * Supported SHA algorithm names for password hashing.
+     */
     private static final Set<String> SHA_ALGORITHMS;
+
+    /**
+     * Supported PBKDF2 algorithm names for password hashing.
+     */
     private static final Set<String> PBKDF2_ALGORITHMS;
+
+    /**
+     * Default iteration counts for PBKDF2 algorithms.
+     *
+     * <p>Each algorithm has a recommended iteration count based on OWASP guidelines.
+     */
     private static final Map<String, Integer> PBKDF2_ALGORITHM_ITERATIONS;
+
+    /**
+     * Default key length in bits for PBKDF2 key derivation.
+     */
     private static final int PBKDF2_KEY_LENGTH_BITS = 128;
+
+    /**
+     * Scheduled executor for periodic SSL certificate reloading.
+     *
+     * <p>Checks for updated certificates every hour.
+     */
     private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
 
+    /**
+     * Comma separator for parsing SSL configuration values.
+     */
     private static final String COMMA_SEPARATOR = ",";
 
+    /**
+     * Current keystore properties, updated when certificates are reloaded.
+     */
     private static KeyStoreProperties keyStoreProperties;
+
+    /**
+     * Current truststore properties, updated when certificates are reloaded.
+     */
     private static KeyStoreProperties trustStoreProperties;
 
     static {
@@ -136,21 +231,28 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
      */
     private HTTPServerFactory() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to create an HTTPServer using the supplied arguments
+     * Creates and starts an HTTP server with the specified configuration.
      *
-     * @param prometheusRegistry prometheusRegistry
-     * @param inetAddress inetAddress
-     * @param port port
-     * @param exporterYamlFile exporterYamlFile
-     * @return an HTTPServer
-     * @throws IOException IOException
+     * <p>The HTTP server is configured based on the YAML configuration file, including:
+     * thread pool settings, authentication, and SSL/TLS.
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param inetAddress the network address to bind to, must not be {@code null}
+     * @param port the port number to listen on, must be a valid port (0-65535)
+     * @param exporterYamlFile the YAML configuration file, must not be {@code null}
+     * @return the started HTTP server instance
+     * @throws IOException if the server fails to start or configuration cannot be read
+     * @throws ConfigurationException if the configuration is invalid
      */
     public static HTTPServer createAndStartHTTPServer(
             PrometheusRegistry prometheusRegistry, InetAddress inetAddress, int port, File exporterYamlFile)
@@ -168,12 +270,17 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to create an HTTPServer using the supplied arguments (used for testing)
+     * Creates and starts an HTTP server with the specified configuration (testing variant).
      *
-     * @param prometheusRegistry prometheusRegistry
-     * @param exporterYamlFile exporterYamlFile
-     * @return an HTTPServer
-     * @throws IOException IOException
+     * <p>This variant does not bind to a specific address and is primarily used for testing.
+     * The HTTP server is configured based on the YAML configuration file.
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param exporterYamlFile the YAML configuration file, must not be {@code null}
+     * @return the started HTTP server instance
+     * @throws IOException if the server fails to start or configuration cannot be read
+     * @throws ConfigurationException if the configuration is invalid
      */
     public static HTTPServer createAndStartHTTPServer(PrometheusRegistry prometheusRegistry, File exporterYamlFile)
             throws IOException {
@@ -189,10 +296,14 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to configure the HTTPServer thread pool
+     * Configures the HTTP server thread pool based on YAML configuration.
      *
-     * @param rootMapAccessor rootMapAccessor
-     * @param httpServerBuilder httpServerBuilder
+     * <p>Thread pool configuration is read from the {@code /httpServer/threads} path. If not
+     * specified, default values are used: minimum=1, maximum=10, keepAliveTime=120 seconds.
+     *
+     * @param rootMapAccessor the root configuration map accessor, must not be {@code null}
+     * @param httpServerBuilder the HTTP server builder to configure, must not be {@code null}
+     * @throws ConfigurationException if thread pool configuration is invalid
      */
     private static void configureThreads(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         int minimum = DEFAULT_MINIMUM_THREADS;
@@ -258,10 +369,20 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to configure authentication
+     * Configures HTTP basic authentication based on YAML configuration.
      *
-     * @param rootMapAccessor rootMapAccessor
-     * @param httpServerBuilder httpServerBuilder
+     * <p>Supports three authentication mechanisms:
+     *
+     * <ul>
+     *   <li>Plaintext password (not recommended for production)
+     *   <li>SHA-1/SHA-256/SHA-512 hashed passwords with salt
+     *   <li>PBKDF2 hashed passwords with configurable iterations
+     *   <li>Custom authenticator plugins via class name
+     * </ul>
+     *
+     * @param rootMapAccessor the root configuration map accessor, must not be {@code null}
+     * @param httpServerBuilder the HTTP server builder to configure, must not be {@code null}
+     * @throws ConfigurationException if authentication configuration is invalid
      */
     private static void configureAuthentication(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         Authenticator authenticator;
@@ -383,6 +504,16 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Loads a custom authenticator class by name.
+     *
+     * <p>The authenticator class must have a no-argument constructor and extend or implement
+     * {@link Authenticator}.
+     *
+     * @param className the fully qualified class name of the authenticator
+     * @return a new instance of the authenticator
+     * @throws ConfigurationException if the class cannot be loaded or instantiated
+     */
     private static Authenticator loadAuthenticator(String className) {
         Class<?> clazz;
 
@@ -414,14 +545,15 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to create a MessageDigestAuthenticator
+     * Creates a MessageDigestAuthenticator for SHA-based password hashing.
      *
-     * @param httpServerAuthenticationBasicMapAccessor httpServerAuthenticationBasicMapAccessor
-     * @param realm realm
-     * @param username username
-     * @param password password
-     * @param algorithm algorithm
-     * @return a MessageDigestAuthenticator
+     * @param httpServerAuthenticationBasicMapAccessor the authentication configuration accessor
+     * @param realm the authentication realm
+     * @param username the username
+     * @param password the password hash
+     * @param algorithm the SHA algorithm (SHA-1, SHA-256, or SHA-512)
+     * @return the configured authenticator
+     * @throws ConfigurationException if the algorithm is unsupported or salt is missing
      */
     private static Authenticator createMessageDigestAuthenticator(
             MapAccessor httpServerAuthenticationBasicMapAccessor,
@@ -447,14 +579,17 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to create a PBKDF2Authenticator
+     * Creates a PBKDF2Authenticator for PBKDF2-based password hashing.
      *
-     * @param httpServerAuthenticationBasicMapAccessor httpServerAuthenticationBasicMapAccessor
-     * @param realm realm
-     * @param username username
-     * @param password password./m
-     * @param algorithm algorithm
-     * @return a PBKDF2Authenticator
+     * @param httpServerAuthenticationBasicMapAccessor the authentication configuration accessor
+     * @param realm the authentication realm
+     * @param username the username
+     * @param password the password hash
+     * @param algorithm the PBKDF2 algorithm (PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA256, or
+     *     PBKDF2WithHmacSHA512)
+     * @return the configured authenticator
+     * @throws ConfigurationException if the algorithm is unsupported or required parameters are
+     *     missing
      */
     private static Authenticator createPBKDF2Authenticator(
             MapAccessor httpServerAuthenticationBasicMapAccessor,
@@ -506,10 +641,21 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Method to configure SSL
+     * Configures SSL/TLS for the HTTP server based on YAML configuration.
      *
-     * @param rootMapAccessor rootMapAccessor
-     * @param httpServerBuilder httpServerBuilder
+     * <p>Supports:
+     *
+     * <ul>
+     *   <li>Keystore-based SSL with optional password (can use system properties)
+     *   <li>Truststore-based two-way TLS (mTLS)
+     *   <li>Configurable protocols and cipher suites
+     *   <li>Automatic certificate reloading (checked hourly)
+     * </ul>
+     *
+     * @param rootMapAccessor the root configuration map accessor, must not be {@code null}
+     * @param httpServerBuilder the HTTP server builder to configure, must not be {@code null}
+     * @throws ConfigurationException if SSL configuration is invalid or certificates cannot be
+     *     loaded
      */
     public static void configureSSL(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         if (rootMapAccessor.containsPath("/httpServer/ssl")) {
@@ -534,6 +680,13 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Creates an SSLFactory from the configuration.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return the configured SSLFactory
+     * @throws ConfigurationException if SSL configuration is invalid
+     */
     private static SSLFactory createSslFactory(MapAccessor rootMapAccessor) {
         keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
@@ -563,6 +716,16 @@ public class HTTPServerFactory {
         return sslFactoryBuilder.build();
     }
 
+    /**
+     * Reloads SSL certificates if the keystore or truststore files have been modified.
+     *
+     * <p>This method is called periodically by the scheduled executor to check for certificate
+     * updates. If either keystore or truststore has been modified since last load, the SSL
+     * context is updated.
+     *
+     * @param sslFactory the SSLFactory to reload
+     * @param rootMapAccessor the root configuration map accessor
+     */
     private static void reloadSsl(SSLFactory sslFactory, MapAccessor rootMapAccessor) {
         KeyStoreProperties keyProps = getKeyStoreProperties(rootMapAccessor);
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
@@ -594,6 +757,16 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Extracts keystore properties from the configuration.
+     *
+     * <p>Keystore can be configured via YAML or system properties. System properties are used
+     * as fallbacks when YAML values are not specified.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return the keystore properties
+     * @throws ConfigurationException if required properties are missing
+     */
     private static KeyStoreProperties getKeyStoreProperties(MapAccessor rootMapAccessor) {
         String keyStoreFilename = rootMapAccessor
                 .get("/httpServer/ssl/keyStore/filename")
@@ -637,6 +810,12 @@ public class HTTPServerFactory {
                 keyStoreFilename, lastModifiedTime, keyStorePassword.toCharArray(), keyStoreType, certificateAlias);
     }
 
+    /**
+     * Gets the last modified time of a file.
+     *
+     * @param filename the file path
+     * @return the last modified time, or {@link Instant#EPOCH} if the file cannot be read
+     */
     private static Instant getLastModifiedTime(String filename) {
         try {
             return Files.readAttributes(Paths.get(filename), BasicFileAttributes.class)
@@ -647,6 +826,16 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Extracts truststore properties from the configuration.
+     *
+     * <p>Truststore configuration is only required when mTLS is enabled. System properties are
+     * used as fallbacks when YAML values are not specified.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return an Optional containing truststore properties, or empty if mTLS is disabled
+     * @throws ConfigurationException if required properties are missing when mTLS is enabled
+     */
     private static Optional<KeyStoreProperties> getTrustStoreProperties(MapAccessor rootMapAccessor) {
         final boolean mutualTLS = isMutualTls(rootMapAccessor);
         if (!mutualTLS) {
@@ -686,6 +875,12 @@ public class HTTPServerFactory {
                 trustStoreFilename, lastModifiedTime, trustStorePassword.toCharArray(), trustStoreType, null));
     }
 
+    /**
+     * Determines if mutual TLS (mTLS) is enabled in the configuration.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return {@code true} if mTLS is enabled, {@code false} otherwise
+     */
     private static boolean isMutualTls(MapAccessor rootMapAccessor) {
         return rootMapAccessor
                 .get("/httpServer/ssl/mutualTLS")
@@ -698,14 +893,33 @@ public class HTTPServerFactory {
                 .orElse(false);
     }
 
+    /**
+     * Gets the SSL protocols configuration.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return an Optional containing the protocols array, or empty if not configured
+     */
     private static Optional<String[]> getProtocolsProperties(MapAccessor rootMapAccessor) {
         return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "protocols");
     }
 
+    /**
+     * Gets the SSL cipher suites configuration.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return an Optional containing the cipher suites array, or empty if not configured
+     */
     private static Optional<String[]> getCiphersProperties(MapAccessor rootMapAccessor) {
         return getPropertiesFromCommaSeparatedStringAsArray(rootMapAccessor, "ciphers");
     }
 
+    /**
+     * Parses a comma-separated string from the SSL configuration into an array.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @param property the property name (e.g., "protocols" or "ciphers")
+     * @return an Optional containing the parsed array, or empty if not configured
+     */
     private static Optional<String[]> getPropertiesFromCommaSeparatedStringAsArray(
             MapAccessor rootMapAccessor, String property) {
         return rootMapAccessor
@@ -722,24 +936,55 @@ public class HTTPServerFactory {
                 .filter(values -> values.length > 0);
     }
 
+    /**
+     * Gets the current truststore properties.
+     *
+     * @return an Optional containing truststore properties, or empty if not configured
+     */
     private static Optional<KeyStoreProperties> getTrustStoreProperties() {
         return Optional.ofNullable(trustStoreProperties);
     }
 
     /**
-     * Class to implement a named thread factory
+     * Thread factory for creating named daemon threads for the HTTP server thread pool.
      *
-     * <p>Copied from the `prometheus/client_java` `HTTPServer` due to scoping issues / dependencies
+     * <p>Threads are named with the pattern {@code prometheus-http-{pool}-{thread}}.
+     *
+     * <p>Copied from {@code prometheus/client_java} HTTPServer due to scoping issues.
      */
     private static class NamedDaemonThreadFactory implements ThreadFactory {
 
+        /**
+         * Counter for generating unique pool numbers.
+         */
         private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);
 
+        /**
+         * The pool number for this factory instance.
+         */
         private final int poolNumber = POOL_NUMBER.getAndIncrement();
+
+        /**
+         * Counter for generating unique thread numbers within the pool.
+         */
         private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+        /**
+         * The delegate thread factory.
+         */
         private final ThreadFactory delegate;
+
+        /**
+         * Whether created threads should be daemon threads.
+         */
         private final boolean daemon;
 
+        /**
+         * Constructs a named daemon thread factory.
+         *
+         * @param delegate the delegate thread factory
+         * @param daemon whether created threads should be daemon threads
+         */
         NamedDaemonThreadFactory(ThreadFactory delegate, boolean daemon) {
             this.delegate = delegate;
             this.daemon = daemon;
@@ -753,13 +998,22 @@ public class HTTPServerFactory {
             return t;
         }
 
+        /**
+         * Creates a default thread factory that produces daemon threads.
+         *
+         * @param daemon whether created threads should be daemon threads
+         * @return a new thread factory
+         */
         static ThreadFactory defaultThreadFactory(boolean daemon) {
             return new NamedDaemonThreadFactory(Executors.defaultThreadFactory(), daemon);
         }
     }
 
     /**
-     * Class to implement a blocking RejectedExecutionHandler
+     * Rejected execution handler that blocks when the thread pool queue is full.
+     *
+     * <p>Instead of rejecting tasks when the queue is full, this handler attempts to put the
+     * task into the queue, blocking until space is available.
      */
     private static class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
 
@@ -775,14 +1029,48 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Immutable holder for keystore or truststore properties.
+     *
+     * <p>Stores the file path, last modified time, password, type, and optional certificate alias.
+     */
     private static final class KeyStoreProperties {
 
+        /**
+         * The keystore/truststore file path.
+         */
         private final Path filename;
+
+        /**
+         * The last modified time of the keystore/truststore file.
+         */
         private final Instant lastModifiedTime;
+
+        /**
+         * The keystore/truststore password.
+         */
         private final char[] password;
+
+        /**
+         * The keystore/truststore type (e.g., JKS, PKCS12).
+         */
         private final String type;
+
+        /**
+         * The certificate alias (only for keystore, may be {@code null} for truststore).
+         */
         private final String certificateAlias;
 
+        /**
+         * Constructs keystore/truststore properties.
+         *
+         * @param filename the keystore/truststore file path
+         * @param lastModifiedTime the last modified time of the file
+         * @param password the password for the keystore/truststore
+         * @param type the keystore/truststore type
+         * @param certificateAlias the certificate alias for keystore, may be {@code null} for
+         *     truststore
+         */
         private KeyStoreProperties(
                 String filename, Instant lastModifiedTime, char[] password, String type, String certificateAlias) {
 
@@ -793,22 +1081,47 @@ public class HTTPServerFactory {
             this.certificateAlias = certificateAlias;
         }
 
+        /**
+         * Returns the keystore/truststore file path.
+         *
+         * @return the file path
+         */
         public Path getFilename() {
             return filename;
         }
 
+        /**
+         * Returns the last modified time of the file.
+         *
+         * @return the last modified time
+         */
         public Instant getLastModifiedTime() {
             return lastModifiedTime;
         }
 
+        /**
+         * Returns the keystore/truststore password.
+         *
+         * @return the password
+         */
         public char[] getPassword() {
             return password;
         }
 
+        /**
+         * Returns the keystore/truststore type.
+         *
+         * @return the type
+         */
         public String getType() {
             return type;
         }
 
+        /**
+         * Returns the certificate alias.
+         *
+         * @return an Optional containing the certificate alias, or empty if not set
+         */
         public Optional<String> getCertificateAlias() {
             return Optional.ofNullable(certificateAlias);
         }

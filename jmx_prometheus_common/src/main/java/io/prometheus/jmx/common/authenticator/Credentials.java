@@ -19,18 +19,29 @@ package io.prometheus.jmx.common.authenticator;
 import java.util.Objects;
 
 /**
- * Class to implement credentials
+ * Immutable credentials container for username and password.
+ *
+ * <p>Used by authenticator implementations to cache credentials for fast lookup.
+ *
+ * <p>This class is immutable and thread-safe.
  */
 public class Credentials {
 
+    /**
+     * The username.
+     */
     private final String username;
+
+    /**
+     * The password.
+     */
     private final String password;
 
     /**
-     * Constructor
+     * Constructs credentials with the specified username and password.
      *
-     * @param username username
-     * @param password password
+     * @param username the username, must not be {@code null}
+     * @param password the password, must not be {@code null}
      */
     public Credentials(String username, String password) {
         this.username = username;
@@ -38,9 +49,11 @@ public class Credentials {
     }
 
     /**
-     * Method to get the size (username length + password length) of the credentials
+     * Returns the total size of the credentials in characters.
      *
-     * @return the size of the credentials
+     * <p>This is the sum of the username and password lengths, used for cache size accounting.
+     *
+     * @return the total size in characters
      */
     public int size() {
         return username.length() + password.length();

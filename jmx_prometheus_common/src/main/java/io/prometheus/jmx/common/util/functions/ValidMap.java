@@ -22,16 +22,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to validate a map contains valid keys and values
+ * Function that validates a map contains valid (non-null, non-blank) string keys and values.
+ *
+ * <p>This function iterates through all entries in the map and validates that neither keys nor
+ * values are null or blank. If validation fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Map<String, String>, Map<String, String>> validator = new ValidMap(() -> new ConfigurationException("Invalid map"));
+ * Map<String, String> result = validator.apply(Map.of("key", "value"));  // Returns the map
+ * validator.apply(Map.of("key", ""));  // Throws ConfigurationException
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class ValidMap implements Function<Map<String, String>, Map<String, String>> {
 
+    /**
+     * Supplier for the exception to throw when validation fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ValidMap validator with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ValidMap(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

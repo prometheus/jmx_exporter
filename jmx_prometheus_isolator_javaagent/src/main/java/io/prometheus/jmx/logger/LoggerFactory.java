@@ -22,14 +22,30 @@ import java.util.logging.Handler;
 import java.util.logging.SimpleFormatter;
 
 /**
- * Class to implement LoggerFactory
+ * Factory for creating Logger instances.
+ *
+ * <p>Creates and caches Logger instances for classes. The factory overrides the default
+ * {@link SimpleFormatter} with {@link LoggerFormatter} for consistent log message formatting.
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe. Logger instances are cached in a
+ * {@link ConcurrentHashMap}.
  */
 public class LoggerFactory {
 
-    /** The root logger name */
+    /**
+     * The root logger name.
+     *
+     * <p>Empty string refers to the root logger in java.util.logging.
+     */
     private static final String ROOT_LOGGER = "";
 
-    /** Cache for Logger instances */
+    /**
+     * Cache for Logger instances.
+     *
+     * <p>Maps class objects to their corresponding Logger instances.
+     */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
     static {
@@ -42,16 +58,22 @@ public class LoggerFactory {
         }
     }
 
-    /** Constructor */
+    /**
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
+     */
     private LoggerFactory() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to get a Logger
+     * Returns a Logger instance for the specified class.
      *
-     * @param clazz the class for which the logger is to be created
-     * @return a Logger
+     * <p>Logger instances are cached and reused for subsequent requests for the same class.
+     *
+     * @param clazz the class for which to create a logger, must not be {@code null}
+     * @return a Logger instance for the specified class
      */
     public static Logger getLogger(Class<?> clazz) {
         return CACHE.computeIfAbsent(clazz, Logger::new);

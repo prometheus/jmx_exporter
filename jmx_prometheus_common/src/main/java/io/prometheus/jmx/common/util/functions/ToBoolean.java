@@ -21,16 +21,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to convert an Object to a Boolean
+ * Function that converts an Object to a Boolean.
+ *
+ * <p>This function handles both Boolean values and String representations of boolean values.
+ * If conversion fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Object, Boolean> toBoolean = new ToBoolean(() -> new ConfigurationException("Invalid boolean"));
+ * Boolean result = toBoolean.apply("true");  // Returns true
+ * Boolean result2 = toBoolean.apply(false);  // Returns false
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class ToBoolean implements Function<Object, Boolean> {
 
+    /**
+     * Supplier for the exception to throw when conversion fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ToBoolean function with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ToBoolean(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

@@ -112,7 +112,9 @@ public class HttpRequest {
         return new Builder();
     }
 
-    /** Class to implement Builder */
+    /**
+     * Class to implement Builder.
+     */
     public static class Builder {
 
         private String url;

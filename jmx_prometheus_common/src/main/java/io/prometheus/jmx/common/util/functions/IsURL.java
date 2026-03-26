@@ -23,16 +23,35 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to validate a String is a URL
+ * Function that validates a String is a valid URL.
+ *
+ * <p>This function uses {@link java.net.URI#create(String)} and {@link java.net.URL} to validate
+ * that the string represents a well-formed URL. If validation fails, it throws an exception from
+ * the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<String, String> validator = new IsURL(() -> new ConfigurationException("Invalid URL"));
+ * String result = validator.apply("http://localhost:8080");  // Returns the URL string
+ * validator.apply("not a url");  // Throws ConfigurationException
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class IsURL implements Function<String, String> {
 
+    /**
+     * Supplier for the exception to throw when validation fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs an IsURL validator with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public IsURL(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

@@ -19,31 +19,42 @@ package io.prometheus.jmx.common.util;
 import static java.lang.String.format;
 
 /**
- * Class to implement Precondition
+ * Utility class for validating method arguments and state.
+ *
+ * <p>Provides static methods for common validation checks that throw
+ * {@link IllegalArgumentException} when the check fails.
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe. All methods are stateless.
  */
 public class Precondition {
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
      */
     private Precondition() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to check an Object is not null
+     * Validates that an object is not {@code null}.
      *
-     * @param object object
+     * @param object the object to validate
+     * @throws IllegalArgumentException if {@code object} is {@code null}
      */
     public static void notNull(Object object) {
         notNull(object, "object is null");
     }
 
     /**
-     * Method to check an Object is not null
+     * Validates that an object is not {@code null} with a custom error message.
      *
-     * @param object object
-     * @param message message
+     * @param object the object to validate
+     * @param message the error message if validation fails
+     * @throws IllegalArgumentException if {@code object} is {@code null}
      */
     public static void notNull(Object object, String message) {
         if (object == null) {
@@ -52,19 +63,21 @@ public class Precondition {
     }
 
     /**
-     * Method to check that a String is not null and not empty
+     * Validates that a string is not {@code null} and not blank.
      *
-     * @param string string
+     * @param string the string to validate
+     * @throws IllegalArgumentException if {@code string} is {@code null} or blank
      */
     public static void notNullOrEmpty(String string) {
         notNullOrEmpty(string, format("string [%s] is null or empty", string));
     }
 
     /**
-     * Method to check that a String is not null and not empty
+     * Validates that a string is not {@code null} and not blank with a custom error message.
      *
-     * @param string string
-     * @param message message
+     * @param string the string to validate
+     * @param message the error message if validation fails
+     * @throws IllegalArgumentException if {@code string} is {@code null} or blank
      */
     public static void notNullOrEmpty(String string, String message) {
         if (string == null || string.trim().isEmpty()) {
@@ -73,10 +86,11 @@ public class Precondition {
     }
 
     /**
-     * Method to check that an integer is greater than or equal to a value
+     * Validates that an integer is greater than or equal to a minimum value.
      *
-     * @param value value
-     * @param minimumValue minimumValue
+     * @param value the value to validate
+     * @param minimumValue the minimum allowed value (inclusive)
+     * @throws IllegalArgumentException if {@code value} is less than {@code minimumValue}
      */
     public static void isGreaterThanOrEqualTo(int value, int minimumValue) {
         isGreaterThanOrEqualTo(
@@ -84,11 +98,13 @@ public class Precondition {
     }
 
     /**
-     * Method to check that an integer is greater than or equal to a value
+     * Validates that an integer is greater than or equal to a minimum value with a custom error
+     * message.
      *
-     * @param value value
-     * @param minimumValue minimumValue
-     * @param message message
+     * @param value the value to validate
+     * @param minimumValue the minimum allowed value (inclusive)
+     * @param message the error message if validation fails
+     * @throws IllegalArgumentException if {@code value} is less than {@code minimumValue}
      */
     public static void isGreaterThanOrEqualTo(int value, int minimumValue, String message) {
         if (value < minimumValue) {

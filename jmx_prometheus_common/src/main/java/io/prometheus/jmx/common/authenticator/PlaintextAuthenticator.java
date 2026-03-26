@@ -20,19 +20,37 @@ import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
 
 /**
- * Class to implement a username / plaintext password BasicAuthenticator
+ * Basic authenticator that validates credentials against a plaintext username and password.
+ *
+ * <p>This authenticator is suitable for development and testing. For production environments,
+ * consider using {@link MessageDigestAuthenticator} or {@link PBKDF2Authenticator} for more
+ * secure password handling.
+ *
+ * <p>Thread-safety: This class is thread-safe. Password comparison is atomic.
+ *
+ * @see MessageDigestAuthenticator
+ * @see PBKDF2Authenticator
  */
 public class PlaintextAuthenticator extends BasicAuthenticator {
 
+    /**
+     * The expected username for authentication.
+     */
     private final String username;
+
+    /**
+     * The expected password for authentication.
+     */
     private final String password;
 
     /**
-     * Constructor
+     * Constructs a plaintext authenticator with the specified credentials.
      *
-     * @param realm realm
-     * @param username username
-     * @param password password
+     * @param realm the HTTP authentication realm, must not be {@code null} or blank
+     * @param username the expected username, must not be {@code null} or blank
+     * @param password the expected password, must not be {@code null} or blank
+     * @throws NullPointerException if any parameter is {@code null}
+     * @throws IllegalArgumentException if any parameter is blank
      */
     public PlaintextAuthenticator(String realm, String username, String password) {
         super(realm);
@@ -44,15 +62,6 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
         this.password = password;
     }
 
-    /**
-     * called for each incoming request to verify the given name and password in the context of this
-     * Authenticator's realm. Any caching of credentials must be done by the implementation of this
-     * method
-     *
-     * @param username the username from the request
-     * @param password the password from the request
-     * @return <code>true</code> if the credentials are valid, <code>false</code> otherwise.
-     */
     @Override
     public boolean checkCredentials(String username, String password) {
         return this.username.equals(username) && this.password.equals(password);
