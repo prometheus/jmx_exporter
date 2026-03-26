@@ -29,22 +29,33 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 /**
- * Class to implement ResourceSupport
+ * Utility class for loading and exporting classpath resources.
+ *
+ * <p>Provides static methods to check for resource existence, load resource content as strings,
+ * and export resources to files.
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe. All methods are stateless.
  */
 public class ResourceSupport {
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
      */
     private ResourceSupport() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to check if a resource exists
+     * Checks if a classpath resource exists.
      *
-     * @param resource resource
-     * @return true if the resource exists, false otherwise
+     * <p>The resource path is automatically prefixed with {@code /} if not already present.
+     *
+     * @param resource the resource path to check, must not be {@code null}
+     * @return {@code true} if the resource exists, {@code false} otherwise
      */
     public static boolean exists(String resource) {
         boolean hasResource = false;
@@ -63,11 +74,15 @@ public class ResourceSupport {
     }
 
     /**
-     * Method to load a resource's content
+     * Loads a classpath resource as a string.
      *
-     * @param resource resource
-     * @return the resource content
-     * @throws IOException IOException
+     * <p>The resource path is automatically prefixed with {@code /} if not already present.
+     * Lines are joined using the platform line separator.
+     *
+     * @param resource the resource path to load, must not be {@code null}
+     * @return the resource content as a string
+     * @throws IOException if the resource does not exist or cannot be read
+     * @throws NullPointerException if {@code resource} is {@code null}
      */
     public static String load(String resource) throws IOException {
         Precondition.notNull(resource, "resource is null");
@@ -103,11 +118,17 @@ public class ResourceSupport {
     }
 
     /**
-     * Method to export a resource to a temporary file
+     * Exports a classpath resource to a file.
      *
-     * @param resource the resource to export
-     * @param file the file to export to
-     * @throws IOException If an I/O error occurs
+     * <p>The resource path is automatically prefixed with {@code /} if not already present.
+     * The resource content is written to the specified file using an 8KB buffer.
+     *
+     * @param resource the resource path to export, must not be {@code null} or blank
+     * @param file the destination file, must not be {@code null}
+     * @throws IOException if the resource does not exist, cannot be read, or the file cannot be
+     *     written
+     * @throws NullPointerException if {@code resource} is {@code null} or {@code file} is
+     *     {@code null}
      */
     public static void export(String resource, File file) throws IOException {
         Precondition.notNullOrEmpty(resource, "resource is null or empty");

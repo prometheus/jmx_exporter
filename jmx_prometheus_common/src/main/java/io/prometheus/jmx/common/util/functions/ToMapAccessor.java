@@ -23,17 +23,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to create a MapAccessor from an Object
+ * Function that converts an Object to a MapAccessor.
+ *
+ * <p>This function casts the input object to a map and wraps it in a MapAccessor. If casting
+ * fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Object, MapAccessor> toMapAccessor = new ToMapAccessor(() -> new ConfigurationException("Invalid map"));
+ * MapAccessor result = toMapAccessor.apply(Map.of("key", "value"));
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 @SuppressWarnings("unchecked")
 public class ToMapAccessor implements Function<Object, MapAccessor> {
 
+    /**
+     * Supplier for the exception to throw when conversion fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ToMapAccessor function with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ToMapAccessor(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

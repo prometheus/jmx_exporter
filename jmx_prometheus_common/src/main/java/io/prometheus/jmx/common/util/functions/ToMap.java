@@ -23,17 +23,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to convert an Object to a Map
+ * Function that converts an Object to a {@code Map<String, String>}.
+ *
+ * <p>This function casts the input object to a map and converts all keys and values to trimmed
+ * strings. If conversion fails, it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<Object, Map<String, String>> toMap = new ToMap(() -> new ConfigurationException("Invalid map"));
+ * Map<String, String> result = toMap.apply(Map.of("key1", "value1", "key2", "value2"));
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 @SuppressWarnings("unchecked")
 public class ToMap implements Function<Object, Map<String, String>> {
 
+    /**
+     * Supplier for the exception to throw when conversion fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a ToMap function with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public ToMap(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);

@@ -21,16 +21,34 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Function to validate a String is not blank
+ * Function that validates a String is not blank.
+ *
+ * <p>A string is considered blank if it is empty after trimming whitespace. If validation fails,
+ * it throws an exception from the provided supplier.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * Function<String, String> validator = new StringIsNotBlank(() -> new ConfigurationException("String is blank"));
+ * String result = validator.apply("hello");  // Returns "hello"
+ * validator.apply("   ");  // Throws ConfigurationException
+ * }</pre>
+ *
+ * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
  */
 public class StringIsNotBlank implements Function<String, String> {
 
+    /**
+     * Supplier for the exception to throw when validation fails.
+     */
     private final Supplier<? extends RuntimeException> supplier;
 
     /**
-     * Constructor
+     * Constructs a StringIsNotBlank validator with the specified exception supplier.
      *
-     * @param supplier supplier
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @throws NullPointerException if {@code supplier} is {@code null}
      */
     public StringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
@@ -38,10 +56,11 @@ public class StringIsNotBlank implements Function<String, String> {
     }
 
     /**
-     * Method to apply a function
+     * Validates that the string is not blank.
      *
-     * @param value value
-     * @return the return value
+     * @param value the string to validate
+     * @return the validated string, unchanged
+     * @throws RuntimeException if the string is blank
      */
     @Override
     public String apply(String value) {

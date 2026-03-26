@@ -149,7 +149,9 @@ public class CombinedModeTest {
         assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    /** Method to test that metrics exist in Prometheus */
+    /**
+     * Method to test that metrics exist in Prometheus.
+     */
     @Verifyica.Test
     @Verifyica.Order(6)
     public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {

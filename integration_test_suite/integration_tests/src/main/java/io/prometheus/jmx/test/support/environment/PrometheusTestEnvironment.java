@@ -134,7 +134,9 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
-    /** Method to wait for the Prometheus container to be ready */
+    /**
+     * Method to wait for the Prometheus container to be ready.
+     */
     public void waitForReady() {
         waitForReady(null, null);
     }
@@ -175,7 +177,9 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
                 prometheusContainer.getDockerImageName(), System.currentTimeMillis() - startMilliseconds));
     }
 
-    /** Method to destroy the test environment */
+    /**
+     * Method to destroy the test environment.
+     */
     public void destroy() {
         if (prometheusContainer != null) {
             prometheusContainer.stop();

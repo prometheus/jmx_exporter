@@ -20,42 +20,97 @@ import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 /**
- * Class to implement a username / salted message digest password BasicAuthenticator
+ * Basic authenticator that validates credentials using PBKDF2 password hashing.
+ *
+ * <p>Supports PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA256, and PBKDF2WithHmacSHA512 algorithms.
+ * This is the most secure authentication method available, recommended for production use.
+ *
+ * <p>This authenticator caches both valid and invalid credentials to improve authentication
+ * performance. Credentials are cached up to 1 MB for valid credentials and 10 MB for invalid
+ * credentials.
+ *
+ * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
+ *
+ * @see PlaintextAuthenticator
+ * @see MessageDigestAuthenticator
  */
 public class PBKDF2Authenticator extends BasicAuthenticator {
 
+    /**
+     * Hexadecimal characters for converting bytes to hex strings.
+     */
     private static final char[] HEXADECIMAL_CHARACTERS = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
+    /**
+     * Maximum cache size for valid credentials in bytes (1 MB).
+     */
     private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+
+    /**
+     * Maximum cache size for invalid credentials in bytes (10 MB).
+     */
     private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
 
+    /**
+     * The expected username for authentication.
+     */
     private final String username;
+
+    /**
+     * The expected password hash for authentication.
+     */
     private final String passwordHash;
+
+    /**
+     * The PBKDF2 algorithm (PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA256, or PBKDF2WithHmacSHA512).
+     */
     private final String algorithm;
+
+    /**
+     * The salt used in password hashing.
+     */
     private final String salt;
+
+    /**
+     * The number of iterations for key derivation.
+     */
     private final int iterations;
+
+    /**
+     * The key length in bits.
+     */
     private final int keyLength;
+
+    /**
+     * Cache for valid credentials.
+     */
     private final CredentialsCache validCredentialsCache;
+
+    /**
+     * Cache for invalid credentials.
+     */
     private final CredentialsCache invalidCredentialsCache;
 
     /**
-     * Constructor
+     * Constructs a PBKDF2 authenticator with the specified parameters.
      *
-     * @param realm realm
-     * @param username username
-     * @param passwordHash passwordHash
-     * @param algorithm algorithm
-     * @param salt salt
-     * @param iterations iterations
-     * @param keyLength keyLength
-     * @throws NoSuchAlgorithmException NoSuchAlgorithmException
+     * @param realm the HTTP authentication realm, must not be {@code null} or blank
+     * @param username the expected username, must not be {@code null} or blank
+     * @param passwordHash the expected password hash, must not be {@code null} or blank
+     * @param algorithm the PBKDF2 algorithm, must not be {@code null} or blank
+     * @param salt the salt used in hashing, must not be {@code null} or blank
+     * @param iterations the number of iterations, must be at least 1
+     * @param keyLength the key length in bits, must be at least 1
+     * @throws GeneralSecurityException if the algorithm is not supported
+     * @throws NullPointerException if any string parameter is {@code null}
+     * @throws IllegalArgumentException if any string parameter is blank or if iterations/keyLength
+     *     is invalid
      */
     public PBKDF2Authenticator(
             String realm,
@@ -87,15 +142,6 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
     }
 
-    /**
-     * called for each incoming request to verify the given name and password in the context of this
-     * Authenticator's realm. Any caching of credentials must be done by the implementation of this
-     * method
-     *
-     * @param username the username from the request
-     * @param password the password from the request
-     * @return <code>true</code> if the credentials are valid, <code>false</code> otherwise.
-     */
     @Override
     public boolean checkCredentials(String username, String password) {
         if (username == null || password == null) {
@@ -123,14 +169,15 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     }
 
     /**
-     * Method to generate a hash based on the configured secret key algorithm
+     * Generates a password hash using PBKDF2 key derivation.
      *
-     * @param algorithm algorithm
-     * @param salt salt
-     * @param iterations iterations
-     * @param keyLength keyLength
-     * @param password password
-     * @return the hash
+     * @param algorithm the PBKDF2 algorithm
+     * @param salt the salt
+     * @param iterations the number of iterations
+     * @param keyLength the key length in bits
+     * @param password the password to hash
+     * @return the lowercase hexadecimal hash
+     * @throws RuntimeException if key derivation fails
      */
     private static String generatePasswordHash(
             String algorithm, String salt, int iterations, int keyLength, String password) {
@@ -147,10 +194,10 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     }
 
     /**
-     * Method to convert a byte array to a lowercase hexadecimal string
+     * Converts a byte array to a lowercase hexadecimal string.
      *
      * @param bytes the byte array to convert
-     * @return the lowercase hexadecimal string representation of the byte array
+     * @return the lowercase hexadecimal string representation
      */
     private static String toLowerCaseHexadecimal(byte[] bytes) {
         int len = bytes.length;

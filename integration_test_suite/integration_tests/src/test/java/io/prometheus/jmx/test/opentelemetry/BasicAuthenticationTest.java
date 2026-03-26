@@ -71,7 +71,9 @@ public class BasicAuthenticationTest {
         jmxExporterTestEnvironment.initialize(testClass, network);
     }
 
-    /** Method to test that metrics exist in Prometheus */
+    /**
+     * Method to test that metrics exist in Prometheus.
+     */
     @Verifyica.Test
     public void testPrometheusHasMetrics(ArgumentContext argumentContext) throws IOException {
         OpenTelemetryTestEnvironment openTelemetryTestEnvironment =

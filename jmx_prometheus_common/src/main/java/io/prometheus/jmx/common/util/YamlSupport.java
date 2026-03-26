@@ -24,33 +24,42 @@ import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Class to implement YamlSupport
+ * Utility class for loading and parsing YAML configuration files.
+ *
+ * <p>Provides static methods to load YAML content from strings or files into map structures
+ * that can be traversed using {@link MapAccessor}.
+ *
+ * <p>This class is not instantiable and all methods are static.
+ *
+ * <p>Thread-safety: This class is thread-safe. All methods are stateless.
  */
 public class YamlSupport {
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
+     *
+     * <p>This is a utility class with only static methods.
      */
     private YamlSupport() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to load a YAML string
+     * Loads a YAML string into a map structure.
      *
-     * @param yaml the YAML string
-     * @return a map of the YAML string
+     * @param yaml the YAML content to parse, must not be {@code null}
+     * @return a map representing the YAML structure, may be empty but never {@code null}
      */
     public static Map<Object, Object> loadYaml(String yaml) {
         return new Yaml().load(yaml);
     }
 
     /**
-     * Method to load a YAML file
+     * Loads a YAML file into a map structure.
      *
-     * @param file the YAML file
-     * @return a map of the YAML file
-     * @throws IOException If an I/O error occurs
+     * @param file the YAML file to load, must not be {@code null} and must exist
+     * @return a map representing the YAML structure, may be empty but never {@code null}
+     * @throws IOException if the file cannot be read or parsed
      */
     public static Map<Object, Object> loadYaml(File file) throws IOException {
         try (Reader reader = new FileReader(file)) {

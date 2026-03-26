@@ -19,34 +19,42 @@ package io.prometheus.jmx.common;
 import java.util.function.Supplier;
 
 /**
- * Class to implement ConfigurationException
+ * Runtime exception thrown when configuration parsing or validation fails.
+ *
+ * <p>This exception is used throughout the JMX exporter to report configuration errors such as
+ * invalid YAML syntax, missing required fields, invalid values, or type mismatches.
+ *
+ * <p>This class is thread-safe.
  */
 public class ConfigurationException extends RuntimeException {
 
     /**
-     * Constructor
+     * Constructs a configuration exception with the specified detail message.
      *
-     * @param message message
+     * @param message the detail message describing the configuration error
      */
     public ConfigurationException(String message) {
         super(message);
     }
 
     /**
-     * Constructor
+     * Constructs a configuration exception with the specified detail message and cause.
      *
-     * @param message message
-     * @param throwable throwable
+     * @param message the detail message describing the configuration error
+     * @param throwable the cause of this exception
      */
     public ConfigurationException(String message, Throwable throwable) {
         super(message, throwable);
     }
 
     /**
-     * Method to create a ConfigurationException supplier
+     * Creates a supplier that produces a ConfigurationException with the specified message.
      *
-     * @param message message
-     * @return a ConfigurationException supplier
+     * <p>This is useful for lazy exception creation in functional methods like
+     * {@link java.util.Optional#orElseThrow(java.util.function.Supplier)}.
+     *
+     * @param message the detail message for the exception
+     * @return a supplier that creates a new ConfigurationException with the given message
      */
     public static Supplier<ConfigurationException> supplier(String message) {
         return () -> new ConfigurationException(message);

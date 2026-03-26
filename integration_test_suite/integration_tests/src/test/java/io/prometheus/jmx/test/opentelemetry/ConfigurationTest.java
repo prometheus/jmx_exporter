@@ -80,7 +80,9 @@ public class ConfigurationTest {
         jmxExporterTestEnvironment.initialize(testClass, network);
     }
 
-    /** Method to test that metrics exist in Prometheus */
+    /**
+     * Method to test that metrics exist in Prometheus.
+     */
     @Verifyica.Test
     public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
         JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();

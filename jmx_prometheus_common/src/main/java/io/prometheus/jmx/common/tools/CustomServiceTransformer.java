@@ -31,18 +31,43 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 
 /**
- * ResourceTransformer that modifies the META-INF/services files to add a prefix to service file
- * names and entries
+ * Maven Shade plugin resource transformer for META-INF/services files.
+ *
+ * <p>This transformer modifies META-INF/services files to add a unique prefix to service names
+ * and entries. This is used during shading to prevent conflicts between the shaded and unshaded
+ * versions of the same library.
+ *
+ * <p>The prefix {@code e1723a08afd7bca35570fd31a7656f59.} is added to:
+ *
+ * <ul>
+ *   <li>Service file names (e.g., META-INF/services/MyService becomes
+ *       META-INF/services/e1723a08afd7bca35570fd31a7656f59.MyService)
+ *   <li>Service implementation class names within the files
+ * </ul>
+ *
+ * <p>This class is used during the Maven build process and is not used at runtime.
  */
 public class CustomServiceTransformer implements ResourceTransformer {
 
+    /**
+     * Prefix to add to service names and entries.
+     */
     private static final String PREFIX = "e1723a08afd7bca35570fd31a7656f59.";
+
+    /**
+     * META-INF services directory path.
+     */
     private static final String SERVICES_DIR = "META-INF/services/";
 
+    /**
+     * Map of service files to their entries.
+     */
     private final Map<String, List<String>> serviceEntries = new HashMap<>();
 
     /**
-     * Default constructor for CustomServiceTransformer.
+     * Constructs a new CustomServiceTransformer.
+     *
+     * <p>Default constructor for use by Maven Shade plugin.
      */
     public CustomServiceTransformer() {
         // INTENTIONALLY BLANK
