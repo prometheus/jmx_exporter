@@ -394,6 +394,9 @@ main() {
     log_info "Git remote: ${git_remote:-auto-detect}"
     log_info "GPG key: ${gpg_key_id:-default}"
     
+    mkdir -p "${RELEASE_DIR}"
+    rm -f "${RELEASE_DIR}"/* 2>/dev/null || true
+    
     validate_version "${version}"
     check_prerequisites
     check_git_state
