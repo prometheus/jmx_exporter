@@ -128,7 +128,7 @@ public class JmxCollector implements MultiCollector {
     static class KeyStoreProperties {
         Path path;
         String type;
-        String password;
+        char[] password;
     }
 
     /**
@@ -185,7 +185,7 @@ public class JmxCollector implements MultiCollector {
 
     private Config config;
     private File configFile;
-    private final long createTimeNanoSecs = System.nanoTime();
+    private final long createTimeMillis = System.currentTimeMillis();
 
     private Counter configReloadSuccess;
     private Counter configReloadFailure;
@@ -217,7 +217,9 @@ public class JmxCollector implements MultiCollector {
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
         configFile = in;
         this.mode = mode;
-        config = loadConfig(new Yaml().load(new FileReader(in)));
+        try (FileReader fr = new FileReader(in)) {
+            config = loadConfig(new Yaml().load(fr));
+        }
         config.lastUpdate = configFile.lastModified();
         exitOnConfigError();
     }
@@ -293,16 +295,16 @@ public class JmxCollector implements MultiCollector {
 
     private void exitOnConfigError() {
         if (mode == Mode.AGENT && !config.jmxUrl.isEmpty()) {
-            LOGGER.error("Configuration error: When running jmx_exporter as a Java agent, you must not"
-                    + " configure 'jmxUrl' or 'hostPort' because you don't want to monitor a"
-                    + " remote JVM.");
-            System.exit(-1);
+            throw new IllegalArgumentException(
+                    "Configuration error: When running jmx_exporter as a Java agent, you must not"
+                            + " configure 'jmxUrl' or 'hostPort' because you don't want to monitor a"
+                            + " remote JVM.");
         }
         if (mode == Mode.STANDALONE && config.jmxUrl.isEmpty()) {
-            LOGGER.error("Configuration error: When running jmx_exporter in standalone mode (using"
-                    + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
-                    + " 'hostPort'.");
-            System.exit(-1);
+            throw new IllegalArgumentException(
+                    "Configuration error: When running jmx_exporter in standalone mode (using"
+                            + " jmx_prometheus_standalone-*.jar) you must configure 'jmxUrl' or"
+                            + " 'hostPort'.");
         }
     }
 
@@ -344,7 +346,7 @@ public class JmxCollector implements MultiCollector {
                 if (cfg.startDelaySeconds < 0) {
                     throw new IllegalArgumentException("startDelaySeconds must be non-negative");
                 }
-            } catch (NumberFormatException e) {
+            } catch (ClassCastException e) {
                 throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
             }
         }
@@ -536,7 +538,7 @@ public class JmxCollector implements MultiCollector {
                     try {
                         rule.valueFactor = Double.valueOf(valueFactor);
                     } catch (NumberFormatException e) {
-                        // use default value
+                        throw new IllegalArgumentException("Invalid number provided for valueFactor", e);
                     }
                 }
                 if (yamlRule.containsKey("attrNameSnakeCase")) {
@@ -602,7 +604,7 @@ public class JmxCollector implements MultiCollector {
             keyStoreProperties.type = (String) configKeyStore.get("type");
         }
         if (configKeyStore.containsKey("password")) {
-            keyStoreProperties.password = (String) configKeyStore.get("password");
+            keyStoreProperties.password = ((String) configKeyStore.get("password")).toCharArray();
         }
         return keyStoreProperties;
     }
@@ -700,6 +702,9 @@ public class JmxCollector implements MultiCollector {
 
         // [] and () are special in regexes, so switch to <>.
         private String angleBrackets(String s) {
+            if (s.length() < 2) {
+                return "<" + s + ">";
+            }
             return "<" + s.substring(1, s.length() - 1) + ">";
         }
 
@@ -996,13 +1001,13 @@ public class JmxCollector implements MultiCollector {
                 receiver,
                 jmxMBeanPropertyCache);
 
-        long start = System.nanoTime();
+        long start = System.currentTimeMillis();
         double error = 1;
         String errorMsg = "";
 
         if (mode != Mode.AGENT
                 && (config.startDelaySeconds > 0)
-                && ((start - createTimeNanoSecs) / 1000000000L < config.startDelaySeconds)) {
+                && ((start - createTimeMillis) / 1000L < config.startDelaySeconds)) {
             throw new IllegalStateException("JMXCollector waiting for startDelaySeconds");
         }
         try {
@@ -1024,7 +1029,7 @@ public class JmxCollector implements MultiCollector {
             config.rulesCache.evictStaleEntries(stalenessTracker);
         }
 
-        jmxScrapeDurationSeconds.set((System.nanoTime() - start) / 1.0E9);
+        jmxScrapeDurationSeconds.set((System.currentTimeMillis() - start) / 1000.0);
         jmxScrapeError.set(error);
         jmxScrapeCachedBeans.set(stalenessTracker.freshCount());
 

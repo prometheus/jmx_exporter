@@ -700,6 +700,97 @@ public class JmxCollectorTest {
         assertThat(rateType).isEqualTo("UNKNOWN");
     }
 
+    @Test
+    public void testSslConfigWithWhitespaceInProtocols() throws Exception {
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nsslConfig:\n  keystore: /path/to/keystore\n  keystoreType: PKCS12\n  protocols: \"TLSv1.2, TLSv1.3\"\n  ciphers: \"AES256, AES128\""
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
+    @Test
+    public void testSslConfigWithWhitespaceInCiphers() throws Exception {
+        JmxCollector jc = new JmxCollector(
+                        "\n---\nsslConfig:\n  keystore: /path/to/keystore\n  keystoreType: PKCS12\n  protocols: \"TLSv1.2\"\n  ciphers: \"AES256, AES128, AES192\""
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
+    @Test
+    public void testRuleWithNameAndHelpLoadsSuccessfully() throws Exception {
+        new JmxCollector(
+                        "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: test_metric\n  help: This is a test metric"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+
+        assertThat(getSampleValue("test_metric", new String[] {}, new String[] {}))
+                .isCloseTo(200, within(0.001));
+    }
+
+    @Test
+    public void testRuleWithNameAndPatternLoadsSuccessfully() throws Exception {
+        new JmxCollector(
+                        "\n---\nrules:\n- pattern: `^hadoop<service=DataNode, name=DataNodeActivity-ams-hdd001-50010><>replaceBlockOpMinTime:`\n  name: jvm_memory"
+                                .replace('`', '"'))
+                .register(prometheusRegistry);
+
+        assertThat(getSampleValue("jvm_memory", new String[] {}, new String[] {}))
+                .isCloseTo(200, within(0.001));
+    }
+
+    @Test
+    public void testRuleMissingNameWithHelpThrowsException() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new JmxCollector("\n---\nrules:\n- help: foo".replace('`', '"')));
+    }
+
+    @Test
+    public void testRuleMissingNameWithLabelsThrowsException() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new JmxCollector("\n---\nrules:\n- labels:\n    key: value".replace('`', '"')));
+    }
+
+    @Test
+    public void testRuleWithNameButNoPatternThrowsException() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new JmxCollector("\n---\nrules:\n- name: foo".replace('`', '"')));
+    }
+
+    @Test
+    public void testInvalidValueFactorThrowsException() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new JmxCollector(
+                        "\n---\nrules:\n- pattern: `.*`\n  name: foo\n  valueFactor: not_a_number".replace('`', '"')));
+    }
+
+    @Test
+    public void testInvalidStartDelaySecondsThrowsException() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new JmxCollector("\n---\nstartDelaySeconds: -5".replace('`', '"')));
+    }
+
+    @Test
+    public void testZeroStartDelaySecondsIsValid() throws Exception {
+        new JmxCollector("\n---\nstartDelaySeconds: 0".replace('`', '"')).register(prometheusRegistry);
+
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
+    @Test
+    public void testEmptyYamlConfigUsesDefaults() throws Exception {
+        new JmxCollector("---").register(prometheusRegistry);
+
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
     private Double getSampleValue(String name, String[] labelNames, String[] labelValues) {
         return prometheusRegistryUtils.getSampleValue(name, labelNames, labelValues);
     }

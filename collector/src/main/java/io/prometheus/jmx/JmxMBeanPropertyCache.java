@@ -16,7 +16,9 @@
 
 package io.prometheus.jmx;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,10 +88,14 @@ class JmxMBeanPropertyCache {
     }
 
     public void onlyKeepMBeans(Set<ObjectName> latestBeans) {
+        List<ObjectName> toRemove = new ArrayList<>();
         for (ObjectName prevName : keyPropertiesPerBean.keySet()) {
             if (!latestBeans.contains(prevName)) {
-                keyPropertiesPerBean.remove(prevName);
+                toRemove.add(prevName);
             }
+        }
+        for (ObjectName name : toRemove) {
+            keyPropertiesPerBean.remove(name);
         }
     }
 }

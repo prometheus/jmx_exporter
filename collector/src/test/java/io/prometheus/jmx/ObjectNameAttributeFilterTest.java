@@ -171,6 +171,42 @@ public class ObjectNameAttributeFilterTest {
                 .isTrue();
     }
 
+    @Test
+    public void includeReturnsFalseForNonConfiguredObjectName() throws Exception {
+        ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
+
+        boolean result = filter.include(new ObjectName("java.lang:type=Memory"), "HeapMemoryUsage");
+
+        assertThat(result)
+                .withFailMessage("java.lang:type=Memory<>HeapMemoryUsage should not be included by config")
+                .isFalse();
+    }
+
+    @Test
+    public void excludeReturnsFalseForNonConfiguredObjectName() throws Exception {
+        ObjectNameAttributeFilter filter = initEmptyConfigFilter();
+
+        boolean result = filter.exclude(new ObjectName("java.lang:type=Memory"), "HeapMemoryUsage");
+
+        assertThat(result)
+                .withFailMessage("java.lang:type=Memory<>HeapMemoryUsage should not be excluded")
+                .isFalse();
+    }
+
+    @Test
+    public void includeObjectNameAttributesIsEmptyForEmptyConfig() throws Exception {
+        ObjectNameAttributeFilter filter = initEmptyConfigFilter();
+
+        assertThat(filter.includeObjectNameAttributesIsEmpty()).isTrue();
+    }
+
+    @Test
+    public void includeObjectNameAttributesIsNotEmptyForNonEmptyConfig() throws Exception {
+        ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
+
+        assertThat(filter.includeObjectNameAttributesIsEmpty()).isFalse();
+    }
+
     private static ObjectNameAttributeFilter initEmptyConfigFilter() {
         return ObjectNameAttributeFilter.create(
                 new Yaml().load("---\n" + "excludeObjectNameAttributes: {}\n" + "includeObjectNameAttributes: {}\n"));
