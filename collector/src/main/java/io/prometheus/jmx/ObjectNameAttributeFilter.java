@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -138,10 +139,14 @@ public class ObjectNameAttributeFilter {
      */
     public void onlyKeepMBeans(Set<ObjectName> aliveMBeans) {
         if (autoExcludeObjectNameAttributes) {
+            List<ObjectName> toRemove = new ArrayList<>();
             for (ObjectName prevName : dynamicExcludeObjectNameAttributesMap.keySet()) {
                 if (!aliveMBeans.contains(prevName)) {
-                    dynamicExcludeObjectNameAttributesMap.remove(prevName);
+                    toRemove.add(prevName);
                 }
+            }
+            for (ObjectName name : toRemove) {
+                dynamicExcludeObjectNameAttributesMap.remove(name);
             }
         }
     }

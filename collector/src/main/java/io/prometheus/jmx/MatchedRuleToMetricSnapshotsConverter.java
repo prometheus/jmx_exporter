@@ -40,6 +40,14 @@ public class MatchedRuleToMetricSnapshotsConverter {
 
     private static final String OBJECTNAME = "_objectname";
 
+    private static String getDomainName(String matchName) {
+        int lastColon = matchName.lastIndexOf(":");
+        if (lastColon <= 0) {
+            return matchName;
+        }
+        return matchName.substring(0, lastColon);
+    }
+
     /**
      * Constructor
      */
@@ -86,8 +94,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels = labels.merge(
-                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(Labels.of(OBJECTNAME, getDomainName(rule.matchName)));
                     }
                     counterBuilder.dataPoint(CounterSnapshot.CounterDataPointSnapshot.builder()
                             .labels(labels)
@@ -102,8 +109,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels = labels.merge(
-                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(Labels.of(OBJECTNAME, getDomainName(rule.matchName)));
                     }
                     gaugeBuilder.dataPoint(GaugeSnapshot.GaugeDataPointSnapshot.builder()
                             .labels(labels)
@@ -118,8 +124,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
-                        labels = labels.merge(
-                                Labels.of(OBJECTNAME, rule.matchName.substring(0, rule.matchName.lastIndexOf(":"))));
+                        labels = labels.merge(Labels.of(OBJECTNAME, getDomainName(rule.matchName)));
                     }
                     unknownBuilder.dataPoint(UnknownSnapshot.UnknownDataPointSnapshot.builder()
                             .labels(labels)

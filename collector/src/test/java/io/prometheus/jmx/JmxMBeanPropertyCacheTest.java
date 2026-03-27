@@ -158,6 +158,62 @@ public class JmxMBeanPropertyCacheTest {
         assertThat(testCache.getKeyPropertiesPerBean()).isEmpty();
     }
 
+    @Test
+    public void testEmptyValue() throws javax.management.MalformedObjectNameException {
+        JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
+        LinkedHashMap<String, String> parameterList =
+                testCache.getKeyPropertyList(new ObjectName("com.organisation:name="));
+        assertThat(parameterList).hasSize(1);
+        assertThat(parameterList.get("name")).isEqualTo("");
+    }
+
+    @Test
+    public void testOnlyKeepMBeansDoesNotThrowConcurrentModification()
+            throws javax.management.MalformedObjectNameException {
+        JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
+        ObjectName mBean1 = new ObjectName("com.organisation:name=value1");
+        ObjectName mBean2 = new ObjectName("com.organisation:name=value2");
+        ObjectName mBean3 = new ObjectName("com.organisation:name=value3");
+        ObjectName mBean4 = new ObjectName("com.organisation:name=value4");
+        ObjectName mBean5 = new ObjectName("com.organisation:name=value5");
+
+        testCache.getKeyPropertyList(mBean1);
+        testCache.getKeyPropertyList(mBean2);
+        testCache.getKeyPropertyList(mBean3);
+        testCache.getKeyPropertyList(mBean4);
+        testCache.getKeyPropertyList(mBean5);
+
+        Set<ObjectName> keepSet = new HashSet<>();
+        keepSet.add(mBean1);
+        keepSet.add(mBean3);
+        keepSet.add(mBean5);
+
+        testCache.onlyKeepMBeans(keepSet);
+
+        assertThat(testCache.getKeyPropertiesPerBean()).hasSize(3);
+        assertThat(testCache.getKeyPropertiesPerBean()).containsKey(mBean1);
+        assertThat(testCache.getKeyPropertiesPerBean()).containsKey(mBean3);
+        assertThat(testCache.getKeyPropertiesPerBean()).containsKey(mBean5);
+    }
+
+    @Test
+    public void testAsteriskInValue() throws javax.management.MalformedObjectNameException {
+        JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
+        LinkedHashMap<String, String> parameterList =
+                testCache.getKeyPropertyList(new ObjectName("com.organisation:name=value*"));
+        assertThat(parameterList).hasSize(1);
+        assertThat(parameterList.get("name")).isEqualTo("value*");
+    }
+
+    @Test
+    public void testQuestionMarkInValue() throws javax.management.MalformedObjectNameException {
+        JmxMBeanPropertyCache testCache = new JmxMBeanPropertyCache();
+        LinkedHashMap<String, String> parameterList =
+                testCache.getKeyPropertyList(new ObjectName("com.organisation:name=value?"));
+        assertThat(parameterList).hasSize(1);
+        assertThat(parameterList.get("name")).isEqualTo("value?");
+    }
+
     private void assertSameElementsAndOrder(LinkedHashMap<?, ?> actual, Object... expected) {
         assert expected.length % 2 == 0;
         List<Map.Entry<?, ?>> actualList = new ArrayList<>(actual.entrySet());

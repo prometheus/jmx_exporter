@@ -72,7 +72,7 @@ public class MatchedRule {
             final List<String> labelValues,
             final Double value,
             double valueFactor) {
-        this.name = PrometheusNaming.sanitizeMetricName(name);
+        this.name = name == null ? null : PrometheusNaming.sanitizeMetricName(name);
         this.matchName = matchName;
         this.type = type;
         this.help = help;

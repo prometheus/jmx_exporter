@@ -148,14 +148,18 @@ class JmxScraper {
         } else {
             Map<String, Object> environment = new HashMap<>();
             if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
-                String[] credent = new String[] {username, password};
-                environment.put(JMXConnector.CREDENTIALS, credent);
+                String[] credentials = new String[] {username, password};
+                environment.put(JMXConnector.CREDENTIALS, credentials);
             }
             if (sslProperties.enabled) {
                 environment.put(Context.SECURITY_PROTOCOL, "ssl");
 
                 SSLFactory sslFactory = createSslFactory();
-                ProviderUtils.configure(sslFactory);
+                try {
+                    ProviderUtils.configure(sslFactory);
+                } finally {
+                    ProviderUtils.remove();
+                }
 
                 SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
                 environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
@@ -223,12 +227,10 @@ class JmxScraper {
         SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder().withDefaultTrustMaterial();
         sslProperties
                 .getKeyStoreProperties()
-                .ifPresent(props ->
-                        sslFactoryBuilder.withIdentityMaterial(props.path, props.password.toCharArray(), props.type));
+                .ifPresent(props -> sslFactoryBuilder.withIdentityMaterial(props.path, props.password, props.type));
         sslProperties
                 .getTrustStoreProperties()
-                .ifPresent(props ->
-                        sslFactoryBuilder.withTrustMaterial(props.path, props.password.toCharArray(), props.type));
+                .ifPresent(props -> sslFactoryBuilder.withTrustMaterial(props.path, props.password, props.type));
 
         if (!sslProperties.protocols.isEmpty()) {
             sslFactoryBuilder.withProtocols(sslProperties.protocols.toArray(new String[0]));
@@ -522,8 +524,14 @@ class JmxScraper {
 
                             // Nested tabulardata will repeat the 'key' label, so
                             // append a suffix to distinguish each.
+                            int suffixCount = 0;
                             while (l2s.containsKey(idx)) {
                                 idx = idx + "_";
+                                suffixCount++;
+                                if (suffixCount > 1000) {
+                                    throw new IllegalStateException(
+                                            "Too many key collisions in TabularData processing");
+                                }
                             }
 
                             if (obj instanceof CompositeData) {
