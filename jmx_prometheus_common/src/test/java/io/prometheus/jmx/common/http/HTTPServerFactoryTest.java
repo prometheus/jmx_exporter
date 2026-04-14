@@ -31,8 +31,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class HTTPServerFactoryTest {
 
@@ -48,8 +50,10 @@ public class HTTPServerFactoryTest {
         }
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClass451RoundTrip() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClass451RoundTrip(String path) throws Exception {
         File config = new File(temporaryFolder, "ok");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -58,13 +62,15 @@ public class HTTPServerFactoryTest {
         writer.println("      class:" + " io.prometheus.jmx.common.http.authenticator.CustomAuthenticator451");
         writer.close();
 
-        httpServer = startServer(config);
+        httpServer = startServer(config, path);
 
         verifyExpectedResponse(httpServer, "HTTP/1.1 451");
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectOkRoundTrip() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectOkRoundTrip(String path) throws Exception {
         File config = new File(temporaryFolder, "ok");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -75,13 +81,16 @@ public class HTTPServerFactoryTest {
 
         writer.close();
 
-        httpServer = startServer(config);
+        httpServer = startServer(config, path);
 
         verifyExpectedResponse(httpServer, "HTTP/1.1 200 OK");
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectNotMatchingRoundTrip() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassSubjectNotMatchingRoundTrip(String path)
+            throws Exception {
         File config = new File(temporaryFolder, "unmatched_subjectAttributeName");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -92,7 +101,7 @@ public class HTTPServerFactoryTest {
 
         writer.close();
 
-        httpServer = startServer(config);
+        httpServer = startServer(config, path);
 
         verifyExpectedResponse(httpServer, "HTTP/1.1 403");
     }
@@ -115,8 +124,10 @@ public class HTTPServerFactoryTest {
         }
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNOkNoConstructor() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNOkNoConstructor(String path) throws Exception {
         File config = new File(temporaryFolder, "error_no_constructor");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -125,11 +136,14 @@ public class HTTPServerFactoryTest {
         writer.println("      class:" + " io.prometheus.jmx.common.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config, path));
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotFound() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotFound(String path) throws Exception {
         File config = new File(temporaryFolder, "notFound");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -138,11 +152,14 @@ public class HTTPServerFactoryTest {
         writer.println("      class:" + " myio.jmx.common.notThere.authenticator.PlaintextAuthenticator");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config, path));
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotString() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokNotString(String path) throws Exception {
         File config = new File(temporaryFolder, "as_int");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -151,11 +168,14 @@ public class HTTPServerFactoryTest {
         writer.println("       class: 10");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config, path));
     }
 
-    @Test
-    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokMissingString() throws Exception {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"/custom_metrics"})
+    public void createAndStartHTTPServerWithCustomAuthenticatorClassNokMissingString(String path) throws Exception {
         File config = new File(temporaryFolder, "missing");
         PrintWriter writer = new PrintWriter(config);
         writer.println("httpServer:");
@@ -164,11 +184,12 @@ public class HTTPServerFactoryTest {
         writer.println("      class:");
         writer.close();
 
-        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config, path));
     }
 
-    private HTTPServer startServer(File config) throws IOException {
+    private HTTPServer startServer(File config, String path) throws IOException {
         return HTTPServerFactory.createAndStartHTTPServer(
-                PrometheusRegistry.defaultRegistry, InetAddress.getByName("0.0.0.0"), 0, config);
+                PrometheusRegistry.defaultRegistry, InetAddress.getByName("0.0.0.0"), 0, path, config);
     }
 }
