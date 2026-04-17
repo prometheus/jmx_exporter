@@ -20,6 +20,7 @@ import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -34,6 +35,7 @@ import javax.crypto.spec.PBEKeySpec;
  * credentials.
  *
  * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
+ * Password hash comparison is constant-time.
  *
  * @see PlaintextAuthenticator
  * @see MessageDigestAuthenticator
@@ -63,9 +65,9 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     private final String username;
 
     /**
-     * The expected password hash for authentication.
+     * The expected password hash for authentication (stored as bytes for constant-time comparison).
      */
-    private final String passwordHash;
+    private final byte[] passwordHashBytes;
 
     /**
      * The PBKDF2 algorithm (PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA256, or PBKDF2WithHmacSHA512).
@@ -83,7 +85,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     private final int iterations;
 
     /**
-     * The key length in bits.
+     * The key length in bits (note: constructor parameter is in bytes, converted to bits internally).
      */
     private final int keyLength;
 
@@ -133,7 +135,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         SecretKeyFactory.getInstance(algorithm);
 
         this.username = username;
-        this.passwordHash = passwordHash.toLowerCase().replace(":", "");
+        this.passwordHashBytes = hexStringToByteArray(passwordHash.toLowerCase().replace(":", ""));
         this.algorithm = algorithm;
         this.salt = salt;
         this.iterations = iterations;
@@ -156,8 +158,10 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             return false;
         }
 
-        boolean isValid = this.username.equals(username)
-                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, iterations, keyLength, password));
+        byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, iterations, keyLength, password);
+        boolean isValid = MessageDigest.isEqual(
+                        this.username.getBytes(StandardCharsets.UTF_8), username.getBytes(StandardCharsets.UTF_8))
+                && MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
 
         if (isValid) {
             validCredentialsCache.add(credentials);
@@ -181,13 +185,29 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      */
     private static String generatePasswordHash(
             String algorithm, String salt, int iterations, int keyLength, String password) {
+        byte[] hashBytes = generatePasswordHashBytes(algorithm, salt, iterations, keyLength, password);
+        return toLowerCaseHexadecimal(hashBytes);
+    }
+
+    /**
+     * Generates a password hash as bytes for constant-time comparison.
+     *
+     * @param algorithm the PBKDF2 algorithm
+     * @param salt the salt
+     * @param iterations the number of iterations
+     * @param keyLength the key length in bits
+     * @param password the password to hash
+     * @return the hash as a byte array
+     * @throws RuntimeException if key derivation fails
+     */
+    private static byte[] generatePasswordHashBytes(
+            String algorithm, String salt, int iterations, int keyLength, String password) {
         try {
+            // Note: keyLength parameter is in bytes (for historical reasons), convert to bits for PBEKeySpec
             PBEKeySpec pbeKeySpec = new PBEKeySpec(
                     password.toCharArray(), salt.getBytes(StandardCharsets.UTF_8), iterations, keyLength * 8);
             SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithm);
-            byte[] secretKeyBytes = secretKeyFactory.generateSecret(pbeKeySpec).getEncoded();
-
-            return toLowerCaseHexadecimal(secretKeyBytes);
+            return secretKeyFactory.generateSecret(pbeKeySpec).getEncoded();
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
@@ -210,5 +230,27 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         }
 
         return new String(result);
+    }
+
+    /**
+     * Converts a hexadecimal string to a byte array.
+     *
+     * @param hex the hexadecimal string to convert
+     * @return the byte array representation
+     * @throws IllegalArgumentException if the hex string is invalid
+     */
+    private static byte[] hexStringToByteArray(String hex) {
+        if (hex.length() % 2 != 0) {
+            throw new IllegalArgumentException("Hex string must have an even length");
+        }
+
+        int len = hex.length();
+        byte[] bytes = new byte[len / 2];
+
+        for (int i = 0; i < len; i += 2) {
+            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+        }
+
+        return bytes;
     }
 }

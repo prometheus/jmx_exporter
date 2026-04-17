@@ -18,7 +18,6 @@ package io.prometheus.jmx.common.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -34,6 +33,7 @@ import java.security.MessageDigest;
  * credentials.
  *
  * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
+ * Password hash comparison is constant-time.
  *
  * @see PlaintextAuthenticator
  * @see PBKDF2Authenticator
@@ -56,9 +56,9 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     private final String username;
 
     /**
-     * The expected password hash for authentication.
+     * The expected password hash for authentication (stored as bytes for constant-time comparison).
      */
-    private final String passwordHash;
+    private final byte[] passwordHashBytes;
 
     /**
      * The hashing algorithm (SHA-1, SHA-256, or SHA-512).
@@ -105,7 +105,7 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         MessageDigest.getInstance(algorithm);
 
         this.username = username;
-        this.passwordHash = passwordHash.toLowerCase().replace(":", "");
+        this.passwordHashBytes = hexStringToByteArray(passwordHash.toLowerCase().replace(":", ""));
         this.algorithm = algorithm;
         this.salt = salt;
         this.validCredentialsCache = new CredentialsCache(MAXIMUM_VALID_CACHE_SIZE_BYTES);
@@ -125,8 +125,10 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        boolean isValid = this.username.equals(username)
-                && this.passwordHash.equals(generatePasswordHash(algorithm, salt, password));
+        byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, password);
+        boolean isValid = MessageDigest.isEqual(
+                        this.username.getBytes(StandardCharsets.UTF_8), username.getBytes(StandardCharsets.UTF_8))
+                && MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
 
         if (isValid) {
             validCredentialsCache.add(credentials);
@@ -147,13 +149,66 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @throws RuntimeException if the algorithm is not supported
      */
     private static String generatePasswordHash(String algorithm, String salt, String password) {
+        byte[] hashBytes = generatePasswordHashBytes(algorithm, salt, password);
+        return toLowerCaseHexadecimal(hashBytes);
+    }
+
+    /**
+     * Generates a password hash as bytes for constant-time comparison.
+     *
+     * @param algorithm the hashing algorithm
+     * @param salt the salt
+     * @param password the password to hash
+     * @return the hash as a byte array
+     * @throws RuntimeException if the algorithm is not supported
+     */
+    private static byte[] generatePasswordHashBytes(String algorithm, String salt, String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance(algorithm);
-            byte[] hash = digest.digest((salt + ":" + password).getBytes(StandardCharsets.UTF_8));
-            BigInteger number = new BigInteger(1, hash);
-            return number.toString(16).toLowerCase();
+            return digest.digest((salt + ":" + password).getBytes(StandardCharsets.UTF_8));
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Converts a byte array to a lowercase hexadecimal string.
+     *
+     * @param bytes the byte array to convert
+     * @return the lowercase hexadecimal string representation
+     */
+    private static String toLowerCaseHexadecimal(byte[] bytes) {
+        int len = bytes.length;
+        char[] result = new char[len * 2];
+
+        for (int i = 0, j = 0; i < len; i++) {
+            int v = bytes[i] & 0xFF;
+            result[j++] = Integer.toHexString(v >>> 4).charAt(0);
+            result[j++] = Integer.toHexString(v & 0x0F).charAt(0);
+        }
+
+        return new String(result);
+    }
+
+    /**
+     * Converts a hexadecimal string to a byte array.
+     *
+     * @param hex the hexadecimal string to convert
+     * @return the byte array representation
+     * @throws IllegalArgumentException if the hex string is invalid
+     */
+    private static byte[] hexStringToByteArray(String hex) {
+        if (hex.length() % 2 != 0) {
+            throw new IllegalArgumentException("Hex string must have an even length");
+        }
+
+        int len = hex.length();
+        byte[] bytes = new byte[len / 2];
+
+        for (int i = 0; i < len; i += 2) {
+            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+        }
+
+        return bytes;
     }
 }

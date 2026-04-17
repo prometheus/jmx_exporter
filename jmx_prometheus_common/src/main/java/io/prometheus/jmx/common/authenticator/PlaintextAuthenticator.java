@@ -18,6 +18,8 @@ package io.prometheus.jmx.common.authenticator;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.util.Precondition;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 /**
  * Basic authenticator that validates credentials against a plaintext username and password.
@@ -26,7 +28,7 @@ import io.prometheus.jmx.common.util.Precondition;
  * consider using {@link MessageDigestAuthenticator} or {@link PBKDF2Authenticator} for more
  * secure password handling.
  *
- * <p>Thread-safety: This class is thread-safe. Password comparison is atomic.
+ * <p>Thread-safety: This class is thread-safe. Password comparison is constant-time.
  *
  * @see MessageDigestAuthenticator
  * @see PBKDF2Authenticator
@@ -64,6 +66,13 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
 
     @Override
     public boolean checkCredentials(String username, String password) {
-        return this.username.equals(username) && this.password.equals(password);
+        if (username == null || password == null) {
+            return false;
+        }
+
+        return MessageDigest.isEqual(
+                        this.username.getBytes(StandardCharsets.UTF_8), username.getBytes(StandardCharsets.UTF_8))
+                && MessageDigest.isEqual(
+                        this.password.getBytes(StandardCharsets.UTF_8), password.getBytes(StandardCharsets.UTF_8));
     }
 }

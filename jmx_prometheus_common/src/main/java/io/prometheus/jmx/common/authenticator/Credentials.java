@@ -16,12 +16,16 @@
 
 package io.prometheus.jmx.common.authenticator;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Objects;
 
 /**
  * Immutable credentials container for username and password.
  *
  * <p>Used by authenticator implementations to cache credentials for fast lookup.
+ *
+ * <p>Password comparison is constant-time to prevent timing side-channel attacks.
  *
  * <p>This class is immutable and thread-safe.
  */
@@ -69,7 +73,12 @@ public class Credentials {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Credentials credentials = (Credentials) o;
-        return Objects.equals(username, credentials.username) && Objects.equals(password, credentials.password);
+        return MessageDigest.isEqual(
+                        username.getBytes(StandardCharsets.UTF_8),
+                        credentials.username.getBytes(StandardCharsets.UTF_8))
+                && MessageDigest.isEqual(
+                        password.getBytes(StandardCharsets.UTF_8),
+                        credentials.password.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
