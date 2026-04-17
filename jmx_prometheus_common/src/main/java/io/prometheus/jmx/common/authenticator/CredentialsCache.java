@@ -94,10 +94,7 @@ public class CredentialsCache {
         while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes) && (currentCacheSizeBytes > 0)) {
             Credentials c = linkedList.removeLast();
             linkedHashMap.remove(c);
-            currentCacheSizeBytes -= credentialSizeBytes;
-            if (currentCacheSizeBytes < 0) {
-                currentCacheSizeBytes = 0;
-            }
+            currentCacheSizeBytes -= c.toString().getBytes(StandardCharsets.UTF_8).length;
         }
 
         linkedHashMap.put(credentials, (byte) 1);

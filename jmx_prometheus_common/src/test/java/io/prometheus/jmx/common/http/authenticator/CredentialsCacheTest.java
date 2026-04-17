@@ -132,4 +132,38 @@ public class CredentialsCacheTest {
         assertThat(credentialsCache.contains(credentials)).isFalse();
         assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
     }
+
+    /**
+     * Test that verifies correct size accounting during LRU eviction with varying credential sizes.
+     * This catches the bug where eviction subtracted the new entry size instead of the
+     * evicted entry size, causing incorrect memory accounting.
+     */
+    @Test
+    public void evictionSizeAccountingWithVaryingSizes() {
+        Credentials smallCred = new Credentials("ab", "cd");
+        int smallSize = smallCred.toString().getBytes(StandardCharsets.UTF_8).length;
+
+        Credentials largeCred = new Credentials("abcdefghijklmnop", "qrstuvwx");
+        int largeSize = largeCred.toString().getBytes(StandardCharsets.UTF_8).length;
+
+        int maxCacheSize = smallSize * 2 + largeSize;
+        CredentialsCache credentialsCache = new CredentialsCache(maxCacheSize);
+
+        credentialsCache.add(smallCred);
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(smallSize);
+
+        credentialsCache.add(largeCred);
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(smallSize + largeSize);
+
+        Credentials slightlyLargerCred = new Credentials("ab", "cd!");
+        int slightlyLargerSize = slightlyLargerCred.toString().getBytes(StandardCharsets.UTF_8).length;
+        credentialsCache.add(slightlyLargerCred);
+        // Adding slightlyLargerCred evicts smallCred (LRU) since maxCacheSize = smallSize * 2 + largeSize
+        // After eviction: largeCred(24) + slightlyLargerCred(5) = 29
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(largeSize + slightlyLargerSize);
+
+        credentialsCache.add(new Credentials("zz", "zz"));
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isGreaterThan(0);
+        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isLessThanOrEqualTo(maxCacheSize);
+    }
 }
