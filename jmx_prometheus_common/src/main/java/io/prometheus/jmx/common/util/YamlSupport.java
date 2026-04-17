@@ -21,7 +21,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Map;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
  * Utility class for loading and parsing YAML configuration files.
@@ -51,7 +53,7 @@ public class YamlSupport {
      * @return a map representing the YAML structure, may be empty but never {@code null}
      */
     public static Map<Object, Object> loadYaml(String yaml) {
-        return new Yaml().load(yaml);
+        return new Yaml(new SafeConstructor(new LoaderOptions())).load(yaml);
     }
 
     /**
@@ -63,7 +65,7 @@ public class YamlSupport {
      */
     public static Map<Object, Object> loadYaml(File file) throws IOException {
         try (Reader reader = new FileReader(file)) {
-            return new Yaml().load(reader);
+            return new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
         }
     }
 }

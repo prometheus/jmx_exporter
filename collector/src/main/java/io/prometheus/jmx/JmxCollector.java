@@ -52,7 +52,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
  * Class to implement JmxCollector
@@ -218,7 +220,7 @@ public class JmxCollector implements MultiCollector {
         configFile = in;
         this.mode = mode;
         try (FileReader fr = new FileReader(in)) {
-            config = loadConfig(new Yaml().load(fr));
+            config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(fr));
         }
         config.lastUpdate = configFile.lastModified();
         exitOnConfigError();
@@ -231,7 +233,7 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException MalformedObjectNameException
      */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        config = loadConfig(new Yaml().load(yamlConfig));
+        config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(yamlConfig));
         mode = null;
     }
 
@@ -242,7 +244,7 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException MalformedObjectNameException
      */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        config = loadConfig(new Yaml().load(inputStream));
+        config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(inputStream));
         mode = null;
     }
 
@@ -310,7 +312,7 @@ public class JmxCollector implements MultiCollector {
 
     private void reloadConfig() {
         try (FileReader fr = new FileReader(configFile)) {
-            Map<String, Object> newYamlConfig = new Yaml().load(fr);
+            Map<String, Object> newYamlConfig = new Yaml(new SafeConstructor(new LoaderOptions())).load(fr);
             Config newConfig = loadConfig(newYamlConfig);
             newConfig.lastUpdate = configFile.lastModified();
             config = newConfig;
