@@ -97,6 +97,46 @@ public class ArgumentsTest {
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
+                "12345::/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "12345:/:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "12345:/my_metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/my_metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "12345:/my-metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/my-metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "12345:/_node/_local/metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/_node/_local/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
@@ -129,6 +169,54 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345::/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345:/:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345:my_metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "my_metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345:/my_metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/my_metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345:/my-metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/my-metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "myhost.domain.com:12345:/_node/_local/metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/_node/_local/metrics",
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
@@ -237,6 +325,46 @@ public class ArgumentsTest {
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
+                "192.168.1.1:12345::/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "192.168.1.1",
+                12345,
+                "/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "192.168.1.1:12345:/:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "192.168.1.1",
+                12345,
+                "/",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "192.168.1.1:12345:/my_metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "192.168.1.1",
+                12345,
+                "/my_metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "192.168.1.1:12345:/my-metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "192.168.1.1",
+                12345,
+                "/my-metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "192.168.1.1:12345:/_node/_local/metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "192.168.1.1",
+                12345,
+                "/_node/_local/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
                 "[::/0]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "::/0",
@@ -283,6 +411,46 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345::/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "001:0db8:0a0b:12f0:0000:0000:0000:0001",
+                12345,
+                "/metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "001:0db8:0a0b:12f0:0000:0000:0000:0001",
+                12345,
+                "/",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/my_metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "001:0db8:0a0b:12f0:0000:0000:0000:0001",
+                12345,
+                "/my_metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/my-metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "001:0db8:0a0b:12f0:0000:0000:0000:0001",
+                12345,
+                "/my-metrics",
+                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/_node/_local/metrics:/opt/prometheus/jmx_exporter/config-file.yaml",
+                HTTP_ENABLED,
+                "001:0db8:0a0b:12f0:0000:0000:0000:0001",
+                12345,
+                "/_node/_local/metrics",
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
@@ -347,6 +515,11 @@ public class ArgumentsTest {
         private final Integer port;
 
         /**
+         * Expected metrics path, or {@code null} if not specified.
+         */
+        private final String path;
+
+        /**
          * Expected configuration file path.
          */
         private final String filename;
@@ -368,11 +541,34 @@ public class ArgumentsTest {
                 String host,
                 Integer port,
                 String filename) {
+            this(validConfiguration, argument, httpEnabled, host, port, null, filename);
+        }
+
+        /**
+         * Constructs a test definition with expected parsing results.
+         *
+         * @param validConfiguration whether the argument is valid
+         * @param argument the raw argument string to test
+         * @param httpEnabled expected HTTP enabled state
+         * @param host expected host address
+         * @param port expected port number
+         * @param path expected metrics path
+         * @param filename expected configuration file path
+         */
+        public ArgumentsTestDefinition(
+                boolean validConfiguration,
+                String argument,
+                boolean httpEnabled,
+                String host,
+                Integer port,
+                String path,
+                String filename) {
             this.argument = argument;
             this.validConfiguration = validConfiguration;
             this.httpEnabled = httpEnabled;
             this.host = host;
             this.port = port;
+            this.path = path;
             this.filename = filename;
         }
 
@@ -389,6 +585,9 @@ public class ArgumentsTest {
                 assertThat(arguments.isHttpEnabled()).isEqualTo(httpEnabled);
                 assertThat(arguments.getHost()).isEqualTo(host);
                 assertThat(arguments.getPort()).isEqualTo(port);
+                if (port != null) {
+                    assertThat(arguments.getPath()).isEqualTo(path == null || path.isEmpty() ? "/metrics" : path);
+                }
                 assertThat(arguments.getFilename()).isEqualTo(filename);
             } else {
                 assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> Arguments.parse(argument));

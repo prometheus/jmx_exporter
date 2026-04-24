@@ -256,9 +256,14 @@ public class JavaAgent {
     private static HTTPServer startHttpServer(Arguments arguments, File file) throws Exception {
         LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
         LOGGER.info("Starting HTTPServer ...");
+        if (arguments.getPath() != null) LOGGER.info("Metrics path: %s", arguments.getPath());
 
         HTTPServer httpServer = HTTPServerFactory.createAndStartHTTPServer(
-                DEFAULT_REGISTRY, InetAddress.getByName(arguments.getHost()), arguments.getPort(), file);
+                DEFAULT_REGISTRY,
+                InetAddress.getByName(arguments.getHost()),
+                arguments.getPort(),
+                arguments.getPath(),
+                file);
 
         LOGGER.info("HTTPServer started");
 

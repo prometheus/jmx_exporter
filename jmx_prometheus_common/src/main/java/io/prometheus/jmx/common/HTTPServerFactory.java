@@ -249,6 +249,44 @@ public class HTTPServerFactory {
      *     {@code null}
      * @param inetAddress the network address to bind to, must not be {@code null}
      * @param port the port number to listen on, must be a valid port (0-65535)
+     * @param metricsPath the metrics path to bind to, default is {@code /metrics}
+     * @param exporterYamlFile the YAML configuration file, must not be {@code null}
+     * @return the started HTTP server instance
+     * @throws IOException if the server fails to start or configuration cannot be read
+     * @throws ConfigurationException if the configuration is invalid
+     */
+    public static HTTPServer createAndStartHTTPServer(
+            PrometheusRegistry prometheusRegistry,
+            InetAddress inetAddress,
+            int port,
+            String metricsPath,
+            File exporterYamlFile)
+            throws IOException {
+        MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+
+        HTTPServer.Builder httpServerBuilder = HTTPServer.builder()
+                .inetAddress(inetAddress)
+                .port(port)
+                .metricsHandlerPath(metricsPath)
+                .registry(prometheusRegistry);
+
+        configureThreads(rootMapAccessor, httpServerBuilder);
+        configureAuthentication(rootMapAccessor, httpServerBuilder);
+        configureSSL(rootMapAccessor, httpServerBuilder);
+
+        return httpServerBuilder.buildAndStart();
+    }
+
+    /**
+     * Creates and starts an HTTP server with the specified configuration.
+     *
+     * <p>The HTTP server is configured based on the YAML configuration file, including:
+     * thread pool settings, authentication, and SSL/TLS.
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param inetAddress the network address to bind to, must not be {@code null}
+     * @param port the port number to listen on, must be a valid port (0-65535)
      * @param exporterYamlFile the YAML configuration file, must not be {@code null}
      * @return the started HTTP server instance
      * @throws IOException if the server fails to start or configuration cannot be read
@@ -257,16 +295,7 @@ public class HTTPServerFactory {
     public static HTTPServer createAndStartHTTPServer(
             PrometheusRegistry prometheusRegistry, InetAddress inetAddress, int port, File exporterYamlFile)
             throws IOException {
-        MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
-
-        HTTPServer.Builder httpServerBuilder =
-                HTTPServer.builder().inetAddress(inetAddress).port(port).registry(prometheusRegistry);
-
-        configureThreads(rootMapAccessor, httpServerBuilder);
-        configureAuthentication(rootMapAccessor, httpServerBuilder);
-        configureSSL(rootMapAccessor, httpServerBuilder);
-
-        return httpServerBuilder.buildAndStart();
+        return createAndStartHTTPServer(prometheusRegistry, inetAddress, port, null, exporterYamlFile);
     }
 
     /**

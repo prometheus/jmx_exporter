@@ -30,7 +30,9 @@ import java.util.regex.Pattern;
  *
  * <ul>
  *   <li>{@code port:configFile} - HTTP server on default host (0.0.0.0) with specified port
+ *   <li>{@code port:path:configFile} - HTTP server on default host (0.0.0.0) with specified port and metrics path
  *   <li>{@code host:port:configFile} - HTTP server on specified host and port
+ *   <li>{@code host:port:path:configFile} - HTTP server on specified host, port, and metrics path
  *   <li>{@code configFile} - No HTTP server (HTTP disabled)
  * </ul>
  *
@@ -46,6 +48,11 @@ public class Arguments {
     private static final String DEFAULT_HOST = "0.0.0.0";
 
     /**
+     * Default metrics path for HTTP server binding when only port is specified.
+     */
+    private static final String DEFAULT_PATH = "/metrics";
+
+    /**
      * Regular expression pattern for parsing agent arguments.
      *
      * <p>Captures groups:
@@ -53,6 +60,7 @@ public class Arguments {
      * <ol>
      *   <li>Optional host (hostname, IPv4, or IPv6 in brackets)
      *   <li>Port number
+     *   <li>Optional metrics path
      *   <li>Configuration file path
      * </ol>
      */
@@ -60,6 +68,7 @@ public class Arguments {
             + // host name, or ipv4, or ipv6 address in brackets
             "(?:(\\d{1,5}):)"
             // port
+            + "(?:((?:/?)|(?:/?[\\w.~-])*):)?" // Optional metrics path
             + "(.+)"; // config file
 
     /**
@@ -86,6 +95,14 @@ public class Arguments {
     private final Integer port;
 
     /**
+     * Metrics path for HTTP server.
+     *
+     * <p>May be {@code null} when HTTP is disabled. When HTTP is enabled without an explicit path,
+     * defaults to {@value #DEFAULT_PATH}.
+     */
+    private final String path;
+
+    /**
      * Path to the configuration file.
      *
      * <p>Never {@code null}.
@@ -99,13 +116,15 @@ public class Arguments {
      * @param host the host address for HTTP server binding, may be {@code null} when HTTP is
      *     disabled
      * @param port the port number for HTTP server, may be {@code null} when HTTP is disabled
+     * @param path the metrics path, may be {@code null} when HTTP is disabled
      * @param filename the path to the configuration file, must not be {@code null}
      * @throws NullPointerException if {@code filename} is {@code null}
      */
-    private Arguments(boolean httpEnabled, String host, Integer port, String filename) {
+    private Arguments(boolean httpEnabled, String host, Integer port, String path, String filename) {
         this.httpEnabled = httpEnabled;
         this.host = host;
         this.port = port;
+        this.path = path;
         this.filename = Objects.requireNonNull(filename, "filename cannot be null");
     }
 
@@ -148,6 +167,20 @@ public class Arguments {
     }
 
     /**
+     * Returns the metrics path.
+     *
+     * <p>When HTTP is enabled and no explicit path was provided in the agent arguments, returns the
+     * default metrics path {@value #DEFAULT_PATH}.
+     *
+     * @return the metrics path, or {@code null} if HTTP is disabled
+     */
+    public String getPath() {
+        if (!httpEnabled) return null;
+
+        return path == null || path.isEmpty() ? DEFAULT_PATH : path;
+    }
+
+    /**
      * Returns the path to the configuration file.
      *
      * <p>The configuration file contains JMX exporter settings including rules for metric naming,
@@ -166,7 +199,9 @@ public class Arguments {
      *
      * <ul>
      *   <li>{@code port:configFile} - Enables HTTP on default host (0.0.0.0) and specified port
+     *   <li>{@code port:path:configFile} - Enables HTTP server on default host (0.0.0.0) with specified port and metrics path
      *   <li>{@code host:port:configFile} - Enables HTTP on specified host and port
+     *   <li>{@code host:port:path:configFile} - Enables HTTP on specified host, port and metrics path
      *   <li>{@code configFile} - Disables HTTP (only OpenTelemetry export possible via config)
      * </ul>
      *
@@ -187,6 +222,7 @@ public class Arguments {
         boolean httpEnabled = false;
         String host = null;
         Integer port = null;
+        String path = null;
         String filename;
 
         if (matcher.matches()) {
@@ -194,25 +230,29 @@ public class Arguments {
                 case 2: {
                     httpEnabled = true;
                     host = DEFAULT_HOST;
-
-                    try {
-                        port = Integer.parseInt(matcher.group(1));
-                    } catch (NumberFormatException e) {
-                        throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
-                    }
+                    port = parsePort(agentArgument, matcher.group(1));
                     filename = matcher.group(2);
                     break;
                 }
                 case 3: {
                     httpEnabled = true;
-                    host = matcher.group(1) != null ? matcher.group(1) : DEFAULT_HOST;
-
-                    if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
-                        host = host.substring(1, host.length() - 1);
+                    String hostOrPort = matcher.group(1);
+                    if (hostOrPort.matches("(\\d{1,5})")) {
+                        port = parsePort(agentArgument, hostOrPort);
+                        path = parsePath(matcher.group(2));
+                    } else {
+                        host = parseHost(hostOrPort);
+                        port = parsePort(agentArgument, matcher.group(2));
                     }
-
-                    port = Integer.parseInt(matcher.group(2));
                     filename = matcher.group(3);
+                    break;
+                }
+                case 4: {
+                    httpEnabled = true;
+                    host = parseHost(matcher.group(1));
+                    port = parsePort(agentArgument, matcher.group(2));
+                    path = parsePath(matcher.group(3));
+                    filename = matcher.group(4);
                     break;
                 }
                 default: {
@@ -227,6 +267,28 @@ public class Arguments {
             filename = agentArgument;
         }
 
-        return new Arguments(httpEnabled, host, port, filename);
+        return new Arguments(httpEnabled, host, port, path, filename);
+    }
+
+    private static String parseHost(String matcherGroup) {
+        String host = matcherGroup != null ? matcherGroup : DEFAULT_HOST;
+
+        if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
+            host = host.substring(1, host.length() - 1);
+        }
+
+        return host;
+    }
+
+    private static int parsePort(String agentArgument, String matcherGroup) {
+        try {
+            return Integer.parseInt(matcherGroup);
+        } catch (NumberFormatException e) {
+            throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
+        }
+    }
+
+    private static String parsePath(String matcherGroup) {
+        return matcherGroup == null || matcherGroup.isEmpty() ? DEFAULT_PATH : matcherGroup;
     }
 }
