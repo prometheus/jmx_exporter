@@ -39,6 +39,16 @@ import java.util.Objects;
 public class Arguments {
 
     /**
+     * Minimum valid port number.
+     */
+    private static final int MIN_PORT = 1;
+
+    /**
+     * Maximum valid port number.
+     */
+    private static final int MAX_PORT = 65535;
+
+    /**
      * Default host address for HTTP server binding when only port is specified.
      */
     private static final String DEFAULT_HOST = "0.0.0.0";
@@ -191,6 +201,11 @@ public class Arguments {
                 }
             } catch (NumberFormatException e) {
                 throw new ConfigurationException(format("Malformed arguments [%s]", toString(arguments)));
+            }
+
+            if (port < MIN_PORT || port > MAX_PORT) {
+                throw new ConfigurationException(
+                        format("Port must be between %d and %d [%d]", MIN_PORT, MAX_PORT, port));
             }
 
             filename = arguments[1];
