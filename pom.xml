@@ -34,10 +34,10 @@
         <snakeyaml.version>2.6</snakeyaml.version>
         <slf4j.version>2.1.0-alpha1</slf4j.version>
         <logback.version>1.5.32</logback.version>
-        <testcontainers.version>2.0.4</testcontainers.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
         <okhttp.version>5.3.2</okhttp.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <verifyica.version>1.0.6</verifyica.version>
+        <verifyica.version>1.0.8</verifyica.version>
     </properties>
 
     <modules>
