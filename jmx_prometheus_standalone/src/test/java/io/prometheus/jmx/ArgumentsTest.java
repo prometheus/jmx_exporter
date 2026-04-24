@@ -56,6 +56,11 @@ public class ArgumentsTest {
     private static final boolean VALID_CONFIGURATION = true;
 
     /**
+     * Constant for invalid configuration state in test definitions.
+     */
+    private static final boolean INVALID_CONFIGURATION = false;
+
+    /**
      * Test data array containing various valid and invalid argument configurations.
      */
     private static final ArgumentsTestDefinition[] ARGUMENTS_TEST_DEFINITIONS = {
@@ -244,6 +249,54 @@ public class ArgumentsTest {
         new ArgumentsTestDefinition(false, new String[] {"abc:xyz", "config.yaml"}, HTTP_DISABLED, null, null, null),
         new ArgumentsTestDefinition(false, new String[] {"12345", null}, HTTP_DISABLED, null, null, null),
         new ArgumentsTestDefinition(false, new String[] {"12345", ""}, HTTP_DISABLED, null, null, null),
+        // Invalid port - port 0
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"0", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
+        // Invalid port - port 65536
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"65536", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
+        // Invalid port - port 99999
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"99999", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
+        // Invalid port - host with port 0
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"myhost.domain.com:0", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
+        // Invalid port - host with port 65536
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"myhost.domain.com:65536", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
+        // Invalid port - host with port 99999
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                new String[] {"myhost.domain.com:99999", "/opt/prometheus/config.yaml"},
+                HTTP_ENABLED,
+                null,
+                null,
+                null),
     };
 
     /**
