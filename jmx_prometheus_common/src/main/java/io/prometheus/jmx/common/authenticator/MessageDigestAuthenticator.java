@@ -29,8 +29,8 @@ import java.security.MessageDigest;
  * {@code hash(algorithm, salt + ":" + password)}.
  *
  * <p>This authenticator caches both valid and invalid credentials to improve authentication
- * performance. Credentials are cached up to 1 MB for valid credentials and 10 MB for invalid
- * credentials.
+ * performance, using a maximum value size of 5 KiB and a maximum of 100 entries per
+ * cache.
  *
  * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
  * Password hash comparison is constant-time.
@@ -40,15 +40,11 @@ import java.security.MessageDigest;
  */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
-    /**
-     * Maximum cache size for valid credentials in bytes (1 MB).
-     */
-    private static final int MAXIMUM_VALID_CACHE_SIZE_BYTES = 1000000; // 1 MB
+    /** Maximum size for a single cached credential value in bytes (5 KiB). */
+    private static final int MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES = CredentialsCache.DEFAULT_MAX_VALUE_SIZE_BYTES;
 
-    /**
-     * Maximum cache size for invalid credentials in bytes (10 MB).
-     */
-    private static final int MAXIMUM_INVALID_CACHE_SIZE_BYTES = 10000000; // 10 MB
+    /** Maximum number of entries per credential cache. */
+    private static final int MAXIMUM_CREDENTIAL_CACHE_ENTRIES = CredentialsCache.DEFAULT_MAX_ENTRIES;
 
     /**
      * The expected username for authentication.
@@ -108,8 +104,10 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         this.passwordHashBytes = hexStringToByteArray(passwordHash.toLowerCase().replace(":", ""));
         this.algorithm = algorithm;
         this.salt = salt;
-        this.validCredentialsCache = new CredentialsCache(MAXIMUM_VALID_CACHE_SIZE_BYTES);
-        this.invalidCredentialsCache = new CredentialsCache(MAXIMUM_INVALID_CACHE_SIZE_BYTES);
+        this.validCredentialsCache =
+                new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
+        this.invalidCredentialsCache =
+                new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
     }
 
     @Override
