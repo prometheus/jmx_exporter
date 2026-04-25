@@ -16,142 +16,149 @@
 
 package io.prometheus.jmx.common.authenticator;
 
+import io.prometheus.jmx.common.util.Precondition;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 /**
- * Size-constrained LRU cache for credentials.
+ * LRU cache for credentials.
  *
- * <p>Provides caching for both valid and invalid credentials to improve authentication performance.
- * When the cache reaches its maximum size, the oldest entries are evicted to make room for new
- * ones.
+ * <p>Provides caching for both valid and invalid credentials to improve authentication
+ * performance.
  *
- * <p>Credentials that exceed the maximum cache size are not cached. This prevents a single large
- * credential from evicting multiple smaller entries.
+ * <p>Entries larger than the configured maximum value size are not cached. Once the cache reaches
+ * the configured maximum number of entries, the least recently used entry is evicted.
  *
  * <p>Thread-safety: This class is thread-safe. All public methods are synchronized.
  */
 public class CredentialsCache {
 
-    /**
-     * Maximum cache size in bytes.
-     */
-    private final int maximumCacheSizeBytes;
+    /** Default maximum size for a single cached credential value (5 KiB). */
+    public static final int DEFAULT_MAX_VALUE_SIZE_BYTES = 5 * 1024;
+
+    /** Default maximum number of cached credentials. */
+    public static final int DEFAULT_MAX_ENTRIES = 100;
+
+    private static final Byte PRESENT = (byte) 1;
+
+    /** Maximum cacheable credential size in bytes. */
+    private final int maxValueSizeBytes;
+
+    /** Maximum number of cached credentials. */
+    private final int maxEntries;
 
     /**
      * LRU cache for credential lookups.
      *
-     * <p>Uses LinkedHashMap with access-order to implement LRU eviction.
+     * <p>Uses access-order to implement classic LRU semantics.
      */
-    private final LinkedHashMap<Credentials, Byte> linkedHashMap;
+    private final LinkedHashMap<Credentials, Byte> cache;
 
     /**
-     * LinkedList for maintaining LRU order.
+     * Constructs a credentials cache with the specified limits.
      *
-     * <p>The most recently used credentials are at the head, least recently used at the tail.
+     * @param maxValueSizeBytes maximum size of a single cached credential value in bytes, must be
+     *     positive
+     * @param maxEntries maximum number of cached credentials, must be positive
      */
-    private final LinkedList<Credentials> linkedList;
+    public CredentialsCache(int maxValueSizeBytes, int maxEntries) {
+        Precondition.isGreaterThanOrEqualTo(maxValueSizeBytes, 1);
+        Precondition.isGreaterThanOrEqualTo(maxEntries, 1);
 
-    /**
-     * Current cache size in bytes.
-     */
-    private int currentCacheSizeBytes;
-
-    /**
-     * Constructs a credentials cache with the specified maximum size.
-     *
-     * @param maximumCacheSizeBytes maximum cache size in bytes, must be positive
-     */
-    public CredentialsCache(int maximumCacheSizeBytes) {
-        this.maximumCacheSizeBytes = maximumCacheSizeBytes;
-        linkedHashMap = new LinkedHashMap<>();
-        linkedList = new LinkedList<>();
+        this.maxValueSizeBytes = maxValueSizeBytes;
+        this.maxEntries = maxEntries;
+        this.cache = new LinkedHashMap<>(16, 0.75f, true);
     }
 
     /**
      * Adds credentials to the cache.
      *
-     * <p>If the credentials size exceeds the maximum cache size, they are not cached. If adding
-     * the credentials would exceed the cache size, older entries are evicted until there is
-     * room.
-     *
-     * <p>This operation is synchronized to ensure thread-safe access to the underlying
-     * collections.
+     * <p>If the credentials size exceeds the maximum value size, they are not cached. If the
+     * credentials are already present, they are refreshed as the most recently used entry.
+     * Otherwise, the least recently used entries are evicted until there is room for the new
+     * entry.
      *
      * @param credentials credentials to add, must not be {@code null}
      */
     public synchronized void add(Credentials credentials) {
-        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+        Precondition.notNull(credentials, "credentials is null");
 
-        // Don't cache the entry since it's bigger than the maximum cache size
-        // Don't invalidate other entries
-        if (credentialSizeBytes > maximumCacheSizeBytes) {
+        if (calculateSizeBytes(credentials) > maxValueSizeBytes) {
             return;
         }
 
-        // Purge old cache entries until we have space or the cache is empty
-        while (((currentCacheSizeBytes + credentialSizeBytes) > maximumCacheSizeBytes) && (currentCacheSizeBytes > 0)) {
-            Credentials c = linkedList.removeLast();
-            linkedHashMap.remove(c);
-            currentCacheSizeBytes -= c.toString().getBytes(StandardCharsets.UTF_8).length;
+        if (cache.get(credentials) != null) {
+            return;
         }
 
-        linkedHashMap.put(credentials, (byte) 1);
-        linkedList.addFirst(credentials);
-        currentCacheSizeBytes += credentialSizeBytes;
+        while (cache.size() >= maxEntries) {
+            evictLeastRecentlyUsed();
+        }
+
+        cache.put(credentials, PRESENT);
     }
 
     /**
      * Checks if the cache contains the specified credentials.
      *
-     * <p>This operation is synchronized to ensure thread-safe access to the underlying
-     * collection.
+     * <p>A successful lookup refreshes the credentials as the most recently used entry.
      *
      * @param credentials credentials to check, must not be {@code null}
-     * @return {@code true} if the cache contains the credentials, {@code false} otherwise
+     * @return {@code true} if the cache contains the credentials, otherwise {@code false}
      */
     public synchronized boolean contains(Credentials credentials) {
-        return linkedHashMap.containsKey(credentials);
+        Precondition.notNull(credentials, "credentials is null");
+        return cache.get(credentials) != null;
     }
 
     /**
      * Removes credentials from the cache.
      *
-     * <p>This operation is synchronized to ensure thread-safe access to the underlying
-     * collections.
-     *
      * @param credentials credentials to remove, must not be {@code null}
-     * @return {@code true} if the credentials were found and removed, {@code false} if they
-     *     were not found
+     * @return {@code true} if the credentials were found and removed, otherwise {@code false}
      */
     public synchronized boolean remove(Credentials credentials) {
-        if (linkedHashMap.remove(credentials) != null) {
-            linkedList.remove(credentials);
-            currentCacheSizeBytes -= credentials.toString().getBytes(StandardCharsets.UTF_8).length;
-            return true;
-        } else {
-            return false;
+        Precondition.notNull(credentials, "credentials is null");
+        return cache.remove(credentials) != null;
+    }
+
+    /**
+     * Returns the maximum cacheable credential size in bytes.
+     *
+     * @return the maximum cacheable credential size in bytes
+     */
+    public int getMaxValueSizeBytes() {
+        return maxValueSizeBytes;
+    }
+
+    /**
+     * Returns the maximum number of cached credentials.
+     *
+     * @return the maximum number of cached credentials
+     */
+    public int getMaxEntries() {
+        return maxEntries;
+    }
+
+    /**
+     * Returns the current number of cached credentials.
+     *
+     * @return the current number of cached credentials
+     */
+    public synchronized int getCurrentEntries() {
+        return cache.size();
+    }
+
+    private static int calculateSizeBytes(Credentials credentials) {
+        return credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    private void evictLeastRecentlyUsed() {
+        Iterator<Credentials> iterator = cache.keySet().iterator();
+        if (iterator.hasNext()) {
+            iterator.next();
+            iterator.remove();
         }
-    }
-
-    /**
-     * Returns the maximum cache size in bytes.
-     *
-     * @return the maximum cache size
-     */
-    public int getMaximumCacheSizeBytes() {
-        return maximumCacheSizeBytes;
-    }
-
-    /**
-     * Returns the current cache size in bytes.
-     *
-     * <p>This operation is synchronized to ensure thread-safe access to the cache size counter.
-     *
-     * @return the current cache size
-     */
-    public synchronized int getCurrentCacheSizeBytes() {
-        return currentCacheSizeBytes;
     }
 }

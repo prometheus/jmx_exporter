@@ -17,6 +17,7 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.prometheus.jmx.common.authenticator.Credentials;
 import io.prometheus.jmx.common.authenticator.CredentialsCache;
@@ -26,144 +27,114 @@ import org.junit.jupiter.api.Test;
 public class CredentialsCacheTest {
 
     @Test
-    public void basicTest() {
-        String username = "prometheus";
-        String password = "secret";
-        Credentials credentials = new Credentials(username, password);
-        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+    public void basicAddContainsAndRemoveTest() {
+        Credentials credentials = new Credentials("prometheus", "secret");
+        int credentialSizeBytes = sizeBytes(credentials);
 
-        CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes);
+        CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes, 1);
 
         credentialsCache.add(credentials);
 
         assertThat(credentialsCache.contains(credentials)).isTrue();
-        assertThat(credentialsCache.contains(new Credentials(username, password)))
+        assertThat(credentialsCache.contains(new Credentials("prometheus", "secret")))
                 .isTrue();
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialsCache.getMaximumCacheSizeBytes());
+        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(1);
+        assertThat(credentialsCache.getMaxValueSizeBytes()).isEqualTo(credentialSizeBytes);
+        assertThat(credentialsCache.getMaxEntries()).isEqualTo(1);
 
-        assertThat(credentialsCache.remove(new Credentials(username, password))).isTrue();
-        assertThat(credentialsCache.contains(new Credentials(username, password)))
+        assertThat(credentialsCache.remove(new Credentials("prometheus", "secret")))
+                .isTrue();
+        assertThat(credentialsCache.contains(new Credentials("prometheus", "secret")))
                 .isFalse();
+        assertThat(credentialsCache.getCurrentEntries()).isZero();
     }
 
     @Test
-    public void basicTestWithMultipleCredentials() {
-        String username = "prometheus";
-        String password = "secret";
-        Credentials credentials = new Credentials(username + "X", password);
-        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+    public void oversizedCredentialsAreNotCachedAndDoNotEvictExistingEntries() {
+        Credentials cachedCredentials = new Credentials("ab", "cd");
+        Credentials oversizedCredentials = new Credentials("oversized-username", "oversized-password");
 
-        CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes);
+        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(cachedCredentials), 2);
+        credentialsCache.add(cachedCredentials);
+        credentialsCache.add(oversizedCredentials);
 
-        for (int i = 0; i < 10; i++) {
-            credentials = new Credentials(username + i, password);
-
-            credentialsCache.add(credentials);
-
-            assertThat(credentialsCache.contains(credentials)).isTrue();
-            assertThat(credentialsCache.contains(new Credentials(username + i, password)))
-                    .isTrue();
-            assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
-            assertThat(credentialsCache.getCurrentCacheSizeBytes())
-                    .isEqualTo(credentialsCache.getMaximumCacheSizeBytes());
-
-            assertThat(credentialsCache.remove(new Credentials(username + i, password)))
-                    .isTrue();
-            assertThat(credentialsCache.contains(new Credentials(username + 1, password)))
-                    .isFalse();
-
-            assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(0);
-        }
-
-        credentials = new Credentials(username + 10, password);
-        credentialsCache.add(credentials);
-        assertThat(credentialsCache.contains(credentials)).isFalse();
+        assertThat(credentialsCache.contains(cachedCredentials)).isTrue();
+        assertThat(credentialsCache.contains(oversizedCredentials)).isFalse();
+        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(1);
     }
 
     @Test
-    public void cacheUpdateTest() {
-        String username = "prometheus";
-        String password = "secret";
-        Credentials credentials = new Credentials(username + "X", password);
-        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
-        int maximumCacheSizeBytes = credentialSizeBytes * 10;
+    public void addEvictsLeastRecentlyUsedEntryWhenMaxEntriesExceeded() {
+        Credentials credentialsA = new Credentials("user-a", "password-a");
+        Credentials credentialsB = new Credentials("user-b", "password-b");
+        Credentials credentialsC = new Credentials("user-c", "password-c");
 
-        CredentialsCache credentialsCache = new CredentialsCache(maximumCacheSizeBytes);
+        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 2);
+        credentialsCache.add(credentialsA);
+        credentialsCache.add(credentialsB);
+        credentialsCache.add(credentialsC);
 
-        for (int i = 0; i < 10; i++) {
-            credentials = new Credentials(username + i, password);
-
-            credentialsCache.add(credentials);
-
-            assertThat(credentialsCache.contains(credentials)).isTrue();
-            assertThat(credentialsCache.contains(new Credentials(username + i, password)))
-                    .isTrue();
-            assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes * (i + 1));
-        }
-
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(maximumCacheSizeBytes);
-
-        credentialsCache.add(new Credentials(username + 0, password));
-
-        assertThat(credentialsCache.contains(new Credentials(username + 0, password)))
-                .isTrue();
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(maximumCacheSizeBytes);
+        assertThat(credentialsCache.contains(credentialsA)).isFalse();
+        assertThat(credentialsCache.contains(credentialsB)).isTrue();
+        assertThat(credentialsCache.contains(credentialsC)).isTrue();
+        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(2);
     }
 
     @Test
-    public void cacheOverflowTest() {
-        String username = "prometheus";
-        String password = "secret";
-        Credentials credentials = new Credentials(username, password);
-        int credentialSizeBytes = credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+    public void containsRefreshesRecencyBeforeEviction() {
+        Credentials credentialsA = new Credentials("user-a", "password-a");
+        Credentials credentialsB = new Credentials("user-b", "password-b");
+        Credentials credentialsC = new Credentials("user-c", "password-c");
+        Credentials credentialsD = new Credentials("user-d", "password-d");
 
-        CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes);
+        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 3);
+        credentialsCache.add(credentialsA);
+        credentialsCache.add(credentialsB);
+        credentialsCache.add(credentialsC);
 
-        credentialsCache.add(credentials);
+        assertThat(credentialsCache.contains(credentialsA)).isTrue();
 
-        assertThat(credentialsCache.contains(credentials)).isTrue();
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
+        credentialsCache.add(credentialsD);
 
-        credentials = new Credentials(username + "012345678", password);
-
-        credentialsCache.add(credentials);
-
-        assertThat(credentialsCache.contains(credentials)).isFalse();
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(credentialSizeBytes);
+        assertThat(credentialsCache.contains(credentialsA)).isTrue();
+        assertThat(credentialsCache.contains(credentialsB)).isFalse();
+        assertThat(credentialsCache.contains(credentialsC)).isTrue();
+        assertThat(credentialsCache.contains(credentialsD)).isTrue();
     }
 
-    /**
-     * Test that verifies correct size accounting during LRU eviction with varying credential sizes.
-     * This catches the bug where eviction subtracted the new entry size instead of the
-     * evicted entry size, causing incorrect memory accounting.
-     */
     @Test
-    public void evictionSizeAccountingWithVaryingSizes() {
-        Credentials smallCred = new Credentials("ab", "cd");
-        int smallSize = smallCred.toString().getBytes(StandardCharsets.UTF_8).length;
+    public void reAddingExistingEntryRefreshesRecencyWithoutCreatingDuplicate() {
+        Credentials credentialsA = new Credentials("user-a", "password-a");
+        Credentials credentialsB = new Credentials("user-b", "password-b");
+        Credentials credentialsC = new Credentials("user-c", "password-c");
 
-        Credentials largeCred = new Credentials("abcdefghijklmnop", "qrstuvwx");
-        int largeSize = largeCred.toString().getBytes(StandardCharsets.UTF_8).length;
+        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 2);
+        credentialsCache.add(credentialsA);
+        credentialsCache.add(credentialsB);
 
-        int maxCacheSize = smallSize * 2 + largeSize;
-        CredentialsCache credentialsCache = new CredentialsCache(maxCacheSize);
+        credentialsCache.add(credentialsA);
+        credentialsCache.add(credentialsC);
 
-        credentialsCache.add(smallCred);
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(smallSize);
+        assertThat(credentialsCache.contains(credentialsA)).isTrue();
+        assertThat(credentialsCache.contains(credentialsB)).isFalse();
+        assertThat(credentialsCache.contains(credentialsC)).isTrue();
+        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(2);
+    }
 
-        credentialsCache.add(largeCred);
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(smallSize + largeSize);
+    @Test
+    public void removeReturnsFalseWhenEntryIsMissing() {
+        CredentialsCache credentialsCache = new CredentialsCache(16, 1);
 
-        Credentials slightlyLargerCred = new Credentials("ab", "cd!");
-        int slightlyLargerSize = slightlyLargerCred.toString().getBytes(StandardCharsets.UTF_8).length;
-        credentialsCache.add(slightlyLargerCred);
-        // Adding slightlyLargerCred evicts smallCred (LRU) since maxCacheSize = smallSize * 2 + largeSize
-        // After eviction: largeCred(24) + slightlyLargerCred(5) = 29
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isEqualTo(largeSize + slightlyLargerSize);
+        assertThat(credentialsCache.remove(new Credentials("missing", "entry"))).isFalse();
+    }
 
-        credentialsCache.add(new Credentials("zz", "zz"));
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isGreaterThan(0);
-        assertThat(credentialsCache.getCurrentCacheSizeBytes()).isLessThanOrEqualTo(maxCacheSize);
+    @Test
+    public void constructorRejectsNonPositiveLimits() {
+        assertThatThrownBy(() -> new CredentialsCache(0, 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new CredentialsCache(1, 0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static int sizeBytes(Credentials credentials) {
+        return credentials.toString().getBytes(StandardCharsets.UTF_8).length;
     }
 }
