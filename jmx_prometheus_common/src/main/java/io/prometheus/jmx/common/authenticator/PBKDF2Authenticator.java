@@ -30,12 +30,11 @@ import javax.crypto.spec.PBEKeySpec;
  * <p>Supports PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA256, and PBKDF2WithHmacSHA512 algorithms.
  * This is the most secure authentication method available, recommended for production use.
  *
- * <p>This authenticator caches both valid and invalid credentials to improve authentication
- * performance. Credentials are cached up to 1 MB for valid credentials and 10 MB for invalid
- * credentials.
+ * <p>Each non-null authentication attempt derives a candidate PBKDF2 hash and compares both the
+ * presented username and derived password hash using constant-time equality checks.
  *
- * <p>Thread-safety: This class is thread-safe. Credential cache operations are synchronized.
- * Password hash comparison is constant-time.
+ * <p>Thread-safety: This class is thread-safe. All configuration state is immutable after
+ * construction, and credential verification uses constant-time comparisons.
  *
  * @see PlaintextAuthenticator
  * @see MessageDigestAuthenticator
@@ -48,12 +47,6 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
     private static final char[] HEXADECIMAL_CHARACTERS = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
-
-    /** Maximum size for a single cached credential value in bytes (5 KiB). */
-    private static final int MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES = CredentialsCache.DEFAULT_MAX_VALUE_SIZE_BYTES;
-
-    /** Maximum number of entries per credential cache. */
-    private static final int MAXIMUM_CREDENTIAL_CACHE_ENTRIES = CredentialsCache.DEFAULT_MAX_ENTRIES;
 
     /**
      * The expected username for authentication.
@@ -84,16 +77,6 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      * The key length in bits (note: constructor parameter is in bytes, converted to bits internally).
      */
     private final int keyLength;
-
-    /**
-     * Cache for valid credentials.
-     */
-    private final CredentialsCache validCredentialsCache;
-
-    /**
-     * Cache for invalid credentials.
-     */
-    private final CredentialsCache invalidCredentialsCache;
 
     /**
      * Constructs a PBKDF2 authenticator with the specified parameters.
@@ -136,10 +119,6 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         this.salt = salt;
         this.iterations = iterations;
         this.keyLength = keyLength;
-        this.validCredentialsCache =
-                new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
-        this.invalidCredentialsCache =
-                new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
     }
 
     @Override
@@ -148,26 +127,10 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             return false;
         }
 
-        Credentials credentials = new Credentials(username, password);
-
-        if (validCredentialsCache.contains(credentials)) {
-            return true;
-        } else if (invalidCredentialsCache.contains(credentials)) {
-            return false;
-        }
-
         byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, iterations, keyLength, password);
-        boolean isValid = MessageDigest.isEqual(
+        return MessageDigest.isEqual(
                         this.username.getBytes(StandardCharsets.UTF_8), username.getBytes(StandardCharsets.UTF_8))
                 && MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
-
-        if (isValid) {
-            validCredentialsCache.add(credentials);
-        } else {
-            invalidCredentialsCache.add(credentials);
-        }
-
-        return isValid;
     }
 
     /**
