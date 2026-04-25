@@ -19,6 +19,10 @@ package io.prometheus.jmx.common;
 import static java.lang.String.format;
 
 import com.sun.net.httpserver.Authenticator;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
@@ -32,11 +36,16 @@ import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToMapAccessor;
 import io.prometheus.jmx.common.util.functions.ToString;
 import io.prometheus.jmx.variable.VariableResolver;
+import io.prometheus.metrics.config.PrometheusProperties;
+import io.prometheus.metrics.exporter.httpserver.DefaultHandler;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.exporter.httpserver.HealthyHandler;
+import io.prometheus.metrics.exporter.httpserver.MetricsHandler;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -142,6 +151,31 @@ public class HTTPServerFactory {
      * HTTP authentication realm.
      */
     private static final String REALM = "/";
+
+    /**
+     * Default metrics endpoint path.
+     */
+    private static final String METRICS_PATH = "/metrics";
+
+    /**
+     * Default health endpoint path.
+     */
+    private static final String HEALTH_PATH = "/-/healthy";
+
+    /**
+     * Security header names and values.
+     */
+    private static final String X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
+
+    private static final String NOSNIFF = "nosniff";
+
+    private static final String X_FRAME_OPTIONS = "X-Frame-Options";
+
+    private static final String DENY = "DENY";
+
+    private static final String STRICT_TRANSPORT_SECURITY = "Strict-Transport-Security";
+
+    private static final String STRICT_TRANSPORT_SECURITY_VALUE = "max-age=31536000";
 
     /**
      * Plaintext algorithm identifier for basic authentication.
@@ -259,15 +293,19 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry, InetAddress inetAddress, int port, File exporterYamlFile)
             throws IOException {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+        AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
+        boolean sslEnabled = rootMapAccessor.containsPath("/httpServer/ssl");
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder().inetAddress(inetAddress).port(port).registry(prometheusRegistry);
 
         configureThreads(rootMapAccessor, httpServerBuilder);
-        configureAuthentication(rootMapAccessor, httpServerBuilder);
+        configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
 
-        return httpServerBuilder.buildAndStart();
+        HTTPServer httpServer = httpServerBuilder.buildAndStart();
+        configureSecurityHeaders(httpServer, prometheusRegistry, authenticationConfiguration, sslEnabled);
+        return httpServer;
     }
 
     /**
@@ -286,14 +324,18 @@ public class HTTPServerFactory {
     public static HTTPServer createAndStartHTTPServer(PrometheusRegistry prometheusRegistry, File exporterYamlFile)
             throws IOException {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+        AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
+        boolean sslEnabled = rootMapAccessor.containsPath("/httpServer/ssl");
 
         HTTPServer.Builder httpServerBuilder = HTTPServer.builder().registry(prometheusRegistry);
 
         configureThreads(rootMapAccessor, httpServerBuilder);
-        configureAuthentication(rootMapAccessor, httpServerBuilder);
+        configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
 
-        return httpServerBuilder.buildAndStart();
+        HTTPServer httpServer = httpServerBuilder.buildAndStart();
+        configureSecurityHeaders(httpServer, prometheusRegistry, authenticationConfiguration, sslEnabled);
+        return httpServer;
     }
 
     /**
@@ -385,8 +427,20 @@ public class HTTPServerFactory {
      * @param httpServerBuilder the HTTP server builder to configure, must not be {@code null}
      * @throws ConfigurationException if authentication configuration is invalid
      */
-    private static void configureAuthentication(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
-        Authenticator authenticator;
+    private static void configureAuthentication(
+            AuthenticationConfiguration authenticationConfiguration, HTTPServer.Builder httpServerBuilder) {
+        if (authenticationConfiguration.getAuthenticator() != null) {
+            httpServerBuilder.authenticator(authenticationConfiguration.getAuthenticator());
+        }
+
+        if (authenticationConfiguration.getSubjectAttributeName() != null) {
+            httpServerBuilder.authenticatedSubjectAttributeName(authenticationConfiguration.getSubjectAttributeName());
+        }
+    }
+
+    private static AuthenticationConfiguration getAuthenticationConfiguration(MapAccessor rootMapAccessor) {
+        Authenticator authenticator = null;
+        String subjectAttributeName = null;
 
         if (rootMapAccessor.containsPath("/httpServer/authentication")) {
             Optional<Object> authenticatorClassAttribute = rootMapAccessor.get("/httpServer/authentication/plugin");
@@ -414,7 +468,7 @@ public class HTTPServerFactory {
                         httpServerAuthenticationCustomAuthenticatorMapAccessor.get("/subjectAttributeName");
 
                 if (subjectAttribute.isPresent()) {
-                    String subjectAttributeName = subjectAttribute
+                    subjectAttributeName = subjectAttribute
                             .map(new ToString(ConfigurationException.supplier("Invalid configuration for"
                                     + " /httpServer/authentication/plugin/class/subjectAttributeName"
                                     + " must be a string")))
@@ -422,9 +476,6 @@ public class HTTPServerFactory {
                                     + " /httpServer/authentication/plugin/subjectAttributeName"
                                     + " must not be blank")))
                             .get();
-
-                    // need subject.doAs for subsequent handlers
-                    httpServerBuilder.authenticatedSubjectAttributeName(subjectAttributeName);
                 }
 
                 authenticator = loadAuthenticator(authenticatorClass);
@@ -447,7 +498,6 @@ public class HTTPServerFactory {
                         .orElseThrow(ConfigurationException.supplier(
                                 "/httpServer/authentication/basic/username is a" + " required string"));
 
-                // Resolve the username
                 username = VariableResolver.resolveVariable(username);
 
                 String algorithm = httpServerAuthenticationBasicMapAccessor
@@ -472,9 +522,7 @@ public class HTTPServerFactory {
                             .orElseThrow(ConfigurationException.supplier(
                                     "/httpServer/authentication/basic/password" + " is a required string"));
 
-                    // Resolve the password
                     password = VariableResolver.resolveVariable(password);
-
                     authenticator = new PlaintextAuthenticator("/", username, password);
                 } else if (SHA_ALGORITHMS.contains(algorithm) || PBKDF2_ALGORITHMS.contains(algorithm)) {
                     String hash = httpServerAuthenticationBasicMapAccessor
@@ -500,9 +548,9 @@ public class HTTPServerFactory {
                             format("Unsupported /httpServer/authentication/basic/algorithm" + " [%s]", algorithm));
                 }
             }
-
-            httpServerBuilder.authenticator(authenticator);
         }
+
+        return new AuthenticationConfiguration(authenticator, subjectAttributeName);
     }
 
     /**
@@ -543,6 +591,92 @@ public class HTTPServerFactory {
                             + " constructor newInstance resulted in exception [%s:%s]",
                     className, e.getClass(), e.getMessage()));
         }
+    }
+
+    private static void configureSecurityHeaders(
+            HTTPServer httpServer,
+            PrometheusRegistry prometheusRegistry,
+            AuthenticationConfiguration authenticationConfiguration,
+            boolean sslEnabled) {
+        com.sun.net.httpserver.HttpServer delegate = getDelegateHttpServer(httpServer);
+        Authenticator securityHeadersAuthenticator =
+                wrapAuthenticator(authenticationConfiguration.getAuthenticator(), sslEnabled);
+        String subjectAttributeName = authenticationConfiguration.getSubjectAttributeName();
+
+        replaceContext(
+                delegate,
+                "/",
+                wrapHandler(new DefaultHandler(METRICS_PATH), sslEnabled, subjectAttributeName),
+                securityHeadersAuthenticator);
+        replaceContext(
+                delegate,
+                METRICS_PATH,
+                wrapHandler(
+                        new MetricsHandler(PrometheusProperties.get(), prometheusRegistry),
+                        sslEnabled,
+                        subjectAttributeName),
+                securityHeadersAuthenticator);
+        replaceContext(
+                delegate,
+                HEALTH_PATH,
+                wrapHandler(new HealthyHandler(), sslEnabled, subjectAttributeName),
+                securityHeadersAuthenticator);
+    }
+
+    private static void replaceContext(
+            com.sun.net.httpserver.HttpServer httpServer,
+            String path,
+            HttpHandler handler,
+            Authenticator authenticator) {
+        try {
+            httpServer.removeContext(path);
+        } catch (IllegalArgumentException e) {
+            // context not registered yet, ignore
+        }
+
+        HttpContext context = httpServer.createContext(path, handler);
+        if (authenticator != null) {
+            context.setAuthenticator(authenticator);
+        }
+    }
+
+    private static com.sun.net.httpserver.HttpServer getDelegateHttpServer(HTTPServer httpServer) {
+        try {
+            Field field = HTTPServer.class.getDeclaredField("server");
+            field.setAccessible(true);
+            return (com.sun.net.httpserver.HttpServer) field.get(httpServer);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IllegalStateException("Unable to access underlying HTTP server", e);
+        }
+    }
+
+    private static HttpHandler wrapHandler(HttpHandler handler, boolean sslEnabled, String subjectAttributeName) {
+        return new SecurityHeadersHandler(handler, sslEnabled, subjectAttributeName);
+    }
+
+    private static Authenticator wrapAuthenticator(Authenticator authenticator, boolean sslEnabled) {
+        if (authenticator == null) {
+            return null;
+        }
+
+        return new SecurityHeadersAuthenticator(authenticator, sslEnabled);
+    }
+
+    private static void addSecurityHeaders(Headers headers, boolean sslEnabled) {
+        headers.set(X_CONTENT_TYPE_OPTIONS, NOSNIFF);
+        headers.set(X_FRAME_OPTIONS, DENY);
+        if (sslEnabled) {
+            headers.set(STRICT_TRANSPORT_SECURITY, STRICT_TRANSPORT_SECURITY_VALUE);
+        }
+    }
+
+    private static void drainInputAndClose(HttpExchange httpExchange) throws IOException {
+        InputStream inputStream = httpExchange.getRequestBody();
+        byte[] bytes = new byte[4096];
+        while (inputStream.read(bytes) != -1) {
+            // INTENTIONALLY BLANK
+        }
+        inputStream.close();
     }
 
     /**
@@ -1084,6 +1218,90 @@ public class HTTPServerFactory {
          */
         static ThreadFactory defaultThreadFactory(boolean daemon) {
             return new NamedDaemonThreadFactory(Executors.defaultThreadFactory(), daemon);
+        }
+    }
+
+    private static final class AuthenticationConfiguration {
+
+        private final Authenticator authenticator;
+
+        private final String subjectAttributeName;
+
+        private AuthenticationConfiguration(Authenticator authenticator, String subjectAttributeName) {
+            this.authenticator = authenticator;
+            this.subjectAttributeName = subjectAttributeName;
+        }
+
+        private Authenticator getAuthenticator() {
+            return authenticator;
+        }
+
+        private String getSubjectAttributeName() {
+            return subjectAttributeName;
+        }
+    }
+
+    private static final class SecurityHeadersAuthenticator extends Authenticator {
+
+        private final Authenticator delegate;
+
+        private final boolean sslEnabled;
+
+        private SecurityHeadersAuthenticator(Authenticator delegate, boolean sslEnabled) {
+            this.delegate = delegate;
+            this.sslEnabled = sslEnabled;
+        }
+
+        @Override
+        public Result authenticate(HttpExchange exchange) {
+            addSecurityHeaders(exchange.getResponseHeaders(), sslEnabled);
+            return delegate.authenticate(exchange);
+        }
+    }
+
+    private static final class SecurityHeadersHandler implements HttpHandler {
+
+        private final HttpHandler delegate;
+
+        private final boolean sslEnabled;
+
+        private final String subjectAttributeName;
+
+        private SecurityHeadersHandler(HttpHandler delegate, boolean sslEnabled, String subjectAttributeName) {
+            this.delegate = delegate;
+            this.sslEnabled = sslEnabled;
+            this.subjectAttributeName = subjectAttributeName;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addSecurityHeaders(exchange.getResponseHeaders(), sslEnabled);
+
+            if (subjectAttributeName == null) {
+                delegate.handle(exchange);
+                return;
+            }
+
+            Object authSubject = exchange.getAttribute(subjectAttributeName);
+            if (authSubject instanceof javax.security.auth.Subject) {
+                try {
+                    javax.security.auth.Subject.doAs(
+                            (javax.security.auth.Subject) authSubject,
+                            (java.security.PrivilegedExceptionAction<Void>) () -> {
+                                delegate.handle(exchange);
+                                return null;
+                            });
+                } catch (java.security.PrivilegedActionException e) {
+                    if (e.getException() != null) {
+                        throw new IOException(e.getException());
+                    } else {
+                        throw new IOException(e);
+                    }
+                }
+            } else {
+                drainInputAndClose(exchange);
+                exchange.sendResponseHeaders(403, -1);
+            }
         }
     }
 
