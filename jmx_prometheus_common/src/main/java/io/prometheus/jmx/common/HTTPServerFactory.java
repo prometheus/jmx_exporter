@@ -36,14 +36,15 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.time.Instant;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -717,43 +718,79 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Reloads SSL certificates if the keystore or truststore files have been modified.
+     * Reloads SSL certificates if the keystore or truststore file contents have changed.
      *
      * <p>This method is called periodically by the scheduled executor to check for certificate
-     * updates. If either keystore or truststore has been modified since last load, the SSL
+     * updates. If either keystore or truststore content has changed since last load, the SSL
      * context is updated.
      *
      * @param sslFactory the SSLFactory to reload
      * @param rootMapAccessor the root configuration map accessor
      */
     private static void reloadSsl(SSLFactory sslFactory, MapAccessor rootMapAccessor) {
-        KeyStoreProperties keyProps = getKeyStoreProperties(rootMapAccessor);
-        Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
+        Optional<String> currentKeyStoreContentHash = getContentHash(keyStoreProperties.getFilename());
+        if (!currentKeyStoreContentHash.isPresent()) {
+            return;
+        }
+
+        Optional<KeyStoreProperties> currentTrustProps = getTrustStoreProperties();
+        Optional<String> currentTrustStoreContentHash = Optional.empty();
+        if (currentTrustProps.isPresent()) {
+            currentTrustStoreContentHash =
+                    getContentHash(currentTrustProps.get().getFilename());
+            if (!currentTrustStoreContentHash.isPresent()) {
+                return;
+            }
+        }
+
+        boolean keyStoreChanged = !keyStoreProperties.getContentHash().equals(currentKeyStoreContentHash.get());
+        boolean trustStoreChanged = currentTrustProps.isPresent()
+                && !currentTrustProps
+                        .get()
+                        .getContentHash()
+                        .equals(currentTrustStoreContentHash.orElseThrow(IllegalStateException::new));
+
+        if (!keyStoreChanged && !trustStoreChanged) {
+            return;
+        }
+
+        final KeyStoreProperties keyProps;
+        final Optional<KeyStoreProperties> trustProps;
+        try {
+            keyProps = keyStoreChanged ? getKeyStoreProperties(rootMapAccessor) : keyStoreProperties;
+            trustProps = trustStoreChanged ? getTrustStoreProperties(rootMapAccessor) : currentTrustProps;
+        } catch (ConfigurationException e) {
+            return;
+        }
 
         boolean sslUpdated = false;
         SSLFactory.Builder updatedSslFactory = SSLFactory.builder();
-        if (keyStoreProperties.getLastModifiedTime().isBefore(keyProps.getLastModifiedTime())) {
-            updatedSslFactory.withIdentityMaterial(keyProps.getFilename(), keyProps.getPassword(), keyProps.getType());
-            keyStoreProperties = keyProps;
+        if (keyStoreChanged) {
+            updatedSslFactory.withIdentityMaterial(
+                    keyProps.getFilename(), keyProps.getPassword(), keyProps.getPassword(), keyProps.getType());
             sslUpdated = true;
         }
 
-        if (trustProps.isPresent()
-                && getTrustStoreProperties().isPresent()
-                && getTrustStoreProperties()
-                        .get()
-                        .getLastModifiedTime()
-                        .isBefore(trustProps.get().getLastModifiedTime())) {
+        if (trustStoreChanged && trustProps.isPresent()) {
             updatedSslFactory.withTrustMaterial(
                     trustProps.get().getFilename(),
                     trustProps.get().getPassword(),
                     trustProps.get().getType());
-            trustStoreProperties = trustProps.get();
             sslUpdated = true;
         }
 
         if (sslUpdated) {
-            SSLFactoryUtils.reload(sslFactory, updatedSslFactory.build());
+            try {
+                SSLFactoryUtils.reload(sslFactory, updatedSslFactory.build());
+                if (keyStoreChanged) {
+                    keyStoreProperties = keyProps;
+                }
+                if (trustStoreChanged && trustProps.isPresent()) {
+                    trustStoreProperties = trustProps.get();
+                }
+            } catch (RuntimeException e) {
+                // Keep using the last successfully loaded SSL material.
+            }
         }
     }
 
@@ -776,7 +813,7 @@ public class HTTPServerFactory {
                         "Invalid configuration for" + " /httpServer/ssl/keyStore/filename" + " must not be blank")))
                 .orElse(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
 
-        Instant lastModifiedTime = getLastModifiedTime(keyStoreFilename);
+        String contentHash = getContentHash(keyStoreFilename);
 
         String keyStoreType = rootMapAccessor
                 .get("/httpServer/ssl/keyStore/type")
@@ -807,23 +844,64 @@ public class HTTPServerFactory {
                         ConfigurationException.supplier("/httpServer/ssl/certificate/alias is a required" + " string"));
 
         return new KeyStoreProperties(
-                keyStoreFilename, lastModifiedTime, keyStorePassword.toCharArray(), keyStoreType, certificateAlias);
+                keyStoreFilename, contentHash, keyStorePassword.toCharArray(), keyStoreType, certificateAlias);
     }
 
     /**
-     * Gets the last modified time of a file.
+     * Computes the SHA-256 content hash of a file.
      *
      * @param filename the file path
-     * @return the last modified time, or {@link Instant#EPOCH} if the file cannot be read
+     * @return the SHA-256 content hash
      */
-    private static Instant getLastModifiedTime(String filename) {
+    private static String getContentHash(String filename) {
         try {
-            return Files.readAttributes(Paths.get(filename), BasicFileAttributes.class)
-                    .lastModifiedTime()
-                    .toInstant();
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[8192];
+
+            try (InputStream inputStream = Files.newInputStream(Paths.get(filename))) {
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    messageDigest.update(buffer, 0, bytesRead);
+                }
+            }
+
+            return toHex(messageDigest.digest());
         } catch (IOException e) {
-            return Instant.EPOCH;
+            throw new ConfigurationException(format("Unable to read SSL store file: %s", filename), e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new ConfigurationException("Unable to compute SSL store file hash using SHA-256", e);
         }
+    }
+
+    /**
+     * Computes the SHA-256 content hash of a file for runtime reload checks.
+     *
+     * <p>If the file cannot be read while the server is already running, the reload should be
+     * skipped and the last successfully loaded SSL material should continue to be used.
+     *
+     * @param filename the file path
+     * @return the SHA-256 content hash, or empty if the file cannot be read
+     */
+    private static Optional<String> getContentHash(Path filename) {
+        try {
+            return Optional.of(getContentHash(filename.toString()));
+        } catch (ConfigurationException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Converts bytes to a lowercase hexadecimal string.
+     *
+     * @param bytes the bytes to convert
+     * @return the hexadecimal string
+     */
+    private static String toHex(byte[] bytes) {
+        StringBuilder builder = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            builder.append(String.format("%02x", value));
+        }
+        return builder.toString();
     }
 
     /**
@@ -850,7 +928,7 @@ public class HTTPServerFactory {
                         "Invalid configuration for" + " /httpServer/ssl/trustStore/filename" + " must not be blank")))
                 .orElse(System.getProperty(JAVAX_NET_SSL_TRUST_STORE));
 
-        Instant lastModifiedTime = getLastModifiedTime(trustStoreFilename);
+        String contentHash = getContentHash(trustStoreFilename);
 
         String trustStoreType = rootMapAccessor
                 .get("/httpServer/ssl/trustStore/type")
@@ -872,7 +950,7 @@ public class HTTPServerFactory {
         trustStorePassword = VariableResolver.resolveVariable(trustStorePassword);
 
         return Optional.of(new KeyStoreProperties(
-                trustStoreFilename, lastModifiedTime, trustStorePassword.toCharArray(), trustStoreType, null));
+                trustStoreFilename, contentHash, trustStorePassword.toCharArray(), trustStoreType, null));
     }
 
     /**
@@ -1032,7 +1110,7 @@ public class HTTPServerFactory {
     /**
      * Immutable holder for keystore or truststore properties.
      *
-     * <p>Stores the file path, last modified time, password, type, and optional certificate alias.
+     * <p>Stores the file path, content hash, password, type, and optional certificate alias.
      */
     private static final class KeyStoreProperties {
 
@@ -1042,9 +1120,9 @@ public class HTTPServerFactory {
         private final Path filename;
 
         /**
-         * The last modified time of the keystore/truststore file.
+         * The SHA-256 content hash of the keystore/truststore file.
          */
-        private final Instant lastModifiedTime;
+        private final String contentHash;
 
         /**
          * The keystore/truststore password.
@@ -1065,17 +1143,17 @@ public class HTTPServerFactory {
          * Constructs keystore/truststore properties.
          *
          * @param filename the keystore/truststore file path
-         * @param lastModifiedTime the last modified time of the file
+         * @param contentHash the SHA-256 content hash of the file
          * @param password the password for the keystore/truststore
          * @param type the keystore/truststore type
          * @param certificateAlias the certificate alias for keystore, may be {@code null} for
          *     truststore
          */
         private KeyStoreProperties(
-                String filename, Instant lastModifiedTime, char[] password, String type, String certificateAlias) {
+                String filename, String contentHash, char[] password, String type, String certificateAlias) {
 
             this.filename = Paths.get(filename);
-            this.lastModifiedTime = lastModifiedTime;
+            this.contentHash = contentHash;
             this.password = password;
             this.type = type;
             this.certificateAlias = certificateAlias;
@@ -1091,12 +1169,12 @@ public class HTTPServerFactory {
         }
 
         /**
-         * Returns the last modified time of the file.
+         * Returns the SHA-256 content hash of the file.
          *
-         * @return the last modified time
+         * @return the content hash
          */
-        public Instant getLastModifiedTime() {
-            return lastModifiedTime;
+        public String getContentHash() {
+            return contentHash;
         }
 
         /**
