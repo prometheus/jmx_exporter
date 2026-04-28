@@ -16,22 +16,12 @@
 
 package io.prometheus.jmx.test.support.util;
 
-import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
-import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import java.util.Optional;
-import org.testcontainers.containers.Network;
-import org.verifyica.api.ArgumentContext;
 
 /**
  * Class to implement TestSupport
  */
 public class TestSupport {
-
-    /**
-     * Network configuration constant
-     */
-    public static final String NETWORK = "network";
 
     private static final String BUILD_INFO_JAVAAGENT = "jmx_prometheus_javaagent";
 
@@ -42,87 +32,6 @@ public class TestSupport {
      */
     private TestSupport() {
         // INTENTIONALLY BLANK
-    }
-
-    /**
-     * Creates an ArgumentContext scoped Network if not created at the ClassContext scope
-     *
-     * @param argumentContext argumentContext
-     * @return a Network
-     */
-    public static Network getOrCreateNetwork(ArgumentContext argumentContext) {
-        Network network = argumentContext.getClassContext().getMap().getAs(NETWORK);
-        if (network == null) {
-            // Create the network at the test argument scope
-            // Get the id to force the network creation
-            network = Network.newNetwork();
-            network.getId();
-
-            argumentContext.getMap().put(NETWORK, network);
-        }
-        return network;
-    }
-
-    /**
-     * Initializes the ExporterTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     * @param network network
-     * @param testClass testClass
-     */
-    public static void initializeExporterTestEnvironment(
-            ArgumentContext argumentContext, Network network, Class<?> testClass) {
-        argumentContext
-                .getArgumentAs(JmxExporterTestEnvironment.class)
-                .getPayload()
-                .initialize(testClass, network);
-    }
-
-    /**
-     * Initializes the IsolatorExporterTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     * @param network network
-     * @param testClass testClass
-     */
-    public static void initializeIsolatorExporterTestEnvironment(
-            ArgumentContext argumentContext, Network network, Class<?> testClass) {
-        argumentContext
-                .getArgumentAs(IsolatorExporterTestEnvironment.class)
-                .getPayload()
-                .initialize(testClass, network);
-    }
-
-    /**
-     * Destroys the ExporterTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     */
-    public static void destroyExporterTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getArgumentAs(JmxExporterTestEnvironment.class))
-                .ifPresent(exporterTestEnvironmentArgument ->
-                        exporterTestEnvironmentArgument.getPayload().destroy());
-    }
-
-    /**
-     * Destroys the IsolatorExporterTestEnvironment
-     *
-     * @param argumentContext argumentContext
-     */
-    public static void destroyIsolatorExporterTestEnvironment(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getArgumentAs(IsolatorExporterTestEnvironment.class))
-                .ifPresent(exporterTestEnvironmentArgument ->
-                        exporterTestEnvironmentArgument.getPayload().destroy());
-    }
-
-    /**
-     * Destroys an ArgumentContext scoped Network
-     *
-     * @param argumentContext argumentContext
-     */
-    public static void destroyNetwork(ArgumentContext argumentContext) {
-        Optional.ofNullable(argumentContext.getMap().removeAs(NETWORK, Network.class))
-                .ifPresent(Network::close);
     }
 
     /**

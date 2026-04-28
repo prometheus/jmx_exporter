@@ -23,6 +23,19 @@
 
 set -o pipefail
 
+if [[ "$#" -gt 1 ]]; then
+  echo "Usage: $0 [parallelism]"
+  exit 1
+fi
+
+CPU_COUNT="$(nproc)"
+PARALLELISM="${1:-$CPU_COUNT}"
+
+if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
+  echo "Error: parallelism must be an integer greater than 0"
+  exit 1
+fi
+
 (
   export JAVA_DOCKER_IMAGES=all
   export PROMETHEUS_DOCKER_IMAGES=all
@@ -32,7 +45,7 @@ set -o pipefail
     DATE=$(date)
     echo "STRESS-TEST-START    ${DATE}"
 
-    ./mvnw clean verify
+    ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}"
     if [[ "$?" -ne 0 ]];
     then
       DATE=$(date)

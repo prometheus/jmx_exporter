@@ -27,10 +27,9 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.verifyica.api.Argument;
 
 /** Class to implement ExporterTestEnvironment */
-public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvironment> {
+public class JmxExporterTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
 
@@ -58,14 +57,13 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
         this.baseUrl = BASE_URL;
     }
 
-    @Override
+    /**
+     * Method to get the name of the test environment
+     *
+     * @return the name of the test environment
+     */
     public String getName() {
-        return jmxExporterMode + " / " + javaDockerImage;
-    }
-
-    @Override
-    public JmxExporterTestEnvironment getPayload() {
-        return this;
+        return jmxExporterMode + "(" + javaDockerImage + ")";
     }
 
     /**
@@ -169,7 +167,7 @@ public class JmxExporterTestEnvironment implements Argument<JmxExporterTestEnvir
     /**
      * Method to destroy the test environment.
      */
-    public void destroy() {
+    public void close() {
         if (javaAgentApplicationContainer != null) {
             javaAgentApplicationContainer.stop();
             javaAgentApplicationContainer = null;

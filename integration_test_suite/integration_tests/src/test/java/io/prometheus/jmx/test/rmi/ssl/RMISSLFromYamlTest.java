@@ -30,101 +30,163 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.jmx.test.support.util.TestSupport;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.stream.Stream;
+import java.util.List;
+import org.paramixel.core.Action;
+import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Paramixel;
+import org.paramixel.core.action.Direct;
+import org.paramixel.core.action.Lifecycle;
+import org.paramixel.core.action.Parallel;
+import org.paramixel.core.action.StrictSequential;
+import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
-import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Verifyica;
-import org.verifyica.api.util.CleanupExecutor;
 
-@Verifyica.Disabled
+// Disabled as these tests are not intended to be run as part of the regular test suite
 public class RMISSLFromYamlTest {
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<JmxExporterTestEnvironment> arguments() {
-        // Filter the arguments..
-        //
-        // 1. only run the Standalone exporter
-        // 2. filter out the GraalVM 1.8 JVM - exception is that SunJSSE is not found
-        // 3. filter out all ibmjava* JVMs - exception is that SunJSSE is not found
-        //
-        return JmxExporterTestEnvironment.createEnvironments()
-                .filter(exporterTestEnvironment ->
-                        exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone)
-                .filter(exporterTestEnvironment ->
-                        !exporterTestEnvironment.getJavaDockerImage().contains("graalvm/jdk:java8"))
-                .filter(exporterTestEnvironment ->
-                        !exporterTestEnvironment.getJavaDockerImage().contains("ibmjava"));
+    public static void main(String[] args) {
+        ConsoleRunner.runAndExit(actionFactory());
     }
 
-    @Verifyica.BeforeAll
-    public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
-        Network network = TestSupport.getOrCreateNetwork(argumentContext);
-        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+    @Paramixel.ActionFactory
+    @Paramixel.Disabled
+    public static Action actionFactory() {
+        return Parallel.of(
+                RMISSLFromYamlTest.class.getName(),
+                JmxExporterTestEnvironment.createEnvironments()
+                        .filter(exporterTestEnvironment ->
+                                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone)
+                        .filter(exporterTestEnvironment ->
+                                !exporterTestEnvironment.getJavaDockerImage().contains("graalvm/jdk:java8"))
+                        .filter(exporterTestEnvironment ->
+                                !exporterTestEnvironment.getJavaDockerImage().contains("ibmjava"))
+                        .map(RMISSLFromYamlTest::createLifecycleAction)
+                        .toList());
     }
 
-    @Verifyica.Test
-    @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
+    private static Action createLifecycleAction(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
+        Action testHealthy = Direct.of("testHealthy", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
 
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
-        assertHealthyResponse(httpResponse);
+            HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+            assertHealthyResponse(httpResponse);
+        });
+
+        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+            assertMetricsResponse(attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        });
+
+        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        });
+
+        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        });
+
+        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment,
+                    httpResponse,
+                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        });
+
+        Action tests = StrictSequential.of(
+                "tests",
+                List.of(
+                        testHealthy,
+                        testDefaultTextMetrics,
+                        testOpenMetricsTextMetrics,
+                        testPrometheusTextMetrics,
+                        testPrometheusProtobufMetrics));
+
+        return Lifecycle.of(
+                jmxExporterTestEnvironment.getName(),
+                Direct.of("setUp", context -> {
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    jmxExporterTestEnvironment.initialize(RMISSLFromYamlTest.class, network);
+                    Attachment attachment = new Attachment();
+                    attachment.network = network;
+                    attachment.jmxExporterTestEnvironment = jmxExporterTestEnvironment;
+                    context.setAttachment(attachment);
+                }),
+                tests,
+                Direct.of("tearDown", context -> {
+                    Attachment attachment = context.removeAttachment()
+                            .flatMap(a -> a.to(Attachment.class))
+                            .orElse(null);
+
+                    if (attachment != null) {
+                        Cleanup.of(Cleanup.Mode.FORWARD)
+                                .addCloseable(attachment.jmxExporterTestEnvironment)
+                                .addCloseable(attachment.network)
+                                .runAndThrow();
+                    }
+                }));
     }
 
-    @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+    private static class Attachment {
+        public Network network;
+        public JmxExporterTestEnvironment jmxExporterTestEnvironment;
 
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        public Attachment() {}
     }
 
-    @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-    }
-
-    @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-    }
-
-    @Verifyica.Test
-    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse = HttpClient.sendRequest(
-                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-    }
-
-    @Verifyica.AfterAll
-    public void afterAll(ArgumentContext argumentContext) throws Throwable {
-        new CleanupExecutor()
-                .addTask(() -> TestSupport.destroyExporterTestEnvironment(argumentContext))
-                .addTask(() -> TestSupport.destroyNetwork(argumentContext))
-                .execute()
-                .throwIfFailed();
-    }
-
-    private void assertMetricsResponse(
+    private static void assertMetricsResponse(
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
