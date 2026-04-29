@@ -299,6 +299,7 @@ public class HTTPServerFactory {
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder().inetAddress(inetAddress).port(port).registry(prometheusRegistry);
 
+        configureMetricsPath(rootMapAccessor, httpServerBuilder);
         configureThreads(rootMapAccessor, httpServerBuilder);
         configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
@@ -329,6 +330,7 @@ public class HTTPServerFactory {
 
         HTTPServer.Builder httpServerBuilder = HTTPServer.builder().registry(prometheusRegistry);
 
+        configureMetricsPath(rootMapAccessor, httpServerBuilder);
         configureThreads(rootMapAccessor, httpServerBuilder);
         configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
@@ -336,6 +338,38 @@ public class HTTPServerFactory {
         HTTPServer httpServer = httpServerBuilder.buildAndStart();
         configureSecurityHeaders(httpServer, prometheusRegistry, authenticationConfiguration, sslEnabled);
         return httpServer;
+    }
+
+    /**
+     * Configures the HTTP server metrics path based on YAML configuration.
+     *
+     * <p>Metrics path configuration is read from the {@code /httpServer/metrics} path. If not
+     * specified, default values are used: {@code path =} {@value #METRICS_PATH}
+     *
+     * @param rootMapAccessor the root configuration map accessor, must not be {@code null}
+     * @param httpServerBuilder the HTTP server builder to configure, must not be {@code null}
+     * @throws ConfigurationException if the metrics path configuration is invalid
+     */
+    private static void configureMetricsPath(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
+        String metricsPath = METRICS_PATH;
+
+        if (rootMapAccessor.containsPath("/httpServer/metrics")) {
+            MapAccessor httpServerMetricsMapAccessor = rootMapAccessor
+                    .get("/httpServer/metrics")
+                    .map(new ToMapAccessor(ConfigurationException.supplier(
+                            "Invalid configuration for /httpServer/metrics" + " must be a map")))
+                    .orElseThrow(ConfigurationException.supplier("/httpServer/metrics must be a map"));
+
+            metricsPath = httpServerMetricsMapAccessor
+                    .get("/path")
+                    .map(new ToString(ConfigurationException.supplier(
+                            "Invalid configuration for" + " /httpServer/metrics/path" + " must be a string")))
+                    .map(new StringIsNotBlank(ConfigurationException.supplier(
+                            "Invalid configuration for" + " /httpServer/metrics/path" + " must not be blank")))
+                    .orElseThrow(ConfigurationException.supplier("/httpServer/metrics/path is a" + " required string"));
+        }
+
+        httpServerBuilder.metricsHandlerPath(metricsPath);
     }
 
     /**

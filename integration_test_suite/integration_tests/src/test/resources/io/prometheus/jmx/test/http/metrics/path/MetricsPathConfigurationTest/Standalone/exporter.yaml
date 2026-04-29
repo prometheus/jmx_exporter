@@ -1,0 +1,6 @@
+httpServer:
+  metrics:
+    path: /custom/metrics
+hostPort: application:9999
+rules:
+  - pattern: ".*"
