@@ -20,18 +20,26 @@
 # Bash script to build, package, and run the tests (single Docker container)
 #
 
-if [[ "$#" -ne 2 ]]; then
-    echo "Usage: $0 <JAVA DOCKER IMAGE> <PROMETHEUS DOCKER IMAGE>"
+set -e
+set -o pipefail
+
+if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
+    echo "Usage: $0 <JAVA DOCKER IMAGE> <PROMETHEUS DOCKER IMAGE> [parallelism]"
     exit 1
 fi
 
-set -e
-set -o pipefail
+CPU_COUNT="$(nproc)"
+PARALLELISM="${3:-$CPU_COUNT}"
+
+if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
+  echo "Error: parallelism must be an integer greater than 0"
+  exit 1
+fi
 
 (
   export JAVA_DOCKER_IMAGES="$1"
   export PROMETHEUS_DOCKER_IMAGES="$2"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
-  ./mvnw clean verify
+  ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}"
 ) 2>&1 | tee targeted-test.log

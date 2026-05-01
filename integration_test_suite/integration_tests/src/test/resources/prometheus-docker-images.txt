@@ -1,2 +1,2 @@
-prom/prometheus:v3.5.2
-prom/prometheus:v3.11.2
+prom/prometheus:v3.5.3
+prom/prometheus:v3.11.3

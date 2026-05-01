@@ -23,10 +23,23 @@
 set -e
 set -o pipefail
 
+if [[ "$#" -gt 1 ]]; then
+  echo "Usage: $0 [parallelism]"
+  exit 1
+fi
+
+CPU_COUNT="$(nproc)"
+PARALLELISM="${1:-$CPU_COUNT}"
+
+if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
+  echo "Error: parallelism must be an integer greater than 0"
+  exit 1
+fi
+
 (
-  export JAVA_DOCKER_IMAGES="amazoncorretto:25"
-  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.11.2"
+  export JAVA_DOCKER_IMAGES="amazoncorretto:24"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.11.3"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
-  ./mvnw clean verify
+  ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}"
 ) 2>&1 | tee quick-test.log

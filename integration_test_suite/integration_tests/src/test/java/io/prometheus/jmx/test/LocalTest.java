@@ -43,7 +43,8 @@ import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,21 +52,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
-import javax.management.MalformedObjectNameException;
-import org.verifyica.api.Argument;
-import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.ClassContext;
-import org.verifyica.api.Verifyica;
-import org.verifyica.api.util.TemporaryDirectory;
+import org.paramixel.core.Action;
+import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.action.Direct;
+import org.paramixel.core.action.Lifecycle;
+import org.paramixel.core.action.Parallel;
+import org.paramixel.core.action.StrictSequential;
 
 /**
  * Local (non-Docker) test that verifies the functionality of the JMX Exporter code.
  *
  * <p>Implements multiple, simultaneous HTTP client requests to test the JMX Exporter.
  */
-// Disabled as this test is not intended to be run as part of the regular test suite
-@Verifyica.Disabled
 public class LocalTest {
 
     /**
@@ -84,159 +82,196 @@ public class LocalTest {
     private static final String BASE_URL = "http://localhost:";
 
     /**
-     * The key for the base test URL (protocol + hostname + port).
-     */
-    private static final String URL = "url";
-
-    /**
-     * The key for the HTTP server.
-     */
-    private static final String HTTP_SERVER = "httpServer";
-
-    /**
      * The default Prometheus registry.
      */
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<Argument<String>> arguments() {
-        List<Argument<String>> arguments = new ArrayList<>();
-
-        for (int i = 1; i < CLIENT_COUNT + 1; i++) {
-            arguments.add(Argument.ofString("client " + i));
-        }
-
-        return arguments.stream();
+    /**
+     * The main entry point to run the test.
+     *
+     * @param args the arguments
+     */
+    public static void main(String[] args) {
+        ConsoleRunner.runAndExit(actionFactory());
     }
 
-    @Verifyica.Prepare
-    public static void prepare(ClassContext classContext) throws Throwable {
-        // Derive the resource path based on the test class name
-        String resource = (classContext.getTestClass().getName().replace(".", "/") + "/exporter.yaml");
+    /**
+     * Local test - no @Paramixel.TestFactory.
+     *
+     * @return the root action
+     */
+    public static Action actionFactory() {
+        try {
+            // Derive the resource path based on the test class name
+            String resource = (LocalTest.class.getName().replace(".", "/") + "/exporter.yaml");
 
-        // Create a temporary directory
-        TemporaryDirectory temporaryDirectory = TemporaryDirectory.newDirectory();
+            // Create a temporary directory
+            Path tempDirectory = Files.createTempDirectory("jmx-exporter-test");
 
-        // Create a temporary file
-        File exporterYamlFile = temporaryDirectory.newFile();
+            // Create a temporary file
+            File exporterYamlFile = tempDirectory.resolve("exporter.yaml").toFile();
 
-        // Export the resource to a temporary file
-        ResourceSupport.export(resource, exporterYamlFile);
+            // Export the resource to a temporary file
+            ResourceSupport.export(resource, exporterYamlFile);
 
-        // Register the example MBeans
-        new TabularData().register();
-        new AutoIncrementing().register();
-        new ExistDb().register();
-        new PerformanceMetrics().register();
-        new CustomValue().register();
-        new StringValue().register();
+            // Register the example MBeans
+            new TabularData().register();
+            new AutoIncrementing().register();
+            new ExistDb().register();
+            new PerformanceMetrics().register();
+            new CustomValue().register();
+            new StringValue().register();
 
-        // Register the build info metrics collector
-        new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+            // Register the build info metrics collector
+            new BuildInfoMetrics().register(DEFAULT_REGISTRY);
 
-        // Register the JVM metrics collector
-        JvmMetrics.builder().register(DEFAULT_REGISTRY);
+            // Register the JVM metrics collector
+            JvmMetrics.builder().register(DEFAULT_REGISTRY);
 
-        // Register the JMX collector
-        new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
+            // Register the JMX collector
+            new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
 
-        // Create an HTTP server to serve the metrics
-        final HTTPServer httpServer = HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
+            // Create an HTTP server to serve the metrics
+            final HTTPServer httpServer =
+                    HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
 
-        // Add a shutdown hook to stop the HTTP server when the JVM exits
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (httpServer != null) {
-                try {
-                    httpServer.stop();
-                } catch (Throwable t) {
-                    // INTENTIONALLY BLANK
+            // Add a shutdown hook to stop the HTTP server when the JVM exits
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (httpServer != null) {
+                    try {
+                        httpServer.stop();
+                    } catch (Throwable t) {
+                        // INTENTIONALLY BLANK
+                    }
                 }
-            }
-        }));
+            }));
 
-        classContext.getMap().put(HTTP_SERVER, httpServer);
-        classContext.getMap().put(URL, BASE_URL + httpServer.getPort());
-    }
+            String baseUrl = BASE_URL + httpServer.getPort();
 
-    @Verifyica.Test
-    @Verifyica.Order(1)
-    public void testHealthy(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.HEALTHY;
+            List<Action> clientTests = new ArrayList<>();
 
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
+            for (int i = 1; i < CLIENT_COUNT + 1; i++) {
+                String clientId = "client " + i;
 
-        assertHealthyResponse(httpResponse);
-    }
+                Action testHealthy = Direct.of(clientId + "-testHealthy", context -> {
+                    String url = context.getParent()
+                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
+                                    .orElse(baseUrl)
+                            + JmxExporterPath.HEALTHY;
 
-    @Verifyica.Test
-    public void testDefaultTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
-
-        // Run the test code multiple times
-        new Repeater(ITERATIONS)
-                .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(() -> {
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-                })
-                .run();
-    }
+                    assertHealthyResponse(httpResponse);
+                });
 
-    @Verifyica.Test
-    public void testOpenMetricsTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+                Action testDefaultTextMetrics = Direct.of(clientId + "-testDefaultTextMetrics", context -> {
+                    String url = context.getParent()
+                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
+                                    .orElse(baseUrl)
+                            + JmxExporterPath.METRICS;
 
-        // Run the test code multiple times
-        new Repeater(ITERATIONS)
-                .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(() -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                    // Run the test code multiple times
+                    new Repeater(ITERATIONS)
+                            .throttle(new Repeater.RandomThrottle(0, 100))
+                            .test(() -> {
+                                HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                })
-                .run();
-    }
+                                assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                            })
+                            .run();
+                });
 
-    @Verifyica.Test
-    public void testPrometheusTextMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+                Action testOpenMetricsTextMetrics = Direct.of(clientId + "-testOpenMetricsTextMetrics", context -> {
+                    String url = context.getParent()
+                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
+                                    .orElse(baseUrl)
+                            + JmxExporterPath.METRICS;
 
-        // Run the test code multiple times
-        new Repeater(ITERATIONS)
-                .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(() -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                    // Run the test code multiple times
+                    new Repeater(ITERATIONS)
+                            .throttle(new Repeater.RandomThrottle(0, 100))
+                            .test(() -> {
+                                HttpResponse httpResponse = HttpClient.sendRequest(
+                                        url,
+                                        HttpHeader.ACCEPT,
+                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                })
-                .run();
-    }
+                                assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                            })
+                            .run();
+                });
 
-    @Verifyica.Test
-    public void testPrometheusProtobufMetrics(ArgumentContext argumentContext) throws Throwable {
-        String url = argumentContext.getClassContext().getMap().getAs(URL) + JmxExporterPath.METRICS;
+                Action testPrometheusTextMetrics = Direct.of(clientId + "-testPrometheusTextMetrics", context -> {
+                    String url = context.getParent()
+                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
+                                    .orElse(baseUrl)
+                            + JmxExporterPath.METRICS;
 
-        // Run the test code multiple times
-        new Repeater(ITERATIONS)
-                .throttle(new Repeater.RandomThrottle(0, 100))
-                .test(() -> {
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+                    // Run the test code multiple times
+                    new Repeater(ITERATIONS)
+                            .throttle(new Repeater.RandomThrottle(0, 100))
+                            .test(() -> {
+                                HttpResponse httpResponse = HttpClient.sendRequest(
+                                        url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                })
-                .run();
-    }
+                                assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                            })
+                            .run();
+                });
 
-    @Verifyica.Conclude
-    public static void conclude(ClassContext classContext) throws IOException, MalformedObjectNameException {
-        // Clean up the HTTP server
-        HTTPServer httpServer = classContext.getMap().removeAs(HTTP_SERVER);
-        if (httpServer != null) {
-            httpServer.stop();
+                Action testPrometheusProtobufMetrics =
+                        Direct.of(clientId + "-testPrometheusProtobufMetrics", context -> {
+                            String url = context.getParent()
+                                            .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
+                                            .orElse(baseUrl)
+                                    + JmxExporterPath.METRICS;
+
+                            // Run the test code multiple times
+                            new Repeater(ITERATIONS)
+                                    .throttle(new Repeater.RandomThrottle(0, 100))
+                                    .test(() -> {
+                                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                                url,
+                                                HttpHeader.ACCEPT,
+                                                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+
+                                        assertMetricsResponse(
+                                                httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                                    })
+                                    .run();
+                        });
+
+                Action clientTestsStrictSequential = StrictSequential.of(
+                        "tests",
+                        List.of(
+                                testHealthy,
+                                testDefaultTextMetrics,
+                                testOpenMetricsTextMetrics,
+                                testPrometheusTextMetrics,
+                                testPrometheusProtobufMetrics));
+
+                clientTests.add(clientTestsStrictSequential);
+            }
+
+            Action parallelClientTests = Parallel.of("client-tests", clientTests);
+
+            Action setUpTearDown = Lifecycle.of(
+                    "LocalTest",
+                    Direct.of("setUp", context -> {
+                        // Attach the baseUrl for child actions to access
+                        context.setAttachment(baseUrl);
+                    }),
+                    parallelClientTests,
+                    Direct.of("tearDown", context -> {
+                        // Clean up the HTTP server
+                        if (httpServer != null) {
+                            httpServer.stop();
+                        }
+                    }));
+
+            return setUpTearDown;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create LocalTest action", e);
         }
     }
 
@@ -246,7 +281,7 @@ public class LocalTest {
      * @param httpResponse the HTTP response
      * @param metricsContentType the metrics content type
      */
-    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private static void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -337,7 +372,7 @@ public class LocalTest {
 
         assertThat(hasJavaMetrics).as("No java_lang_* metrics found").isTrue();
 
-        // Validate JVM metrics are present when using Java Agent mode
+        // Validate JVM metrics are present
 
         boolean hasJvmMetrics = false;
 

@@ -33,10 +33,9 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.verifyica.api.Argument;
 
 /** Class to implement PrometheusTestEnvironment */
-public class PrometheusTestEnvironment implements Argument<PrometheusTestEnvironment> {
+public class PrometheusTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
 
@@ -57,16 +56,6 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
         this.id = UUID.randomUUID().toString();
         this.prometheusDockerImage = prometheusDockerImage;
         this.baseUrl = BASE_URL;
-    }
-
-    @Override
-    public String getName() {
-        return prometheusDockerImage;
-    }
-
-    @Override
-    public PrometheusTestEnvironment getPayload() {
-        return this;
     }
 
     /**
@@ -180,7 +169,7 @@ public class PrometheusTestEnvironment implements Argument<PrometheusTestEnviron
     /**
      * Method to destroy the test environment.
      */
-    public void destroy() {
+    public void close() {
         if (prometheusContainer != null) {
             prometheusContainer.stop();
             prometheusContainer = null;

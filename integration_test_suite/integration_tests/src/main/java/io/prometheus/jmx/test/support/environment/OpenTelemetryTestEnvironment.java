@@ -22,12 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.verifyica.api.Named;
 
 /**
  * Class to implement Environment
  */
-public class OpenTelemetryTestEnvironment implements Named {
+public class OpenTelemetryTestEnvironment {
 
     private final String id;
     private final PrometheusTestEnvironment prometheusTestEnvironment;
@@ -47,13 +46,18 @@ public class OpenTelemetryTestEnvironment implements Named {
         this.jmxExporterTestEnvironment = jmxExporterTestEnvironment;
     }
 
-    @Override
+    /**
+     * Method to get the name of the test environment
+     *
+     * @return the name of the test environment
+     */
     public String getName() {
         return jmxExporterTestEnvironment.getJmxExporterMode()
-                + " / "
+                + " ("
                 + jmxExporterTestEnvironment.getJavaDockerImage()
-                + " / "
-                + prometheusTestEnvironment.getPrometheusDockerImage();
+                + ","
+                + prometheusTestEnvironment.getPrometheusDockerImage()
+                + ")";
     }
 
     /**

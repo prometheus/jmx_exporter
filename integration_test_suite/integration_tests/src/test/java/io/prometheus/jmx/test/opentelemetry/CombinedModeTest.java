@@ -42,175 +42,195 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.paramixel.core.Action;
+import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Paramixel;
+import org.paramixel.core.action.Direct;
+import org.paramixel.core.action.Lifecycle;
+import org.paramixel.core.action.Parallel;
+import org.paramixel.core.action.StrictSequential;
+import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
-import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Verifyica;
-import org.verifyica.api.util.CleanupExecutor;
 
-/**
- * Class to implement CombinedModeTest
- */
 public class CombinedModeTest {
 
-    private static final String NETWORK = "network";
+    private static class Attachment {
+        public Network network;
+        public OpenTelemetryTestEnvironment openTelemetryTestEnvironment;
+        public JmxExporterTestEnvironment jmxExporterTestEnvironment;
+        public PrometheusTestEnvironment prometheusTestEnvironment;
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<OpenTelemetryTestEnvironment> arguments() {
-        return OpenTelemetryTestEnvironment.createEnvironments();
+        public Attachment() {}
     }
 
-    @Verifyica.BeforeAll
-    public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
-
-        Network network = Network.newNetwork();
-        network.getId();
-
-        argumentContext.getMap().put(NETWORK, network);
-
-        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
-
-        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
-        prometheusTestEnvironment.initialize(testClass, network);
-        prometheusTestEnvironment.waitForReady();
-
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-        jmxExporterTestEnvironment.initialize(testClass, network);
+    public static void main(String[] args) {
+        ConsoleRunner.runAndExit(actionFactory());
     }
 
-    @Verifyica.Test
-    @Verifyica.Order(1)
-    public void testHealthy(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
-
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-        assertHealthyResponse(httpResponse);
+    @Paramixel.ActionFactory
+    public static Action actionFactory() {
+        return Parallel.of(
+                CombinedModeTest.class.getName(),
+                OpenTelemetryTestEnvironment.createEnvironments()
+                        .map(CombinedModeTest::createLifecycleAction)
+                        .toList());
     }
 
-    @Verifyica.Test
-    @Verifyica.Order(2)
-    public void testDefaultTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
+    private static Action createLifecycleAction(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
         JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
-    }
-
-    @Verifyica.Test
-    @Verifyica.Order(3)
-    public void testOpenMetricsTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-    }
-
-    @Verifyica.Test
-    @Verifyica.Order(4)
-    public void testPrometheusTextMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse =
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-    }
-
-    @Verifyica.Test
-    @Verifyica.Order(5)
-    public void testPrometheusProtobufMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        HttpResponse httpResponse = HttpClient.sendRequest(
-                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-
-        assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-    }
-
-    /**
-     * Method to test that metrics exist in Prometheus.
-     */
-    @Verifyica.Test
-    @Verifyica.Order(6)
-    public void testPrometheusHasMetrics(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) throws IOException {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
         PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
 
-        boolean isJmxExporterModeJavaStandalone =
-                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+        Action testHealthy = Direct.of("testHealthy", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
 
-        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
-                .filter(metricName -> !isJmxExporterModeJavaStandalone
-                        || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
-                .collect(Collectors.toList())) {
-            Double value = getPrometheusMetric(prometheusTestEnvironment, metricName);
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
 
-            assertThat(value).as("metricName [%s]", metricName).isNotNull();
-            assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
-        }
+            HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+            assertHealthyResponse(httpResponse);
+        });
+
+        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(url);
+
+            assertMetricsResponse(attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+        });
+
+        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        });
+
+        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        });
+
+        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            String url = attachment.jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = HttpClient.sendRequest(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+
+            assertMetricsResponse(
+                    attachment.jmxExporterTestEnvironment,
+                    httpResponse,
+                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        });
+
+        Action testPrometheusHasMetrics = Direct.of("testPrometheusHasMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+
+            boolean isJmxExporterModeJavaStandalone =
+                    attachment.jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+
+            for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
+                    .filter(metricName -> !isJmxExporterModeJavaStandalone
+                            || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
+                    .collect(Collectors.toList())) {
+                Double value = getPrometheusMetric(attachment.prometheusTestEnvironment, metricName);
+
+                assertThat(value).as("metricName [%s]", metricName).isNotNull();
+                assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
+            }
+        });
+
+        Action tests = StrictSequential.of(
+                "tests",
+                List.of(
+                        testHealthy,
+                        testDefaultTextMetrics,
+                        testOpenMetricsTextMetrics,
+                        testPrometheusTextMetrics,
+                        testPrometheusProtobufMetrics,
+                        testPrometheusHasMetrics));
+
+        return Lifecycle.of(
+                openTelemetryTestEnvironment.getName(),
+                Direct.of("setUp", context -> {
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    prometheusTestEnvironment.initialize(CombinedModeTest.class, network);
+                    prometheusTestEnvironment.waitForReady();
+                    jmxExporterTestEnvironment.initialize(CombinedModeTest.class, network);
+                    Attachment attachment = new Attachment();
+                    attachment.network = network;
+                    attachment.openTelemetryTestEnvironment = openTelemetryTestEnvironment;
+                    attachment.jmxExporterTestEnvironment = jmxExporterTestEnvironment;
+                    attachment.prometheusTestEnvironment = prometheusTestEnvironment;
+                    context.setAttachment(attachment);
+                }),
+                tests,
+                Direct.of("tearDown", context -> {
+                    Attachment attachment = context.removeAttachment()
+                            .flatMap(a -> a.to(Attachment.class))
+                            .orElse(null);
+
+                    if (attachment != null) {
+                        Cleanup.of(Cleanup.Mode.FORWARD)
+                                .addCloseable(attachment.jmxExporterTestEnvironment)
+                                .addCloseable(attachment.prometheusTestEnvironment)
+                                .addCloseable(attachment.network)
+                                .runAndThrow();
+                    }
+                }));
     }
 
-    @Verifyica.AfterAll
-    public void afterAll(ArgumentContext argumentContext) throws Throwable {
-        OpenTelemetryTestEnvironment openTelemetryTestEnvironment =
-                argumentContext.getArgument().getPayloadAs(OpenTelemetryTestEnvironment.class);
-
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-
-        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
-
-        Network network = argumentContext.getMap().getAs(NETWORK);
-
-        CleanupExecutor cleanupExecutor = new CleanupExecutor();
-
-        if (jmxExporterTestEnvironment != null) {
-            cleanupExecutor.addTask(jmxExporterTestEnvironment::destroy);
-        }
-
-        if (prometheusTestEnvironment != null) {
-            cleanupExecutor.addTask(prometheusTestEnvironment::destroy);
-        }
-
-        if (network != null) {
-            cleanupExecutor.addTask(network::close);
-        }
-
-        cleanupExecutor.execute().throwIfFailed();
-    }
-
-    private void assertMetricsResponse(
+    private static void assertMetricsResponse(
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
-
-        // Validate no duplicate metrics (metrics with the same name and labels)
-        // and build a Metrics Map for subsequent processing
 
         Set<String> compositeNameSet = new HashSet<>();
         MetricsParser.parseCollection(httpResponse).forEach(metric -> {
@@ -221,8 +241,6 @@ public class CombinedModeTest {
             compositeNameSet.add(compositeName);
             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
         });
-
-        // Validate common / known metrics (and potentially values)
 
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
@@ -305,14 +323,7 @@ public class CombinedModeTest {
                 .isPresent();
     }
 
-    /**
-     * Method to get a Prometheus metric
-     *
-     * @param prometheusTestEnvironment prometheusTestEnvironment
-     * @param metricName metricName
-     * @return the metric value, or null if it doesn't exist
-     */
-    protected Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
+    protected static Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
             throws IOException {
         Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
         Double value = null;
@@ -324,7 +335,6 @@ public class CombinedModeTest {
             assertThat(httpResponse.body()).isNotNull();
             assertThat(httpResponse.body().string()).isNotNull();
 
-            // TODO parse response and return value
             if (httpResponse.body().string().contains(metricName)) {
                 value = 1.0;
                 break;
@@ -336,27 +346,13 @@ public class CombinedModeTest {
         return value;
     }
 
-    /**
-     * Method to send a Prometheus query
-     *
-     * @param prometheusTestEnvironment prometheusTestEnvironment
-     * @param query query
-     * @return an HttpResponse
-     */
-    protected HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)
+    protected static HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)
             throws IOException {
         return sendRequest(
                 prometheusTestEnvironment, "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
-    /**
-     * Method to send an Http GET request
-     *
-     * @param prometheusTestEnvironment prometheusTestEnvironment
-     * @param path path
-     * @return an HttpResponse
-     */
-    protected HttpResponse sendRequest(PrometheusTestEnvironment prometheusTestEnvironment, String path)
+    protected static HttpResponse sendRequest(PrometheusTestEnvironment prometheusTestEnvironment, String path)
             throws IOException {
         return HttpClient.sendRequest(prometheusTestEnvironment.getPrometheusUrl(path));
     }

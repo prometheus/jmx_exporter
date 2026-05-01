@@ -37,7 +37,7 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <okhttp.version>5.3.2</okhttp.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <verifyica.version>1.0.8</verifyica.version>
+        <paramixel.version>1.0.1</paramixel.version>
     </properties>
 
     <modules>
@@ -140,21 +140,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
                 <version>${commons-compress.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.verifyica</groupId>
-                <artifactId>verifyica-api</artifactId>
-                <version>${verifyica.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.verifyica</groupId>
-                <artifactId>verifyica-engine</artifactId>
-                <version>${verifyica.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.verifyica</groupId>
-                <artifactId>verifyica-maven-plugin</artifactId>
-                <version>${verifyica.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.prometheus.jmx</groupId>

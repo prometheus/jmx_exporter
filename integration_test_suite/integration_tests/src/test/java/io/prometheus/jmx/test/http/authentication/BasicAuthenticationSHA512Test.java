@@ -31,197 +31,268 @@ import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.jmx.test.support.util.TestSupport;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Set;
+import org.paramixel.core.Action;
+import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Paramixel;
+import org.paramixel.core.action.Direct;
+import org.paramixel.core.action.Lifecycle;
+import org.paramixel.core.action.Parallel;
+import org.paramixel.core.action.StrictSequential;
+import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
-import org.verifyica.api.ArgumentContext;
-import org.verifyica.api.Verifyica;
-import org.verifyica.api.util.CleanupExecutor;
 
 public class BasicAuthenticationSHA512Test {
 
-    private final String VALID_USERNAME = "Prometheus";
+    private static final String VALID_USERNAME = "Prometheus";
 
-    private final String VALID_PASSWORD = "secret";
+    private static final String VALID_PASSWORD = "secret";
 
-    private final String[] TEST_USERNAMES = new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
+    private static final String[] TEST_USERNAMES = new String[] {VALID_USERNAME, "prometheus", "bad", "", null};
 
-    private final String[] TEST_PASSWORDS = new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
+    private static final String[] TEST_PASSWORDS = new String[] {VALID_PASSWORD, "Secret", "bad", "", null};
 
-    @Verifyica.ArgumentSupplier(parallelism = Integer.MAX_VALUE)
-    public static Stream<JmxExporterTestEnvironment> arguments() {
-        return JmxExporterTestEnvironment.createEnvironments();
+    private static class Attachment {
+        public Network network;
+        public JmxExporterTestEnvironment environment;
+
+        public Attachment() {}
     }
 
-    @Verifyica.BeforeAll
-    public void beforeAll(ArgumentContext argumentContext) {
-        Class<?> testClass = argumentContext.getClassContext().getTestClass();
-        Network network = TestSupport.getOrCreateNetwork(argumentContext);
-        TestSupport.initializeExporterTestEnvironment(argumentContext, network, testClass);
+    public static void main(String[] args) {
+        ConsoleRunner.runAndExit(actionFactory());
     }
 
-    @Verifyica.Test
-    @Verifyica.Order(1)
-    public void testHealthy(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
-
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
-            }
-        }
+    @Paramixel.ActionFactory
+    public static Action actionFactory() {
+        return Parallel.of(
+                BasicAuthenticationSHA512Test.class.getName(),
+                JmxExporterTestEnvironment.createEnvironments()
+                        .map(BasicAuthenticationSHA512Test::createLifecycleAction)
+                        .toList());
     }
 
-    @Verifyica.Test
-    public void testDefaultTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+    private static Action createLifecycleAction(JmxExporterTestEnvironment environment) {
+        Action testHealthy = Direct.of("testHealthy", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+            String url = attachment.environment.getUrl(JmxExporterPath.HEALTHY);
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    int expectedStatusCode = 401;
 
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
+                    if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                        expectedStatusCode = 200;
+                    }
 
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .build();
+                    HttpRequest httpRequest = HttpRequest.builder()
+                            .url(url)
+                            .basicAuthentication(username, password)
+                            .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(jmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
+                    assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
                 }
             }
-        }
-    }
+        });
 
-    @Verifyica.Test
-    public void testOpenMetricsTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    int expectedStatusCode = 401;
 
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
+                    if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                        expectedStatusCode = 200;
+                    }
 
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
-                        .build();
+                    HttpRequest httpRequest = HttpRequest.builder()
+                            .url(url)
+                            .basicAuthentication(username, password)
+                            .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                }
-            }
-        }
-    }
-
-    @Verifyica.Test
-    public void testPrometheusTextMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment) throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
-                        .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    if (expectedStatusCode == 401) {
+                        assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    } else {
+                        assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.DEFAULT);
+                    }
                 }
             }
-        }
-    }
+        });
 
-    @Verifyica.Test
-    public void testPrometheusProtobufMetrics(JmxExporterTestEnvironment jmxExporterTestEnvironment)
-            throws IOException {
-        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
+        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    int expectedStatusCode = 401;
 
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
+                    if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                        expectedStatusCode = 200;
+                    }
 
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
-                        .build();
+                    HttpRequest httpRequest = HttpRequest.builder()
+                            .url(url)
+                            .basicAuthentication(username, password)
+                            .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
+                            .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(
-                            jmxExporterTestEnvironment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    if (expectedStatusCode == 401) {
+                        assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    } else {
+                        assertMetricsResponse(
+                                attachment.environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    }
                 }
             }
-        }
+        });
+
+        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
+
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    int expectedStatusCode = 401;
+
+                    if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                        expectedStatusCode = 200;
+                    }
+
+                    HttpRequest httpRequest = HttpRequest.builder()
+                            .url(url)
+                            .basicAuthentication(username, password)
+                            .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
+                            .build();
+
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                    if (expectedStatusCode == 401) {
+                        assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    } else {
+                        assertMetricsResponse(
+                                attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    }
+                }
+            }
+        });
+
+        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
+            var lifecycleContext = context.findContext(2).orElseThrow();
+            Attachment attachment = lifecycleContext
+                    .getAttachment()
+                    .flatMap(a -> a.to(Attachment.class))
+                    .orElseThrow();
+            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
+
+            for (String username : TEST_USERNAMES) {
+                for (String password : TEST_PASSWORDS) {
+                    int expectedStatusCode = 401;
+
+                    if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                        expectedStatusCode = 200;
+                    }
+
+                    HttpRequest httpRequest = HttpRequest.builder()
+                            .url(url)
+                            .basicAuthentication(username, password)
+                            .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
+                            .build();
+
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                    if (expectedStatusCode == 401) {
+                        assertThat(httpResponse.statusCode()).isEqualTo(401);
+                    } else {
+                        assertMetricsResponse(
+                                attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    }
+                }
+            }
+        });
+
+        Action tests = StrictSequential.of(
+                "tests",
+                List.of(
+                        testHealthy,
+                        testDefaultTextMetrics,
+                        testOpenMetricsTextMetrics,
+                        testPrometheusTextMetrics,
+                        testPrometheusProtobufMetrics));
+
+        return Lifecycle.of(
+                environment.getName(),
+                Direct.of("setUp", context -> {
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    environment.initialize(BasicAuthenticationSHA512Test.class, network);
+                    Attachment attachment = new Attachment();
+                    attachment.network = network;
+                    attachment.environment = environment;
+                    context.setAttachment(attachment);
+                }),
+                tests,
+                Direct.of("tearDown", context -> {
+                    Attachment attachment = context.removeAttachment()
+                            .flatMap(a -> a.to(Attachment.class))
+                            .orElse(null);
+
+                    if (attachment != null) {
+                        Cleanup.of(Cleanup.Mode.FORWARD)
+                                .addCloseable(attachment.environment)
+                                .addCloseable(attachment.network)
+                                .runAndThrow();
+                    }
+                }));
     }
 
-    @Verifyica.AfterAll
-    public void afterAll(ArgumentContext argumentContext) throws Throwable {
-        new CleanupExecutor()
-                .addTask(() -> TestSupport.destroyExporterTestEnvironment(argumentContext))
-                .addTask(() -> TestSupport.destroyNetwork(argumentContext))
-                .execute()
-                .throwIfFailed();
-    }
-
-    private void assertMetricsResponse(
+    private static void assertMetricsResponse(
             JmxExporterTestEnvironment jmxExporterTestEnvironment,
             HttpResponse httpResponse,
             MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = MetricsParser.parseMap(httpResponse);
+        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+
+        Set<String> compositeNameSet = new HashSet<>();
+        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
+            String name = metric.name();
+            Map<String, String> labels = metric.labels();
+            String compositeName = name + " " + labels;
+            assertThat(compositeNameSet).doesNotContain(compositeName);
+            compositeNameSet.add(compositeName);
+            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
+        });
 
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;

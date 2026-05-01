@@ -27,10 +27,9 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.verifyica.api.Argument;
 
 /** Class to implement MultiExporterTestEnvironment */
-public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporterTestEnvironment> {
+public class IsolatorExporterTestEnvironment {
 
     private static final String BASE_URL = "http://localhost";
     private static final int BASE_PORT = 8888;
@@ -54,14 +53,13 @@ public class IsolatorExporterTestEnvironment implements Argument<IsolatorExporte
         this.baseUrl = BASE_URL;
     }
 
-    @Override
+    /**
+     * Method to get the name of the test environment
+     *
+     * @return the name of the test environment
+     */
     public String getName() {
         return "IsolatorJavaAgent / " + javaDockerImage;
-    }
-
-    @Override
-    public IsolatorExporterTestEnvironment getPayload() {
-        return this;
     }
 
     /**
