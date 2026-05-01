@@ -14,32 +14,18 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.environment;
+package io.prometheus.jmx.test.http.metrics.path;
 
-/**
- * Class to implement ExporterPath
- */
-public class JmxExporterPath {
+import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.discovery.Selector;
 
-    /**
-     * Healthy exporter path
-     */
-    public static final String HEALTHY = "/-/healthy";
+public class __ConsolePackageRunner__ {
 
-    /**
-     * Metrics exporter path
-     */
-    public static final String METRICS = "/metrics";
+    public static void main(String[] args) {
+        ConsoleRunner.runAndExit(selector());
+    }
 
-    /**
-     * Customize the metric exporter path from the YAML configuration file
-     */
-    public static final String CUSTOM_METRICS = "/custom/metrics";
-
-    /**
-     * Constructor
-     */
-    private JmxExporterPath() {
-        // INTENTIONALLY BLANK
+    private static Selector selector() {
+        return Selector.byPackageName(__ConsolePackageRunner__.class);
     }
 }

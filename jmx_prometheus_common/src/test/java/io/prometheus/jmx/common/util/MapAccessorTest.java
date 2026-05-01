@@ -88,6 +88,16 @@ public class MapAccessorTest {
                     .isEqualTo("c6d52fc2733af33e62b45d4525261e35e04f7b0ec227e4feee8fd3fe1401a2a9");
         });
 
+        optional = mapAccessor.get("/httpServer/metrics");
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(Map.class);
+        });
+
+        optional = mapAccessor.get("/httpServer/metrics/path");
+        assertThat(optional).isNotNull().hasValueSatisfying(value -> {
+            assertThat(value).isNotNull().isInstanceOf(String.class).isEqualTo("/custom/metrics");
+        });
+
         optional = mapAccessor.get("/httpServer/threads");
         assertThat(optional).isNotNull().hasValueSatisfying(value -> {
             assertThat(value).isNotNull().isInstanceOf(Map.class);

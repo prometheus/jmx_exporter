@@ -7,6 +7,8 @@ httpServer:
       salt: PvrLg8tJphqTM8286VfH2w==
       iterations: 1000
       keyLength: 256
+  metrics:
+    path: /custom/metrics
   ssl:
     certificate:
       alias: localhost

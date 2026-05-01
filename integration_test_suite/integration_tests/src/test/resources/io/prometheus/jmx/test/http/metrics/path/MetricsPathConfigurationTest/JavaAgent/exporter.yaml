@@ -1,0 +1,5 @@
+httpServer:
+  metrics:
+    path: /custom/metrics
+rules:
+  - pattern: ".*"
