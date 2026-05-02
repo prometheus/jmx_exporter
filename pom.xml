@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.prometheus.jmx</groupId>
     <artifactId>jmx_exporter</artifactId>
-    <version>1.5.0-post</version>
+    <version>${revision}</version>
     <name>Prometheus JMX Exporter</name>
     <description>See https://github.com/prometheus/jmx_exporter/blob/main/README.md</description>
     <url>https://github.com/prometheus/jmx_exporter</url>
@@ -20,6 +20,8 @@
     </licenses>
 
     <properties>
+        <revision>1.5.0-post</revision>
+        <palantir.java.format.version>2.90.0</palantir.java.format.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.reporting.sourceEncoding>UTF-8</project.reporting.sourceEncoding>
@@ -37,7 +39,8 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <okhttp.version>5.3.2</okhttp.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <paramixel.version>1.0.1</paramixel.version>
+        <paramixel.version>1.0.2</paramixel.version>
+        <central.publishing.maven.plugin.version>0.10.0</central.publishing.maven.plugin.version>
     </properties>
 
     <modules>
@@ -155,6 +158,16 @@
                 <groupId>io.prometheus.jmx</groupId>
                 <artifactId>jmx_example_application</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opentest4j</groupId>
+                <artifactId>opentest4j</artifactId>
+                <version>1.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.paramixel</groupId>
+                <artifactId>core</artifactId>
+                <version>${paramixel.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -279,7 +292,7 @@
                         </licenseHeader>
                         <java>
                             <palantirJavaFormat>
-                                <version>2.89.0</version>
+                                <version>${palantir.java.format.version}</version>
                                 <style>PALANTIR</style>
                             </palantirJavaFormat>
                         </java>
@@ -292,6 +305,16 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.paramixel</groupId>
+                    <artifactId>maven-plugin</artifactId>
+                    <version>${paramixel.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central.publishing.maven.plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
