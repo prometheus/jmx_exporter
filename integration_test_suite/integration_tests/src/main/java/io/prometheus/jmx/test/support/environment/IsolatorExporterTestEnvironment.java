@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -150,7 +149,7 @@ public class IsolatorExporterTestEnvironment {
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
-                .withLogConsumer(new TestContainerLogger("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
+                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*\\n", 1))

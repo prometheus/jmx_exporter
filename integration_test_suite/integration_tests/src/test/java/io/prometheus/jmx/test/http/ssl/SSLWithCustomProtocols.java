@@ -33,7 +33,6 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import io.prometheus.jmx.test.support.util.TestSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -51,29 +50,30 @@ import javax.net.ssl.SSLHandshakeException;
 import nl.altindag.ssl.SSLFactory;
 import org.assertj.core.util.Strings;
 import org.paramixel.core.Action;
-import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Context;
+import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
+import org.paramixel.core.Value;
+import org.paramixel.core.action.DependentSequential;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
-import org.paramixel.core.action.StrictSequential;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class SSLWithCustomProtocols {
 
+    private static final int ENVIRONMENT_LEVEL = 2;
+
+    private static final String ENVIRONMENT_KEY = "environment";
+
+    private static final String NETWORK_KEY = "network";
+
     private static final String BASE_URL = "https://localhost";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
 
-    private static class Attachment {
-        public Network network;
-        public JmxExporterTestEnvironment environment;
-
-        public Attachment() {}
-    }
-
     public static void main(String[] args) {
-        ConsoleRunner.runAndExit(actionFactory());
+        Factory.defaultRunner().runAndExit(actionFactory());
     }
 
     private static SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String protocol) throws Exception {
@@ -106,128 +106,25 @@ public class SSLWithCustomProtocols {
     }
 
     private static Action createLifecycleAction(JmxExporterTestEnvironment environment) {
-        Action testHealthy = Direct.of("testHealthy", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.HEALTHY);
+        Action testHealthy = Direct.of("testHealthy", SSLWithCustomProtocols::testHealthy);
 
-            assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+        Action testCallingServerWithNonMatchingSslProtocols = Direct.of(
+                "testCallingServerWithNonMatchingSslProtocols",
+                SSLWithCustomProtocols::testCallingServerWithNonMatchingSslProtocols);
 
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url,
-                    initSSLContextForClientAuth(attachment.environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
-            assertHealthyResponse(httpResponse);
-        });
+        Action testDefaultTextMetrics =
+                Direct.of("testDefaultTextMetrics", SSLWithCustomProtocols::testDefaultTextMetrics);
 
-        Action testCallingServerWithNonMatchingSslProtocols =
-                Direct.of("testCallingServerWithNonMatchingSslProtocols", context -> {
-                    var lifecycleContext = context.findContext(2).orElseThrow();
-                    Attachment attachment = lifecycleContext
-                            .getAttachment()
-                            .flatMap(a -> a.to(Attachment.class))
-                            .orElseThrow();
-                    String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
+        Action testOpenMetricsTextMetrics =
+                Direct.of("testOpenMetricsTextMetrics", SSLWithCustomProtocols::testOpenMetricsTextMetrics);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+        Action testPrometheusTextMetrics =
+                Direct.of("testPrometheusTextMetrics", SSLWithCustomProtocols::testPrometheusTextMetrics);
 
-                    SSLContext sslContext = SSLContext.getDefault();
-                    Optional<String> anyOtherProtocol = Stream.of(
-                                    sslContext.getDefaultSSLParameters().getProtocols())
-                            .filter(protocol -> !protocol.equals("TLSv1.2"))
-                            .findAny();
+        Action testPrometheusProtobufMetrics =
+                Direct.of("testPrometheusProtobufMetrics", SSLWithCustomProtocols::testPrometheusProtobufMetrics);
 
-                    assertThat(anyOtherProtocol).isPresent();
-                    assertThatThrownBy(() -> HttpClient.sendRequest(
-                                    url,
-                                    initSSLContextForClientAuth(
-                                            attachment.environment.getJmxExporterMode(), anyOtherProtocol.get())))
-                            .isInstanceOf(SSLHandshakeException.class);
-                });
-
-        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-
-            assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
-
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url,
-                    initSSLContextForClientAuth(attachment.environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.DEFAULT);
-        });
-
-        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-
-            assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-            });
-
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url,
-                    HttpHeader.ACCEPT,
-                    MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
-                    initSSLContextForClientAuth(attachment.environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
-
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-        });
-
-        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-
-            assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-            });
-
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url,
-                    HttpHeader.ACCEPT,
-                    MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
-                    initSSLContextForClientAuth(attachment.environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
-
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-        });
-
-        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-
-            assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                HttpClient.sendRequest(
-                        url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-            });
-
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url,
-                    HttpHeader.ACCEPT,
-                    MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
-                    initSSLContextForClientAuth(attachment.environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
-
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-        });
-
-        Action tests = StrictSequential.of(
+        Action tests = DependentSequential.of(
                 "tests",
                 List.of(
                         testHealthy,
@@ -239,28 +136,145 @@ public class SSLWithCustomProtocols {
 
         return Lifecycle.of(
                 environment.getName(),
-                Direct.of("setUp", context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    environment.initialize(SSLWithCustomProtocols.class, network);
-                    Attachment attachment = new Attachment();
-                    attachment.network = network;
-                    attachment.environment = environment;
-                    context.setAttachment(attachment);
-                }),
+                Direct.of("setUp", context -> setUp(context, environment)),
                 tests,
-                Direct.of("tearDown", context -> {
-                    Attachment attachment = context.removeAttachment()
-                            .flatMap(a -> a.to(Attachment.class))
-                            .orElse(null);
+                Direct.of("tearDown", SSLWithCustomProtocols::tearDown));
+    }
 
-                    if (attachment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(attachment.environment)
-                                .addCloseable(attachment.network)
-                                .runAndThrow();
-                    }
-                }));
+    private static void setUp(Context context, JmxExporterTestEnvironment environment) throws Throwable {
+        Network network = Network.newNetwork();
+        network.getId();
+        environment.initialize(SSLWithCustomProtocols.class, network);
+        context.getStore().put(NETWORK_KEY, Value.of(network));
+        context.getStore().put(ENVIRONMENT_KEY, Value.of(environment));
+    }
+
+    private static void testHealthy(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        ;
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
+        assertHealthyResponse(httpResponse);
+    }
+
+    private static void testCallingServerWithNonMatchingSslProtocols(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = context.findAncestor(ENVIRONMENT_LEVEL)
+                .orElseThrow()
+                .getStore()
+                .get(ENVIRONMENT_KEY)
+                .orElseThrow()
+                .cast(JmxExporterTestEnvironment.class);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+
+        SSLContext sslContext = SSLContext.getDefault();
+        Optional<String> anyOtherProtocol = Stream.of(
+                        sslContext.getDefaultSSLParameters().getProtocols())
+                .filter(protocol -> !protocol.equals("TLSv1.2"))
+                .findAny();
+
+        assertThat(anyOtherProtocol).isPresent();
+        assertThatThrownBy(() -> HttpClient.sendRequest(
+                        url, initSSLContextForClientAuth(environment.getJmxExporterMode(), anyOtherProtocol.get())))
+                .isInstanceOf(SSLHandshakeException.class);
+    }
+
+    private static void testDefaultTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        ;
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
+    }
+
+    private static void testOpenMetricsTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        ;
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        });
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
+
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+    }
+
+    private static void testPrometheusTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        ;
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        });
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
+
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+    }
+
+    private static void testPrometheusProtobufMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        ;
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        });
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_TLS_PROTOCOL));
+
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+    }
+
+    private static void tearDown(Context context) throws Throwable {
+        Network network = context.getStore()
+                .remove(NETWORK_KEY)
+                .map(value -> value.cast(Network.class))
+                .orElse(null);
+        JmxExporterTestEnvironment environment = context.getStore()
+                .remove(ENVIRONMENT_KEY)
+                .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                .orElse(null);
+
+        if (network != null && environment != null) {
+            Cleanup.of(Cleanup.Mode.FORWARD)
+                    .addCloseable(environment)
+                    .addCloseable(network)
+                    .runAndThrow();
+        }
+    }
+
+    private static JmxExporterTestEnvironment getEnvironment(Context context) {
+        return context.findAncestor(ENVIRONMENT_LEVEL)
+                .orElseThrow()
+                .getStore()
+                .get(ENVIRONMENT_KEY)
+                .orElseThrow()
+                .cast(JmxExporterTestEnvironment.class);
     }
 
     private static void assertMetricsResponse(
@@ -284,7 +298,7 @@ public class SSLWithCustomProtocols {
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName = TestSupport.getBuildInfoName(jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = jmxExporterTestEnvironment.getJmxExporterMode().getBuildInfoName();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

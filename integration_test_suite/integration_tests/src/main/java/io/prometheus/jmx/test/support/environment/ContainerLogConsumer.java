@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx.test.support.util;
+package io.prometheus.jmx.test.support.environment;
 
 import java.util.function.Consumer;
 import org.testcontainers.containers.output.OutputFrame;
 
 /**
- * Class to implement TestContainerLogger
+ * Class to implement ContainerLogConsumer
  */
-public class TestContainerLogger implements Consumer<OutputFrame> {
+public class ContainerLogConsumer implements Consumer<OutputFrame> {
 
     private final String prefix;
     private final String dockerImage;
@@ -33,7 +33,7 @@ public class TestContainerLogger implements Consumer<OutputFrame> {
      * @param prefix the prefix to use for the log messages
      * @param dockerImage the docker image to use for the log messages
      */
-    public TestContainerLogger(String prefix, String dockerImage) {
+    public ContainerLogConsumer(String prefix, String dockerImage) {
         this.prefix = prefix;
         this.dockerImage = dockerImage;
     }

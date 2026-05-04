@@ -24,7 +24,6 @@ import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
 import io.prometheus.jmx.test.support.throttle.Throttle;
-import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -212,7 +211,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
                 .withCommand(commands.toArray(new String[0]))
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withExposedPorts(9090)
-                .withLogConsumer(new TestContainerLogger("PROMETHEUS", prometheusDockerImage))
+                .withLogConsumer(new ContainerLogConsumer("PROMETHEUS", prometheusDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("prometheus")
                 .waitingFor(Wait.forLogMessage(".*Server is ready to receive web requests.*", 1))

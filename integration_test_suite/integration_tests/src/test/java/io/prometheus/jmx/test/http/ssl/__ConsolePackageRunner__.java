@@ -16,16 +16,15 @@
 
 package io.prometheus.jmx.test.http.ssl;
 
-import org.paramixel.core.ConsoleRunner;
-import org.paramixel.core.discovery.Selector;
+import org.paramixel.core.Factory;
+import org.paramixel.core.Selector;
 
 public class __ConsolePackageRunner__ {
 
     public static void main(String[] args) {
-        ConsoleRunner.runAndExit(selector());
-    }
-
-    private static Selector selector() {
-        return Selector.byPackageName(__ConsolePackageRunner__.class);
+        Factory.defaultRunner()
+                .runAndExit(Selector.builder()
+                        .packageOf(__ConsolePackageRunner__.class)
+                        .build());
     }
 }

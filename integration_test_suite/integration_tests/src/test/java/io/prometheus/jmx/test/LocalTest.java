@@ -53,11 +53,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.paramixel.core.Action;
-import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Factory;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
-import org.paramixel.core.action.StrictSequential;
+import org.paramixel.core.action.Sequential;
 
 /**
  * Local (non-Docker) test that verifies the functionality of the JMX Exporter code.
@@ -92,7 +92,7 @@ public class LocalTest {
      * @param args the arguments
      */
     public static void main(String[] args) {
-        ConsoleRunner.runAndExit(actionFactory());
+        Factory.defaultRunner().runAndExit(actionFactory());
     }
 
     /**
@@ -154,10 +154,7 @@ public class LocalTest {
                 String clientId = "client " + i;
 
                 Action testHealthy = Direct.of(clientId + "-testHealthy", context -> {
-                    String url = context.getParent()
-                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
-                                    .orElse(baseUrl)
-                            + JmxExporterPath.HEALTHY;
+                    String url = baseUrl + JmxExporterPath.HEALTHY;
 
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
 
@@ -165,10 +162,7 @@ public class LocalTest {
                 });
 
                 Action testDefaultTextMetrics = Direct.of(clientId + "-testDefaultTextMetrics", context -> {
-                    String url = context.getParent()
-                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
-                                    .orElse(baseUrl)
-                            + JmxExporterPath.METRICS;
+                    String url = baseUrl + JmxExporterPath.METRICS;
 
                     // Run the test code multiple times
                     new Repeater(ITERATIONS)
@@ -182,10 +176,7 @@ public class LocalTest {
                 });
 
                 Action testOpenMetricsTextMetrics = Direct.of(clientId + "-testOpenMetricsTextMetrics", context -> {
-                    String url = context.getParent()
-                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
-                                    .orElse(baseUrl)
-                            + JmxExporterPath.METRICS;
+                    String url = baseUrl + JmxExporterPath.METRICS;
 
                     // Run the test code multiple times
                     new Repeater(ITERATIONS)
@@ -202,10 +193,7 @@ public class LocalTest {
                 });
 
                 Action testPrometheusTextMetrics = Direct.of(clientId + "-testPrometheusTextMetrics", context -> {
-                    String url = context.getParent()
-                                    .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
-                                    .orElse(baseUrl)
-                            + JmxExporterPath.METRICS;
+                    String url = baseUrl + JmxExporterPath.METRICS;
 
                     // Run the test code multiple times
                     new Repeater(ITERATIONS)
@@ -221,10 +209,7 @@ public class LocalTest {
 
                 Action testPrometheusProtobufMetrics =
                         Direct.of(clientId + "-testPrometheusProtobufMetrics", context -> {
-                            String url = context.getParent()
-                                            .flatMap(c -> c.getAttachment().flatMap(a -> a.to(String.class)))
-                                            .orElse(baseUrl)
-                                    + JmxExporterPath.METRICS;
+                            String url = baseUrl + JmxExporterPath.METRICS;
 
                             // Run the test code multiple times
                             new Repeater(ITERATIONS)
@@ -241,7 +226,7 @@ public class LocalTest {
                                     .run();
                         });
 
-                Action clientTestsStrictSequential = StrictSequential.of(
+                Action clientTestsStrictSequential = Sequential.of(
                         "tests",
                         List.of(
                                 testHealthy,
@@ -255,12 +240,9 @@ public class LocalTest {
 
             Action parallelClientTests = Parallel.of("client-tests", clientTests);
 
-            Action setUpTearDown = Lifecycle.of(
+            return Lifecycle.of(
                     "LocalTest",
-                    Direct.of("setUp", context -> {
-                        // Attach the baseUrl for child actions to access
-                        context.setAttachment(baseUrl);
-                    }),
+                    Direct.of("setUp", context -> {}),
                     parallelClientTests,
                     Direct.of("tearDown", context -> {
                         // Clean up the HTTP server
@@ -268,8 +250,6 @@ public class LocalTest {
                             httpServer.stop();
                         }
                     }));
-
-            return setUpTearDown;
         } catch (Exception e) {
             throw new RuntimeException("Failed to create LocalTest action", e);
         }

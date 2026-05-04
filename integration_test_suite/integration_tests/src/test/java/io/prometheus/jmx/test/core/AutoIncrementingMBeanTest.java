@@ -40,26 +40,27 @@ import java.util.Map;
 import java.util.Set;
 import org.opentest4j.AssertionFailedError;
 import org.paramixel.core.Action;
-import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Context;
+import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
+import org.paramixel.core.Value;
+import org.paramixel.core.action.DependentSequential;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
-import org.paramixel.core.action.StrictSequential;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class AutoIncrementingMBeanTest {
 
-    private static class Attachment {
-        public Network network;
-        public JmxExporterTestEnvironment environment;
+    private static final int ENVIRONMENT_LEVEL = 2;
 
-        public Attachment() {}
-    }
+    private static final String ENVIRONMENT_KEY = "environment";
+
+    private static final String NETWORK_KEY = "network";
 
     public static void main(String[] args) {
-        ConsoleRunner.runAndExit(actionFactory());
+        Factory.defaultRunner().runAndExit(actionFactory());
     }
 
     @Paramixel.ActionFactory
@@ -72,83 +73,24 @@ public class AutoIncrementingMBeanTest {
     }
 
     private static Action createLifecycleAction(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        Action testHealthy = Direct.of("testHealthy", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.HEALTHY);
-            HttpResponse httpResponse = HttpClient.sendRequest(url);
-            assertHealthyResponse(httpResponse);
-        });
+        Action testHealthy = Direct.of("testHealthy", AutoIncrementingMBeanTest::testHealthy);
 
-        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-            HttpResponse httpResponse = HttpClient.sendRequest(url);
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.DEFAULT);
-        });
+        Action testDefaultTextMetrics =
+                Direct.of("testDefaultTextMetrics", AutoIncrementingMBeanTest::testDefaultTextMetrics);
 
-        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-        });
+        Action testOpenMetricsTextMetrics =
+                Direct.of("testOpenMetricsTextMetrics", AutoIncrementingMBeanTest::testOpenMetricsTextMetrics);
 
-        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-        });
+        Action testPrometheusTextMetrics =
+                Direct.of("testPrometheusTextMetrics", AutoIncrementingMBeanTest::testPrometheusTextMetrics);
 
-        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-            assertMetricsResponse(attachment.environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-        });
+        Action testPrometheusProtobufMetrics =
+                Direct.of("testPrometheusProtobufMetrics", AutoIncrementingMBeanTest::testPrometheusProtobufMetrics);
 
-        Action testAutoIncrementingMBean = Direct.of("testAutoIncrementingMBean", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            String url = attachment.environment.getUrl(JmxExporterPath.METRICS);
+        Action testAutoIncrementingMBean =
+                Direct.of("testAutoIncrementingMBean", AutoIncrementingMBeanTest::testAutoIncrementingMBean);
 
-            double value1 = collect(url);
-            double value2 = collect(url);
-            double value3 = collect(url);
-
-            assertThat(value2).isGreaterThan(value1);
-            assertThat(value2).isEqualTo(value1 + 1);
-            assertThat(value3).isGreaterThan(value2);
-            assertThat(value3).isEqualTo(value2 + 1);
-        });
-
-        Action tests = StrictSequential.of(
+        Action tests = DependentSequential.of(
                 "tests",
                 List.of(
                         testHealthy,
@@ -160,28 +102,96 @@ public class AutoIncrementingMBeanTest {
 
         return Lifecycle.of(
                 jmxExporterTestEnvironment.getName(),
-                Direct.of("setUp", context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    jmxExporterTestEnvironment.initialize(AutoIncrementingMBeanTest.class, network);
-                    Attachment attachment = new Attachment();
-                    attachment.network = network;
-                    attachment.environment = jmxExporterTestEnvironment;
-                    context.setAttachment(attachment);
-                }),
+                Direct.of("setUp", context -> setUp(context, jmxExporterTestEnvironment)),
                 tests,
-                Direct.of("tearDown", context -> {
-                    Attachment attachment = context.removeAttachment()
-                            .flatMap(a -> a.to(Attachment.class))
-                            .orElse(null);
+                Direct.of("tearDown", AutoIncrementingMBeanTest::tearDown));
+    }
 
-                    if (attachment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(attachment.environment)
-                                .addCloseable(attachment.network)
-                                .runAndThrow();
-                    }
-                }));
+    private static void setUp(Context context, JmxExporterTestEnvironment jmxExporterTestEnvironment) throws Throwable {
+        Network network = Network.newNetwork();
+        network.getId();
+        jmxExporterTestEnvironment.initialize(AutoIncrementingMBeanTest.class, network);
+        context.getStore().put(NETWORK_KEY, Value.of(network));
+        context.getStore().put(ENVIRONMENT_KEY, Value.of(jmxExporterTestEnvironment));
+    }
+
+    private static void testHealthy(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertHealthyResponse(httpResponse);
+    }
+
+    private static void testDefaultTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
+    }
+
+    private static void testOpenMetricsTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+    }
+
+    private static void testPrometheusTextMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+    }
+
+    private static void testPrometheusProtobufMetrics(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+    }
+
+    private static void testAutoIncrementingMBean(Context context) throws Throwable {
+        JmxExporterTestEnvironment environment = getEnvironment(context);
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+
+        double value1 = collect(url);
+        double value2 = collect(url);
+        double value3 = collect(url);
+
+        assertThat(value2).isGreaterThan(value1);
+        assertThat(value2).isEqualTo(value1 + 1);
+        assertThat(value3).isGreaterThan(value2);
+        assertThat(value3).isEqualTo(value2 + 1);
+    }
+
+    private static void tearDown(Context context) throws Throwable {
+        Network network = context.getStore()
+                .remove(NETWORK_KEY)
+                .map(value -> value.cast(Network.class))
+                .orElse(null);
+        JmxExporterTestEnvironment environment = context.getStore()
+                .remove(ENVIRONMENT_KEY)
+                .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                .orElse(null);
+
+        if (network != null && environment != null) {
+            Cleanup.of(Cleanup.Mode.FORWARD)
+                    .addCloseable(environment)
+                    .addCloseable(network)
+                    .runAndThrow();
+        }
+    }
+
+    private static JmxExporterTestEnvironment getEnvironment(Context context) {
+        return context.findAncestor(ENVIRONMENT_LEVEL)
+                .orElseThrow()
+                .getStore()
+                .get(ENVIRONMENT_KEY)
+                .orElseThrow()
+                .cast(JmxExporterTestEnvironment.class);
     }
 
     private static void assertMetricsResponse(
@@ -205,8 +215,7 @@ public class AutoIncrementingMBeanTest {
         boolean isJmxExporterModeJavaAgent =
                 jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName = io.prometheus.jmx.test.support.util.TestSupport.getBuildInfoName(
-                jmxExporterTestEnvironment.getJmxExporterMode());
+        String buildInfoName = jmxExporterTestEnvironment.getJmxExporterMode().getBuildInfoName();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

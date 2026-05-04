@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.util.TestContainerLogger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -198,7 +197,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(new TestContainerLogger("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
+                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
@@ -220,7 +219,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh application.sh")
                 .withExposedPorts(9999)
-                .withLogConsumer(new TestContainerLogger("EXAMPLE_APPLICATION", javaDockerImage))
+                .withLogConsumer(new ContainerLogConsumer("EXAMPLE_APPLICATION", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
@@ -242,7 +241,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
                 .withCommand("/bin/sh exporter.sh")
                 .withExposedPorts(8888)
-                .withLogConsumer(new TestContainerLogger("JMX_EXPORTER_STANDALONE", javaDockerImage))
+                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_STANDALONE", javaDockerImage))
                 .withNetwork(network)
                 .withNetworkAliases("exporter")
                 .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
