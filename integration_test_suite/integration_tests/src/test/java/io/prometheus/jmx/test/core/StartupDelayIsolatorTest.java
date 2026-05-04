@@ -39,16 +39,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.paramixel.core.Action;
-import org.paramixel.core.ConsoleRunner;
+import org.paramixel.core.Context;
+import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
+import org.paramixel.core.Value;
+import org.paramixel.core.action.DependentSequential;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
-import org.paramixel.core.action.StrictSequential;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class StartupDelayIsolatorTest {
+
+    private static final int ENVIRONMENT_LEVEL = 2;
+
+    private static final String ENVIRONMENT_KEY = "environment";
+
+    private static final String NETWORK_KEY = "network";
 
     private static final int JAVA_AGENT_COUNT = 2;
 
@@ -56,15 +64,8 @@ public class StartupDelayIsolatorTest {
 
     private static final long REPEAT_INTERVAL_MILLISECONDS = 1000;
 
-    private static class Attachment {
-        public Network network;
-        public IsolatorExporterTestEnvironment environment;
-
-        public Attachment() {}
-    }
-
     public static void main(String[] args) {
-        ConsoleRunner.runAndExit(actionFactory());
+        Factory.defaultRunner().runAndExit(actionFactory());
     }
 
     @Paramixel.ActionFactory
@@ -77,94 +78,21 @@ public class StartupDelayIsolatorTest {
     }
 
     private static Action createLifecycleAction(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
-        Action testHealthy = Direct.of("testHealthy", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
-                String url = attachment.environment.getUrl(test, JmxExporterPath.HEALTHY);
+        Action testHealthy = Direct.of("testHealthy", StartupDelayIsolatorTest::testHealthy);
 
-                new Repeater(REPEAT_COUNT)
-                        .throttle(REPEAT_INTERVAL_MILLISECONDS)
-                        .test(() -> {
-                            HttpResponse httpResponse = HttpClient.sendRequest(url);
-                            assertHealthyResponse(httpResponse);
-                        })
-                        .accept((iteration, throwable) -> {
-                            if (throwable == null) {
-                                Repeater.abort();
-                            }
-                        })
-                        .run();
-            }
-        });
+        Action testDefaultTextMetrics =
+                Direct.of("testDefaultTextMetrics", StartupDelayIsolatorTest::testDefaultTextMetrics);
 
-        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
-                String url = attachment.environment.getUrl(test, JmxExporterPath.METRICS);
+        Action testOpenMetricsTextMetrics =
+                Direct.of("testOpenMetricsTextMetrics", StartupDelayIsolatorTest::testOpenMetricsTextMetrics);
 
-                HttpResponse httpResponse = sendRequestWithRetry(url);
+        Action testPrometheusTextMetrics =
+                Direct.of("testPrometheusTextMetrics", StartupDelayIsolatorTest::testPrometheusTextMetrics);
 
-                assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-            }
-        });
+        Action testPrometheusProtobufMetrics =
+                Direct.of("testPrometheusProtobufMetrics", StartupDelayIsolatorTest::testPrometheusProtobufMetrics);
 
-        Action testOpenMetricsTextMetrics = Direct.of("testOpenMetricsTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
-                String url = attachment.environment.getUrl(test, JmxExporterPath.METRICS);
-
-                HttpResponse httpResponse = sendRequestWithRetry(
-                        url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-
-                assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-            }
-        });
-
-        Action testPrometheusTextMetrics = Direct.of("testPrometheusTextMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
-                String url = attachment.environment.getUrl(test, JmxExporterPath.METRICS);
-
-                HttpResponse httpResponse = sendRequestWithRetry(
-                        url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-
-                assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-            }
-        });
-
-        Action testPrometheusProtobufMetrics = Direct.of("testPrometheusProtobufMetrics", context -> {
-            var lifecycleContext = context.findContext(2).orElseThrow();
-            Attachment attachment = lifecycleContext
-                    .getAttachment()
-                    .flatMap(a -> a.to(Attachment.class))
-                    .orElseThrow();
-            for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
-                String url = attachment.environment.getUrl(test, JmxExporterPath.METRICS);
-
-                HttpResponse httpResponse = sendRequestWithRetry(
-                        url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-
-                assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-            }
-        });
-
-        Action tests = StrictSequential.of(
+        Action tests = DependentSequential.of(
                 "tests",
                 List.of(
                         testHealthy,
@@ -175,27 +103,113 @@ public class StartupDelayIsolatorTest {
 
         return Lifecycle.of(
                 isolatorExporterTestEnvironment.getName(),
-                Direct.of("setUp", context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    isolatorExporterTestEnvironment.initialize(StartupDelayIsolatorTest.class, network);
-                    Attachment attachment = new Attachment();
-                    attachment.network = network;
-                    attachment.environment = isolatorExporterTestEnvironment;
-                    context.setAttachment(attachment);
-                }),
+                Direct.of("setUp", context -> setUp(context, isolatorExporterTestEnvironment)),
                 tests,
-                Direct.of("tearDown", context -> {
-                    Attachment attachment = context.removeAttachment()
-                            .flatMap(a -> a.to(Attachment.class))
-                            .orElse(null);
+                Direct.of("tearDown", StartupDelayIsolatorTest::tearDown));
+    }
 
-                    if (attachment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(attachment.network)
-                                .runAndThrow();
-                    }
-                }));
+    private static void setUp(Context context, IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
+            throws Throwable {
+        Network network = Network.newNetwork();
+        network.getId();
+        isolatorExporterTestEnvironment.initialize(StartupDelayIsolatorTest.class, network);
+        context.getStore().put(NETWORK_KEY, Value.of(network));
+        context.getStore().put(ENVIRONMENT_KEY, Value.of(isolatorExporterTestEnvironment));
+    }
+
+    private static void testHealthy(Context context) throws Throwable {
+        IsolatorExporterTestEnvironment environment = getEnvironment(context);
+        for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
+            String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
+
+            new Repeater(REPEAT_COUNT)
+                    .throttle(REPEAT_INTERVAL_MILLISECONDS)
+                    .test(() -> {
+                        HttpResponse httpResponse = HttpClient.sendRequest(url);
+                        assertHealthyResponse(httpResponse);
+                    })
+                    .accept((iteration, throwable) -> {
+                        if (throwable == null) {
+                            Repeater.abort();
+                        }
+                    })
+                    .run();
+        }
+    }
+
+    private static void testDefaultTextMetrics(Context context) throws Throwable {
+        IsolatorExporterTestEnvironment environment = getEnvironment(context);
+        for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
+            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = sendRequestWithRetry(url);
+
+            assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+        }
+    }
+
+    private static void testOpenMetricsTextMetrics(Context context) throws Throwable {
+        IsolatorExporterTestEnvironment environment = getEnvironment(context);
+        for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
+            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = sendRequestWithRetry(
+                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        }
+    }
+
+    private static void testPrometheusTextMetrics(Context context) throws Throwable {
+        IsolatorExporterTestEnvironment environment = getEnvironment(context);
+        for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
+            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse =
+                    sendRequestWithRetry(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+
+            assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        }
+    }
+
+    private static void testPrometheusProtobufMetrics(Context context) throws Throwable {
+        IsolatorExporterTestEnvironment environment = getEnvironment(context);
+        for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
+            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+            HttpResponse httpResponse = sendRequestWithRetry(
+                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+
+            assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        }
+    }
+
+    private static void tearDown(Context context) throws Throwable {
+        Network network = context.getStore()
+                .remove(NETWORK_KEY)
+                .map(value -> value.cast(Network.class))
+                .orElse(null);
+        IsolatorExporterTestEnvironment environment = context.getStore()
+                .remove(ENVIRONMENT_KEY)
+                .map(value -> value.cast(IsolatorExporterTestEnvironment.class))
+                .orElse(null);
+
+        if (network != null && environment != null) {
+            try {
+                environment.destroy();
+            } finally {
+                Cleanup.of(Cleanup.Mode.FORWARD).addCloseable(network).runAndThrow();
+            }
+        }
+    }
+
+    private static IsolatorExporterTestEnvironment getEnvironment(Context context) {
+        return context.findAncestor(ENVIRONMENT_LEVEL)
+                .orElseThrow()
+                .getStore()
+                .get(ENVIRONMENT_KEY)
+                .orElseThrow()
+                .cast(IsolatorExporterTestEnvironment.class);
     }
 
     private static HttpResponse sendRequestWithRetry(String url) throws IOException, Throwable {

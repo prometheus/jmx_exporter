@@ -23,9 +23,19 @@ public enum JmxExporterMode {
     /**
      * JavaAgent
      */
-    JavaAgent,
+    JavaAgent("jmx_prometheus_javaagent"),
     /**
      * Standalone
      */
-    Standalone
+    Standalone("jmx_prometheus_standalone");
+
+    private final String buildInfoName;
+
+    JmxExporterMode(String buildInfoName) {
+        this.buildInfoName = buildInfoName;
+    }
+
+    public String getBuildInfoName() {
+        return buildInfoName;
+    }
 }

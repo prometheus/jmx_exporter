@@ -16,23 +16,15 @@
 
 package io.prometheus.jmx.test;
 
-import java.util.Optional;
-import org.paramixel.core.Action;
-import org.paramixel.core.discovery.Resolver;
-import org.paramixel.core.discovery.Selector;
+import org.paramixel.core.Factory;
+import org.paramixel.core.Selector;
 
 public class __ConsolePackageRunner__ {
 
     public static void main(String[] args) {
-        long start = System.currentTimeMillis();
-        Optional<Action> actionOptional = Resolver.resolveActions(selector());
-
-        long elapsedTime = System.currentTimeMillis() - start;
-        System.out.println("Resolved actions: " + elapsedTime + " ms");
-        // ConsoleRunner.runAndExit(selector());
-    }
-
-    private static Selector selector() {
-        return Selector.byPackageName(__ConsolePackageRunner__.class);
+        Factory.defaultRunner()
+                .runAndExit(Selector.builder()
+                        .packageOf(__ConsolePackageRunner__.class)
+                        .build());
     }
 }
