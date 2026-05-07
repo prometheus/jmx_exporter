@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.paramixel.core.Action;
@@ -43,16 +42,13 @@ import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
 import org.paramixel.core.Value;
-import org.paramixel.core.action.DependentSequential;
+import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class BasicAuthenticationPBKDF2WithHmacSHA256Test {
-
-    private static final int ENVIRONMENT_LEVEL = 2;
 
     private static final String ENVIRONMENT_KEY = "environment";
 
@@ -72,218 +68,234 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test {
 
     @Paramixel.ActionFactory
     public static Action actionFactory() {
-        return Parallel.of(
-                BasicAuthenticationPBKDF2WithHmacSHA256Test.class.getName(),
-                JmxExporterTestEnvironment.createEnvironments()
-                        .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter())
-                        .map(BasicAuthenticationPBKDF2WithHmacSHA256Test::createLifecycleAction)
-                        .toList());
-    }
-
-    private static Action createLifecycleAction(JmxExporterTestEnvironment environment) {
-        Action testHealthy = Direct.of("testHealthy", BasicAuthenticationPBKDF2WithHmacSHA256Test::testHealthy);
-
-        Action testDefaultTextMetrics = Direct.of(
-                "testDefaultTextMetrics", BasicAuthenticationPBKDF2WithHmacSHA256Test::testDefaultTextMetrics);
-
-        Action testOpenMetricsTextMetrics = Direct.of(
-                "testOpenMetricsTextMetrics", BasicAuthenticationPBKDF2WithHmacSHA256Test::testOpenMetricsTextMetrics);
-
-        Action testPrometheusTextMetrics = Direct.of(
-                "testPrometheusTextMetrics", BasicAuthenticationPBKDF2WithHmacSHA256Test::testPrometheusTextMetrics);
-
-        Action testPrometheusProtobufMetrics = Direct.of(
-                "testPrometheusProtobufMetrics",
-                BasicAuthenticationPBKDF2WithHmacSHA256Test::testPrometheusProtobufMetrics);
-
-        Action tests = DependentSequential.of(
-                "tests",
-                List.of(
-                        testHealthy,
-                        testDefaultTextMetrics,
-                        testOpenMetricsTextMetrics,
-                        testPrometheusTextMetrics,
-                        testPrometheusProtobufMetrics));
-
-        return Lifecycle.of(
-                environment.getName(),
-                Direct.of("setUp", context -> setUp(context, environment)),
-                tests,
-                Direct.of("tearDown", BasicAuthenticationPBKDF2WithHmacSHA256Test::tearDown));
-    }
-
-    private static void setUp(Context context, JmxExporterTestEnvironment environment) throws Throwable {
-        Network network = Network.newNetwork();
-        network.getId();
-        environment.initialize(BasicAuthenticationPBKDF2WithHmacSHA256Test.class, network);
-        context.getStore().put(NETWORK_KEY, Value.of(network));
-        context.getStore().put(ENVIRONMENT_KEY, Value.of(environment));
-    }
-
-    private static void testHealthy(Context context) throws Throwable {
-        JmxExporterTestEnvironment environment = getEnvironment(context);
-        String url = environment.getUrl(JmxExporterPath.HEALTHY);
-
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
-            }
+        var parallelBuilder = Parallel.builder(BasicAuthenticationPBKDF2WithHmacSHA256Test.class.getName());
+        for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()
+                .filter(new PBKDF2WithHmacExporterTestEnvironmentFilter())
+                .toList()) {
+            parallelBuilder.child(argument(environment));
         }
+        return parallelBuilder.build();
     }
 
-    private static void testDefaultTextMetrics(Context context) throws Throwable {
-        JmxExporterTestEnvironment environment = getEnvironment(context);
-        String url = environment.getUrl(JmxExporterPath.METRICS);
+    private static Action argument(JmxExporterTestEnvironment environment) {
+        Action setUp = setUp(environment);
+        Action testHealthy = testHealthy();
+        Action tearDown = tearDown();
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
-                }
-            }
-        }
+        return Container.builder(environment.getName())
+                .before(setUp)
+                .child(testHealthy)
+                .after(tearDown)
+                .build();
     }
 
-    private static void testOpenMetricsTextMetrics(Context context) throws Throwable {
-        JmxExporterTestEnvironment environment = getEnvironment(context);
-        String url = environment.getUrl(JmxExporterPath.METRICS);
-
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
-
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
-
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
-                        .build();
-
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
-
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                }
-            }
-        }
+    private static Action setUp(JmxExporterTestEnvironment environment) {
+        return Direct.builder("setUp")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    environment.initialize(BasicAuthenticationPBKDF2WithHmacSHA256Test.class, network);
+                    context.getStore().put(NETWORK_KEY, Value.of(network));
+                    context.getStore().put(ENVIRONMENT_KEY, Value.of(environment));
+                })
+                .build();
     }
 
-    private static void testPrometheusTextMetrics(Context context) throws Throwable {
-        JmxExporterTestEnvironment environment = getEnvironment(context);
-        String url = environment.getUrl(JmxExporterPath.METRICS);
+    private static Action testHealthy() {
+        return Direct.builder("testHealthy")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment environment = getEnvironment(context);
+                    String url = environment.getUrl(JmxExporterPath.HEALTHY);
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
+                    for (String username : TEST_USERNAMES) {
+                        for (String password : TEST_PASSWORDS) {
+                            int expectedStatusCode = 401;
 
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
+                            if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                                expectedStatusCode = 200;
+                            }
 
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
-                        .build();
+                            HttpRequest httpRequest = HttpRequest.builder()
+                                    .url(url)
+                                    .basicAuthentication(username, password)
+                                    .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                            HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                }
-            }
-        }
+                            assertThat(httpResponse.statusCode()).isEqualTo(expectedStatusCode);
+                        }
+                    }
+                })
+                .build();
     }
 
-    private static void testPrometheusProtobufMetrics(Context context) throws Throwable {
-        JmxExporterTestEnvironment environment = getEnvironment(context);
-        String url = environment.getUrl(JmxExporterPath.METRICS);
+    private static Action testDefaultTextMetrics() {
+        return Direct.builder("testDefaultTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment environment = getEnvironment(context);
+                    String url = environment.getUrl(JmxExporterPath.METRICS);
 
-        for (String username : TEST_USERNAMES) {
-            for (String password : TEST_PASSWORDS) {
-                int expectedStatusCode = 401;
+                    for (String username : TEST_USERNAMES) {
+                        for (String password : TEST_PASSWORDS) {
+                            int expectedStatusCode = 401;
 
-                if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
-                    expectedStatusCode = 200;
-                }
+                            if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                                expectedStatusCode = 200;
+                            }
 
-                HttpRequest httpRequest = HttpRequest.builder()
-                        .url(url)
-                        .basicAuthentication(username, password)
-                        .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
-                        .build();
+                            HttpRequest httpRequest = HttpRequest.builder()
+                                    .url(url)
+                                    .basicAuthentication(username, password)
+                                    .build();
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+                            HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
 
-                if (expectedStatusCode == 401) {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                } else {
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                }
-            }
-        }
+                            if (expectedStatusCode == 401) {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                            } else {
+                                assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
+                            }
+                        }
+                    }
+                })
+                .build();
     }
 
-    private static void tearDown(Context context) throws Throwable {
-        Network network = context.getStore()
-                .remove(NETWORK_KEY)
-                .map(value -> value.cast(Network.class))
-                .orElse(null);
-        JmxExporterTestEnvironment environment = context.getStore()
-                .remove(ENVIRONMENT_KEY)
-                .map(value -> value.cast(JmxExporterTestEnvironment.class))
-                .orElse(null);
+    private static Action testOpenMetricsTextMetrics() {
+        return Direct.builder("testOpenMetricsTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment environment = getEnvironment(context);
+                    String url = environment.getUrl(JmxExporterPath.METRICS);
 
-        if (network != null && environment != null) {
-            Cleanup.of(Cleanup.Mode.FORWARD)
-                    .addCloseable(environment)
-                    .addCloseable(network)
-                    .runAndThrow();
-        }
+                    for (String username : TEST_USERNAMES) {
+                        for (String password : TEST_PASSWORDS) {
+                            int expectedStatusCode = 401;
+
+                            if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                                expectedStatusCode = 200;
+                            }
+
+                            HttpRequest httpRequest = HttpRequest.builder()
+                                    .url(url)
+                                    .basicAuthentication(username, password)
+                                    .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
+                                    .build();
+
+                            HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                            if (expectedStatusCode == 401) {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                            } else {
+                                assertMetricsResponse(
+                                        environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action testPrometheusTextMetrics() {
+        return Direct.builder("testPrometheusTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment environment = getEnvironment(context);
+                    String url = environment.getUrl(JmxExporterPath.METRICS);
+
+                    for (String username : TEST_USERNAMES) {
+                        for (String password : TEST_PASSWORDS) {
+                            int expectedStatusCode = 401;
+
+                            if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                                expectedStatusCode = 200;
+                            }
+
+                            HttpRequest httpRequest = HttpRequest.builder()
+                                    .url(url)
+                                    .basicAuthentication(username, password)
+                                    .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
+                                    .build();
+
+                            HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                            if (expectedStatusCode == 401) {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                            } else {
+                                assertMetricsResponse(
+                                        environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action testPrometheusProtobufMetrics() {
+        return Direct.builder("testPrometheusProtobufMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment environment = getEnvironment(context);
+                    String url = environment.getUrl(JmxExporterPath.METRICS);
+
+                    for (String username : TEST_USERNAMES) {
+                        for (String password : TEST_PASSWORDS) {
+                            int expectedStatusCode = 401;
+
+                            if (VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password)) {
+                                expectedStatusCode = 200;
+                            }
+
+                            HttpRequest httpRequest = HttpRequest.builder()
+                                    .url(url)
+                                    .basicAuthentication(username, password)
+                                    .header(
+                                            HttpHeader.ACCEPT,
+                                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
+                                    .build();
+
+                            HttpResponse httpResponse = HttpClient.sendRequest(httpRequest);
+
+                            if (expectedStatusCode == 401) {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                            } else {
+                                assertMetricsResponse(
+                                        environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action tearDown() {
+        return Direct.builder("tearDown")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    Network network = context.getStore()
+                            .remove(NETWORK_KEY)
+                            .map(value -> value.cast(Network.class))
+                            .orElse(null);
+                    JmxExporterTestEnvironment environment = context.getStore()
+                            .remove(ENVIRONMENT_KEY)
+                            .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                            .orElse(null);
+
+                    if (network != null && environment != null) {
+                        Cleanup.of(Cleanup.Mode.FORWARD)
+                                .addCloseable(environment)
+                                .addCloseable(network)
+                                .runAndThrow();
+                    }
+                })
+                .build();
     }
 
     private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.findAncestor(ENVIRONMENT_LEVEL)
-                .orElseThrow()
-                .getStore()
-                .get(ENVIRONMENT_KEY)
-                .orElseThrow()
-                .cast(JmxExporterTestEnvironment.class);
+        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(JmxExporterTestEnvironment.class);
     }
 
     private static void assertMetricsResponse(
