@@ -19,12 +19,11 @@ package io.prometheus.jmx.test.http.metrics.path;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Selector;
 
-public class __ConsolePackageRunner__ {
+public class __ParamixelRunner__ {
 
     public static void main(String[] args) {
         Factory.defaultRunner()
-                .runAndExit(Selector.builder()
-                        .packageOf(__ConsolePackageRunner__.class)
-                        .build());
+                .runAndExit(
+                        Selector.builder().packageOf(__ParamixelRunner__.class).build());
     }
 }

@@ -41,7 +41,7 @@ export JAVA_DOCKER_IMAGES="azul/zulu-openjdk:17"
 
 #### Running integration tests
 
-Each test package contains a `__ConsolePackageRunner__` class with a `main()` method. Running a `__ConsolePackageRunner__` from an IDE executes all tests in that package.
+Each test package contains a `__ParamixelRunner__` class with a `main()` method. Running a `__ParamixelRunner__` from an IDE executes all tests in that package.
 
 #### Running local (non-Docker) tests
 
