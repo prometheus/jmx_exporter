@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.paramixel.core.Action;
@@ -41,16 +40,13 @@ import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
 import org.paramixel.core.Value;
-import org.paramixel.core.action.DependentSequential;
+import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class BasicIsolatorTest {
-
-    private static final int ENVIRONMENT_LEVEL = 2;
 
     private static final String ENVIRONMENT_KEY = "environment";
 
@@ -70,192 +66,217 @@ public class BasicIsolatorTest {
 
     @Paramixel.ActionFactory
     public static Action actionFactory() {
-        return Parallel.of(
-                BasicIsolatorTest.class.getName(),
-                IsolatorExporterTestEnvironment.createEnvironments()
-                        .map(BasicIsolatorTest::createLifecycleAction)
-                        .toList());
-    }
-
-    private static Action createLifecycleAction(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
-        Action testHealthy = Direct.of("testHealthy", BasicIsolatorTest::testHealthy);
-
-        Action testDefaultTextMetrics = Direct.of("testDefaultTextMetrics", BasicIsolatorTest::testDefaultTextMetrics);
-
-        Action testOpenMetricsTextMetrics =
-                Direct.of("testOpenMetricsTextMetrics", BasicIsolatorTest::testOpenMetricsTextMetrics);
-
-        Action testPrometheusTextMetrics =
-                Direct.of("testPrometheusTextMetrics", BasicIsolatorTest::testPrometheusTextMetrics);
-
-        Action testPrometheusProtobufMetrics =
-                Direct.of("testPrometheusProtobufMetrics", BasicIsolatorTest::testPrometheusProtobufMetrics);
-
-        Action tests = DependentSequential.of(
-                "tests",
-                List.of(
-                        testHealthy,
-                        testDefaultTextMetrics,
-                        testOpenMetricsTextMetrics,
-                        testPrometheusTextMetrics,
-                        testPrometheusProtobufMetrics));
-
-        return Lifecycle.of(
-                isolatorExporterTestEnvironment.getName(),
-                Direct.of("setUp", context -> setUp(context, isolatorExporterTestEnvironment)),
-                tests,
-                Direct.of("tearDown", BasicIsolatorTest::tearDown));
-    }
-
-    private static void setUp(Context context, IsolatorExporterTestEnvironment isolatorExporterTestEnvironment)
-            throws Throwable {
-        Network network = Network.newNetwork();
-        network.getId();
-        isolatorExporterTestEnvironment.initialize(BasicIsolatorTest.class, network);
-        context.getStore().put(NETWORK_KEY, Value.of(network));
-        context.getStore().put(ENVIRONMENT_KEY, Value.of(isolatorExporterTestEnvironment));
-    }
-
-    private static void testHealthy(Context context) throws Throwable {
-        IsolatorExporterTestEnvironment environment = getEnvironment(context);
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
-
-            switch (test) {
-                case LOWER_CASE_TEST:
-                case DEFAULT_TEST: {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                }
-            }
+        var parallelBuilder = Parallel.builder(BasicIsolatorTest.class.getName());
+        for (IsolatorExporterTestEnvironment environment :
+                IsolatorExporterTestEnvironment.createEnvironments().toList()) {
+            parallelBuilder.child(argument(environment));
         }
+        return parallelBuilder.build();
     }
 
-    private static void testDefaultTextMetrics(Context context) throws Throwable {
-        IsolatorExporterTestEnvironment environment = getEnvironment(context);
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+    private static Action argument(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
+        Action setUp = setUp(isolatorExporterTestEnvironment);
+        Action testHealthy = testHealthy();
+        Action testDefaultTextMetrics = testDefaultTextMetrics();
+        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
+        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
+        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
+        Action tearDown = tearDown();
 
-            HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-            switch (test) {
-                case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-                    break;
-                }
-                case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.DEFAULT);
-                    break;
-                }
-                case FAILED_AUTHENTICATION_TEST: {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                    break;
-                }
-            }
-        }
+        return Container.builder(isolatorExporterTestEnvironment.getName())
+                .before(setUp)
+                .child(testHealthy)
+                .child(testDefaultTextMetrics)
+                .child(testOpenMetricsTextMetrics)
+                .child(testPrometheusTextMetrics)
+                .child(testPrometheusProtobufMetrics)
+                .after(tearDown)
+                .build();
     }
 
-    private static void testOpenMetricsTextMetrics(Context context) throws Throwable {
-        IsolatorExporterTestEnvironment environment = getEnvironment(context);
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = environment.getUrl(test, JmxExporterPath.METRICS);
-
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-
-            switch (test) {
-                case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                    break;
-                }
-                case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                    break;
-                }
-                case FAILED_AUTHENTICATION_TEST: {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                    break;
-                }
-            }
-        }
+    private static Action setUp(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
+        return Direct.builder("setUp")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    isolatorExporterTestEnvironment.initialize(BasicIsolatorTest.class, network);
+                    context.getStore().put(NETWORK_KEY, Value.of(network));
+                    context.getStore().put(ENVIRONMENT_KEY, Value.of(isolatorExporterTestEnvironment));
+                })
+                .build();
     }
 
-    private static void testPrometheusTextMetrics(Context context) throws Throwable {
-        IsolatorExporterTestEnvironment environment = getEnvironment(context);
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+    private static Action testHealthy() {
+        return Direct.builder("testHealthy")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    IsolatorExporterTestEnvironment environment = getEnvironment(context);
+                    for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+                        String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
 
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-
-            switch (test) {
-                case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                    break;
-                }
-                case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                    break;
-                }
-                case FAILED_AUTHENTICATION_TEST: {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                    break;
-                }
-            }
-        }
+                        switch (test) {
+                            case LOWER_CASE_TEST:
+                            case DEFAULT_TEST: {
+                                HttpResponse httpResponse = HttpClient.sendRequest(url);
+                                assertHealthyResponse(httpResponse);
+                            }
+                        }
+                    }
+                })
+                .build();
     }
 
-    private static void testPrometheusProtobufMetrics(Context context) throws Throwable {
-        IsolatorExporterTestEnvironment environment = getEnvironment(context);
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
-            String url = environment.getUrl(test, JmxExporterPath.METRICS);
+    private static Action testDefaultTextMetrics() {
+        return Direct.builder("testDefaultTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    IsolatorExporterTestEnvironment environment = getEnvironment(context);
+                    for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+                        String url = environment.getUrl(test, JmxExporterPath.METRICS);
 
-            HttpResponse httpResponse = HttpClient.sendRequest(
-                    url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+                        HttpResponse httpResponse = HttpClient.sendRequest(url);
 
-            switch (test) {
-                case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                    break;
-                }
-                case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                    break;
-                }
-                case FAILED_AUTHENTICATION_TEST: {
-                    assertThat(httpResponse.statusCode()).isEqualTo(401);
-                    break;
-                }
-            }
-        }
+                        switch (test) {
+                            case DEFAULT_TEST: {
+                                assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                                break;
+                            }
+                            case LOWER_CASE_TEST: {
+                                assertMetricsResponseLowerCase(httpResponse, MetricsContentType.DEFAULT);
+                                break;
+                            }
+                            case FAILED_AUTHENTICATION_TEST: {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .build();
     }
 
-    private static void tearDown(Context context) throws Throwable {
-        Network network = context.getStore()
-                .remove(NETWORK_KEY)
-                .map(value -> value.cast(Network.class))
-                .orElse(null);
-        IsolatorExporterTestEnvironment environment = context.getStore()
-                .remove(ENVIRONMENT_KEY)
-                .map(value -> value.cast(IsolatorExporterTestEnvironment.class))
-                .orElse(null);
+    private static Action testOpenMetricsTextMetrics() {
+        return Direct.builder("testOpenMetricsTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    IsolatorExporterTestEnvironment environment = getEnvironment(context);
+                    for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+                        String url = environment.getUrl(test, JmxExporterPath.METRICS);
 
-        if (network != null && environment != null) {
-            try {
-                environment.destroy();
-            } finally {
-                Cleanup.of(Cleanup.Mode.FORWARD).addCloseable(network).runAndThrow();
-            }
-        }
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+
+                        switch (test) {
+                            case DEFAULT_TEST: {
+                                assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                                break;
+                            }
+                            case LOWER_CASE_TEST: {
+                                assertMetricsResponseLowerCase(
+                                        httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                                break;
+                            }
+                            case FAILED_AUTHENTICATION_TEST: {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action testPrometheusTextMetrics() {
+        return Direct.builder("testPrometheusTextMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    IsolatorExporterTestEnvironment environment = getEnvironment(context);
+                    for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+                        String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+
+                        switch (test) {
+                            case DEFAULT_TEST: {
+                                assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                                break;
+                            }
+                            case LOWER_CASE_TEST: {
+                                assertMetricsResponseLowerCase(
+                                        httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                                break;
+                            }
+                            case FAILED_AUTHENTICATION_TEST: {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action testPrometheusProtobufMetrics() {
+        return Direct.builder("testPrometheusProtobufMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    IsolatorExporterTestEnvironment environment = getEnvironment(context);
+                    for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+                        String url = environment.getUrl(test, JmxExporterPath.METRICS);
+
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+
+                        switch (test) {
+                            case DEFAULT_TEST: {
+                                assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                                break;
+                            }
+                            case LOWER_CASE_TEST: {
+                                assertMetricsResponseLowerCase(
+                                        httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                                break;
+                            }
+                            case FAILED_AUTHENTICATION_TEST: {
+                                assertThat(httpResponse.statusCode()).isEqualTo(401);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .build();
+    }
+
+    private static Action tearDown() {
+        return Direct.builder("tearDown")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    Network network = context.getStore()
+                            .remove(NETWORK_KEY)
+                            .map(value -> value.cast(Network.class))
+                            .orElse(null);
+                    IsolatorExporterTestEnvironment environment = context.getStore()
+                            .remove(ENVIRONMENT_KEY)
+                            .map(value -> value.cast(IsolatorExporterTestEnvironment.class))
+                            .orElse(null);
+
+                    if (network != null && environment != null) {
+                        try {
+                            environment.destroy();
+                        } finally {
+                            Cleanup.of(Cleanup.Mode.FORWARD)
+                                    .addCloseable(network)
+                                    .runAndThrow();
+                        }
+                    }
+                })
+                .build();
     }
 
     private static IsolatorExporterTestEnvironment getEnvironment(Context context) {
-        return context.findAncestor(ENVIRONMENT_LEVEL)
-                .orElseThrow()
-                .getStore()
-                .get(ENVIRONMENT_KEY)
-                .orElseThrow()
-                .cast(IsolatorExporterTestEnvironment.class);
+        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(IsolatorExporterTestEnvironment.class);
     }
 
     private static void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {

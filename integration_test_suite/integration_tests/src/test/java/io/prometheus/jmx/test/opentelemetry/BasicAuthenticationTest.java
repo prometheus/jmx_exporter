@@ -30,23 +30,19 @@ import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.stream.Collectors;
 import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
 import org.paramixel.core.Value;
-import org.paramixel.core.action.DependentSequential;
+import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Lifecycle;
 import org.paramixel.core.action.Parallel;
 import org.paramixel.core.support.Cleanup;
 import org.testcontainers.containers.Network;
 
 public class BasicAuthenticationTest {
-
-    private static final int ENVIRONMENT_LEVEL = 2;
 
     private static final String NETWORK_KEY = "network";
 
@@ -63,98 +59,107 @@ public class BasicAuthenticationTest {
 
     @Paramixel.ActionFactory
     public static Action actionFactory() {
-        return Parallel.of(
-                BasicAuthenticationTest.class.getName(),
-                OpenTelemetryTestEnvironment.createEnvironments()
-                        .map(BasicAuthenticationTest::createLifecycleAction)
-                        .toList());
-    }
-
-    private static Action createLifecycleAction(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
-
-        Action testPrometheusHasMetrics =
-                Direct.of("testPrometheusHasMetrics", BasicAuthenticationTest::testPrometheusHasMetrics);
-
-        Action tests = DependentSequential.of("tests", List.of(testPrometheusHasMetrics));
-
-        return Lifecycle.of(
-                openTelemetryTestEnvironment.getName(),
-                Direct.of("setUp", context -> setUp(context, openTelemetryTestEnvironment)),
-                tests,
-                Direct.of("tearDown", BasicAuthenticationTest::tearDown));
-    }
-
-    private static void setUp(Context context, OpenTelemetryTestEnvironment openTelemetryTestEnvironment)
-            throws Throwable {
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = openTelemetryTestEnvironment.exporterTestEnvironment();
-        PrometheusTestEnvironment prometheusTestEnvironment = openTelemetryTestEnvironment.prometheusTestEnvironment();
-        Network network = Network.newNetwork();
-        network.getId();
-        prometheusTestEnvironment.initialize(BasicAuthenticationTest.class, network);
-        prometheusTestEnvironment.waitForReady(VALID_USER, VALUE_PASSWORD);
-        jmxExporterTestEnvironment.initialize(BasicAuthenticationTest.class, network);
-        context.getStore().put(NETWORK_KEY, Value.of(network));
-        context.getStore().put(JMX_EXPORTER_TEST_ENVIRONMENT, Value.of(jmxExporterTestEnvironment));
-        context.getStore().put(PROMETHEUS_TEST_ENVIRONMENT, Value.of(prometheusTestEnvironment));
-    }
-
-    private static void testPrometheusHasMetrics(Context context) throws Throwable {
-        JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getJmxExporterTestEnvironment(context);
-        PrometheusTestEnvironment currentPrometheusTestEnvironment = getPrometheusTestEnvironment(context);
-
-        boolean isJmxExporterModeJavaStandalone =
-                currentJmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
-
-        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
-                .filter(metricName -> !isJmxExporterModeJavaStandalone
-                        || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
-                .collect(Collectors.toList())) {
-            Double value = getPrometheusMetric(currentPrometheusTestEnvironment, metricName);
-
-            assertThat(value).as("metricName [%s]", metricName).isNotNull();
-            assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
+        var parallelBuilder = Parallel.builder(BasicAuthenticationTest.class.getName());
+        for (OpenTelemetryTestEnvironment environment :
+                OpenTelemetryTestEnvironment.createEnvironments().toList()) {
+            parallelBuilder.child(argument(environment));
         }
+        return parallelBuilder.build();
     }
 
-    private static void tearDown(Context context) throws Throwable {
-        Network network = context.getStore()
-                .remove(NETWORK_KEY)
-                .map(value -> value.cast(Network.class))
-                .orElse(null);
-        JmxExporterTestEnvironment jmxExporterTestEnvironment = context.getStore()
-                .remove(JMX_EXPORTER_TEST_ENVIRONMENT)
-                .map(value -> value.cast(JmxExporterTestEnvironment.class))
-                .orElse(null);
-        PrometheusTestEnvironment prometheusTestEnvironment = context.getStore()
-                .remove(PROMETHEUS_TEST_ENVIRONMENT)
-                .map(value -> value.cast(PrometheusTestEnvironment.class))
-                .orElse(null);
+    private static Action argument(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
+        Action setUp = setUp(openTelemetryTestEnvironment);
+        Action testPrometheusHasMetrics = testPrometheusHasMetrics();
+        Action tearDown = tearDown();
 
-        if (network != null && jmxExporterTestEnvironment != null && prometheusTestEnvironment != null) {
-            Cleanup.of(Cleanup.Mode.FORWARD)
-                    .addCloseable(jmxExporterTestEnvironment)
-                    .addCloseable(prometheusTestEnvironment)
-                    .addCloseable(network)
-                    .runAndThrow();
-        }
+        return Container.builder(openTelemetryTestEnvironment.getName())
+                .before(setUp)
+                .child(testPrometheusHasMetrics)
+                .after(tearDown)
+                .build();
+    }
+
+    private static Action setUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
+        return Direct.builder("setUp")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment jmxExporterTestEnvironment =
+                            openTelemetryTestEnvironment.exporterTestEnvironment();
+                    PrometheusTestEnvironment prometheusTestEnvironment =
+                            openTelemetryTestEnvironment.prometheusTestEnvironment();
+                    Network network = Network.newNetwork();
+                    network.getId();
+                    prometheusTestEnvironment.initialize(BasicAuthenticationTest.class, network);
+                    prometheusTestEnvironment.waitForReady(VALID_USER, VALUE_PASSWORD);
+                    jmxExporterTestEnvironment.initialize(BasicAuthenticationTest.class, network);
+                    context.getStore().put(NETWORK_KEY, Value.of(network));
+                    context.getStore().put(JMX_EXPORTER_TEST_ENVIRONMENT, Value.of(jmxExporterTestEnvironment));
+                    context.getStore().put(PROMETHEUS_TEST_ENVIRONMENT, Value.of(prometheusTestEnvironment));
+                })
+                .build();
+    }
+
+    private static Action testPrometheusHasMetrics() {
+        return Direct.builder("testPrometheusHasMetrics")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
+                            getJmxExporterTestEnvironment(context);
+                    PrometheusTestEnvironment currentPrometheusTestEnvironment = getPrometheusTestEnvironment(context);
+
+                    boolean isJmxExporterModeJavaStandalone =
+                            currentJmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
+
+                    for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
+                            .filter(metricName -> !isJmxExporterModeJavaStandalone
+                                    || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
+                            .collect(Collectors.toList())) {
+                        Double value = getPrometheusMetric(currentPrometheusTestEnvironment, metricName);
+
+                        assertThat(value).as("metricName [%s]", metricName).isNotNull();
+                        assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
+                    }
+                })
+                .build();
+    }
+
+    private static Action tearDown() {
+        return Direct.builder("tearDown")
+                .contextMode(Action.ContextMode.SHARED)
+                .execute(context -> {
+                    Network network = context.getStore()
+                            .remove(NETWORK_KEY)
+                            .map(value -> value.cast(Network.class))
+                            .orElse(null);
+                    JmxExporterTestEnvironment jmxExporterTestEnvironment = context.getStore()
+                            .remove(JMX_EXPORTER_TEST_ENVIRONMENT)
+                            .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                            .orElse(null);
+                    PrometheusTestEnvironment prometheusTestEnvironment = context.getStore()
+                            .remove(PROMETHEUS_TEST_ENVIRONMENT)
+                            .map(value -> value.cast(PrometheusTestEnvironment.class))
+                            .orElse(null);
+
+                    if (network != null && jmxExporterTestEnvironment != null && prometheusTestEnvironment != null) {
+                        Cleanup.of(Cleanup.Mode.FORWARD)
+                                .addCloseable(jmxExporterTestEnvironment)
+                                .addCloseable(prometheusTestEnvironment)
+                                .addCloseable(network)
+                                .runAndThrow();
+                    }
+                })
+                .build();
     }
 
     private static JmxExporterTestEnvironment getJmxExporterTestEnvironment(Context context) {
-        return context.findAncestor(ENVIRONMENT_LEVEL)
-                .orElseThrow()
-                .getStore()
+        return context.getStore()
                 .get(JMX_EXPORTER_TEST_ENVIRONMENT)
                 .orElseThrow()
                 .cast(JmxExporterTestEnvironment.class);
     }
 
     private static PrometheusTestEnvironment getPrometheusTestEnvironment(Context context) {
-        return context.findAncestor(ENVIRONMENT_LEVEL)
-                .orElseThrow()
-                .getStore()
-                .get(PROMETHEUS_TEST_ENVIRONMENT)
-                .orElseThrow()
-                .cast(PrometheusTestEnvironment.class);
+        return context.getStore().get(PROMETHEUS_TEST_ENVIRONMENT).orElseThrow().cast(PrometheusTestEnvironment.class);
     }
 
     protected static Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
