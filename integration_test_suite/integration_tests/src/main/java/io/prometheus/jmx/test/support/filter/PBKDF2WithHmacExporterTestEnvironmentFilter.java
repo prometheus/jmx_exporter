@@ -22,14 +22,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Class to implement PBKDF2WithHmacTestArgumentFilter
+ * Filters JMX exporter test environments to exclude Docker images that do not support
+ * PBKDF2WithHmac authentication configurations.
  */
 public class PBKDF2WithHmacExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
     /**
-     * Constructor
+     * Creates a filter that excludes IBM Java 8 images incompatible with PBKDF2WithHmac.
      */
     public PBKDF2WithHmacExporterTestEnvironmentFilter() {
         // Filter out Docker image names that don't support PBKDF2 with HMAC
@@ -41,10 +42,10 @@ public class PBKDF2WithHmacExporterTestEnvironmentFilter implements Predicate<Jm
     }
 
     /**
-     * Evaluates this predicate on the given argument.
+     * Returns {@code true} if the test environment's Docker image supports PBKDF2WithHmac.
      *
-     * @param jmxExporterTestEnvironment jmxExporterTestEnvironment
-     * @return {@code true} if the input argument matches the predicate; otherwise, {@code false}
+     * @param jmxExporterTestEnvironment the test environment to evaluate
+     * @return {@code true} if the environment is compatible, {@code false} if it should be filtered out
      */
     @Override
     public boolean test(JmxExporterTestEnvironment jmxExporterTestEnvironment) {

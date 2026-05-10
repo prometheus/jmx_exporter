@@ -24,7 +24,8 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
- * Class to implement Environment
+ * Combines a Prometheus test environment and a JMX exporter test environment
+ * for OpenTelemetry integration testing.
  */
 public class OpenTelemetryTestEnvironment {
 
@@ -33,10 +34,10 @@ public class OpenTelemetryTestEnvironment {
     private final JmxExporterTestEnvironment jmxExporterTestEnvironment;
 
     /**
-     * Constructor
+     * Creates an OpenTelemetry test environment combining a Prometheus and JMX exporter environment.
      *
-     * @param prometheusTestEnvironment PrometheusTestEnvironment
-     * @param jmxExporterTestEnvironment ExporterTestEnvironment
+     * @param prometheusTestEnvironment the Prometheus test environment for scraping and OTLP reception
+     * @param jmxExporterTestEnvironment the JMX exporter test environment providing the metrics source
      */
     public OpenTelemetryTestEnvironment(
             PrometheusTestEnvironment prometheusTestEnvironment,
@@ -47,9 +48,9 @@ public class OpenTelemetryTestEnvironment {
     }
 
     /**
-     * Method to get the name of the test environment
+     * Returns the display name of the test environment, combining mode and Docker images.
      *
-     * @return the name of the test environment
+     * @return the display name of the test environment
      */
     public String getName() {
         return jmxExporterTestEnvironment.getJmxExporterMode()
@@ -61,36 +62,37 @@ public class OpenTelemetryTestEnvironment {
     }
 
     /**
-     * Method to get the ID of the test environment
+     * Returns the unique identifier of the test environment.
      *
-     * @return the ID of the test environment
+     * @return the unique identifier of the test environment
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Method to get the PrometheusTestEnvironment
+     * Returns the Prometheus test environment used for OTLP reception and scraping.
      *
-     * @return the PrometheusTestEnvironment
+     * @return the {@link PrometheusTestEnvironment}
      */
     public PrometheusTestEnvironment prometheusTestEnvironment() {
         return prometheusTestEnvironment;
     }
 
     /**
-     * Method to get the ExporterTestEnvironment
+     * Returns the JMX exporter test environment providing the metrics source.
      *
-     * @return the ExporterTestEnvironment
+     * @return the {@link JmxExporterTestEnvironment}
      */
     public JmxExporterTestEnvironment exporterTestEnvironment() {
         return jmxExporterTestEnvironment;
     }
 
     /**
-     * Method to create a Stream of Environments
+     * Creates a stream of OpenTelemetry test environments for all combinations
+     * of configured Prometheus and Java Docker images and exporter modes.
      *
-     * @return a Stream of Environments
+     * @return a stream of {@link OpenTelemetryTestEnvironment} instances
      */
     public static Stream<OpenTelemetryTestEnvironment> createEnvironments() {
         List<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();

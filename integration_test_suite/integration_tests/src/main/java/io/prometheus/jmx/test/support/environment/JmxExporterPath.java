@@ -17,27 +17,27 @@
 package io.prometheus.jmx.test.support.environment;
 
 /**
- * Class to implement ExporterPath
+ * Defines HTTP endpoint path constants for the JMX exporter health and metrics endpoints.
  */
 public class JmxExporterPath {
 
     /**
-     * Healthy exporter path
+     * The health endpoint path, used to verify the exporter is responsive.
      */
     public static final String HEALTHY = "/-/healthy";
 
     /**
-     * Metrics exporter path
+     * The default metrics endpoint path.
      */
     public static final String METRICS = "/metrics";
 
     /**
-     * Customize the metric exporter path from the YAML configuration file
+     * The custom metrics endpoint path, as configured in the YAML configuration file.
      */
     public static final String CUSTOM_METRICS = "/custom/metrics";
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
      */
     private JmxExporterPath() {
         // INTENTIONALLY BLANK

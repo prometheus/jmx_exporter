@@ -33,7 +33,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-/** Class to implement PrometheusTestEnvironment */
+/**
+ * Manages a Prometheus Docker container for integration testing, providing lifecycle
+ * control and readiness checks.
+ */
 public class PrometheusTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
@@ -47,9 +50,9 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     private GenericContainer<?> prometheusContainer;
 
     /**
-     * Constructor
+     * Creates a Prometheus test environment using the specified Docker image.
      *
-     * @param prometheusDockerImage prometheusDockerImage
+     * @param prometheusDockerImage the Docker image name for the Prometheus container
      */
     public PrometheusTestEnvironment(String prometheusDockerImage) {
         this.id = UUID.randomUUID().toString();
@@ -58,19 +61,19 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get the ID of the test environment
+     * Returns the unique identifier of the test environment.
      *
-     * @return the ID of the test environment
+     * @return the unique identifier of the test environment
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Method to set the base URL
+     * Sets the base URL for constructing Prometheus request URLs.
      *
-     * @param baseUrl baseUrl
-     * @return the ExporterTestEnvironment
+     * @param baseUrl the base URL (e.g., {@code http://localhost})
+     * @return this test environment for method chaining
      */
     public PrometheusTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -78,7 +81,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get the Prometheus Docker image name
+     * Returns the Prometheus Docker image name.
      *
      * @return the Prometheus Docker image name
      */
@@ -87,9 +90,11 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to initialize the test environment
+     * Starts the Prometheus Docker container for the test environment.
      *
-     * @param network network
+     * @param testClass the test class whose classpath resources configure the container
+     * @param network the Docker network for inter-container communication
+     * @throws IllegalStateException if the Prometheus container fails to start
      */
     public void initialize(Class<?> testClass, Network network) {
         this.testClass = testClass;
@@ -104,36 +109,38 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get a Prometheus URL
+     * Constructs a Prometheus URL by appending the specified path to the Prometheus base URL.
      *
-     * @param path path
-     * @return a Prometheus URL
+     * @param path the path to append (with or without a leading slash)
+     * @return the full Prometheus URL
      */
     public String getPrometheusUrl(String path) {
         return !path.startsWith("/") ? getPrometheusBaseUrl() + "/" + path : getPrometheusBaseUrl() + path;
     }
 
     /**
-     * Method to get the Prometheus base URL
+     * Returns the Prometheus base URL including the dynamically mapped port.
      *
-     * @return the Prometheus base URL
+     * @return the Prometheus base URL with the mapped port
      */
     private String getPrometheusBaseUrl() {
         return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
     }
 
     /**
-     * Method to wait for the Prometheus container to be ready.
+     * Waits for the Prometheus container to become ready by polling the {@code /-/ready} endpoint.
      */
     public void waitForReady() {
         waitForReady(null, null);
     }
 
     /**
-     * Method to wait for the Prometheus container to be ready with credentials
+     * Waits for the Prometheus container to become ready by polling the {@code /-/ready} endpoint
+     * with optional Basic authentication credentials.
      *
-     * @param username username
-     * @param password password
+     * @param username the username for Basic authentication, or {@code null} if unauthenticated
+     * @param password the password for Basic authentication, or {@code null} if unauthenticated
+     * @throws EnvironmentException if the container does not become ready within the retry limit
      */
     public void waitForReady(String username, String password) {
         long startMilliseconds = System.currentTimeMillis();
@@ -166,7 +173,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to destroy the test environment.
+     * Stops the Prometheus Docker container and releases resources.
      */
     public void close() {
         if (prometheusContainer != null) {
@@ -176,9 +183,10 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to create a Prometheus container
+     * Creates a Docker container for Prometheus with classpath-mapped configuration files
+     * and OTLP receiver support.
      *
-     * @return the return value
+     * @return the configured GenericContainer
      */
     private GenericContainer<?> createPrometheusContainer() {
         List<String> commands = new ArrayList<>();

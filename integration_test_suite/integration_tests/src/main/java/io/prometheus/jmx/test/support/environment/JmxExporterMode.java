@@ -17,15 +17,19 @@
 package io.prometheus.jmx.test.support.environment;
 
 /**
- * Enum of the two operational modes
+ * Defines the two operational modes of the JMX exporter: Java Agent and Standalone.
  */
 public enum JmxExporterMode {
+
     /**
-     * JavaAgent
+     * The Java Agent mode, where the exporter runs as a JVM agent using
+     * the {@code jmx_prometheus_javaagent} build artifact.
      */
     JavaAgent("jmx_prometheus_javaagent"),
+
     /**
-     * Standalone
+     * The Standalone mode, where the exporter runs as a separate process using
+     * the {@code jmx_prometheus_standalone} build artifact.
      */
     Standalone("jmx_prometheus_standalone");
 
@@ -35,6 +39,11 @@ public enum JmxExporterMode {
         this.buildInfoName = buildInfoName;
     }
 
+    /**
+     * Returns the build artifact name associated with this exporter mode.
+     *
+     * @return the build artifact name (e.g., {@code jmx_prometheus_javaagent})
+     */
     public String getBuildInfoName() {
         return buildInfoName;
     }

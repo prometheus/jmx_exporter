@@ -29,6 +29,9 @@ public class ExistDb implements ExistDbMXBean {
 
     private final Map<QueryKey, RunningQuery> queries;
 
+    /**
+     * Constructor
+     */
     public ExistDb() {
         queries = build();
     }

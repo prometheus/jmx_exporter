@@ -84,6 +84,9 @@ public class AuthenticatorPlugin extends Authenticator {
      */
     public static class UserPrincipal implements Principal, Serializable {
 
+        /**
+         * The name
+         */
         private final String name;
 
         /**

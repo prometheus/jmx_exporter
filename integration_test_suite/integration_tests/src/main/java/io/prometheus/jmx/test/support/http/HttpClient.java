@@ -43,32 +43,40 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Class to implement HttpClient
+ * Sends HTTP requests using OkHttp with configurable timeouts, SSL contexts,
+ * and connection pooling for integration test communication.
  */
 public class HttpClient {
 
     /**
-     * Default connect timeout in milliseconds
+     * Private constructor to prevent instantiation.
+     */
+    private HttpClient() {
+        // INTENTIONALLY BLANK
+    }
+
+    /**
+     * The default connect timeout in milliseconds.
      */
     public static final int CONNECT_TIMEOUT = 60000;
 
     /**
-     * Default read timeout in milliseconds
+     * The default write timeout in milliseconds.
      */
     public static final int WRITE_TIMEOUT = 60000;
 
     /**
-     * Default read timeout in milliseconds
+     * The default read timeout in milliseconds.
      */
     public static final int READ_TIMEOUT = 60000;
 
     /**
-     * Default maximum total connections
+     * The maximum number of idle connections in the connection pool.
      */
     public static final int MAXIMUM_CONNECTIONS = 200;
 
     /**
-     * Default eviction timeout in seconds
+     * The time in seconds before idle connections are evicted from the pool.
      */
     public static final int EVICTION_TIMEOUT = 30;
 
@@ -82,23 +90,23 @@ public class HttpClient {
             createHttpClient(CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT, UNSAFE_SSL_FACTORY.getSslContext());
 
     /**
-     * Send an HTTP request
+     * Sends a GET request to the specified URL using default timeouts.
      *
-     * @param url url
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param url the target URL
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(String url) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).build());
     }
 
     /**
-     * Send an HTTP request using a specified SSL context
+     * Sends a GET request to the specified URL using the provided SSL context.
      *
-     * @param url url
-     * @param sslContext sslContext
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param url the target URL
+     * @param sslContext the SSL context for HTTPS connections
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(String url, SSLContext sslContext) throws IOException {
         return sendRequest(
@@ -106,26 +114,27 @@ public class HttpClient {
     }
 
     /**
-     * Send an HTTP request with a single header
+     * Sends a GET request to the specified URL with a single header.
      *
-     * @param url url
-     * @param header header
-     * @param value value
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param url the target URL
+     * @param header the header name
+     * @param value the header value
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(String url, String header, String value) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).header(header, value).build());
     }
 
     /**
-     * Send an HTTP request with a single header
+     * Sends a GET request to the specified URL with a single header and SSL context.
      *
-     * @param url url
-     * @param header header
-     * @param value value
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param url the target URL
+     * @param header the header name
+     * @param value the header value
+     * @param sslContext the SSL context for HTTPS connections
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(String url, String header, String value, SSLContext sslContext)
             throws IOException {
@@ -138,37 +147,37 @@ public class HttpClient {
     }
 
     /**
-     * Send an HTTP request with a Map of headers
+     * Sends a GET request to the specified URL with multiple headers.
      *
-     * @param url url
-     * @param headers headers
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param url the target URL
+     * @param headers the map of header names to their value collections
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(String url, Map<String, Collection<String>> headers) throws IOException {
         return sendRequest(HttpRequest.builder().url(url).headers(headers).build());
     }
 
     /**
-     * Send an HttpRequest
+     * Sends the specified HTTP request using default timeouts and the default SSL context.
      *
-     * @param httpRequest httpRequest
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param httpRequest the HTTP request to send
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(HttpRequest httpRequest) throws IOException {
         return sendRequest(httpRequest, CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT);
     }
 
     /**
-     * Send an HttpRequest
+     * Sends the specified HTTP request with custom timeouts.
      *
-     * @param httpRequest httpRequest
-     * @param connectTimeout connectTimeout
-     * @param writeTimeout writeTimeout
-     * @param readTimeout readTimeout
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param httpRequest the HTTP request to send
+     * @param connectTimeout the connect timeout in milliseconds
+     * @param writeTimeout the write timeout in milliseconds
+     * @param readTimeout the read timeout in milliseconds
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
      */
     public static HttpResponse sendRequest(
             HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout) throws IOException {
@@ -176,15 +185,16 @@ public class HttpClient {
     }
 
     /**
-     * Send an HttpRequest
+     * Sends the specified HTTP request with custom timeouts and an optional SSL context.
      *
-     * @param httpRequest httpRequest
-     * @param connectTimeout connectTimeout
-     * @param writeTimeout writeTimeout
-     * @param readTimeout readTimeout
-     * @param sslContext sslContext
-     * @return an HttpResponse
-     * @throws IOException IOException
+     * @param httpRequest the HTTP request to send
+     * @param connectTimeout the connect timeout in milliseconds
+     * @param writeTimeout the write timeout in milliseconds
+     * @param readTimeout the read timeout in milliseconds
+     * @param sslContext the SSL context for HTTPS connections, or {@code null} to use the default
+     * @return the HTTP response
+     * @throws IOException if the request fails due to an I/O or network error
+     * @throws SSLHandshakeException if the SSL handshake fails
      */
     public static HttpResponse sendRequest(
             HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext)
@@ -256,13 +266,14 @@ public class HttpClient {
     }
 
     /**
-     * Get or create an OkHttpClient
+     * Returns a cached default OkHttpClient when default parameters are used,
+     * or creates a new client with the specified timeouts and SSL context.
      *
-     * @param connectTimeout connectTimeout
-     * @param writeTimeout writeTimeout
-     * @param readTimeout readTimeout
-     * @param sslContext sslContext
-     * @return OkHttpClient
+     * @param connectTimeout the connect timeout in milliseconds
+     * @param writeTimeout the write timeout in milliseconds
+     * @param readTimeout the read timeout in milliseconds
+     * @param sslContext the SSL context for HTTPS connections
+     * @return the configured OkHttpClient
      */
     private static OkHttpClient getHttpClient(
             int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {
@@ -281,13 +292,14 @@ public class HttpClient {
     }
 
     /**
-     * Create an OkHttpClient with improved connection management
+     * Creates an OkHttpClient with connection pooling, retry support, and the specified
+     * timeouts and SSL context.
      *
-     * @param connectTimeout connectTimeout
-     * @param writeTimeout writeTimeout
-     * @param readTimeout readTimeout
-     * @param sslContext sslContext
-     * @return OkHttpClient
+     * @param connectTimeout the connect timeout in milliseconds
+     * @param writeTimeout the write timeout in milliseconds
+     * @param readTimeout the read timeout in milliseconds
+     * @param sslContext the SSL context for HTTPS connections
+     * @return the configured OkHttpClient
      */
     private static OkHttpClient createHttpClient(
             int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {

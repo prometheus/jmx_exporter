@@ -21,7 +21,10 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Ulimit;
 import java.util.function.Consumer;
 
-/** Class to implement ContainerCmdModifier */
+/**
+ * Modifies Docker container creation commands to configure memory limits and ulimit settings
+ * for Testcontainers integration test environments.
+ */
 public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
 
     private static final long MEMORY_BYTES = 1073741824;
@@ -34,12 +37,17 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
     private static final ContainerCmdModifier SINGLETON = new ContainerCmdModifier();
 
     /**
-     * Constructor
+     * Private constructor to enforce singleton pattern.
      */
     private ContainerCmdModifier() {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * Applies memory and ulimit configuration to the container creation command.
+     *
+     * @param createContainerCmd the Docker container creation command to modify
+     */
     @Override
     public void accept(CreateContainerCmd createContainerCmd) {
         HostConfig hostConfig = createContainerCmd.getHostConfig();
@@ -52,9 +60,9 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
     }
 
     /**
-     * Method to get the singleton instance of TestContainerConfigureCmd
+     * Returns the singleton instance of the container command modifier.
      *
-     * @return the singleton instance of TestContainerConfigureCmd
+     * @return the singleton {@link ContainerCmdModifier} instance
      */
     public static ContainerCmdModifier getInstance() {
         return SINGLETON;

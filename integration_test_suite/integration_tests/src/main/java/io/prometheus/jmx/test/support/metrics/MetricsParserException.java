@@ -17,24 +17,24 @@
 package io.prometheus.jmx.test.support.metrics;
 
 /**
- * Class to implement MetricsParserException
+ * Signals that an error occurred while parsing Prometheus-format metrics.
  */
 public class MetricsParserException extends RuntimeException {
 
     /**
-     * Constructor
+     * Creates a metrics parser exception with the specified detail message.
      *
-     * @param message message
+     * @param message the detail message describing the parsing failure
      */
     public MetricsParserException(String message) {
         super(message);
     }
 
     /**
-     * Constructor
+     * Creates a metrics parser exception with the specified detail message and cause.
      *
-     * @param message message
-     * @param throwable throwable
+     * @param message the detail message describing the parsing failure
+     * @param throwable the underlying cause of the parsing failure
      */
     public MetricsParserException(String message, Throwable throwable) {
         super(message, throwable);

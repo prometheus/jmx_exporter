@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.TreeMap;
 
 /**
- * Class to implement a Metric
+ * Represents a parsed Prometheus metric with type, help text, name, labels, and value.
  */
 public class Metric {
 
@@ -32,31 +32,34 @@ public class Metric {
     private final double value;
 
     /**
-     * Metric types
+     * Defines the supported Prometheus metric types.
      */
     public enum Type {
+
         /**
-         * Gauge
+         * A gauge metric that can go up or down.
          */
         GAUGE,
+
         /**
-         * Counter
+         * A counter metric that only increases or resets to zero.
          */
         COUNTER,
+
         /**
-         * Untyped
+         * An untyped metric with no defined semantics.
          */
         UNTYPED
     }
 
     /**
-     * Constructor
+     * Creates a metric with the specified type, help text, name, labels, and value.
      *
-     * @param type type
-     * @param help help
-     * @param name name
-     * @param labels labels
-     * @param value value
+     * @param type the metric type (gauge, counter, or untyped)
+     * @param help the help text describing the metric
+     * @param name the metric name
+     * @param labels the label key-value pairs; if {@code null}, an empty map is used
+     * @param value the metric value
      */
     public Metric(Type type, String help, String name, TreeMap<String, String> labels, double value) {
         this.type = type;
@@ -67,45 +70,45 @@ public class Metric {
     }
 
     /**
-     * Method to get the Metric type
+     * Returns the metric type.
      *
-     * @return the Metric type
+     * @return the metric type
      */
     public Type type() {
         return type;
     }
 
     /**
-     * Method to get the Metric name
+     * Returns the metric name.
      *
-     * @return the Metric name
+     * @return the metric name
      */
     public String name() {
         return name;
     }
 
     /**
-     * Method to get the Metric help
+     * Returns the metric help text.
      *
-     * @return the Metric help
+     * @return the metric help text
      */
     public String help() {
         return help;
     }
 
     /**
-     * Method to get the Metric labels
+     * Returns the metric labels as an immutable sorted map keyed by label name.
      *
-     * @return the Metric labels
+     * @return the metric labels, never {@code null}
      */
     public Map<String, String> labels() {
         return labels;
     }
 
     /**
-     * Method to get the Metric value
+     * Returns the metric value.
      *
-     * @return the Metric value
+     * @return the metric value
      */
     public double value() {
         return value;

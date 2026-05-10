@@ -27,7 +27,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-/** Class to implement MultiExporterTestEnvironment */
+/**
+ * Manages an isolated JMX exporter Docker container that exposes multiple ports
+ * for testing multiple exporter instances simultaneously.
+ */
 public class IsolatorExporterTestEnvironment {
 
     private static final String BASE_URL = "http://localhost";
@@ -42,9 +45,9 @@ public class IsolatorExporterTestEnvironment {
     private GenericContainer<?> javaAgentApplicationContainer;
 
     /**
-     * Constructor
+     * Creates an isolator exporter test environment using the specified Java Docker image.
      *
-     * @param javaDockerImage javaDockerImage
+     * @param javaDockerImage the Docker image name for the Java application container
      */
     public IsolatorExporterTestEnvironment(String javaDockerImage) {
         this.id = UUID.randomUUID().toString();
@@ -53,28 +56,28 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to get the name of the test environment
+     * Returns the display name of the test environment.
      *
-     * @return the name of the test environment
+     * @return the display name of the test environment
      */
     public String getName() {
         return "IsolatorJavaAgent / " + javaDockerImage;
     }
 
     /**
-     * Method to get the ID of the test environment
+     * Returns the unique identifier of the test environment.
      *
-     * @return the ID of the test environment
+     * @return the unique identifier of the test environment
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Method to set the base URL
+     * Sets the base URL for constructing test request URLs.
      *
-     * @param baseUrl baseUrl
-     * @return the ExporterTestEnvironment
+     * @param baseUrl the base URL (e.g., {@code http://localhost})
+     * @return this test environment for method chaining
      */
     public IsolatorExporterTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -82,7 +85,7 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to get the Java Docker image name
+     * Returns the Java Docker image name used for the application container.
      *
      * @return the Java Docker image name
      */
@@ -91,9 +94,10 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to initialize the test environment
+     * Starts the Docker container for the test environment.
      *
-     * @param network network
+     * @param testClass the test class whose classpath resources configure the container
+     * @param network the Docker network for inter-container communication
      */
     public void initialize(Class<?> testClass, Network network) {
         this.testClass = testClass;
@@ -104,21 +108,21 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to get a URL (base URL + path)
+     * Constructs a URL by appending the specified path to the base URL for the given port index.
      *
-     * @param index index
-     * @param path path
-     * @return the URL (base URL + path)
+     * @param index the port index (0, 1, or 2) selecting which exposed exporter port to use
+     * @param path the path to append (with or without a leading slash)
+     * @return the full URL
      */
     public String getUrl(int index, String path) {
         return !path.startsWith("/") ? getBaseUrl(index) + "/" + path : getBaseUrl(index) + path;
     }
 
     /**
-     * Method to get the base URL
+     * Returns the base URL including the dynamically mapped port for the specified port index.
      *
-     * @param index index
-     * @return the base URL
+     * @param index the port index (0, 1, or 2) selecting which exposed exporter port to use
+     * @return the base URL with the mapped port
      */
     public String getBaseUrl(int index) {
         int port = javaAgentApplicationContainer.getMappedPort(BASE_PORT + index);
@@ -126,7 +130,7 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to destroy the test environment.
+     * Stops the Docker container and releases resources.
      */
     public void destroy() {
         if (javaAgentApplicationContainer != null) {
@@ -136,9 +140,10 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Method to create an application container
+     * Creates a Docker container for the Java Agent mode, exposing multiple exporter ports
+     * (8888, 8889, 8890) for isolated metric scraping.
      *
-     * @return the return value
+     * @return the configured GenericContainer
      */
     private GenericContainer<?> createJavaAgentApplicationContainer() {
         return new GenericContainer<>(javaDockerImage)
@@ -158,9 +163,9 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Create the MultiExporterTestEnvironment
+     * Creates a stream of isolator exporter test environments for all configured Java Docker images.
      *
-     * @return a Stream of MultiExporterTestEnvironments
+     * @return a stream of {@link IsolatorExporterTestEnvironment} instances
      */
     public static Stream<IsolatorExporterTestEnvironment> createEnvironments() {
         Collection<IsolatorExporterTestEnvironment> collection = new ArrayList<>();
