@@ -17,22 +17,22 @@
 package io.prometheus.jmx.test.support.http;
 
 /**
- * Class to implement HttpHeader
+ * Defines standard HTTP header name constants used in integration test requests and responses.
  */
 public class HttpHeader {
 
     /**
-     * Accept header
+     * The {@code Accept} header name, used to specify acceptable response content types.
      */
     public static final String ACCEPT = "ACCEPT";
 
     /**
-     * Content-Type header
+     * The {@code Content-Type} header name, used to identify the format of the request or response body.
      */
     public static final String CONTENT_TYPE = "CONTENT-TYPE";
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
      */
     private HttpHeader() {
         // INTENTIONALLY BLANK

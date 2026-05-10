@@ -21,7 +21,8 @@ import static java.lang.String.format;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Class to implement Repeater
+ * Repeats a test action for a configurable number of iterations with optional
+ * before/after hooks, throttling, and error handling between runs.
  */
 @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
 public class Repeater {
@@ -34,9 +35,10 @@ public class Repeater {
     private ThrowableConsumer throwableConsumer;
 
     /**
-     * Constructor
+     * Creates a repeater that will run the test the specified number of times.
      *
-     * @param iterations iterations
+     * @param iterations the number of iterations to run; must be at least 1
+     * @throws IllegalArgumentException if iterations is less than 1
      */
     public Repeater(int iterations) {
         if (iterations < 1) {
@@ -47,10 +49,10 @@ public class Repeater {
     }
 
     /**
-     * Method to set a throttle time between tests
+     * Sets a fixed throttle delay in milliseconds between test iterations.
      *
-     * @param milliseconds milliseconds
-     * @return the Repeater
+     * @param milliseconds the delay in milliseconds; if negative, the throttle is not set
+     * @return this repeater for method chaining
      */
     public Repeater throttle(long milliseconds) {
         if (milliseconds >= 0) {
@@ -61,10 +63,10 @@ public class Repeater {
     }
 
     /**
-     * Method to set a Throwable to throttle time between tests
+     * Sets a custom throttle strategy for controlling delays between iterations.
      *
-     * @param throttle throttle
-     * @return the Repeater
+     * @param throttle the throttle strategy; if {@code null}, the throttle is not changed
+     * @return this repeater for method chaining
      */
     public Repeater throttle(Throttle throttle) {
         if (throttle != null) {
@@ -75,10 +77,10 @@ public class Repeater {
     }
 
     /**
-     * Method to run code before a test
+     * Sets a callback to run before each test iteration.
      *
-     * @param throwableRunnable throwableRunnable
-     * @return the Repeater
+     * @param throwableRunnable the callback to execute before each iteration
+     * @return this repeater for method chaining
      */
     public Repeater before(ThrowableRunnable throwableRunnable) {
         beforeEach = throwableRunnable;
@@ -87,10 +89,10 @@ public class Repeater {
     }
 
     /**
-     * Method to run the test. If code ran before the test fails, the test will be skipped.
+     * Sets the test action to execute on each iteration.
      *
-     * @param throwableRunnable throwableRunnable
-     * @return the Repeater
+     * @param throwableRunnable the test action to run
+     * @return this repeater for method chaining
      */
     public Repeater test(ThrowableRunnable throwableRunnable) {
         test = throwableRunnable;
@@ -99,10 +101,10 @@ public class Repeater {
     }
 
     /**
-     * Method to run code after the test. Always runs.
+     * Sets a callback to run after each test iteration, executed even if the test throws.
      *
-     * @param throwableRunnable throwableRunnable
-     * @return the Repeater
+     * @param throwableRunnable the callback to execute after each iteration
+     * @return this repeater for method chaining
      */
     public Repeater after(ThrowableRunnable throwableRunnable) {
         afterEach = throwableRunnable;
@@ -111,10 +113,10 @@ public class Repeater {
     }
 
     /**
-     * Method to set a consumer
+     * Sets a consumer that receives the iteration number and any thrown exception after each iteration.
      *
-     * @param throwableConsumer throwableConsumer
-     * @return the Repeater
+     * @param throwableConsumer the consumer for iteration results
+     * @return this repeater for method chaining
      */
     public Repeater accept(ThrowableConsumer throwableConsumer) {
         this.throwableConsumer = throwableConsumer;
@@ -123,9 +125,10 @@ public class Repeater {
     }
 
     /**
-     * Method to run the test
+     * Executes the test for the configured number of iterations, running before/after hooks
+     * and applying throttling between iterations.
      *
-     * @throws Throwable Throwable
+     * @throws Throwable if the test or after-hook throws and no consumer is set
      */
     public void run() throws Throwable {
         Throwable throwable = null;
@@ -175,17 +178,19 @@ public class Repeater {
     }
 
     /**
-     * Method to abort a test.
+     * Aborts the current repeater run by throwing a runtime exception.
+     *
+     * @throws RuntimeException always, to signal early termination
      */
     public static void abort() {
         throw new RuntimeException("4dbf35e7-415c-4e66-a61e-f6a7057e382e");
     }
 
     /**
-     * Method to rethrow a Throwable is not null
+     * Rethrows the specified throwable if it is not {@code null}.
      *
-     * @param throwable throwable
-     * @throws Throwable Throwable
+     * @param throwable the throwable to rethrow, or {@code null} to do nothing
+     * @throws Throwable the specified throwable if it is not {@code null}
      */
     public static void rethrow(Throwable throwable) throws Throwable {
         if (throwable != null) {
@@ -194,60 +199,63 @@ public class Repeater {
     }
 
     /**
-     * Interface to define code.
+     * A functional interface for code that may throw a checked exception.
      */
     public interface ThrowableRunnable {
 
         /**
-         * Method to run
+         * Executes the action.
          *
-         * @throws Throwable Throwable
+         * @throws Throwable if the action fails
          */
         void run() throws Throwable;
     }
 
     /**
-     * Interface to consume the result.
+     * A functional interface for consuming iteration results with the ability to throw checked exceptions.
      */
     public interface ThrowableConsumer {
 
         /**
-         * Method to accept
+         * Accepts the iteration number and any exception that occurred during that iteration.
          *
-         * @param counter counter
-         * @param throwable throwable
-         * @throws Throwable Throwable
+         * @param counter the 1-based iteration number
+         * @param throwable the exception thrown during the iteration, or {@code null} if none
+         * @throws Throwable if the consumer fails
          */
         void accept(int counter, Throwable throwable) throws Throwable;
     }
 
     /**
-     * Interface to implement a Throttle.
+     * Controls the delay between repeated test iterations.
      */
     public interface Throttle {
 
         /**
-         * Method to throttle
+         * Blocks the current thread for the configured delay.
          */
         void throttle();
     }
 
     /**
-     * Class to implement a fixed throttle.
+     * Throttles execution with a fixed delay between iterations.
      */
     public static class FixedThrottle implements Throttle {
 
         private final long milliseconds;
 
         /**
-         * Constructor
+         * Creates a fixed throttle with the specified delay.
          *
-         * @param milliseconds milliseconds
+         * @param milliseconds the delay in milliseconds between iterations
          */
         public FixedThrottle(long milliseconds) {
             this.milliseconds = milliseconds;
         }
 
+        /**
+         * Blocks the current thread for the configured fixed delay.
+         */
         @Override
         public void throttle() {
             try {
@@ -259,7 +267,7 @@ public class Repeater {
     }
 
     /**
-     * Class to implement a random throttle.
+     * Throttles execution with a random delay between a minimum and maximum value.
      */
     public static class RandomThrottle implements Throttle {
 
@@ -267,10 +275,11 @@ public class Repeater {
         private final long maxMilliseconds;
 
         /**
-         * Constructor
+         * Creates a random throttle with the specified delay range.
          *
-         * @param minMilliseconds the minimum number of milliseconds to throttle
-         * @param maxMilliseconds the maximum number of milliseconds to throttle
+         * @param minMilliseconds the minimum delay in milliseconds; must be non-negative
+         * @param maxMilliseconds the maximum delay in milliseconds; must be at least minMilliseconds
+         * @throws IllegalArgumentException if minMilliseconds is negative or maxMilliseconds is less than minMilliseconds
          */
         public RandomThrottle(long minMilliseconds, long maxMilliseconds) {
             if (minMilliseconds < 0) {
@@ -285,6 +294,9 @@ public class Repeater {
             this.maxMilliseconds = maxMilliseconds;
         }
 
+        /**
+         * Blocks the current thread for a random duration within the configured range.
+         */
         @Override
         public void throttle() {
             long sleep = (minMilliseconds == maxMilliseconds)
@@ -301,7 +313,8 @@ public class Repeater {
     }
 
     /**
-     * Class to implement an exponential backoff throttle.
+     * Throttles execution with an exponential backoff delay, starting at 1 millisecond
+     * and doubling on each call up to the specified maximum.
      */
     public static class ExponentialBackoffThrottle implements Throttle {
 
@@ -309,15 +322,19 @@ public class Repeater {
         private long currentBackoff;
 
         /**
-         * Constructor
+         * Creates an exponential backoff throttle with the specified maximum delay.
          *
-         * @param maxMilliseconds maxMilliseconds
+         * @param maxMilliseconds the maximum delay in milliseconds that the backoff will not exceed
          */
         public ExponentialBackoffThrottle(long maxMilliseconds) {
             this.maxMilliseconds = maxMilliseconds;
             this.currentBackoff = 1;
         }
 
+        /**
+         * Blocks the current thread for the current backoff delay, then doubles the delay
+         * for the next call up to the configured maximum.
+         */
         @Override
         public void throttle() {
             try {

@@ -17,14 +17,14 @@
 package io.prometheus.jmx.test.support.environment;
 
 /**
- * Class to implement EnvironmentException
+ * Signals that a test environment failed to initialize or reach a ready state.
  */
 public class EnvironmentException extends RuntimeException {
 
     /**
-     * Constructor
+     * Creates an environment exception with the specified detail message.
      *
-     * @param message message
+     * @param message the detail message describing the environment failure
      */
     public EnvironmentException(String message) {
         super(message);

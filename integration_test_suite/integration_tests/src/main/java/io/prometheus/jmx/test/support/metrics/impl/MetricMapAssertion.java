@@ -26,7 +26,10 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.opentest4j.AssertionFailedError;
 
-/** Class to implement MetricMapAssertion */
+/**
+ * Asserts the presence or absence of metrics within a map keyed by metric name
+ * using fluent matchers for type, name, help, labels, and value.
+ */
 public class MetricMapAssertion implements MetricAssertion {
 
     private final Map<String, Collection<Metric>> metrics;
@@ -37,9 +40,10 @@ public class MetricMapAssertion implements MetricAssertion {
     private Double value;
 
     /**
-     * Constructor
+     * Creates a metric map assertion over the specified metrics map.
      *
-     * @param metrics metrics
+     * @param metrics the map of metric names to their corresponding metric collections
+     * @throws IllegalArgumentException if metrics is {@code null}
      */
     public MetricMapAssertion(Map<String, Collection<Metric>> metrics) {
         if (metrics == null) {
@@ -49,10 +53,11 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to set the type to match against
+     * Restricts the match to metrics of the specified type.
      *
-     * @param type type
-     * @return this MetricAssertion
+     * @param type the metric type to match against
+     * @return this assertion for method chaining
+     * @throws IllegalArgumentException if type is {@code null}
      */
     public MetricMapAssertion ofType(Metric.Type type) {
         if (type == null) {
@@ -63,10 +68,10 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to set the name to match against
+     * Restricts the match to metrics with the specified name.
      *
-     * @param name name
-     * @return this MetricAssertion
+     * @param name the metric name to match against
+     * @return this assertion for method chaining
      */
     public MetricMapAssertion withName(String name) {
         this.name = name;
@@ -74,10 +79,10 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to set the help to match against
+     * Restricts the match to metrics with the specified help text.
      *
-     * @param help help
-     * @return this MetricAssertion
+     * @param help the metric help text to match against
+     * @return this assertion for method chaining
      */
     public MetricMapAssertion withHelp(String help) {
         this.help = help;
@@ -85,11 +90,12 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to add a label to match against
+     * Adds a label name-value pair that matching metrics must contain.
      *
-     * @param name name
-     * @param value value
-     * @return this MetricAssertion
+     * @param name the label name
+     * @param value the label value
+     * @return this assertion for method chaining
+     * @throws IllegalArgumentException if either the label name or value is {@code null}
      */
     public MetricMapAssertion withLabel(String name, String value) {
         if (name == null || value == null) {
@@ -103,10 +109,10 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to set the value to match against
+     * Restricts the match to metrics with the specified numeric value.
      *
-     * @param value value
-     * @return this MetricAssertion
+     * @param value the metric value to match against
+     * @return this assertion for method chaining
      */
     public MetricMapAssertion withValue(Double value) {
         this.value = value;
@@ -114,19 +120,22 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to assert the Metric is present
+     * Asserts that exactly one metric matching the configured criteria is present.
      *
-     * @return this MetricAssertion
+     * @return this assertion for method chaining
+     * @throws AssertionFailedError if no matching metric is found or multiple match
      */
     public MetricMapAssertion isPresent() {
         return isPresentWhen(true);
     }
 
     /**
-     * Method to assert the Metric is present
+     * Asserts that exactly one matching metric is present when the condition is {@code true},
+     * and that no matching metric is present when the condition is {@code false}.
      *
-     * @param condition condition
-     * @return this MetricAssertion
+     * @param condition the condition controlling the presence expectation
+     * @return this assertion for method chaining
+     * @throws AssertionFailedError if the presence expectation is violated
      */
     public MetricMapAssertion isPresentWhen(boolean condition) {
         Collection<Metric> metrics = this.metrics.get(name);
@@ -172,29 +181,32 @@ public class MetricMapAssertion implements MetricAssertion {
     }
 
     /**
-     * Method to assert the Metric is not present
+     * Asserts that no metric matching the configured criteria is present.
      *
-     * @return this MetricAssertion
+     * @return this assertion for method chaining
+     * @throws AssertionFailedError if a matching metric is found
      */
     public MetricMapAssertion isNotPresent() {
         return isPresentWhen(false);
     }
 
     /**
-     * Method to assert the Metric is not present
+     * Asserts that no matching metric is present when the condition is {@code true},
+     * and that a matching metric may be present when the condition is {@code false}.
      *
-     * @param condition condition
-     * @return this MetricAssertion
+     * @param condition the condition controlling the absence expectation
+     * @return this assertion for method chaining
+     * @throws AssertionFailedError if the absence expectation is violated
      */
     public MetricMapAssertion isNotPresentWhen(boolean condition) {
         return isPresentWhen(!condition);
     }
 
     /**
-     * Method to create a MetricAssertion
+     * Creates a metric map assertion over the specified metrics map.
      *
-     * @param metrics the collection of metrics
-     * @return a MetricAssertion
+     * @param metrics the map of metric names to their corresponding metric collections
+     * @return a new {@link MetricMapAssertion} instance
      */
     public static MetricMapAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
         return new MetricMapAssertion(metrics);

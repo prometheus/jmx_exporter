@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Class to implement HttpResponse
+ * Represents an immutable HTTP response with status code, headers, and body.
  */
 public class HttpResponse {
 
@@ -33,12 +33,12 @@ public class HttpResponse {
     private final Map<String, List<String>> headers;
 
     /**
-     * Constructor
+     * Creates an HTTP response with the specified status, headers, and body.
      *
-     * @param statusCode statusCode
-     * @param statusMessage statusMessage
-     * @param headers headers
-     * @param body body
+     * @param statusCode the HTTP status code
+     * @param statusMessage the HTTP status message
+     * @param headers the response headers as a map of uppercased header names to their values
+     * @param body the raw bytes of the response body
      */
     public HttpResponse(int statusCode, String statusMessage, Map<String, List<String>> headers, byte[] body) {
         this.statusCode = statusCode;
@@ -48,55 +48,57 @@ public class HttpResponse {
     }
 
     /**
-     * Get the status code
+     * Returns the HTTP status code.
      *
-     * @return the status code
+     * @return the HTTP status code
      */
     public int statusCode() {
         return statusCode;
     }
 
     /**
-     * Get the status message
+     * Returns the HTTP status message.
      *
-     * @return the status message
+     * @return the HTTP status message
      */
     public String statusMessage() {
         return statusMessage;
     }
 
     /**
-     * Get the Map of headers
+     * Returns the response headers as a map of uppercased header names to their values.
      *
-     * @return a Map of headers
+     * @return the response headers
      */
     public Map<String, List<String>> headers() {
         return headers;
     }
 
     /**
-     * Get a List of header values
+     * Returns the values for the specified header name using case-insensitive lookup.
      *
-     * @param name name
-     * @return a List of header values
+     * @param name the header name to look up (case-insensitive)
+     * @return the header values, or {@code null} if the header is not present
      */
     public List<String> header(String name) {
         return headers.get(name.toUpperCase(Locale.US));
     }
 
     /**
-     * Get the body
+     * Returns the response body.
      *
-     * @return the body
+     * @return the response body
      */
     public HttpResponseBody body() {
         return body;
     }
 
     /**
-     * Assert a health response
+     * Asserts that the response is a healthy jmx_exporter response with status 200
+     * and a text/plain content type containing the expected health message.
      *
-     * @param httpResponse httpResponse
+     * @param httpResponse the HTTP response to validate
+     * @throws AssertionError if the response does not meet health criteria
      */
     public static void assertHealthyResponse(HttpResponse httpResponse) {
         assertThat(httpResponse).isNotNull();

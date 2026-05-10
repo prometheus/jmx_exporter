@@ -28,24 +28,27 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Class to implement HttpRequest
+ * Represents an immutable HTTP request with method, URL, headers, and body, built via the Builder pattern.
  */
 public class HttpRequest {
 
     /**
-     * Enum to represent HTTP methods
+     * Defines the supported HTTP methods for integration test requests.
      */
     public enum Method {
+
         /**
-         * GET method
+         * The HTTP {@code GET} method for retrieving resources.
          */
         GET,
+
         /**
-         * POST method
+         * The HTTP {@code POST} method for submitting data.
          */
         POST,
+
         /**
-         * PUT method
+         * The HTTP {@code PUT} method for replacing resources.
          */
         PUT
     }
@@ -56,9 +59,9 @@ public class HttpRequest {
     private final String body;
 
     /**
-     * Constructor
+     * Creates an {@link HttpRequest} from the builder state.
      *
-     * @param builder builder
+     * @param builder the builder containing the request configuration
      */
     private HttpRequest(Builder builder) {
         this.url = builder.url;
@@ -68,52 +71,52 @@ public class HttpRequest {
     }
 
     /**
-     * Get the URL
+     * Returns the request URL.
      *
-     * @return the URL
+     * @return the request URL
      */
     public String url() {
         return url;
     }
 
     /**
-     * Get the Method
+     * Returns the HTTP method.
      *
-     * @return the Method
+     * @return the HTTP method
      */
     public Method method() {
         return method;
     }
 
     /**
-     * Get the Map of headers
+     * Returns the request headers as a map of header names to their values.
      *
-     * @return the Map of headers
+     * @return the request headers, where keys are uppercased header names
      */
     public Map<String, List<String>> headers() {
         return headers;
     }
 
     /**
-     * Get the body
+     * Returns the request body, or {@code null} if no body is set.
      *
-     * @return the body
+     * @return the request body, or {@code null} if unset
      */
     public String body() {
         return body;
     }
 
     /**
-     * Get a Builder
+     * Creates a new {@link Builder} for constructing an {@link HttpRequest}.
      *
-     * @return a Builder
+     * @return a new {@link Builder} instance
      */
     public static Builder builder() {
         return new Builder();
     }
 
     /**
-     * Class to implement Builder.
+     * Builds {@link HttpRequest} instances with a fluent API.
      */
     public static class Builder {
 
@@ -123,17 +126,17 @@ public class HttpRequest {
         private String body;
 
         /**
-         * Constructor
+         * Private constructor to enforce use of {@link HttpRequest#builder()}.
          */
         private Builder() {
             // INTENTIONALLY BLANK
         }
 
         /**
-         * Set the URL
+         * Sets the request URL.
          *
-         * @param url url
-         * @return the Builder
+         * @param url the target URL for the request
+         * @return this builder for method chaining
          */
         public Builder url(String url) {
             this.url = url;
@@ -141,10 +144,10 @@ public class HttpRequest {
         }
 
         /**
-         * Set the Method
+         * Sets the HTTP method, defaulting to {@code GET} if not called.
          *
-         * @param method method
-         * @return the Builder
+         * @param method the HTTP method to use
+         * @return this builder for method chaining
          */
         public Builder method(Method method) {
             this.method = method;
@@ -152,11 +155,11 @@ public class HttpRequest {
         }
 
         /**
-         * Set a header
+         * Adds a single header name-value pair. Header names are stored in uppercase.
          *
-         * @param name name
-         * @param value value
-         * @return the Builder
+         * @param name the header name
+         * @param value the header value
+         * @return this builder for method chaining
          */
         public Builder header(String name, String value) {
             headers.computeIfAbsent(name.toUpperCase(Locale.US), k -> new ArrayList<>())
@@ -165,11 +168,11 @@ public class HttpRequest {
         }
 
         /**
-         * Set a Collection of headers
+         * Adds multiple values for a single header name.
          *
-         * @param name name
-         * @param values values
-         * @return the Builder
+         * @param name the header name
+         * @param values the collection of header values to add
+         * @return this builder for method chaining
          */
         public Builder headers(String name, Collection<String> values) {
             for (String value : values) {
@@ -179,10 +182,10 @@ public class HttpRequest {
         }
 
         /**
-         * Set a Map of headers
+         * Adds all headers from a map of header names to their value collections.
          *
-         * @param headers headers
-         * @return the Builder
+         * @param headers the map of header names to their values
+         * @return this builder for method chaining
          */
         public Builder headers(Map<String, Collection<String>> headers) {
             for (Map.Entry<String, ? extends Collection<String>> entry : headers.entrySet()) {
@@ -194,11 +197,11 @@ public class HttpRequest {
         }
 
         /**
-         * Set the BASIC authentication header
+         * Sets the HTTP Authorization header with Basic authentication credentials.
          *
-         * @param principal principal
-         * @param credential credential
-         * @return the Builder
+         * @param principal the username for Basic authentication
+         * @param credential the password for Basic authentication
+         * @return this builder for method chaining
          */
         public Builder basicAuthentication(String principal, String credential) {
             return header(
@@ -210,10 +213,10 @@ public class HttpRequest {
         }
 
         /**
-         * Set the body
+         * Sets the request body.
          *
-         * @param body body
-         * @return the Builder
+         * @param body the request body content
+         * @return this builder for method chaining
          */
         public Builder body(String body) {
             this.body = body;
@@ -221,9 +224,9 @@ public class HttpRequest {
         }
 
         /**
-         * Build the HttpRequest
+         * Builds an immutable {@link HttpRequest} from the configured state.
          *
-         * @return an HttpRequest
+         * @return a new {@link HttpRequest} instance
          */
         public HttpRequest build() {
             return new HttpRequest(this);

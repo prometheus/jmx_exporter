@@ -17,7 +17,8 @@
 package io.prometheus.jmx.test.support.throttle;
 
 /**
- * Class to implement ExponentialBackupThrottle
+ * Throttles execution with an exponential backoff delay, doubling the wait time on each call
+ * up to a configured maximum.
  */
 @SuppressWarnings("PMD.EmptyCatchBlock")
 public class ExponentialBackoffThrottle implements Throttle {
@@ -26,10 +27,12 @@ public class ExponentialBackoffThrottle implements Throttle {
     private long throttleMilliseconds;
 
     /**
-     * Constructor
+     * Creates an exponential backoff throttle starting at the specified minimum delay
+     * and capping at the specified maximum delay.
      *
-     * @param minimumMilliseconds minimumMilliseconds
-     * @param maximumMilliseconds maximumMilliseconds
+     * @param minimumMilliseconds the initial delay in milliseconds for the first throttle call
+     * @param maximumMilliseconds the maximum delay in milliseconds that the backoff will not exceed
+     * @throws IllegalArgumentException if either value is less than 1, or if minimum exceeds maximum
      */
     public ExponentialBackoffThrottle(long minimumMilliseconds, long maximumMilliseconds) {
         if (minimumMilliseconds < 1) {
@@ -52,6 +55,10 @@ public class ExponentialBackoffThrottle implements Throttle {
         this.maximumMilliseconds = maximumMilliseconds;
     }
 
+    /**
+     * Blocks the current thread for the current backoff delay, then doubles the delay
+     * for the next call up to the configured maximum.
+     */
     @Override
     public void throttle() {
         try {

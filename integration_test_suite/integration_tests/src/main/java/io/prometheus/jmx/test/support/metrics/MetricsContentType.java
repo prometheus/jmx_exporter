@@ -19,29 +19,29 @@ package io.prometheus.jmx.test.support.metrics;
 import java.util.Objects;
 
 /**
- * Class to implement MetricsContentType
+ * Defines the supported Prometheus exposition format content types for metrics parsing.
  */
 public class MetricsContentType {
 
     /**
-     * Default text format
+     * The default content type, equivalent to Prometheus text format.
      */
     public static final MetricsContentType DEFAULT = new MetricsContentType("text/plain; version=0.0.4; charset=utf-8");
 
     /**
-     * Prometheus text format
+     * The Prometheus text exposition format content type.
      */
     public static final MetricsContentType PROMETHEUS_TEXT_METRICS =
             new MetricsContentType("text/plain; version=0.0.4; charset=utf-8");
 
     /**
-     * Prometheus Protobuf format
+     * The Prometheus protobuf exposition format content type.
      */
     public static final MetricsContentType PROMETHEUS_PROTOBUF_METRICS = new MetricsContentType(
             "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily;" + " encoding=delimited");
 
     /**
-     * OpenMetrics text format
+     * The OpenMetrics text exposition format content type.
      */
     public static final MetricsContentType OPEN_METRICS_TEXT_METRICS =
             new MetricsContentType("application/openmetrics-text; version=1.0.0; charset=utf-8");
@@ -49,7 +49,9 @@ public class MetricsContentType {
     private final String string;
 
     /**
-     * Constructor
+     * Private constructor to prevent external instantiation.
+     *
+     * @param string the content type string value
      */
     private MetricsContentType(String string) {
         this.string = string;

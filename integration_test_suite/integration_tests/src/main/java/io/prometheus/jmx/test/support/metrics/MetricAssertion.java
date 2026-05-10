@@ -28,106 +28,114 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Class to implement MetricAssertion
+ * Defines the fluent assertion API for verifying metric presence, type, name, help, labels, and value.
  */
 public interface MetricAssertion {
 
     /**
-     * Method to set the type to match against
+     * Restricts the match to metrics of the specified type.
      *
-     * @param type type
-     * @return this MetricAssertion
+     * @param type the metric type to match against
+     * @return this assertion for method chaining
      */
     MetricAssertion ofType(Metric.Type type);
 
     /**
-     * Method to set the name to match against
+     * Restricts the match to metrics with the specified name.
      *
-     * @param name name
-     * @return this MetricAssertion
+     * @param name the metric name to match against
+     * @return this assertion for method chaining
      */
     MetricAssertion withName(String name);
 
     /**
-     * Method to set the help to match against
+     * Restricts the match to metrics with the specified help text.
      *
-     * @param help help
-     * @return this MetricAssertion
+     * @param help the metric help text to match against
+     * @return this assertion for method chaining
      */
     MetricAssertion withHelp(String help);
 
     /**
-     * Method to add a label to match against
+     * Adds a label name-value pair that matching metrics must contain.
      *
-     * @param name name
-     * @param value value
-     * @return this MetricAssertion
+     * @param name the label name
+     * @param value the label value
+     * @return this assertion for method chaining
      */
     MetricAssertion withLabel(String name, String value);
 
     /**
-     * Method to set the value to match against
+     * Restricts the match to metrics with the specified numeric value.
      *
-     * @param value value
-     * @return this MetricAssertion
+     * @param value the metric value to match against
+     * @return this assertion for method chaining
      */
     MetricAssertion withValue(Double value);
 
     /**
-     * Method to assert the Metric is present
+     * Asserts that exactly one metric matching the configured criteria is present.
      *
-     * @return this MetricAssertion
+     * @return this assertion for method chaining
+     * @throws org.opentest4j.AssertionFailedError if no matching metric is found or multiple match
      */
     MetricAssertion isPresent();
 
     /**
-     * Method to assert the Metric is present
+     * Asserts that exactly one matching metric is present when the condition is {@code true},
+     * and that no matching metric is present when the condition is {@code false}.
      *
-     * @param condition condition
-     * @return this MetricAssertion
+     * @param condition the condition controlling the presence expectation
+     * @return this assertion for method chaining
+     * @throws org.opentest4j.AssertionFailedError if the presence expectation is violated
      */
     MetricAssertion isPresentWhen(boolean condition);
 
     /**
-     * Method to assert the Metric is not present
+     * Asserts that no metric matching the configured criteria is present.
      *
-     * @return this MetricAssertion
+     * @return this assertion for method chaining
+     * @throws org.opentest4j.AssertionFailedError if a matching metric is found
      */
     MetricAssertion isNotPresent();
 
     /**
-     * Method to assert the Metric is not present
+     * Asserts that no matching metric is present when the condition is {@code true},
+     * and that a matching metric may be present when the condition is {@code false}.
      *
-     * @param condition condition
-     * @return this MetricAssertion
+     * @param condition the condition controlling the absence expectation
+     * @return this assertion for method chaining
+     * @throws org.opentest4j.AssertionFailedError if the absence expectation is violated
      */
     MetricAssertion isNotPresentWhen(boolean condition);
 
     /**
-     * Method to create a MetricAssertion
+     * Creates a metric assertion over a flat collection of metrics.
      *
-     * @param metrics the collection of metrics
-     * @return a MetricAssertion
+     * @param metrics the collection of metrics to assert against
+     * @return a {@link MetricAssertion} for fluent matching
      */
     static MetricAssertion assertMetric(Collection<Metric> metrics) {
         return new MetricCollectionAssertion(metrics);
     }
 
     /**
-     * Method to create a MetricAssertion
+     * Creates a metric assertion over a map of metric names to their metric collections.
      *
-     * @param metrics the collection of metrics
-     * @return a MetricAssertion
+     * @param metrics the map of metric names to their corresponding metric collections
+     * @return a {@link MetricAssertion} for fluent matching
      */
     static MetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
         return new MetricMapAssertion(metrics);
     }
 
     /**
-     * Assert common metrics response
+     * Asserts that the HTTP response contains metrics with the expected content type,
+     * status code 200, and a non-empty body.
      *
-     * @param httpResponse httpResponse
-     * @param metricsContentType metricsContentType
+     * @param httpResponse the HTTP response to validate
+     * @param metricsContentType the expected metrics content type
+     * @throws AssertionError if the response status is not 200 or the content type does not match
      */
     static void assertMetricsContentType(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertThat(httpResponse).isNotNull();

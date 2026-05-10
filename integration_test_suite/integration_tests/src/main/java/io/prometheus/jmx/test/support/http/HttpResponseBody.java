@@ -20,44 +20,44 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Class to implement HttpResponseBody
+ * Represents an HTTP response body that can be accessed as a byte array or decoded string.
  */
 public class HttpResponseBody {
 
     private final byte[] bytes;
 
     /**
-     * Constructor
+     * Creates an HTTP response body from the raw byte content.
      *
-     * @param bytes bytes
+     * @param bytes the raw bytes of the response body
      */
     public HttpResponseBody(byte[] bytes) {
         this.bytes = bytes;
     }
 
     /**
-     * Get the body byte array
+     * Returns the raw bytes of the response body.
      *
-     * @return the body byte array
+     * @return the response body as a byte array
      */
     public byte[] bytes() {
         return bytes;
     }
 
     /**
-     * Get the body as a String
+     * Decodes the response body as a UTF-8 string.
      *
-     * @return the body as a String
+     * @return the response body decoded as a UTF-8 string
      */
     public String string() {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     /**
-     * Get the body as a String using a specific Charset
+     * Decodes the response body as a string using the specified charset.
      *
-     * @param charset charset
-     * @return the body as a String using a specific Charset
+     * @param charset the charset to use for decoding the response body bytes
+     * @return the response body decoded as a string using the specified charset
      */
     public String string(Charset charset) {
         return new String(bytes, charset);

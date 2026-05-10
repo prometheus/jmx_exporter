@@ -30,7 +30,17 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Class to implement PrometheusDockerImages
+ * Provides Prometheus Docker image names for integration tests, loaded from classpath resources
+ * with environment-variable and system-property overrides.
+ *
+ * <p>Image names are resolved in the following order:
+ * <ol>
+ *   <li>Environment variable {@code PROMETHEUS_DOCKER_IMAGES}</li>
+ *   <li>System property {@code prometheus.docker.images}</li>
+ *   <li>Smoke test image list (default)</li>
+ * </ol>
+ *
+ * <p>Setting the value to {@code ALL} selects the full image list.
  */
 public final class PrometheusDockerImages {
 
@@ -49,16 +59,20 @@ public final class PrometheusDockerImages {
             Collections.unmodifiableList(load(ALL_DOCKER_IMAGES_RESOURCE));
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation.
      */
     private PrometheusDockerImages() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Method to get a collection of Docker image names filter by configuration
+     * Returns the configured Prometheus Docker image names for integration tests.
      *
-     * @return the collection of Docker image names
+     * <p>Checks the environment variable {@code PROMETHEUS_DOCKER_IMAGES} first, then the system
+     * property {@code prometheus.docker.images}. If neither is set, returns the smoke test image list.
+     * If the value is {@code ALL}, returns the complete image list.
+     *
+     * @return an unmodifiable collection of Docker image names
      */
     public static Collection<String> names() {
         String configurationValue = System.getenv(
@@ -80,19 +94,20 @@ public final class PrometheusDockerImages {
     }
 
     /**
-     * Method to get a collection of all Docker image names
+     * Returns all available Prometheus Docker image names from the full image list.
      *
-     * @return a collection of all Docker image names
+     * @return an unmodifiable collection of all Docker image names
      */
     public static Collection<String> allNames() {
         return ALL_DOCKER_IMAGE_NAMES;
     }
 
     /**
-     * Method to load the list of Docker image names from a resource
+     * Loads Docker image names from a classpath resource, skipping blank and comment lines.
      *
-     * @param resource resource
-     * @return the List of lines
+     * @param resource the classpath resource path to load
+     * @return the list of non-blank, non-comment image names
+     * @throws RuntimeException if the resource cannot be found or read
      */
     private static List<String> load(String resource) {
         List<String> lines = new ArrayList<>();
@@ -142,10 +157,10 @@ public final class PrometheusDockerImages {
     }
 
     /**
-     * Method to split a String on whitespace and return a List of Strings
+     * Splits a whitespace-separated string into a list of trimmed, non-empty tokens.
      *
-     * @param string string
-     * @return a List of Strings
+     * @param string the whitespace-separated string to split
+     * @return the list of trimmed tokens
      */
     private static List<String> toList(String string) {
         List<String> list = new ArrayList<>();

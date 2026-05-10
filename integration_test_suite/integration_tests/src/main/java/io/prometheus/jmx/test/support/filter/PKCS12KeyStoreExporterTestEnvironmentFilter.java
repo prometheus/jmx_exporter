@@ -22,14 +22,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Class to implement PKCS12KeyStoreExporterContextFilter
+ * Filters JMX exporter test environments to exclude Docker images that do not support
+ * PKCS12 keystore configurations.
  */
 public class PKCS12KeyStoreExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
     private final Set<String> filteredDockerImages;
 
     /**
-     * Constructor
+     * Creates a filter that excludes Java 8 and IBM Java images incompatible with PKCS12 keystores.
      */
     public PKCS12KeyStoreExporterTestEnvironmentFilter() {
         filteredDockerImages = new HashSet<>();
@@ -43,10 +44,10 @@ public class PKCS12KeyStoreExporterTestEnvironmentFilter implements Predicate<Jm
     }
 
     /**
-     * Evaluates this predicate on the given argument.
+     * Returns {@code true} if the test environment's Docker image supports PKCS12 keystores.
      *
-     * @param jmxExporterTestEnvironment jmxExporterTestEnvironment
-     * @return {@code true} if the input argument matches the predicate; otherwise, {@code false}
+     * @param jmxExporterTestEnvironment the test environment to evaluate
+     * @return {@code true} if the environment is compatible, {@code false} if it should be filtered out
      */
     @Override
     public boolean test(JmxExporterTestEnvironment jmxExporterTestEnvironment) {

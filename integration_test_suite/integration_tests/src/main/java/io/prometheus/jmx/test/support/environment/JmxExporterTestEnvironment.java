@@ -27,7 +27,12 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-/** Class to implement ExporterTestEnvironment */
+/**
+ * Manages JMX exporter Docker containers in Java Agent or Standalone mode for integration testing.
+ *
+ * <p>In Java Agent mode, a single container runs the application with the JMX exporter agent attached.
+ * In Standalone mode, separate application and exporter containers are started.
+ */
 public class JmxExporterTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
@@ -44,10 +49,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     private GenericContainer<?> standaloneExporterContainer;
 
     /**
-     * Constructor
+     * Creates a JMX exporter test environment for the specified Docker image and exporter mode.
      *
-     * @param javaDockerImage javaDockerImage
-     * @param jmxExporterMode jmxExporterMode
+     * @param javaDockerImage the Docker image name for the Java application container
+     * @param jmxExporterMode the operational mode of the JMX exporter
      */
     public JmxExporterTestEnvironment(String javaDockerImage, JmxExporterMode jmxExporterMode) {
         this.id = UUID.randomUUID().toString();
@@ -57,28 +62,28 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get the name of the test environment
+     * Returns the display name of the test environment, combining mode and Docker image.
      *
-     * @return the name of the test environment
+     * @return the display name of the test environment
      */
     public String getName() {
         return jmxExporterMode + "(" + javaDockerImage + ")";
     }
 
     /**
-     * Method to get the ID of the ExporterTestEnvironment
+     * Returns the unique identifier of the test environment.
      *
-     * @return the ID of the ExporterTestEnvironment
+     * @return the unique identifier of the test environment
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Method to set the base URL
+     * Sets the base URL for constructing test request URLs.
      *
-     * @param baseUrl baseUrl
-     * @return the ExporterTestEnvironment
+     * @param baseUrl the base URL (e.g., {@code http://localhost})
+     * @return this test environment for method chaining
      */
     public JmxExporterTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -86,7 +91,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get the Java Docker image name
+     * Returns the Java Docker image name used for the application container.
      *
      * @return the Java Docker image name
      */
@@ -95,19 +100,19 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get the JMX Exporter mode
+     * Returns the JMX exporter operational mode.
      *
-     * @return the JMX Exporter mode
+     * @return the JMX exporter operational mode
      */
     public JmxExporterMode getJmxExporterMode() {
         return jmxExporterMode;
     }
 
     /**
-     * Method to initialize the test environment
+     * Starts the Docker containers for the test environment.
      *
-     * @param testClass testClass
-     * @param network network
+     * @param testClass the test class whose classpath resources configure the containers
+     * @param network the Docker network for inter-container communication
      */
     public void initialize(Class<?> testClass, Network network) {
         this.testClass = testClass;
@@ -133,19 +138,19 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to get a URL (base URL + path)
+     * Constructs a URL by appending the specified path to the base URL.
      *
-     * @param path path
-     * @return the URL (base URL + path)
+     * @param path the path to append (with or without a leading slash)
+     * @return the full URL
      */
     public String getUrl(String path) {
         return !path.startsWith("/") ? getBaseUrl() + "/" + path : getBaseUrl() + path;
     }
 
     /**
-     * Method to get the base URL
+     * Returns the base URL including the dynamically mapped port for the exporter endpoint.
      *
-     * @return the base URL
+     * @return the base URL with the mapped port
      */
     public String getBaseUrl() {
         int port = 0;
@@ -165,7 +170,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to destroy the test environment.
+     * Stops all running Docker containers and releases resources.
      */
     public void close() {
         if (javaAgentApplicationContainer != null) {
@@ -185,9 +190,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to create an application container
+     * Creates a Docker container for the Java Agent mode, running the application
+     * with the JMX exporter agent attached on port 8888.
      *
-     * @return the return value
+     * @return the configured GenericContainer
      */
     private GenericContainer<?> createJavaAgentApplicationContainer() {
         return new GenericContainer<>(javaDockerImage)
@@ -207,9 +213,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to create an application container
+     * Creates a Docker container for the example application in Standalone mode,
+     * exposing JMX on port 9999.
      *
-     * @return the return value
+     * @return the configured GenericContainer
      */
     private GenericContainer<?> createStandaloneApplicationContainer() {
         return new GenericContainer<>(javaDockerImage)
@@ -229,9 +236,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Method to create an exporter container
+     * Creates a Docker container for the standalone JMX exporter,
+     * scraping the application JMX endpoint and exposing metrics on port 8888.
      *
-     * @return the return value
+     * @return the configured GenericContainer
      */
     private GenericContainer<?> createStandaloneExporterContainer() {
         return new GenericContainer<>(javaDockerImage)
@@ -250,9 +258,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Create the ExporterTestEnvironments
+     * Creates a stream of JMX exporter test environments for all combinations
+     * of configured Java Docker images and exporter modes.
      *
-     * @return a Stream of ExporterTestEnvironments
+     * @return a stream of {@link JmxExporterTestEnvironment} instances
      */
     public static Stream<JmxExporterTestEnvironment> createEnvironments() {
         Collection<JmxExporterTestEnvironment> collection = new ArrayList<>();

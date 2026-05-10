@@ -17,12 +17,12 @@
 package io.prometheus.jmx.test.support.throttle;
 
 /**
- * Interface to implement Throttle
+ * Controls the delay between repeated test iterations to avoid overloading the system under test.
  */
 public interface Throttle {
 
     /**
-     * Method to throttle the current thread
+     * Blocks the current thread for the configured delay.
      */
     void throttle();
 }
