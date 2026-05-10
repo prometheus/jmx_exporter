@@ -198,6 +198,11 @@ public class Repeater {
      */
     public interface ThrowableRunnable {
 
+        /**
+         * Method to run
+         *
+         * @throws Throwable Throwable
+         */
         void run() throws Throwable;
     }
 
@@ -206,6 +211,13 @@ public class Repeater {
      */
     public interface ThrowableConsumer {
 
+        /**
+         * Method to accept
+         *
+         * @param counter counter
+         * @param throwable throwable
+         * @throws Throwable Throwable
+         */
         void accept(int counter, Throwable throwable) throws Throwable;
     }
 
@@ -214,6 +226,9 @@ public class Repeater {
      */
     public interface Throttle {
 
+        /**
+         * Method to throttle
+         */
         void throttle();
     }
 

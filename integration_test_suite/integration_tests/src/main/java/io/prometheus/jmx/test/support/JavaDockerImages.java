@@ -38,11 +38,17 @@ public final class JavaDockerImages {
 
     private static final String DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
+    /**
+     * Smoke test Docker images resource
+     */
     public static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE = "/smoke-test-java-docker-images.txt";
 
     private static final List<String> SMOKE_TEST_DOCKER_IMAGES =
             Collections.unmodifiableList(load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE));
 
+    /**
+     * All Docker images resource
+     */
     public static final String ALL_DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
 
     private static final List<String> ALL_DOCKER_IMAGE_NAMES =

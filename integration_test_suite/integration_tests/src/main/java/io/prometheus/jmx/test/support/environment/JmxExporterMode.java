@@ -35,6 +35,11 @@ public enum JmxExporterMode {
         this.buildInfoName = buildInfoName;
     }
 
+    /**
+     * Method to get the build info name
+     *
+     * @return the build info name
+     */
     public String getBuildInfoName() {
         return buildInfoName;
     }

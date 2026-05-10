@@ -48,6 +48,13 @@ import okhttp3.ResponseBody;
 public class HttpClient {
 
     /**
+     * Constructor
+     */
+    private HttpClient() {
+        // INTENTIONALLY BLANK
+    }
+
+    /**
      * Default connect timeout in milliseconds
      */
     public static final int CONNECT_TIMEOUT = 60000;
@@ -124,6 +131,7 @@ public class HttpClient {
      * @param url url
      * @param header header
      * @param value value
+     * @param sslContext sslContext
      * @return an HttpResponse
      * @throws IOException IOException
      */

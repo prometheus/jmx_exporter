@@ -42,6 +42,11 @@ public class CustomValue implements CustomValueMBean {
         return "value";
     }
 
+    /**
+     * Method to register the MBean
+     *
+     * @throws Exception If an error occurs during registration
+     */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
         mBeanServer.registerMBean(new CustomValue(), new ObjectName("io.prometheus.jmx:type=customValue"));
