@@ -23,19 +23,26 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * Class to implement ExitDb
+ * Implements an MXBean that exposes running query information simulating an eXist-db instance.
+ *
+ * <p>Registers with the object name {@code org.exist.management.exist:type=ProcessReport} to match
+ * the naming convention used by eXist-db, enabling integration testing of complex composite and
+ * tabular JMX attribute types.
  */
 public class ExistDb implements ExistDbMXBean {
 
     private final Map<QueryKey, RunningQuery> queries;
 
     /**
-     * Constructor
+     * Constructs a new instance, populating the map of simulated running queries.
      */
     public ExistDb() {
         queries = build();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<QueryKey, RunningQuery> getRunningQueries() {
         return queries;
@@ -55,9 +62,10 @@ public class ExistDb implements ExistDbMXBean {
     }
 
     /**
-     * Method to register the MBean
+     * Registers a new {@link ExistDb} MXBean with the platform MBean server under the object name
+     * {@code org.exist.management.exist:type=ProcessReport}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

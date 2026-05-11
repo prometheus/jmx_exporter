@@ -21,31 +21,40 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * Class to implement CustomValue
+ * Implements an MBean that exposes a fixed integer value and a fixed text string.
+ *
+ * <p>Used in integration testing to verify scraping of custom MBean attribute types.
  */
 public class CustomValue implements CustomValueMBean {
 
     /**
-     * Constructor
+     * Constructs a new instance.
      */
     public CustomValue() {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer getValue() {
         return 345;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getText() {
         return "value";
     }
 
     /**
-     * Method to register the MBean
+     * Registers a new {@link CustomValue} MBean with the platform MBean server under the object name
+     * {@code io.prometheus.jmx:type=customValue}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

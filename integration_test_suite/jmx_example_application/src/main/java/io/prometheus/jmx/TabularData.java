@@ -63,9 +63,9 @@ public class TabularData implements DynamicMBean {
     private final Map<String, TabularDataSupport> data;
 
     /**
-     * Constructor
+     * Constructs a new instance, initializing the tabular disk usage data for two simulated servers.
      *
-     * @throws OpenDataException OpenDataException
+     * @throws OpenDataException if the composite or tabular type definitions are invalid
      */
     public TabularData() throws OpenDataException {
         String[] columnNames = {"source", "target", "size", "used", "avail", "pcent"};
@@ -150,11 +150,19 @@ public class TabularData implements DynamicMBean {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MBeanInfo getMBeanInfo() {
         return mBeanInfo;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws AttributeNotFoundException if the requested attribute is not exposed by this MBean
+     */
     @Override
     public Object getAttribute(String attribute) throws AttributeNotFoundException {
         if (data.containsKey(attribute)) {
@@ -165,6 +173,9 @@ public class TabularData implements DynamicMBean {
                 + getClass().getName());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public AttributeList getAttributes(String[] attributes) {
         AttributeList values = new AttributeList(attributes.length);
@@ -180,25 +191,41 @@ public class TabularData implements DynamicMBean {
         return values;
     }
 
+    /**
+     * Not supported; always throws {@link UnsupportedOperationException}.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void setAttribute(Attribute attribute) {
         throw new UnsupportedOperationException("not implemented");
     }
 
+    /**
+     * Not supported; always throws {@link UnsupportedOperationException}.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public AttributeList setAttributes(AttributeList attributes) {
         throw new UnsupportedOperationException("not implemented");
     }
 
+    /**
+     * Not supported; always throws {@link UnsupportedOperationException}.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public Object invoke(String actionName, Object[] params, String[] signature) {
         throw new UnsupportedOperationException("not implemented");
     }
 
     /**
-     * Method to register the MBean
+     * Registers a new {@link TabularData} MBean with the platform MBean server under the object name
+     * {@code io.prometheus.jmx:type=tabularData}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

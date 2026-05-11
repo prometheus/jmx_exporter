@@ -22,28 +22,35 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * Class to implement AutoIncrementing
+ * Implements an MBean exposing an auto-incrementing integer counter backed by an {@link AtomicInteger}.
+ *
+ * <p>Each call to {@link #getValue()} returns the current counter value and atomically increments it,
+ * producing a monotonically increasing sequence for integration testing.
  */
 public class AutoIncrementing implements AutoIncrementingMBean {
 
     private final AtomicInteger atomicInteger;
 
     /**
-     * Constructor
+     * Constructs a new instance with the counter initialized to zero.
      */
     public AutoIncrementing() {
         atomicInteger = new AtomicInteger(0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getValue() {
         return atomicInteger.getAndIncrement();
     }
 
     /**
-     * Method to register the MBean
+     * Registers this MBean with the platform MBean server under the object name
+     * {@code io.prometheus.jmx:type=autoIncrementing}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

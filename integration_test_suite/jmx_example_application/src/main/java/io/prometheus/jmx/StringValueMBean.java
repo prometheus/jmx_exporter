@@ -17,14 +17,14 @@
 package io.prometheus.jmx;
 
 /**
- * Class to implement StringValueMBean
+ * MBean interface exposing a text string value.
  */
 public interface StringValueMBean {
 
     /**
-     * Method to get the text
+     * Returns the text string value.
      *
-     * @return text
+     * @return the text string exposed by this MBean
      */
     String getText();
 }

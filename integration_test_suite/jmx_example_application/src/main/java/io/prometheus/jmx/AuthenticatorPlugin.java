@@ -28,23 +28,55 @@ import java.util.Objects;
 import javax.security.auth.Subject;
 
 /**
- * Example custom authenticator
+ * HTTP Basic authenticator for the JMX exporter, validating credentials against a fixed username
+ * and password.
+ *
+ * <p>On successful authentication, the authenticated {@link Subject} is stored as a request
+ * attribute under the key {@code io.prometheus.jmx.CustomAuthenticatorSubjectAttribute} for
+ * subsequent handler access via {@link Subject#doAs}.
+ *
+ * <p>This class is designed as a pluggable authenticator for integration testing of the
+ * JMX exporter HTTP server authentication mechanism.
  */
 public class AuthenticatorPlugin extends Authenticator {
 
+    /**
+     * HTTP {@code Authorization} header name.
+     */
     private static final String AUTHORIZATION = "Authorization";
+
+    /**
+     * HTTP Basic authentication scheme name.
+     */
     private static final String BASIC = "Basic";
 
+    /**
+     * Accepted username for authentication.
+     */
     private static final String USERNAME = "Prometheus";
+
+    /**
+     * Accepted password for authentication.
+     */
     private static final String PASSWORD = "secret";
 
     /**
-     * Constructor
+     * Constructs a new instance.
      */
     public AuthenticatorPlugin() {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * Authenticates the incoming HTTP request using HTTP Basic authentication.
+     *
+     * <p>Returns {@link Success} when credentials match the configured username and password,
+     * {@link Retry} when the {@code Authorization} header is missing, or {@link Failure} when
+     * credentials are invalid or the scheme is not {@code Basic}.
+     *
+     * @param httpExchange the HTTP exchange containing the request headers
+     * @return the authentication result indicating success, retry, or failure
+     */
     @Override
     public Result authenticate(HttpExchange httpExchange) {
         // nothing too custom, so the test works, just to demonstrate that it is plug-able
@@ -78,26 +110,32 @@ public class AuthenticatorPlugin extends Authenticator {
     }
 
     /**
-     * Class to implement Principal
+     * Simple {@link Principal} implementation representing an authenticated user by name.
      *
-     * <p>Required for ibmjava:8 since it doesn't provide com.sun.security.auth.UserPrincipal
+     * <p>Required for IBM Java 8, which does not provide {@code com.sun.security.auth.UserPrincipal}.
      */
     public static class UserPrincipal implements Principal, Serializable {
 
         /**
-         * The name
+         * The authenticated user name.
          */
         private final String name;
 
         /**
-         * Constructor
+         * Constructs a new user principal with the given name.
          *
-         * @param name name
+         * @param name the user name; must not be {@code null}
+         * @throws NullPointerException if {@code name} is {@code null}
          */
         public UserPrincipal(String name) {
             this.name = Objects.requireNonNull(name, "Name cannot be null");
         }
 
+        /**
+         * Returns the user name.
+         *
+         * @return the authenticated user name
+         */
         @Override
         public String getName() {
             return name;

@@ -21,26 +21,32 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * Class to implement CustomValue
+ * Implements an MBean that exposes a fixed text string value.
+ *
+ * <p>Used in integration testing to verify scraping of string-typed MBean attributes.
  */
 public class StringValue implements StringValueMBean {
 
     /**
-     * Constructor
+     * Constructs a new instance.
      */
     public StringValue() {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getText() {
         return "value";
     }
 
     /**
-     * Method to register the MBean
+     * Registers a new {@link StringValue} MBean with the platform MBean server under the object name
+     * {@code io.prometheus.jmx:type=stringValue}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
