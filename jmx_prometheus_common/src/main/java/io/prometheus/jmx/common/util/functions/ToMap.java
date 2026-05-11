@@ -57,6 +57,13 @@ public class ToMap implements Function<Object, Map<String, String>> {
         this.supplier = supplier;
     }
 
+    /**
+     * Casts the given object to a map and converts all keys and values to trimmed strings.
+     *
+     * @param o the object to convert, expected to be a {@link Map}
+     * @return a new {@link LinkedHashMap} with all keys and values converted to trimmed strings
+     * @throws RuntimeException if conversion fails, as supplied by the configured exception supplier
+     */
     @Override
     public Map<String, String> apply(Object o) {
         try {

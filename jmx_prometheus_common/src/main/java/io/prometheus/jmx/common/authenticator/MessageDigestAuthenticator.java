@@ -110,6 +110,19 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
                 new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
     }
 
+    /**
+     * Validates the presented credentials using a valid/invalid cache and constant-time comparison.
+     *
+     * <p>The cache is checked first for valid credentials, then for invalid credentials. If neither
+     * cache contains the credentials, a new hash is computed and compared using
+     * {@link MessageDigest#isEqual(byte[], byte[])} for constant-time comparison. The result is
+     * then stored in the appropriate cache.
+     *
+     * @param username the presented username, may be {@code null}
+     * @param password the presented password, may be {@code null}
+     * @return {@code true} if both username and password match, {@code false} if either is
+     *     {@code null} or they do not match
+     */
     @Override
     public boolean checkCredentials(String username, String password) {
         if (username == null || password == null) {

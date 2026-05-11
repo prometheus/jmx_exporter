@@ -69,6 +69,14 @@ public class IntegerInRange implements Function<Integer, Integer> {
         this.supplier = supplier;
     }
 
+    /**
+     * Validates that the integer is within the configured inclusive range.
+     *
+     * @param value the integer to validate
+     * @return the validated integer, unchanged
+     * @throws RuntimeException if the value is outside the range, as supplied by the configured
+     *     exception supplier
+     */
     @Override
     public Integer apply(Integer value) {
         if (value < minimum || value > maximum) {

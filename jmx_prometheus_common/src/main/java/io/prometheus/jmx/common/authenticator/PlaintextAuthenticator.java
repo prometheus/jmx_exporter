@@ -64,6 +64,17 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
         this.password = password;
     }
 
+    /**
+     * Validates the presented credentials against the configured plaintext username and password.
+     *
+     * <p>Both the username and password are compared using constant-time equality checks via
+     * {@link MessageDigest#isEqual(byte[], byte[])} to prevent timing side-channel attacks.
+     *
+     * @param username the presented username, may be {@code null}
+     * @param password the presented password, may be {@code null}
+     * @return {@code true} if both username and password match, {@code false} if either is
+     *     {@code null} or they do not match
+     */
     @Override
     public boolean checkCredentials(String username, String password) {
         if (username == null || password == null) {

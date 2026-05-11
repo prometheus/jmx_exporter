@@ -51,6 +51,12 @@ public class AutoClosableShutdownHook extends Thread {
         this.autoCloseable = autoCloseable;
     }
 
+    /**
+     * Closes the wrapped AutoCloseable resource during JVM shutdown.
+     *
+     * <p>Any exceptions thrown during closure are silently ignored to ensure other shutdown
+     * hooks can complete without disruption.
+     */
     @Override
     public void run() {
         try {
