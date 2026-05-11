@@ -20,24 +20,29 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Class to implement JmxExampleApplication
+ * Entry point for the JMX example application that registers example MBeans for integration testing.
+ *
+ * <p>Registers instances of {@link TabularData}, {@link AutoIncrementing}, {@link ExistDb},
+ * {@link PerformanceMetrics}, {@link CustomValue}, and {@link StringValue} with the platform
+ * MBean server, then blocks the main thread to keep the JVM alive for scraping.
  */
 public class JmxExampleApplication {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     /**
-     * Constructor
+     * Private constructor to prevent instantiation of this utility class.
      */
     private JmxExampleApplication() {
         // INTENTIONALLY BLANK
     }
 
     /**
-     * Main method
+     * Registers all example MBeans with the platform MBean server and blocks the current thread
+     * to keep the JVM alive for JMX scraping.
      *
-     * @param args args
-     * @throws Exception Exception
+     * @param args command-line arguments, ignored
+     * @throws Exception if any MBean registration fails or the thread is interrupted while waiting
      */
     public static void main(String[] args) throws Exception {
         new TabularData().register();

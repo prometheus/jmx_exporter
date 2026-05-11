@@ -17,21 +17,21 @@
 package io.prometheus.jmx;
 
 /**
- * Class to implement CustomValueMBean
+ * MBean interface exposing a fixed integer value and a fixed text string.
  */
 public interface CustomValueMBean {
 
     /**
-     * Method to get the value
+     * Returns the fixed integer value.
      *
-     * @return value
+     * @return the integer value exposed by this MBean
      */
     Integer getValue();
 
     /**
-     * Method to get the text
+     * Returns the fixed text string.
      *
-     * @return text
+     * @return the text string exposed by this MBean
      */
     String getText();
 }

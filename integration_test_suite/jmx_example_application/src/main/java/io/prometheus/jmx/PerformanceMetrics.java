@@ -29,21 +29,27 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Class to implement PerformanceMetrics
+ * Implements an MBean exposing composite performance metrics including active sessions and bootstrap counts.
+ *
+ * <p>The metrics are returned as {@link CompositeData} containing the keys
+ * {@code ActiveSessions}, {@code Bootstraps}, and {@code BootstrapsDeferred}.
  */
 public class PerformanceMetrics implements PerformanceMetricsMBean {
 
     private final CompositeData compositeData;
 
     /**
-     * Constructor
+     * Constructs a new instance, initializing the composite performance metrics data.
      *
-     * @throws OpenDataException OpenDataException
+     * @throws OpenDataException if the composite data structure is invalid
      */
     public PerformanceMetrics() throws OpenDataException {
         compositeData = build();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompositeData getPerformanceMetrics() {
         return compositeData;
@@ -67,9 +73,10 @@ public class PerformanceMetrics implements PerformanceMetricsMBean {
     }
 
     /**
-     * Method to register the MBean
+     * Registers a new {@link PerformanceMetrics} MBean with the platform MBean server under the object name
+     * {@code io.prometheus.jmx.test:name=PerformanceMetricsMBean}.
      *
-     * @throws Exception If an error occurs during registration
+     * @throws Exception if MBean registration fails
      */
     public void register() throws Exception {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

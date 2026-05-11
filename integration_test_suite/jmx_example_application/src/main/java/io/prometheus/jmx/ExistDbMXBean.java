@@ -19,19 +19,24 @@ package io.prometheus.jmx;
 import java.util.Map;
 
 /**
- * Interface to implement ExistDbMXBean
+ * MXBean interface exposing running query information for a simulated eXist-db instance.
+ *
+ * <p>The {@link #getRunningQueries()} method returns a map keyed by {@link QueryKey}, enabling
+ * integration testing of complex composite and tabular JMX attribute types.
  */
 public interface ExistDbMXBean {
 
     /**
-     * Method to get the Map of running queries
+     * Returns the map of currently running queries keyed by query identity.
      *
-     * @return a Map of running queries
+     * @return a map of running queries, keyed by {@link QueryKey}; never {@code null}
      */
     Map<QueryKey, RunningQuery> getRunningQueries();
 
     /**
-     * Class to implement QueryKey
+     * Composite key identifying a running query by its numeric ID and path.
+     *
+     * <p>Natural ordering is by path, as required by {@link Comparable}.
      */
     class QueryKey implements Comparable<QueryKey> {
 
@@ -39,10 +44,10 @@ public interface ExistDbMXBean {
         private final String path;
 
         /**
-         * Constructor
+         * Constructs a new query key.
          *
-         * @param id id
-         * @param path path
+         * @param id the numeric query identifier
+         * @param path the query path, such as {@code /db/query1.xq}
          */
         public QueryKey(final int id, final String path) {
             this.id = id;
@@ -50,18 +55,18 @@ public interface ExistDbMXBean {
         }
 
         /**
-         * Method to get the id
+         * Returns the numeric query identifier.
          *
-         * @return the id
+         * @return the query ID
          */
         public int getId() {
             return id;
         }
 
         /**
-         * Method to get the path
+         * Returns the query path.
          *
-         * @return the path
+         * @return the path of the query
          */
         public String getPath() {
             return path;
@@ -101,7 +106,7 @@ public interface ExistDbMXBean {
     }
 
     /**
-     * Class to implement RunningQuery
+     * Represents a currently executing query with an ID, path, and start time.
      */
     class RunningQuery {
 
@@ -111,11 +116,11 @@ public interface ExistDbMXBean {
         private final long startedAtTime;
 
         /**
-         * Constructor
+         * Constructs a new running query.
          *
-         * @param id id
-         * @param path path
-         * @param startedAtTime startedAtTime
+         * @param id the numeric query identifier
+         * @param path the query path, such as {@code /db/query1.xq}
+         * @param startedAtTime the epoch millisecond timestamp when the query started
          */
         public RunningQuery(final int id, final String path, final long startedAtTime) {
             this.id = id;
@@ -124,36 +129,36 @@ public interface ExistDbMXBean {
         }
 
         /**
-         * Method to get the id
+         * Returns the numeric query identifier.
          *
-         * @return the id
+         * @return the query ID
          */
         public int getId() {
             return id;
         }
 
         /**
-         * Method to get the path
+         * Returns the query path.
          *
-         * @return the path
+         * @return the path of the query
          */
         public String getPath() {
             return path;
         }
 
         /**
-         * Method to get the start time
+         * Returns the epoch millisecond timestamp when the query started.
          *
-         * @return the start time
+         * @return the start time in epoch milliseconds
          */
         public long getStartedAtTime() {
             return startedAtTime;
         }
 
         /**
-         * Method to get the elapsed time
+         * Returns the number of milliseconds elapsed since the query started.
          *
-         * @return the elapsed time
+         * @return the elapsed time in milliseconds
          */
         public long getElapsedTime() {
             return System.currentTimeMillis() - startedAtTime;

@@ -17,14 +17,14 @@
 package io.prometheus.jmx;
 
 /**
- * Interface to implement AutoIncrementingMBean
+ * MBean interface exposing an integer value that increments on each access.
  */
 public interface AutoIncrementingMBean {
 
     /**
-     * Method to get the value
+     * Returns the current value, incrementing it atomically on each call.
      *
-     * @return the value
+     * @return the value before incrementing
      */
     int getValue();
 }

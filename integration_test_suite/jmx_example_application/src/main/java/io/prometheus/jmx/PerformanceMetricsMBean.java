@@ -20,15 +20,15 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 
 /**
- * Interface to implement PerformanceMetricsMBean
+ * MBean interface exposing composite performance metrics as {@link CompositeData}.
  */
 public interface PerformanceMetricsMBean {
 
     /**
-     * Method to get the performance metrics
+     * Returns the composite performance metrics containing active session and bootstrap counts.
      *
-     * @return the performance metrics
-     * @throws OpenDataException OpenDataException
+     * @return the performance metrics as composite data
+     * @throws OpenDataException if the composite data structure is invalid
      */
     CompositeData getPerformanceMetrics() throws OpenDataException;
 }
