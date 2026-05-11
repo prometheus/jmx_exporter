@@ -121,6 +121,18 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         this.keyLength = keyLength;
     }
 
+    /**
+     * Validates the presented credentials against the configured username and PBKDF2 password hash.
+     *
+     * <p>Both the username and the candidate password hash are compared using constant-time
+     * equality checks via {@link MessageDigest#isEqual(byte[], byte[])} to prevent timing
+     * side-channel attacks.
+     *
+     * @param username the presented username, may be {@code null}
+     * @param password the presented password, may be {@code null}
+     * @return {@code true} if both username and password match, {@code false} if either is
+     *     {@code null} or they do not match
+     */
     @Override
     public boolean checkCredentials(String username, String password) {
         if (username == null || password == null) {

@@ -55,6 +55,16 @@ public class ToBoolean implements Function<Object, Boolean> {
         this.supplier = supplier;
     }
 
+    /**
+     * Converts the given object to a {@link Boolean}.
+     *
+     * <p>Handles both {@code Boolean} values and string representations of boolean values.
+     *
+     * @param value the object to convert, must not be {@code null}
+     * @return the boolean value
+     * @throws RuntimeException if conversion fails, as supplied by the configured exception
+     *     supplier
+     */
     @Override
     public Boolean apply(Object value) {
         if (value == null) {

@@ -472,6 +472,18 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Resolves authentication configuration from the YAML root configuration.
+     *
+     * <p>Determines whether to use a custom authenticator plugin or basic authentication. For basic
+     * authentication, selects among plaintext, SHA, or PBKDF2 algorithms based on the configured
+     * {@code algorithm} value.
+     *
+     * @param rootMapAccessor the root configuration map accessor, must not be {@code null}
+     * @return the resolved authentication configuration, with a {@code null} authenticator when
+     *     authentication is not configured
+     * @throws ConfigurationException if authentication configuration is invalid or incomplete
+     */
     private static AuthenticationConfiguration getAuthenticationConfiguration(MapAccessor rootMapAccessor) {
         Authenticator authenticator = null;
         String subjectAttributeName = null;
@@ -627,6 +639,20 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Replaces all HTTP server contexts with wrapped handlers and authenticators that inject
+     * security response headers.
+     *
+     * <p>Adds {@code X-Content-Type-Options}, {@code X-Frame-Options}, and optionally
+     * {@code Strict-Transport-Security} headers to all responses.
+     *
+     * @param httpServer the HTTP server whose contexts should be replaced, must not be {@code null}
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param authenticationConfiguration the authentication configuration containing the
+     *     authenticator and subject attribute name, must not be {@code null}
+     * @param sslEnabled whether SSL is enabled, used to determine if HSTS headers should be added
+     */
     private static void configureSecurityHeaders(
             HTTPServer httpServer,
             PrometheusRegistry prometheusRegistry,
@@ -657,6 +683,15 @@ public class HTTPServerFactory {
                 securityHeadersAuthenticator);
     }
 
+    /**
+     * Replaces an HTTP context by removing the existing context at the given path and creating a
+     * new one with the specified handler and optional authenticator.
+     *
+     * @param httpServer the HTTP server to modify, must not be {@code null}
+     * @param path the context path to replace, must not be {@code null}
+     * @param handler the new HTTP handler, must not be {@code null}
+     * @param authenticator the authenticator to set, or {@code null} if no authentication is needed
+     */
     private static void replaceContext(
             com.sun.net.httpserver.HttpServer httpServer,
             String path,
@@ -674,6 +709,14 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Reflectively accesses the underlying {@link com.sun.net.httpserver.HttpServer} from the
+     * Prometheus {@link HTTPServer} wrapper.
+     *
+     * @param httpServer the Prometheus HTTP server instance, must not be {@code null}
+     * @return the delegate HTTP server
+     * @throws IllegalStateException if the underlying server field cannot be accessed
+     */
     private static com.sun.net.httpserver.HttpServer getDelegateHttpServer(HTTPServer httpServer) {
         try {
             Field field = HTTPServer.class.getDeclaredField("server");
@@ -684,10 +727,27 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Wraps an HTTP handler with security headers and optional Subject.doAs delegation.
+     *
+     * @param handler the delegate handler, must not be {@code null}
+     * @param sslEnabled whether SSL is enabled
+     * @param subjectAttributeName the request attribute name for the authenticated Subject, or
+     *     {@code null} if Subject delegation is not needed
+     * @return the wrapping handler
+     */
     private static HttpHandler wrapHandler(HttpHandler handler, boolean sslEnabled, String subjectAttributeName) {
         return new SecurityHeadersHandler(handler, sslEnabled, subjectAttributeName);
     }
 
+    /**
+     * Wraps an authenticator with security header injection.
+     *
+     * @param authenticator the delegate authenticator, or {@code null} if no authentication is
+     *     configured
+     * @param sslEnabled whether SSL is enabled
+     * @return a wrapping authenticator, or {@code null} if the input authenticator is {@code null}
+     */
     private static Authenticator wrapAuthenticator(Authenticator authenticator, boolean sslEnabled) {
         if (authenticator == null) {
             return null;
@@ -696,6 +756,12 @@ public class HTTPServerFactory {
         return new SecurityHeadersAuthenticator(authenticator, sslEnabled);
     }
 
+    /**
+     * Adds security response headers to the given headers map.
+     *
+     * @param headers the response headers to modify, must not be {@code null}
+     * @param sslEnabled whether SSL is enabled, controls addition of HSTS header
+     */
     private static void addSecurityHeaders(Headers headers, boolean sslEnabled) {
         headers.set(X_CONTENT_TYPE_OPTIONS, NOSNIFF);
         headers.set(X_FRAME_OPTIONS, DENY);
@@ -704,6 +770,13 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Drains and closes the request input stream to ensure the HTTP exchange can be reused.
+     *
+     * @param httpExchange the HTTP exchange whose request body should be drained, must not be
+     *     {@code null}
+     * @throws IOException if reading or closing the input stream fails
+     */
     private static void drainInputAndClose(HttpExchange httpExchange) throws IOException {
         InputStream inputStream = httpExchange.getRequestBody();
         byte[] bytes = new byte[4096];
@@ -1236,6 +1309,12 @@ public class HTTPServerFactory {
             this.daemon = daemon;
         }
 
+        /**
+         * Creates a new thread with a Prometheus-style name and the configured daemon flag.
+         *
+         * @param r the runnable to execute in the new thread
+         * @return the newly created thread
+         */
         @Override
         public Thread newThread(Runnable r) {
             Thread t = delegate.newThread(r);
@@ -1255,37 +1334,90 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Immutable holder for an authenticator and optional subject attribute name.
+     *
+     * <p>Used to pass authentication configuration between resolution and application stages.
+     */
     private static final class AuthenticationConfiguration {
 
+        /**
+         * The configured authenticator, or {@code null} when authentication is not enabled.
+         */
         private final Authenticator authenticator;
 
+        /**
+         * The request attribute name used to store the authenticated Subject, or {@code null}
+         * when Subject delegation is not configured.
+         */
         private final String subjectAttributeName;
 
+        /**
+         * Constructs an authentication configuration.
+         *
+         * @param authenticator the authenticator, may be {@code null} when authentication is disabled
+         * @param subjectAttributeName the subject attribute name, may be {@code null}
+         */
         private AuthenticationConfiguration(Authenticator authenticator, String subjectAttributeName) {
             this.authenticator = authenticator;
             this.subjectAttributeName = subjectAttributeName;
         }
 
+        /**
+         * Returns the configured authenticator.
+         *
+         * @return the authenticator, or {@code null} when authentication is disabled
+         */
         private Authenticator getAuthenticator() {
             return authenticator;
         }
 
+        /**
+         * Returns the subject attribute name.
+         *
+         * @return the subject attribute name, or {@code null} when Subject delegation is not
+         *     configured
+         */
         private String getSubjectAttributeName() {
             return subjectAttributeName;
         }
     }
 
+    /**
+     * Delegating authenticator that injects security response headers before performing
+     * authentication.
+     *
+     * <p>Ensures security headers are present even on 401 Unauthorized responses.
+     */
     private static final class SecurityHeadersAuthenticator extends Authenticator {
 
+        /**
+         * The delegate authenticator that performs the actual credential check.
+         */
         private final Authenticator delegate;
 
+        /**
+         * Whether SSL is enabled, controls addition of HSTS header.
+         */
         private final boolean sslEnabled;
 
+        /**
+         * Constructs a security headers authenticator.
+         *
+         * @param delegate the delegate authenticator, must not be {@code null}
+         * @param sslEnabled whether SSL is enabled
+         */
         private SecurityHeadersAuthenticator(Authenticator delegate, boolean sslEnabled) {
             this.delegate = delegate;
             this.sslEnabled = sslEnabled;
         }
 
+        /**
+         * Injects security headers and delegates authentication.
+         *
+         * @param exchange the HTTP exchange to authenticate
+         * @return the authentication result from the delegate
+         */
         @Override
         public Result authenticate(HttpExchange exchange) {
             addSecurityHeaders(exchange.getResponseHeaders(), sslEnabled);
@@ -1293,20 +1425,53 @@ public class HTTPServerFactory {
         }
     }
 
+    /**
+     * Delegating HTTP handler that injects security response headers and optionally performs
+     * Subject.doAs delegation for authenticated requests.
+     *
+     * <p>When a subject attribute name is configured and the authenticated Subject is available,
+     * the delegate handler is invoked within a {@link javax.security.auth.Subject#doAs} call.
+     * If the Subject is not available, the request is rejected with a 403 response.
+     */
     private static final class SecurityHeadersHandler implements HttpHandler {
 
+        /**
+         * The delegate handler that processes the actual request.
+         */
         private final HttpHandler delegate;
 
+        /**
+         * Whether SSL is enabled, controls addition of HSTS header.
+         */
         private final boolean sslEnabled;
 
+        /**
+         * The request attribute name used to look up the authenticated Subject, or {@code null}
+         * when Subject delegation is not configured.
+         */
         private final String subjectAttributeName;
 
+        /**
+         * Constructs a security headers handler.
+         *
+         * @param delegate the delegate handler, must not be {@code null}
+         * @param sslEnabled whether SSL is enabled
+         * @param subjectAttributeName the request attribute name for Subject lookup, may be
+         *     {@code null}
+         */
         private SecurityHeadersHandler(HttpHandler delegate, boolean sslEnabled, String subjectAttributeName) {
             this.delegate = delegate;
             this.sslEnabled = sslEnabled;
             this.subjectAttributeName = subjectAttributeName;
         }
 
+        /**
+         * Injects security headers, then delegates to the wrapped handler with optional
+         * Subject.doAs invocation.
+         *
+         * @param exchange the HTTP exchange to handle
+         * @throws IOException if the delegate handler or Subject.doAs fails
+         */
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addSecurityHeaders(exchange.getResponseHeaders(), sslEnabled);
@@ -1347,6 +1512,15 @@ public class HTTPServerFactory {
      */
     private static class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
 
+        /**
+         * Blocks the calling thread by attempting to put the rejected task into the executor's
+         * queue, waiting until space becomes available.
+         *
+         * <p>If the executor has been shut down, the task is silently discarded.
+         *
+         * @param runnable the rejected runnable
+         * @param threadPoolExecutor the executor that rejected the task
+         */
         @Override
         public void rejectedExecution(Runnable runnable, ThreadPoolExecutor threadPoolExecutor) {
             if (!threadPoolExecutor.isShutdown()) {

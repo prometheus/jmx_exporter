@@ -73,11 +73,29 @@ public class CustomServiceTransformer implements ResourceTransformer {
         // INTENTIONALLY BLANK
     }
 
+    /**
+     * Determines whether the resource is a META-INF/services file that should be transformed.
+     *
+     * @param resource the resource path to check
+     * @return {@code true} if the resource starts with {@value #SERVICES_DIR}, {@code false}
+     *     otherwise
+     */
     @Override
     public boolean canTransformResource(String resource) {
         return resource.startsWith(SERVICES_DIR);
     }
 
+    /**
+     * Reads a META-INF/services resource and adds its entries with the shading prefix.
+     *
+     * <p>Entries that already start with the prefix are not double-prefixed. Duplicate entries
+     * within the same service file are deduplicated.
+     *
+     * @param resource the resource path being processed
+     * @param is the input stream for the resource content
+     * @param relocators the list of relocators applied during shading (not used by this transformer)
+     * @throws IOException if the resource cannot be read
+     */
     @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -97,11 +115,25 @@ public class CustomServiceTransformer implements ResourceTransformer {
         }
     }
 
+    /**
+     * Returns whether any META-INF/services resources were processed and need to be written.
+     *
+     * @return {@code true} if at least one service file was collected, {@code false} otherwise
+     */
     @Override
     public boolean hasTransformedResource() {
         return !serviceEntries.isEmpty();
     }
 
+    /**
+     * Writes the collected service entries to the JAR with prefixed filenames and entries.
+     *
+     * <p>Each service file is written to a new path where the service name is prefixed with
+     * {@value #PREFIX}, and all implementation class entries within the file are also prefixed.
+     *
+     * @param jos the JAR output stream to write to
+     * @throws IOException if writing to the JAR fails
+     */
     @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         for (Map.Entry<String, List<String>> entry : serviceEntries.entrySet()) {

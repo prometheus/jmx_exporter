@@ -56,6 +56,14 @@ public class ValidMap implements Function<Map<String, String>, Map<String, Strin
         this.supplier = supplier;
     }
 
+    /**
+     * Validates that all keys and values in the map are non-null and non-blank strings.
+     *
+     * @param map the map to validate, must not be {@code null}
+     * @return the validated map, unchanged
+     * @throws RuntimeException if any key or value is {@code null} or blank, as supplied by the
+     *     configured exception supplier
+     */
     @Override
     public Map<String, String> apply(Map<String, String> map) {
         for (Map.Entry<String, String> entry : map.entrySet()) {

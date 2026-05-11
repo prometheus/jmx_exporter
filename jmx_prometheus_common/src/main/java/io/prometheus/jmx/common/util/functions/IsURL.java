@@ -58,6 +58,14 @@ public class IsURL implements Function<String, String> {
         this.supplier = supplier;
     }
 
+    /**
+     * Validates that the string is a well-formed URL.
+     *
+     * @param value the string to validate
+     * @return the validated URL string, unchanged
+     * @throws RuntimeException if the string is blank or not a valid URL, as supplied by the
+     *     configured exception supplier
+     */
     @Override
     public String apply(String value) {
         if (value.trim().isEmpty()) {

@@ -57,6 +57,14 @@ public class ToMapAccessor implements Function<Object, MapAccessor> {
         this.supplier = supplier;
     }
 
+    /**
+     * Casts the given object to a map and wraps it in a {@link MapAccessor}.
+     *
+     * @param value the object to convert, expected to be a {@link Map}
+     * @return a new MapAccessor wrapping the map
+     * @throws RuntimeException if the object is not a map, as supplied by the configured exception
+     *     supplier
+     */
     @Override
     public MapAccessor apply(Object value) {
         try {

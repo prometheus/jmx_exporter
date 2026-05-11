@@ -55,6 +55,13 @@ public class ToString implements Function<Object, String> {
         this.supplier = supplier;
     }
 
+    /**
+     * Converts the given object to a string representation.
+     *
+     * @param value the object to convert, must not be {@code null}
+     * @return the string representation of the object
+     * @throws RuntimeException if conversion fails, as supplied by the configured exception supplier
+     */
     @Override
     public String apply(Object value) {
         if (value == null) {

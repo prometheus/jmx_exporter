@@ -150,10 +150,21 @@ public class CredentialsCache {
         return cache.size();
     }
 
+    /**
+     * Calculates the UTF-8 encoded byte size of the credentials' string representation.
+     *
+     * @param credentials the credentials to measure, must not be {@code null}
+     * @return the byte size of the credentials when encoded as UTF-8
+     */
     private static int calculateSizeBytes(Credentials credentials) {
         return credentials.toString().getBytes(StandardCharsets.UTF_8).length;
     }
 
+    /**
+     * Evicts the least recently used entry from the cache.
+     *
+     * <p>Relies on the access-order iteration of {@link LinkedHashMap} to remove the oldest entry.
+     */
     private void evictLeastRecentlyUsed() {
         Iterator<Credentials> iterator = cache.keySet().iterator();
         if (iterator.hasNext()) {

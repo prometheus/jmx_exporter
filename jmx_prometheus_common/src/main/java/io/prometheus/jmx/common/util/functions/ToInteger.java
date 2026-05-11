@@ -55,6 +55,14 @@ public class ToInteger implements Function<Object, Integer> {
         this.supplier = supplier;
     }
 
+    /**
+     * Converts the given object to an {@link Integer}.
+     *
+     * @param value the object to convert, must not be {@code null}
+     * @return the integer value
+     * @throws RuntimeException if conversion fails, as supplied by the configured exception
+     *     supplier
+     */
     @Override
     public Integer apply(Object value) {
         if (value == null) {

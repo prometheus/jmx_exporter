@@ -63,11 +63,29 @@ public class Credentials {
         return username.length() + password.length();
     }
 
+    /**
+     * Returns the concatenated username and password without a separator.
+     *
+     * <p>Used as a cache key by {@link CredentialsCache}. The lack of a separator is intentional
+     * because cache size accounting uses the combined length.
+     *
+     * @return the concatenated username and password
+     */
     @Override
     public String toString() {
         return username + password;
     }
 
+    /**
+     * Compares credentials for equality using constant-time comparison.
+     *
+     * <p>Uses {@link MessageDigest#isEqual(byte[], byte[])} on UTF-8 encoded username and password
+     * to prevent timing side-channel attacks.
+     *
+     * @param o the object to compare against
+     * @return {@code true} if the object is a {@code Credentials} with matching username and
+     *     password
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
