@@ -20,6 +20,21 @@ The goals are to:
 - Document externally visible contracts, side effects, and failure modes.
 - Keep summaries concise, but include detail where behavior is non-obvious.
 
+### Comment format
+Use block-format Javadoc comments for all Javadocs, including one-sentence comments.
+
+Good:
+```java
+/**
+ * Executes child actions concurrently.
+ */
+```
+
+Avoid:
+```java
+/** Executes child actions concurrently. */
+```
+
 ---
 
 ## Required Coverage

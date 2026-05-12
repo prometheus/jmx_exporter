@@ -213,11 +213,10 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
      * @throws IllegalArgumentException if the hex string is invalid
      */
     private static byte[] hexStringToByteArray(String hex) {
-        if (hex.length() % 2 != 0) {
+        int len = hex.length();
+        if (len % 2 != 0) {
             throw new IllegalArgumentException("Hex string must have an even length");
         }
-
-        int len = hex.length();
         byte[] bytes = new byte[len / 2];
 
         for (int i = 0; i < len; i += 2) {

@@ -116,10 +116,9 @@ public class JarClassLoader extends ClassLoader {
                 JarInputStream jis = new JarInputStream(jarStream)) {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
-                if (entry.getName().endsWith(".class")) {
-                    String className = entry.getName()
-                            .replace('/', '.')
-                            .substring(0, entry.getName().length() - 6);
+                String entryName = entry.getName();
+                if (entryName.endsWith(".class")) {
+                    String className = entryName.replace('/', '.').substring(0, entryName.length() - 6);
 
                     byte[] classData = readAllBytes(jis);
                     classBytes.put(className, classData);

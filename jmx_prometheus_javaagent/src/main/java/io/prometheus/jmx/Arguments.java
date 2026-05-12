@@ -220,10 +220,12 @@ public class Arguments {
                 }
                 case 3: {
                     httpEnabled = true;
-                    host = matcher.group(1) != null ? matcher.group(1) : DEFAULT_HOST;
+                    String group1 = matcher.group(1);
+                    host = group1 != null ? group1 : DEFAULT_HOST;
 
                     if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
-                        host = host.substring(1, host.length() - 1);
+                        int hostLength = host.length();
+                        host = host.substring(1, hostLength - 1);
                     }
 
                     port = Integer.parseInt(matcher.group(2));

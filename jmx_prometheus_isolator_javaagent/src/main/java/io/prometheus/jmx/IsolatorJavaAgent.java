@@ -123,14 +123,15 @@ public class IsolatorJavaAgent {
             List<String> javaAgentArguments =
                     Arrays.stream(agentArgument.split(",")).map(String::trim).collect(Collectors.toList());
 
-            LOGGER.info(
-                    "%s JMX Exporter%s defined", javaAgentArguments.size(), javaAgentArguments.size() == 1 ? "" : "s");
+            int argumentCount = javaAgentArguments.size();
+            LOGGER.info("%s JMX Exporter%s defined", argumentCount, argumentCount == 1 ? "" : "s");
 
             for (int i = 0; i < javaAgentArguments.size(); i++) {
                 int index = i + 1;
                 String javaAgentArgument = javaAgentArguments.get(i);
-                String jarPath = javaAgentArgument.substring(0, javaAgentArgument.indexOf("="));
-                String options = javaAgentArgument.substring(javaAgentArgument.indexOf("=") + 1);
+                int equalsIndex = javaAgentArgument.indexOf("=");
+                String jarPath = javaAgentArgument.substring(0, equalsIndex);
+                String options = javaAgentArgument.substring(equalsIndex + 1);
 
                 LOGGER.info("JMX Exporter[%d] configuration ...", index);
                 LOGGER.info("jar [%s]", jarPath);

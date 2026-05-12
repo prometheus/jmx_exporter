@@ -68,10 +68,12 @@ public class JmxCollector implements MultiCollector {
      * Enum to implement Mode
      */
     public enum Mode {
+
         /**
          * Agent mode
          */
         AGENT,
+
         /**
          * Standalone mode
          */
@@ -84,6 +86,7 @@ public class JmxCollector implements MultiCollector {
      * Class to implement ExtraMetric
      */
     static class ExtraMetric {
+
         String name;
         Object value;
         String description;
@@ -93,6 +96,7 @@ public class JmxCollector implements MultiCollector {
      * Class to implement Rule
      */
     static class Rule {
+
         Pattern pattern;
         String name;
         String value;
@@ -106,6 +110,7 @@ public class JmxCollector implements MultiCollector {
     }
 
     static class SslProperties {
+
         boolean enabled = false;
         KeyStoreProperties keyStoreProperties;
         KeyStoreProperties trustStoreProperties;
@@ -128,6 +133,7 @@ public class JmxCollector implements MultiCollector {
     }
 
     static class KeyStoreProperties {
+
         Path path;
         String type;
         char[] password;
@@ -153,6 +159,7 @@ public class JmxCollector implements MultiCollector {
      * Class to implement MBeanFilter
      */
     public static class MBeanFilter {
+
         String domain;
         Map<String, String> properties;
 
@@ -168,6 +175,7 @@ public class JmxCollector implements MultiCollector {
      * Class to implement Config
      */
     private static class Config {
+
         Integer startDelaySeconds = 0;
         String jmxUrl = "";
         String username = "";
@@ -371,12 +379,13 @@ public class JmxCollector implements MultiCollector {
             cfg.password = VariableResolver.resolveVariable(password);
         }
 
-        if (yamlConfig.containsKey("ssl") && yamlConfig.get("ssl") instanceof Boolean) {
-            cfg.sslProperties.enabled = (Boolean) yamlConfig.get("ssl");
+        Object sslValue = yamlConfig.get("ssl");
+        if (sslValue instanceof Boolean) {
+            cfg.sslProperties.enabled = (Boolean) sslValue;
         }
 
-        if (yamlConfig.containsKey("ssl") && yamlConfig.get("ssl") instanceof Map) {
-            Map<String, Object> configSsl = (Map<String, Object>) yamlConfig.get("ssl");
+        if (sslValue instanceof Map) {
+            Map<String, Object> configSsl = (Map<String, Object>) sslValue;
             if (configSsl.containsKey("enabled")) {
                 cfg.sslProperties.enabled = (Boolean) configSsl.get("enabled");
             }
@@ -797,9 +806,11 @@ public class JmxCollector implements MultiCollector {
                 }
             }
 
+            String beanPropertiesStr = beanProperties.toString();
+            String attrKeysStr = attrKeys.toString();
+
             if (matchedRule.isUnmatched()) {
-                String beanName =
-                        domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
+                String beanName = domain + angleBrackets(beanPropertiesStr) + angleBrackets(attrKeysStr);
 
                 // Build the HELP string from the bean metadata.
                 String help = domain
@@ -951,11 +962,7 @@ public class JmxCollector implements MultiCollector {
             } else {
                 LOGGER.trace(
                         "Ignoring unsupported bean: %s%s%s%s: %s ",
-                        domain,
-                        angleBrackets(beanProperties.toString()),
-                        angleBrackets(attrKeys.toString()),
-                        attrName,
-                        beanValue);
+                        domain, angleBrackets(beanPropertiesStr), angleBrackets(attrKeysStr), attrName, beanValue);
                 return;
             }
 

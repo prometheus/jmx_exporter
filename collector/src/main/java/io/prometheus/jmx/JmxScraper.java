@@ -274,22 +274,23 @@ class JmxScraper {
 
         Map<String, MBeanAttributeInfo> name2MBeanAttributeInfo = new LinkedHashMap<>();
         for (MBeanAttributeInfo mBeanAttributeInfo : mBeanAttributeInfos) {
+            String attributeName = mBeanAttributeInfo.getName();
             if (!mBeanAttributeInfo.isReadable()) {
-                LOGGER.trace("%s_%s not readable", mBeanName, mBeanAttributeInfo.getName());
+                LOGGER.trace("%s_%s not readable", mBeanName, attributeName);
                 continue;
             }
 
-            if (objectNameAttributeFilter.exclude(mBeanName, mBeanAttributeInfo.getName())) {
+            if (objectNameAttributeFilter.exclude(mBeanName, attributeName)) {
                 continue;
             }
 
             if (objectNameAttributeFilter.includeObjectNameAttributesIsEmpty()) {
-                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+                name2MBeanAttributeInfo.put(attributeName, mBeanAttributeInfo);
                 continue;
             }
 
-            if (objectNameAttributeFilter.include(mBeanName, mBeanAttributeInfo.getName())) {
-                name2MBeanAttributeInfo.put(mBeanAttributeInfo.getName(), mBeanAttributeInfo);
+            if (objectNameAttributeFilter.include(mBeanName, attributeName)) {
+                name2MBeanAttributeInfo.put(attributeName, mBeanAttributeInfo);
             }
         }
 
@@ -356,7 +357,7 @@ class JmxScraper {
                     continue;
                 }
 
-                MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attribute.getName());
+                MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attributeName);
                 LOGGER.trace("%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
                         mBeanName,
@@ -364,7 +365,7 @@ class JmxScraper {
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         attributesAsLabelsWithValues,
                         new LinkedList<>(),
-                        mBeanAttributeInfo.getName(),
+                        attributeName,
                         mBeanAttributeInfo.getType(),
                         mBeanAttributeInfo.getDescription(),
                         attribute.getValue());
@@ -420,21 +421,22 @@ class JmxScraper {
             MBeanServerConnection beanConn, ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
         Object value;
         for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
+            String attributeName = attr.getName();
             try {
-                value = beanConn.getAttribute(mbeanName, attr.getName());
+                value = beanConn.getAttribute(mbeanName, attributeName);
             } catch (Exception e) {
-                LOGGER.trace("%s_%s Fail: %s", mbeanName, attr.getName(), e.getMessage());
+                LOGGER.trace("%s_%s Fail: %s", mbeanName, attributeName, e.getMessage());
                 continue;
             }
 
-            LOGGER.trace("%s_%s process", mbeanName, attr.getName());
+            LOGGER.trace("%s_%s process", mbeanName, attributeName);
             processBeanValue(
                     mbeanName,
                     mbeanName.getDomain(),
                     jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
                     new HashMap<>(),
                     new LinkedList<>(),
-                    attr.getName(),
+                    attributeName,
                     attr.getType(),
                     attr.getDescription(),
                     value);

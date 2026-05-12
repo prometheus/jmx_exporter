@@ -254,11 +254,14 @@ public class JavaAgent {
      * @throws Exception if the HTTP server fails to start
      */
     private static HTTPServer startHttpServer(Arguments arguments, File file) throws Exception {
-        LOGGER.info("HTTP host:port [%s:%d]", arguments.getHost(), arguments.getPort());
+        String host = arguments.getHost();
+        int port = arguments.getPort();
+
+        LOGGER.info("HTTP host:port [%s:%d]", host, port);
         LOGGER.info("Starting HTTPServer ...");
 
-        HTTPServer httpServer = HTTPServerFactory.createAndStartHTTPServer(
-                DEFAULT_REGISTRY, InetAddress.getByName(arguments.getHost()), arguments.getPort(), file);
+        HTTPServer httpServer =
+                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, InetAddress.getByName(host), port, file);
 
         LOGGER.info("HTTPServer started");
 

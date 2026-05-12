@@ -40,10 +40,14 @@ import java.security.MessageDigest;
  */
 public class MessageDigestAuthenticator extends BasicAuthenticator {
 
-    /** Maximum size for a single cached credential value in bytes (5 KiB). */
+    /**
+     * Maximum size for a single cached credential value in bytes (5 KiB).
+     */
     private static final int MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES = CredentialsCache.DEFAULT_MAX_VALUE_SIZE_BYTES;
 
-    /** Maximum number of entries per credential cache. */
+    /**
+     * Maximum number of entries per credential cache.
+     */
     private static final int MAXIMUM_CREDENTIAL_CACHE_ENTRIES = CredentialsCache.DEFAULT_MAX_ENTRIES;
 
     /**
@@ -209,11 +213,10 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
      * @throws IllegalArgumentException if the hex string is invalid
      */
     private static byte[] hexStringToByteArray(String hex) {
-        if (hex.length() % 2 != 0) {
+        int len = hex.length();
+        if (len % 2 != 0) {
             throw new IllegalArgumentException("Hex string must have an even length");
         }
-
-        int len = hex.length();
         byte[] bytes = new byte[len / 2];
 
         for (int i = 0; i < len; i += 2) {
