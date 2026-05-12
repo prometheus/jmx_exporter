@@ -86,11 +86,11 @@ public class MatchedRuleToMetricSnapshotsConverter {
 
     private static MetricSnapshot convertRulesWithSameName(List<MatchedRule> rulesWithSameName) {
         boolean labelsUnique = isLabelsUnique(rulesWithSameName);
+        MatchedRule firstRule = rulesWithSameName.get(0);
         switch (getType(rulesWithSameName)) {
             case "COUNTER":
-                CounterSnapshot.Builder counterBuilder = CounterSnapshot.builder()
-                        .name(rulesWithSameName.get(0).name)
-                        .help(rulesWithSameName.get(0).help);
+                CounterSnapshot.Builder counterBuilder =
+                        CounterSnapshot.builder().name(firstRule.name).help(firstRule.help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
@@ -103,9 +103,8 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 }
                 return counterBuilder.build();
             case "GAUGE":
-                GaugeSnapshot.Builder gaugeBuilder = GaugeSnapshot.builder()
-                        .name(rulesWithSameName.get(0).name)
-                        .help(rulesWithSameName.get(0).help);
+                GaugeSnapshot.Builder gaugeBuilder =
+                        GaugeSnapshot.builder().name(firstRule.name).help(firstRule.help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {
@@ -118,9 +117,8 @@ public class MatchedRuleToMetricSnapshotsConverter {
                 }
                 return gaugeBuilder.build();
             default:
-                UnknownSnapshot.Builder unknownBuilder = UnknownSnapshot.builder()
-                        .name(rulesWithSameName.get(0).name)
-                        .help(rulesWithSameName.get(0).help);
+                UnknownSnapshot.Builder unknownBuilder =
+                        UnknownSnapshot.builder().name(firstRule.name).help(firstRule.help);
                 for (MatchedRule rule : rulesWithSameName) {
                     Labels labels = rule.labels;
                     if (!labelsUnique) {

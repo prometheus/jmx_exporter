@@ -20,10 +20,13 @@ import static java.lang.String.format;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.SimpleFormatter;
 
-/** Class to implement a Logger */
+/**
+ * Class to implement a Logger.
+ */
 public class Logger {
 
     private final java.util.logging.Logger LOGGER;
@@ -45,8 +48,8 @@ public class Logger {
 
         // Override the default formatter for the logger if it is SimpleFormatter
         for (Handler handler : LOGGER.getHandlers()) {
-            if (null != handler.getFormatter()
-                    && handler.getFormatter().getClass().getName().endsWith(SimpleFormatter.class.getName())) {
+            Formatter formatter = handler.getFormatter();
+            if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
                 handler.setFormatter(new LoggerFormatter());
             }
         }
@@ -213,11 +216,9 @@ public class Logger {
      * @param objects the objects
      */
     private void log(Level level, String format, Object... objects) {
-        if (isLoggable(level)) {
-            java.util.logging.Level julLevel = decode(level);
-            if (julLevel != null) {
-                LOGGER.log(julLevel, format(format, objects));
-            }
+        java.util.logging.Level julLevel = decode(level);
+        if (julLevel != null && LOGGER.isLoggable(julLevel)) {
+            LOGGER.log(julLevel, format(format, objects));
         }
 
         if (JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG) {

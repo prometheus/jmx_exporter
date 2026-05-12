@@ -34,18 +34,26 @@ import java.util.LinkedHashMap;
  */
 public class CredentialsCache {
 
-    /** Default maximum size for a single cached credential value (5 KiB). */
+    /**
+     * Default maximum size for a single cached credential value (5 KiB).
+     */
     public static final int DEFAULT_MAX_VALUE_SIZE_BYTES = 5 * 1024;
 
-    /** Default maximum number of cached credentials. */
+    /**
+     * Default maximum number of cached credentials.
+     */
     public static final int DEFAULT_MAX_ENTRIES = 100;
 
     private static final Byte PRESENT = (byte) 1;
 
-    /** Maximum cacheable credential size in bytes. */
+    /**
+     * Maximum cacheable credential size in bytes.
+     */
     private final int maxValueSizeBytes;
 
-    /** Maximum number of cached credentials. */
+    /**
+     * Maximum number of cached credentials.
+     */
     private final int maxEntries;
 
     /**

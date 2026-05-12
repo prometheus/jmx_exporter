@@ -190,14 +190,15 @@ public class Arguments {
             httpEnabled = true;
             hostname = DEFAULT_HOST;
 
-            int colonIndex = arguments[0].lastIndexOf(':');
+            String firstArg = arguments[0];
+            int colonIndex = firstArg.lastIndexOf(':');
 
             try {
                 if (colonIndex < 0) {
-                    port = Integer.parseInt(arguments[0]);
+                    port = Integer.parseInt(firstArg);
                 } else {
-                    port = Integer.parseInt(arguments[0].substring(colonIndex + 1));
-                    hostname = arguments[0].substring(0, colonIndex);
+                    port = Integer.parseInt(firstArg.substring(colonIndex + 1));
+                    hostname = firstArg.substring(0, colonIndex);
                 }
             } catch (NumberFormatException e) {
                 throw new ConfigurationException(format("Malformed arguments [%s]", toString(arguments)));
@@ -234,7 +235,8 @@ public class Arguments {
             if (argument == null) {
                 stringBuilder.append("(null)");
             } else if (argument.trim().isEmpty()) {
-                stringBuilder.append("\"").append(argument.trim()).append("\"");
+                String trimmedArgument = argument.trim();
+                stringBuilder.append("\"").append(trimmedArgument).append("\"");
             }
         }
 

@@ -36,12 +36,10 @@ public final class VariableResolver {
      */
     public static String resolveVariable(String variable) {
         // If the variable is null or empty, return the variable
-        if (variable == null || variable.trim().isEmpty()) {
+        String trimmedVariable = variable != null ? variable.trim() : null;
+        if (variable == null || trimmedVariable.isEmpty()) {
             return variable;
         }
-
-        // Trim the variable to remove leading and trailing whitespace
-        String trimmedVariable = variable.trim();
 
         // If exactly "${}", return it as a literal
         if ("${}".equals(trimmedVariable)) {

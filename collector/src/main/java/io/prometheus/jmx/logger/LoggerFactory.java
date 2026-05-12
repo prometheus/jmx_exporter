@@ -18,6 +18,7 @@ package io.prometheus.jmx.logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.SimpleFormatter;
 
@@ -39,8 +40,8 @@ public class LoggerFactory {
     static {
         // Override the default formatter for the root logger if it is SimpleFormatter
         for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
-            if (null != handler.getFormatter()
-                    && handler.getFormatter().getClass().getName().endsWith(SimpleFormatter.class.getName())) {
+            Formatter formatter = handler.getFormatter();
+            if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
                 handler.setFormatter(new LoggerFormatter());
             }
         }

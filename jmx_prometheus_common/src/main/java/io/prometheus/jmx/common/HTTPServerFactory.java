@@ -463,12 +463,14 @@ public class HTTPServerFactory {
      */
     private static void configureAuthentication(
             AuthenticationConfiguration authenticationConfiguration, HTTPServer.Builder httpServerBuilder) {
-        if (authenticationConfiguration.getAuthenticator() != null) {
-            httpServerBuilder.authenticator(authenticationConfiguration.getAuthenticator());
+        Authenticator authenticator = authenticationConfiguration.getAuthenticator();
+        if (authenticator != null) {
+            httpServerBuilder.authenticator(authenticator);
         }
 
-        if (authenticationConfiguration.getSubjectAttributeName() != null) {
-            httpServerBuilder.authenticatedSubjectAttributeName(authenticationConfiguration.getSubjectAttributeName());
+        String subjectAttributeName = authenticationConfiguration.getSubjectAttributeName();
+        if (subjectAttributeName != null) {
+            httpServerBuilder.authenticatedSubjectAttributeName(subjectAttributeName);
         }
     }
 
@@ -492,8 +494,7 @@ public class HTTPServerFactory {
             Optional<Object> authenticatorClassAttribute = rootMapAccessor.get("/httpServer/authentication/plugin");
 
             if (authenticatorClassAttribute.isPresent()) {
-                MapAccessor httpServerAuthenticationCustomAuthenticatorMapAccessor = rootMapAccessor
-                        .get("/httpServer/authentication/plugin")
+                MapAccessor httpServerAuthenticationCustomAuthenticatorMapAccessor = authenticatorClassAttribute
                         .map(new ToMapAccessor(ConfigurationException.supplier(
                                 "Invalid configuration for" + " /httpServer/authentication/plugin" + " must be a map")))
                         .orElseThrow(ConfigurationException.supplier(
@@ -582,7 +583,8 @@ public class HTTPServerFactory {
                             .orElseThrow(ConfigurationException.supplier(
                                     "/httpServer/authentication/basic/passwordHash" + " is a required string"));
 
-                    if (SHA_ALGORITHMS.contains(algorithm)) {
+                    boolean isShaAlgorithm = SHA_ALGORITHMS.contains(algorithm);
+                    if (isShaAlgorithm) {
                         authenticator = createMessageDigestAuthenticator(
                                 httpServerAuthenticationBasicMapAccessor, REALM, username, hash, algorithm);
                     } else {
@@ -931,24 +933,24 @@ public class HTTPServerFactory {
      */
     private static SSLFactory createSslFactory(MapAccessor rootMapAccessor) {
         keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
+        char[] keyStorePassword = keyStoreProperties.getPassword();
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
 
         SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder()
                 .withSwappableIdentityMaterial()
                 .withIdentityMaterial(
                         keyStoreProperties.getFilename(),
-                        keyStoreProperties.getPassword(),
-                        keyStoreProperties.getPassword(),
+                        keyStorePassword,
+                        keyStorePassword,
                         keyStoreProperties.getType());
 
         if (trustProps.isPresent()) {
-            trustStoreProperties = trustProps.get();
+            KeyStoreProperties trustStoreProps = trustProps.get();
+            trustStoreProperties = trustStoreProps;
             sslFactoryBuilder
                     .withSwappableTrustMaterial()
                     .withTrustMaterial(
-                            trustStoreProperties.getFilename(),
-                            trustStoreProperties.getPassword(),
-                            trustStoreProperties.getType());
+                            trustStoreProps.getFilename(), trustStoreProps.getPassword(), trustStoreProps.getType());
         }
 
         sslFactoryBuilder.withNeedClientAuthentication(isMutualTls(rootMapAccessor));
@@ -975,17 +977,18 @@ public class HTTPServerFactory {
         }
 
         Optional<KeyStoreProperties> currentTrustProps = getTrustStoreProperties();
+        boolean hasCurrentTrustProps = currentTrustProps.isPresent();
         Optional<String> currentTrustStoreContentHash = Optional.empty();
-        if (currentTrustProps.isPresent()) {
-            currentTrustStoreContentHash =
-                    getContentHash(currentTrustProps.get().getFilename());
+        if (hasCurrentTrustProps) {
+            KeyStoreProperties currentTrustStoreProps = currentTrustProps.get();
+            currentTrustStoreContentHash = getContentHash(currentTrustStoreProps.getFilename());
             if (!currentTrustStoreContentHash.isPresent()) {
                 return;
             }
         }
 
         boolean keyStoreChanged = !keyStoreProperties.getContentHash().equals(currentKeyStoreContentHash.get());
-        boolean trustStoreChanged = currentTrustProps.isPresent()
+        boolean trustStoreChanged = hasCurrentTrustProps
                 && !currentTrustProps
                         .get()
                         .getContentHash()
@@ -1007,16 +1010,17 @@ public class HTTPServerFactory {
         boolean sslUpdated = false;
         SSLFactory.Builder updatedSslFactory = SSLFactory.builder();
         if (keyStoreChanged) {
+            char[] keyPassword = keyProps.getPassword();
             updatedSslFactory.withIdentityMaterial(
-                    keyProps.getFilename(), keyProps.getPassword(), keyProps.getPassword(), keyProps.getType());
+                    keyProps.getFilename(), keyPassword, keyPassword, keyProps.getType());
             sslUpdated = true;
         }
 
-        if (trustStoreChanged && trustProps.isPresent()) {
+        boolean hasTrustProps = trustProps.isPresent();
+        if (trustStoreChanged && hasTrustProps) {
+            KeyStoreProperties trustStoreProps = trustProps.get();
             updatedSslFactory.withTrustMaterial(
-                    trustProps.get().getFilename(),
-                    trustProps.get().getPassword(),
-                    trustProps.get().getType());
+                    trustStoreProps.getFilename(), trustStoreProps.getPassword(), trustStoreProps.getType());
             sslUpdated = true;
         }
 
@@ -1026,7 +1030,7 @@ public class HTTPServerFactory {
                 if (keyStoreChanged) {
                     keyStoreProperties = keyProps;
                 }
-                if (trustStoreChanged && trustProps.isPresent()) {
+                if (trustStoreChanged && hasTrustProps) {
                     trustStoreProperties = trustProps.get();
                 }
             } catch (RuntimeException e) {
