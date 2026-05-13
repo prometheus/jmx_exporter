@@ -22,12 +22,11 @@ import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
-import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
-import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.paramixel.core.support.Retry;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -143,33 +142,29 @@ public class PrometheusTestEnvironment implements AutoCloseable {
      * @throws EnvironmentException if the container does not become ready within the retry limit
      */
     public void waitForReady(String username, String password) {
-        long startMilliseconds = System.currentTimeMillis();
-        int maximumRetryCount = 10;
-        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
+        Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .retryOn(t -> t instanceof Exception)
+                .run(() -> {
+                    HttpRequest.Builder httpRequestBuilder =
+                            HttpRequest.builder().url(getPrometheusBaseUrl() + "/-/ready");
 
-        for (int i = 0; i < maximumRetryCount; i++) {
-            try {
-                HttpRequest.Builder httpRequestBuilder = HttpRequest.builder().url(getPrometheusBaseUrl() + "/-/ready");
+                    if (username != null && password != null) {
+                        httpRequestBuilder.basicAuthentication(username, password);
+                    }
 
-                if (username != null && password != null) {
-                    httpRequestBuilder.basicAuthentication(username, password);
-                }
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequestBuilder.build());
 
-                HttpResponse httpResponse = HttpClient.sendRequest(httpRequestBuilder.build());
+                    if (httpResponse.statusCode() == 200) {
+                        return;
+                    }
 
-                if (httpResponse.statusCode() == 200) {
-                    return;
-                } else {
-                    throttle.throttle();
-                }
-            } catch (Exception e) {
-                throttle.throttle();
-            }
+                    throw new EnvironmentException("Prometheus not ready, status: " + httpResponse.statusCode());
+                });
+
+        if (!result.isPass()) {
+            throw new EnvironmentException(
+                    format("Prometheus [%s] not ready after retry", prometheusContainer.getDockerImageName()));
         }
-
-        throw new EnvironmentException(format(
-                "Prometheus [%s] not ready have after %d milliseconds",
-                prometheusContainer.getDockerImageName(), System.currentTimeMillis() - startMilliseconds));
     }
 
     /**

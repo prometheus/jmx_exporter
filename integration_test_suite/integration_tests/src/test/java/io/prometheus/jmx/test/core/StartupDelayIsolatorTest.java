@@ -29,8 +29,7 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import io.prometheus.jmx.test.support.util.Repeater;
-import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -41,11 +40,11 @@ import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
-import org.paramixel.core.Value;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Parallel;
 import org.paramixel.core.support.Cleanup;
+import org.paramixel.core.support.Retry;
 import org.testcontainers.containers.Network;
 
 public class StartupDelayIsolatorTest {
@@ -54,10 +53,6 @@ public class StartupDelayIsolatorTest {
     private static final String NETWORK_KEY = "network";
 
     private static final int JAVA_AGENT_COUNT = 2;
-
-    private static final int REPEAT_COUNT = 10;
-
-    private static final long REPEAT_INTERVAL_MILLISECONDS = 1000;
 
     public static void main(String[] args) {
         Factory.defaultRunner().runAndExit(actionFactory());
@@ -95,37 +90,30 @@ public class StartupDelayIsolatorTest {
 
     private static Action setUp(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
         return Direct.builder("setUp")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     Network network = Network.newNetwork();
                     network.getId();
                     isolatorExporterTestEnvironment.initialize(StartupDelayIsolatorTest.class, network);
-                    context.getStore().put(NETWORK_KEY, Value.of(network));
-                    context.getStore().put(ENVIRONMENT_KEY, Value.of(isolatorExporterTestEnvironment));
+                    var store = context.getStore();
+                    store.put(NETWORK_KEY, network);
+                    store.put(ENVIRONMENT_KEY, isolatorExporterTestEnvironment);
                 })
                 .build();
     }
 
     private static Action testHealthy() {
         return Direct.builder("testHealthy")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
 
-                        new Repeater(REPEAT_COUNT)
-                                .throttle(REPEAT_INTERVAL_MILLISECONDS)
-                                .test(() -> {
+                        Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
+                                .retryOn(t -> t instanceof AssertionError || t instanceof Exception)
+                                .runAndThrow(() -> {
                                     HttpResponse httpResponse = HttpClient.sendRequest(url);
                                     assertHealthyResponse(httpResponse);
-                                })
-                                .accept((iteration, throwable) -> {
-                                    if (throwable == null) {
-                                        Repeater.abort();
-                                    }
-                                })
-                                .run();
+                                });
                     }
                 })
                 .build();
@@ -133,8 +121,7 @@ public class StartupDelayIsolatorTest {
 
     private static Action testDefaultTextMetrics() {
         return Direct.builder("testDefaultTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -149,8 +136,7 @@ public class StartupDelayIsolatorTest {
 
     private static Action testOpenMetricsTextMetrics() {
         return Direct.builder("testOpenMetricsTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -166,8 +152,7 @@ public class StartupDelayIsolatorTest {
 
     private static Action testPrometheusTextMetrics() {
         return Direct.builder("testPrometheusTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -183,8 +168,7 @@ public class StartupDelayIsolatorTest {
 
     private static Action testPrometheusProtobufMetrics() {
         return Direct.builder("testPrometheusProtobufMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = 0; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -200,15 +184,11 @@ public class StartupDelayIsolatorTest {
 
     private static Action tearDown() {
         return Direct.builder("tearDown")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
-                    Network network = context.getStore()
-                            .remove(NETWORK_KEY)
-                            .map(value -> value.cast(Network.class))
-                            .orElse(null);
-                    IsolatorExporterTestEnvironment environment = context.getStore()
-                            .remove(ENVIRONMENT_KEY)
-                            .map(value -> value.cast(IsolatorExporterTestEnvironment.class))
+                .runnable(context -> {
+                    var store = context.getStore();
+                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
+                    IsolatorExporterTestEnvironment environment = store.remove(
+                                    ENVIRONMENT_KEY, IsolatorExporterTestEnvironment.class)
                             .orElse(null);
 
                     if (network != null && environment != null) {
@@ -225,30 +205,25 @@ public class StartupDelayIsolatorTest {
     }
 
     private static IsolatorExporterTestEnvironment getEnvironment(Context context) {
-        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(IsolatorExporterTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(ENVIRONMENT_KEY, IsolatorExporterTestEnvironment.class)
+                .orElseThrow();
     }
 
-    private static HttpResponse sendRequestWithRetry(String url) throws IOException, Throwable {
+    private static HttpResponse sendRequestWithRetry(String url) throws Throwable {
         return sendRequestWithRetry(url, null, null);
     }
 
-    private static HttpResponse sendRequestWithRetry(String url, String header, String value)
-            throws IOException, Throwable {
+    private static HttpResponse sendRequestWithRetry(String url, String header, String value) throws Throwable {
         final HttpResponse[] responseHolder = new HttpResponse[1];
 
-        new Repeater(REPEAT_COUNT)
-                .throttle(REPEAT_INTERVAL_MILLISECONDS)
-                .test(() -> {
-                    HttpResponse httpResponse =
+        Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
+                .retryOn(t -> t instanceof Exception)
+                .runAndThrow(() -> {
+                    responseHolder[0] =
                             (header != null) ? HttpClient.sendRequest(url, header, value) : HttpClient.sendRequest(url);
-                    responseHolder[0] = httpResponse;
-                })
-                .accept((iteration, throwable) -> {
-                    if (throwable == null && responseHolder[0] != null) {
-                        Repeater.abort();
-                    }
-                })
-                .run();
+                });
 
         return responseHolder[0];
     }

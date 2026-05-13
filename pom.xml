@@ -39,7 +39,7 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <okhttp.version>5.3.2</okhttp.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <paramixel.version>3.0.1</paramixel.version>
+        <paramixel.version>4.0.0</paramixel.version>
     </properties>
 
     <modules>

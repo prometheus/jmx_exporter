@@ -33,7 +33,6 @@ import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
-import org.paramixel.core.Value;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Parallel;
@@ -81,21 +80,20 @@ public class IncludeObjectNamesTest {
 
     private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
         return Direct.builder("setUp")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     Network network = Network.newNetwork();
                     network.getId();
                     jmxExporterTestEnvironment.initialize(IncludeObjectNamesTest.class, network);
-                    context.getStore().put(NETWORK_KEY, Value.of(network));
-                    context.getStore().put(ENVIRONMENT_KEY, Value.of(jmxExporterTestEnvironment));
+                    var store = context.getStore();
+                    store.put(NETWORK_KEY, network);
+                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
                 })
                 .build();
     }
 
     private static Action testHealthy() {
         return Direct.builder("testHealthy")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.HEALTHY);
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -106,8 +104,7 @@ public class IncludeObjectNamesTest {
 
     private static Action testDefaultTextMetrics() {
         return Direct.builder("testDefaultTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -118,8 +115,7 @@ public class IncludeObjectNamesTest {
 
     private static Action testOpenMetricsTextMetrics() {
         return Direct.builder("testOpenMetricsTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
                     HttpResponse httpResponse = HttpClient.sendRequest(
@@ -131,8 +127,7 @@ public class IncludeObjectNamesTest {
 
     private static Action testPrometheusTextMetrics() {
         return Direct.builder("testPrometheusTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
                     HttpResponse httpResponse = HttpClient.sendRequest(
@@ -144,8 +139,7 @@ public class IncludeObjectNamesTest {
 
     private static Action testPrometheusProtobufMetrics() {
         return Direct.builder("testPrometheusProtobufMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
                     HttpResponse httpResponse = HttpClient.sendRequest(
@@ -157,15 +151,11 @@ public class IncludeObjectNamesTest {
 
     private static Action tearDown() {
         return Direct.builder("tearDown")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
-                    Network network = context.getStore()
-                            .remove(NETWORK_KEY)
-                            .map(value -> value.cast(Network.class))
-                            .orElse(null);
-                    JmxExporterTestEnvironment environment = context.getStore()
-                            .remove(ENVIRONMENT_KEY)
-                            .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                .runnable(context -> {
+                    var store = context.getStore();
+                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
+                    JmxExporterTestEnvironment environment = store.remove(
+                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
                             .orElse(null);
 
                     if (network != null && environment != null) {
@@ -179,7 +169,10 @@ public class IncludeObjectNamesTest {
     }
 
     private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(JmxExporterTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
+                .orElseThrow();
     }
 
     private static void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {

@@ -39,7 +39,6 @@ import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
-import org.paramixel.core.Value;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Parallel;
@@ -96,21 +95,20 @@ public class BasicIsolatorTest {
 
     private static Action setUp(IsolatorExporterTestEnvironment isolatorExporterTestEnvironment) {
         return Direct.builder("setUp")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     Network network = Network.newNetwork();
                     network.getId();
                     isolatorExporterTestEnvironment.initialize(BasicIsolatorTest.class, network);
-                    context.getStore().put(NETWORK_KEY, Value.of(network));
-                    context.getStore().put(ENVIRONMENT_KEY, Value.of(isolatorExporterTestEnvironment));
+                    var store = context.getStore();
+                    store.put(NETWORK_KEY, network);
+                    store.put(ENVIRONMENT_KEY, isolatorExporterTestEnvironment);
                 })
                 .build();
     }
 
     private static Action testHealthy() {
         return Direct.builder("testHealthy")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
@@ -129,8 +127,7 @@ public class BasicIsolatorTest {
 
     private static Action testDefaultTextMetrics() {
         return Direct.builder("testDefaultTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -158,8 +155,7 @@ public class BasicIsolatorTest {
 
     private static Action testOpenMetricsTextMetrics() {
         return Direct.builder("testOpenMetricsTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -189,8 +185,7 @@ public class BasicIsolatorTest {
 
     private static Action testPrometheusTextMetrics() {
         return Direct.builder("testPrometheusTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -220,8 +215,7 @@ public class BasicIsolatorTest {
 
     private static Action testPrometheusProtobufMetrics() {
         return Direct.builder("testPrometheusProtobufMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     IsolatorExporterTestEnvironment environment = getEnvironment(context);
                     for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
                         String url = environment.getUrl(test, JmxExporterPath.METRICS);
@@ -251,15 +245,11 @@ public class BasicIsolatorTest {
 
     private static Action tearDown() {
         return Direct.builder("tearDown")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
-                    Network network = context.getStore()
-                            .remove(NETWORK_KEY)
-                            .map(value -> value.cast(Network.class))
-                            .orElse(null);
-                    IsolatorExporterTestEnvironment environment = context.getStore()
-                            .remove(ENVIRONMENT_KEY)
-                            .map(value -> value.cast(IsolatorExporterTestEnvironment.class))
+                .runnable(context -> {
+                    var store = context.getStore();
+                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
+                    IsolatorExporterTestEnvironment environment = store.remove(
+                                    ENVIRONMENT_KEY, IsolatorExporterTestEnvironment.class)
                             .orElse(null);
 
                     if (network != null && environment != null) {
@@ -276,7 +266,10 @@ public class BasicIsolatorTest {
     }
 
     private static IsolatorExporterTestEnvironment getEnvironment(Context context) {
-        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(IsolatorExporterTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(ENVIRONMENT_KEY, IsolatorExporterTestEnvironment.class)
+                .orElseThrow();
     }
 
     private static void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {

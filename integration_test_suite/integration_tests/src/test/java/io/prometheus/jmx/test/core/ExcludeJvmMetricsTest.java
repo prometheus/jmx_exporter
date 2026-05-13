@@ -30,18 +30,17 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import io.prometheus.jmx.test.support.util.Repeater;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
-import org.paramixel.core.Value;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Parallel;
@@ -93,21 +92,20 @@ public class ExcludeJvmMetricsTest {
 
     private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
         return Direct.builder("setUp")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     Network network = Network.newNetwork();
                     network.getId();
                     jmxExporterTestEnvironment.initialize(ExcludeJvmMetricsTest.class, network);
-                    context.getStore().put(NETWORK_KEY, Value.of(network));
-                    context.getStore().put(ENVIRONMENT_KEY, Value.of(jmxExporterTestEnvironment));
+                    var store = context.getStore();
+                    store.put(NETWORK_KEY, network);
+                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
                 })
                 .build();
     }
 
     private static Action testHealthy() {
         return Direct.builder("testHealthy")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.HEALTHY);
                     HttpResponse httpResponse = HttpClient.sendRequest(url);
@@ -118,97 +116,75 @@ public class ExcludeJvmMetricsTest {
 
     private static Action testDefaultTextMetrics() {
         return Direct.builder("testDefaultTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    new Repeater(ITERATIONS)
-                            .throttle(new Repeater.RandomThrottle(0, 100))
-                            .test(() -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(url);
-                                assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
-                            })
-                            .run();
+                    for (int i = 0; i < ITERATIONS; i++) {
+                        Thread.sleep(ThreadLocalRandom.current().nextLong(0, 101));
+                        HttpResponse httpResponse = HttpClient.sendRequest(url);
+                        assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
+                    }
                 })
                 .build();
     }
 
     private static Action testOpenMetricsTextMetrics() {
         return Direct.builder("testOpenMetricsTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    new Repeater(ITERATIONS)
-                            .throttle(new Repeater.RandomThrottle(0, 100))
-                            .test(() -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                        url,
-                                        HttpHeader.ACCEPT,
-                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                                assertMetricsResponse(
-                                        environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                            })
-                            .run();
+                    for (int i = 0; i < ITERATIONS; i++) {
+                        Thread.sleep(ThreadLocalRandom.current().nextLong(0, 101));
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                        assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    }
                 })
                 .build();
     }
 
     private static Action testPrometheusTextMetrics() {
         return Direct.builder("testPrometheusTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    new Repeater(ITERATIONS)
-                            .throttle(new Repeater.RandomThrottle(0, 100))
-                            .test(() -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                        url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                                assertMetricsResponse(
-                                        environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                            })
-                            .run();
+                    for (int i = 0; i < ITERATIONS; i++) {
+                        Thread.sleep(ThreadLocalRandom.current().nextLong(0, 101));
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                        assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    }
                 })
                 .build();
     }
 
     private static Action testPrometheusProtobufMetrics() {
         return Direct.builder("testPrometheusProtobufMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment environment = getEnvironment(context);
                     String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    new Repeater(ITERATIONS)
-                            .throttle(new Repeater.RandomThrottle(0, 100))
-                            .test(() -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                        url,
-                                        HttpHeader.ACCEPT,
-                                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                                assertMetricsResponse(
-                                        environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                            })
-                            .run();
+                    for (int i = 0; i < ITERATIONS; i++) {
+                        Thread.sleep(ThreadLocalRandom.current().nextLong(0, 101));
+                        HttpResponse httpResponse = HttpClient.sendRequest(
+                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+                        assertMetricsResponse(
+                                environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    }
                 })
                 .build();
     }
 
     private static Action tearDown() {
         return Direct.builder("tearDown")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
-                    Network network = context.getStore()
-                            .remove(NETWORK_KEY)
-                            .map(value -> value.cast(Network.class))
-                            .orElse(null);
-                    JmxExporterTestEnvironment environment = context.getStore()
-                            .remove(ENVIRONMENT_KEY)
-                            .map(value -> value.cast(JmxExporterTestEnvironment.class))
+                .runnable(context -> {
+                    var store = context.getStore();
+                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
+                    JmxExporterTestEnvironment environment = store.remove(
+                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
                             .orElse(null);
 
                     if (network != null && environment != null) {
@@ -222,7 +198,10 @@ public class ExcludeJvmMetricsTest {
     }
 
     private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getStore().get(ENVIRONMENT_KEY).orElseThrow().cast(JmxExporterTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
+                .orElseThrow();
     }
 
     private static void assertMetricsResponse(

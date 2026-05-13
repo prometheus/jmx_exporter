@@ -38,11 +38,13 @@ eclipse-temurin:11
 eclipse-temurin:17
 eclipse-temurin:21
 eclipse-temurin:25
+eclipse-temurin:26
 eclipse-temurin:8-alpine
 eclipse-temurin:11-alpine
 eclipse-temurin:17-alpine
 eclipse-temurin:21-alpine
 eclipse-temurin:25-alpine
+eclipse-temurin:26-alpine
 ghcr.io/graalvm/jdk:java8
 ghcr.io/graalvm/jdk:java11
 ghcr.io/graalvm/jdk:java17
@@ -55,6 +57,8 @@ ibm-semeru-runtimes:open-11-jdk-focal
 ibm-semeru-runtimes:open-17-jdk-focal
 ibm-semeru-runtimes:open-21-jdk-focal
 ibm-semeru-runtimes:open-23-jdk-focal
+ibm-semeru-runtimes:open-25-jdk
+ibm-semeru-runtimes:open-26-jdk
 konajdk/konajdk:8
 konajdk/konajdk:11
 konajdk/konajdk:17-tlinux
@@ -83,6 +87,7 @@ registry.access.redhat.com/ubi8/openjdk-21-runtime:latest
 registry.access.redhat.com/ubi9/openjdk-11-runtime:latest
 registry.access.redhat.com/ubi9/openjdk-17-runtime:latest
 registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
+registry.access.redhat.com/ubi9/openjdk-25-runtime:latest
 sapmachine:11
 sapmachine:17
 sapmachine:21
