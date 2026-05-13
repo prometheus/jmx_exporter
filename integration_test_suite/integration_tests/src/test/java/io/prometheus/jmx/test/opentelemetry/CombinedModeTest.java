@@ -32,11 +32,10 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import io.prometheus.jmx.test.support.throttle.ExponentialBackoffThrottle;
-import io.prometheus.jmx.test.support.throttle.Throttle;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,11 +47,11 @@ import org.paramixel.core.Action;
 import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
 import org.paramixel.core.Paramixel;
-import org.paramixel.core.Value;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
 import org.paramixel.core.action.Parallel;
 import org.paramixel.core.support.Cleanup;
+import org.paramixel.core.support.Retry;
 import org.testcontainers.containers.Network;
 
 public class CombinedModeTest {
@@ -101,8 +100,7 @@ public class CombinedModeTest {
 
     private static Action setUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
         return Direct.builder("setUp")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment jmxExporterTestEnvironment =
                             openTelemetryTestEnvironment.exporterTestEnvironment();
                     PrometheusTestEnvironment prometheusTestEnvironment =
@@ -112,17 +110,17 @@ public class CombinedModeTest {
                     prometheusTestEnvironment.initialize(CombinedModeTest.class, network);
                     prometheusTestEnvironment.waitForReady();
                     jmxExporterTestEnvironment.initialize(CombinedModeTest.class, network);
-                    context.getStore().put(NETWORK_KEY, Value.of(network));
-                    context.getStore().put(JMX_EXPORTER_TEST_ENVIRONMENT, Value.of(jmxExporterTestEnvironment));
-                    context.getStore().put(PROMETHEUS_TEST_ENVIRONMENT, Value.of(prometheusTestEnvironment));
+                    var store = context.getStore();
+                    store.put(NETWORK_KEY, network);
+                    store.put(JMX_EXPORTER_TEST_ENVIRONMENT, jmxExporterTestEnvironment);
+                    store.put(PROMETHEUS_TEST_ENVIRONMENT, prometheusTestEnvironment);
                 })
                 .build();
     }
 
     private static Action testHealthy() {
         return Direct.builder("testHealthy")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
@@ -134,8 +132,7 @@ public class CombinedModeTest {
 
     private static Action testDefaultTextMetrics() {
         return Direct.builder("testDefaultTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
@@ -147,8 +144,7 @@ public class CombinedModeTest {
 
     private static Action testOpenMetricsTextMetrics() {
         return Direct.builder("testOpenMetricsTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
@@ -164,8 +160,7 @@ public class CombinedModeTest {
 
     private static Action testPrometheusTextMetrics() {
         return Direct.builder("testPrometheusTextMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
@@ -181,8 +176,7 @@ public class CombinedModeTest {
 
     private static Action testPrometheusProtobufMetrics() {
         return Direct.builder("testPrometheusProtobufMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
@@ -198,8 +192,7 @@ public class CombinedModeTest {
 
     private static Action testPrometheusHasMetrics() {
         return Direct.builder("testPrometheusHasMetrics")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
+                .runnable(context -> {
                     JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
                             getJmxExporterTestEnvironment(context);
                     PrometheusTestEnvironment currentPrometheusTestEnvironment = getPrometheusTestEnvironment(context);
@@ -222,19 +215,14 @@ public class CombinedModeTest {
 
     private static Action tearDown() {
         return Direct.builder("tearDown")
-                .contextMode(Action.ContextMode.SHARED)
-                .execute(context -> {
-                    Network network = context.getStore()
-                            .remove(NETWORK_KEY)
-                            .map(value -> value.cast(Network.class))
+                .runnable(context -> {
+                    var store = context.getStore();
+                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
+                    JmxExporterTestEnvironment jmxExporterTestEnvironment = store.remove(
+                                    JMX_EXPORTER_TEST_ENVIRONMENT, JmxExporterTestEnvironment.class)
                             .orElse(null);
-                    JmxExporterTestEnvironment jmxExporterTestEnvironment = context.getStore()
-                            .remove(JMX_EXPORTER_TEST_ENVIRONMENT)
-                            .map(value -> value.cast(JmxExporterTestEnvironment.class))
-                            .orElse(null);
-                    PrometheusTestEnvironment prometheusTestEnvironment = context.getStore()
-                            .remove(PROMETHEUS_TEST_ENVIRONMENT)
-                            .map(value -> value.cast(PrometheusTestEnvironment.class))
+                    PrometheusTestEnvironment prometheusTestEnvironment = store.remove(
+                                    PROMETHEUS_TEST_ENVIRONMENT, PrometheusTestEnvironment.class)
                             .orElse(null);
 
                     if (network != null && jmxExporterTestEnvironment != null && prometheusTestEnvironment != null) {
@@ -249,14 +237,17 @@ public class CombinedModeTest {
     }
 
     private static JmxExporterTestEnvironment getJmxExporterTestEnvironment(Context context) {
-        return context.getStore()
-                .get(JMX_EXPORTER_TEST_ENVIRONMENT)
-                .orElseThrow()
-                .cast(JmxExporterTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(JMX_EXPORTER_TEST_ENVIRONMENT, JmxExporterTestEnvironment.class)
+                .orElseThrow();
     }
 
     private static PrometheusTestEnvironment getPrometheusTestEnvironment(Context context) {
-        return context.getStore().get(PROMETHEUS_TEST_ENVIRONMENT).orElseThrow().cast(PrometheusTestEnvironment.class);
+        return context.getParent()
+                .getStore()
+                .get(PROMETHEUS_TEST_ENVIRONMENT, PrometheusTestEnvironment.class)
+                .orElseThrow();
     }
 
     private static void assertMetricsResponse(
@@ -359,26 +350,24 @@ public class CombinedModeTest {
     }
 
     protected static Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
-            throws IOException {
-        Throttle throttle = new ExponentialBackoffThrottle(100, 5000);
-        Double value = null;
+            throws Throwable {
+        Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .retryOn(t -> t instanceof RuntimeException)
+                .run(() -> {
+                    HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, metricName);
 
-        for (int i = 0; i < 10; i++) {
-            HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, metricName);
+                    assertThat(httpResponse.statusCode()).isEqualTo(200);
+                    assertThat(httpResponse.body()).isNotNull();
+                    assertThat(httpResponse.body().string()).isNotNull();
 
-            assertThat(httpResponse.statusCode()).isEqualTo(200);
-            assertThat(httpResponse.body()).isNotNull();
-            assertThat(httpResponse.body().string()).isNotNull();
+                    if (httpResponse.body().string().contains(metricName)) {
+                        return;
+                    }
 
-            if (httpResponse.body().string().contains(metricName)) {
-                value = 1.0;
-                break;
-            }
+                    throw new RuntimeException("metric not found yet: " + metricName);
+                });
 
-            throttle.throttle();
-        }
-
-        return value;
+        return result.isPass() ? 1.0 : null;
     }
 
     protected static HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)

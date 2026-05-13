@@ -1,5 +1,6 @@
-eclipse-temurin:8-alpine
-eclipse-temurin:11-alpine
-eclipse-temurin:17-alpine
-eclipse-temurin:21-alpine
-eclipse-temurin:25-alpine
+amazoncorretto:8
+amazoncorretto:11
+amazoncorretto:17
+amazoncorretto:21
+amazoncorretto:25
+amazoncorretto:26

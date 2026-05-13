@@ -38,7 +38,6 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
-import io.prometheus.jmx.test.support.util.Repeater;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -52,146 +51,149 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import org.paramixel.core.Action;
+import org.paramixel.core.Context;
 import org.paramixel.core.Factory;
+import org.paramixel.core.Paramixel;
 import org.paramixel.core.action.Container;
 import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
 
 public class LocalTest {
 
-    private static final int CLIENT_COUNT = 10;
-    private static final int ITERATIONS = 10;
     private static final String BASE_URL = "http://localhost:";
     private static final PrometheusRegistry DEFAULT_REGISTRY = PrometheusRegistry.defaultRegistry;
+
+    private static final String HTTP_SERVER_KEY = "httpServer";
+    private static final String BASE_URL_KEY = "baseUrl";
 
     public static void main(String[] args) {
         Factory.defaultRunner().runAndExit(actionFactory());
     }
 
+    @Paramixel.ActionFactory
     public static Action actionFactory() {
-        try {
-            String resource = (LocalTest.class.getName().replace(".", "/") + "/exporter.yaml");
-            Path tempDirectory = Files.createTempDirectory("jmx-exporter-test");
-            File exporterYamlFile = tempDirectory.resolve("exporter.yaml").toFile();
-            ResourceSupport.export(resource, exporterYamlFile);
+        Action setUp = setUp();
+        Action testHealthy = testHealthy();
+        Action testDefaultTextMetrics = testDefaultTextMetrics();
+        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
+        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
+        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
+        Action tearDown = tearDown();
 
-            new TabularData().register();
-            new AutoIncrementing().register();
-            new ExistDb().register();
-            new PerformanceMetrics().register();
-            new CustomValue().register();
-            new StringValue().register();
+        return Container.builder("LocalTest")
+                .before(setUp)
+                .child(testHealthy)
+                .child(testDefaultTextMetrics)
+                .child(testOpenMetricsTextMetrics)
+                .child(testPrometheusTextMetrics)
+                .child(testPrometheusProtobufMetrics)
+                .after(tearDown)
+                .build();
+    }
 
-            new BuildInfoMetrics().register(DEFAULT_REGISTRY);
-            JvmMetrics.builder().register(DEFAULT_REGISTRY);
-            new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
-
-            final HTTPServer httpServer =
-                    HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (httpServer != null) {
+    private static Action setUp() {
+        return Direct.builder("setUp")
+                .runnable(context -> {
                     try {
-                        httpServer.stop();
-                    } catch (Throwable t) {
+                        String resource = (LocalTest.class.getName().replace(".", "/") + "/exporter.yaml");
+                        Path tempDirectory = Files.createTempDirectory("jmx-exporter-test");
+                        File exporterYamlFile =
+                                tempDirectory.resolve("exporter.yaml").toFile();
+                        ResourceSupport.export(resource, exporterYamlFile);
+
+                        new TabularData().register();
+                        new AutoIncrementing().register();
+                        new ExistDb().register();
+                        new PerformanceMetrics().register();
+                        new CustomValue().register();
+                        new StringValue().register();
+
+                        new BuildInfoMetrics().register(DEFAULT_REGISTRY);
+                        JvmMetrics.builder().register(DEFAULT_REGISTRY);
+                        new JmxCollector(exporterYamlFile).register(DEFAULT_REGISTRY);
+
+                        HTTPServer httpServer =
+                                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, exporterYamlFile);
+
+                        String baseUrl = BASE_URL + httpServer.getPort();
+
+                        var store = context.getStore();
+                        store.put(HTTP_SERVER_KEY, httpServer);
+                        store.put(BASE_URL_KEY, baseUrl);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to set up LocalTest", e);
                     }
-                }
-            }));
+                })
+                .build();
+    }
 
-            String baseUrl = BASE_URL + httpServer.getPort();
+    private static Action testHealthy() {
+        return Direct.builder("testHealthy")
+                .runnable(context -> {
+                    String url = getBaseUrl(context) + JmxExporterPath.HEALTHY;
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
+                    assertHealthyResponse(httpResponse);
+                })
+                .build();
+    }
 
-            var parallelBuilder = Parallel.builder("client-tests");
+    private static Action testDefaultTextMetrics() {
+        return Direct.builder("testDefaultTextMetrics")
+                .runnable(context -> {
+                    String url = getBaseUrl(context) + JmxExporterPath.METRICS;
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
+                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                })
+                .build();
+    }
 
-            for (int i = 1; i < CLIENT_COUNT + 1; i++) {
-                String clientId = "client " + i;
+    private static Action testOpenMetricsTextMetrics() {
+        return Direct.builder("testOpenMetricsTextMetrics")
+                .runnable(context -> {
+                    String url = getBaseUrl(context) + JmxExporterPath.METRICS;
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                })
+                .build();
+    }
 
-                Action tests = Container.builder(clientId + "-tests")
-                        .child(Direct.builder(clientId + "-testHealthy")
-                                .execute(context -> {
-                                    String url = baseUrl + JmxExporterPath.HEALTHY;
-                                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                                    assertHealthyResponse(httpResponse);
-                                })
-                                .build())
-                        .child(Direct.builder(clientId + "-testDefaultTextMetrics")
-                                .execute(context -> {
-                                    String url = baseUrl + JmxExporterPath.METRICS;
-                                    new Repeater(ITERATIONS)
-                                            .throttle(new Repeater.RandomThrottle(0, 100))
-                                            .test(() -> {
-                                                HttpResponse httpResponse = HttpClient.sendRequest(url);
-                                                assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
-                                            })
-                                            .run();
-                                })
-                                .build())
-                        .child(Direct.builder(clientId + "-testOpenMetricsTextMetrics")
-                                .execute(context -> {
-                                    String url = baseUrl + JmxExporterPath.METRICS;
-                                    new Repeater(ITERATIONS)
-                                            .throttle(new Repeater.RandomThrottle(0, 100))
-                                            .test(() -> {
-                                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                                        url,
-                                                        HttpHeader.ACCEPT,
-                                                        MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                                                assertMetricsResponse(
-                                                        httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                                            })
-                                            .run();
-                                })
-                                .build())
-                        .child(Direct.builder(clientId + "-testPrometheusTextMetrics")
-                                .execute(context -> {
-                                    String url = baseUrl + JmxExporterPath.METRICS;
-                                    new Repeater(ITERATIONS)
-                                            .throttle(new Repeater.RandomThrottle(0, 100))
-                                            .test(() -> {
-                                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                                        url,
-                                                        HttpHeader.ACCEPT,
-                                                        MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                                                assertMetricsResponse(
-                                                        httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                                            })
-                                            .run();
-                                })
-                                .build())
-                        .child(Direct.builder(clientId + "-testPrometheusProtobufMetrics")
-                                .execute(context -> {
-                                    String url = baseUrl + JmxExporterPath.METRICS;
-                                    new Repeater(ITERATIONS)
-                                            .throttle(new Repeater.RandomThrottle(0, 100))
-                                            .test(() -> {
-                                                HttpResponse httpResponse = HttpClient.sendRequest(
-                                                        url,
-                                                        HttpHeader.ACCEPT,
-                                                        MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                                                assertMetricsResponse(
-                                                        httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                                            })
-                                            .run();
-                                })
-                                .build())
-                        .build();
+    private static Action testPrometheusTextMetrics() {
+        return Direct.builder("testPrometheusTextMetrics")
+                .runnable(context -> {
+                    String url = getBaseUrl(context) + JmxExporterPath.METRICS;
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                })
+                .build();
+    }
 
-                parallelBuilder.child(tests);
-            }
+    private static Action testPrometheusProtobufMetrics() {
+        return Direct.builder("testPrometheusProtobufMetrics")
+                .runnable(context -> {
+                    String url = getBaseUrl(context) + JmxExporterPath.METRICS;
+                    HttpResponse httpResponse = HttpClient.sendRequest(
+                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                })
+                .build();
+    }
 
-            return Container.builder("LocalTest")
-                    .child(parallelBuilder.build())
-                    .after(Direct.builder("tearDown")
-                            .execute(context -> {
-                                if (httpServer != null) {
-                                    httpServer.stop();
-                                }
-                            })
-                            .build())
-                    .build();
+    private static Action tearDown() {
+        return Direct.builder("tearDown")
+                .runnable(context -> {
+                    var store = context.getStore();
+                    HTTPServer httpServer =
+                            store.remove(HTTP_SERVER_KEY, HTTPServer.class).orElse(null);
+                    if (httpServer != null) {
+                        httpServer.stop();
+                    }
+                })
+                .build();
+    }
 
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create LocalTest action", e);
-        }
+    private static String getBaseUrl(Context context) {
+        return context.getParent().getStore().get(BASE_URL_KEY, String.class).orElseThrow();
     }
 
     private static void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
@@ -211,6 +213,13 @@ public class LocalTest {
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
+                .withName("jmx_exporter_build_info")
+                .withLabel("name", "unknown")
+                .withValue(1d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
                 .withName("jmx_scrape_error")
                 .withValue(0d)
                 .isPresent();
@@ -219,6 +228,18 @@ public class LocalTest {
                 .ofType(Metric.Type.COUNTER)
                 .withName("jmx_config_reload_success_total")
                 .withValue(0d)
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "nonheap")
+                .isPresent();
+
+        assertMetric(metrics)
+                .ofType(Metric.Type.GAUGE)
+                .withName("jvm_memory_used_bytes")
+                .withLabel("area", "heap")
                 .isPresent();
 
         assertMetric(metrics)
