@@ -6,11 +6,11 @@ httpServer:
   ssl:
     mutualTLS: false
     keyStore:
-      filename: localhost.jks
+      filename: keystore.jks
       type: JKS
       password: changeit
     trustStore:
-      filename: localhost.jks
+      filename: keystore.jks
       type: JKS
       password: changeit
     certificate:

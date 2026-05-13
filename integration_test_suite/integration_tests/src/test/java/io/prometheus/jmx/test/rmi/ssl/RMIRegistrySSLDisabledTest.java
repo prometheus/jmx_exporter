@@ -51,7 +51,6 @@ public class RMIRegistrySSLDisabledTest {
     }
 
     @Paramixel.ActionFactory
-    @Paramixel.Disabled
     public static Action actionFactory() {
         var parallelBuilder = Parallel.builder(RMIRegistrySSLDisabledTest.class.getName());
         for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()

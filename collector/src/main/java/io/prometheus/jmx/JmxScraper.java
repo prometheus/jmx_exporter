@@ -155,11 +155,7 @@ class JmxScraper {
                 environment.put(Context.SECURITY_PROTOCOL, "ssl");
 
                 SSLFactory sslFactory = createSslFactory();
-                try {
-                    ProviderUtils.configure(sslFactory);
-                } finally {
-                    ProviderUtils.remove();
-                }
+                ProviderUtils.configure(sslFactory);
 
                 SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
                 environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
@@ -170,7 +166,6 @@ class JmxScraper {
 
             jmxc = JMXConnectorFactory.connect(new JMXServiceURL(jmxUrl), environment);
             beanConn = jmxc.getMBeanServerConnection();
-            ProviderUtils.remove();
         }
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
@@ -200,6 +195,10 @@ class JmxScraper {
         } finally {
             if (jmxc != null) {
                 jmxc.close();
+            }
+
+            if (sslProperties.enabled) {
+                ProviderUtils.remove();
             }
         }
     }

@@ -103,7 +103,7 @@ public class SSLWithCustomCiphers {
         final String type = "PKCS12";
         final char[] password = "changeit".toCharArray();
         final String keyStoreResource = Strings.formatIfArgs(
-                "%s/%s/localhost.pkcs12", SSLWithCustomCiphers.class.getSimpleName(), mode.toString());
+                "%s/%s/keystore.pkcs12", SSLWithCustomCiphers.class.getSimpleName(), mode.toString());
         KeyStore keyStore = KeyStore.getInstance(type);
         try (InputStream inputStream = SSLWithCustomCiphers.class.getResourceAsStream(keyStoreResource)) {
             keyStore.load(inputStream, password);

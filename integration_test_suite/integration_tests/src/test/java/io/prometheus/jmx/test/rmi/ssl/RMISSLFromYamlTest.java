@@ -51,7 +51,6 @@ public class RMISSLFromYamlTest {
     }
 
     @Paramixel.ActionFactory
-    @Paramixel.Disabled
     public static Action actionFactory() {
         var parallelBuilder = Parallel.builder(RMISSLFromYamlTest.class.getName());
         for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()

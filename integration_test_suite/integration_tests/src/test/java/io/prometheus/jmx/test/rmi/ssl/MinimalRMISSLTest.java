@@ -51,7 +51,6 @@ public class MinimalRMISSLTest {
     }
 
     @Paramixel.ActionFactory
-    @Paramixel.Disabled
     public static Action actionFactory() {
         var parallelBuilder = Parallel.builder(MinimalRMISSLTest.class.getName());
         for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()
