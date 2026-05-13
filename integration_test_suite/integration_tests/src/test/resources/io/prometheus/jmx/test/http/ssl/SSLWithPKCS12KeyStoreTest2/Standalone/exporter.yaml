@@ -1,7 +1,7 @@
 httpServer:
   ssl:
     keyStore:
-      filename: localhost.pkcs12
+      filename: keystore.pkcs12
       password: changeit
     certificate:
       alias: localhost

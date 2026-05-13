@@ -40,10 +40,11 @@ java \
   -Dcom.sun.management.jmxremote.access.file=${JMXREMOTE_ACCESS} \
   -Dcom.sun.management.jmxremote.rmi.port=9999 \
   -Dcom.sun.management.jmxremote.ssl=true \
-  -Djavax.net.ssl.keyStore=localhost.pkcs12 \
+  -Djava.rmi.server.hostname=application \
+  -Djavax.net.ssl.keyStore=application.pkcs12 \
   -Djavax.net.ssl.keyStorePassword=changeit \
   -Djavax.net.ssl.keyStoreType=pkcs12 \
-  -Djavax.net.ssl.trustStore=localhost.pkcs12 \
+  -Djavax.net.ssl.trustStore=application.pkcs12 \
   -Djavax.net.ssl.trustStorePassword=changeit \
   -Djavax.net.ssl.trustStoreType=pkcs12 \
   -jar jmx_example_application.jar
