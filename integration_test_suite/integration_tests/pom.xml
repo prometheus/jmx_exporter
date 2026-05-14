@@ -15,9 +15,9 @@
     <url>https://github.com/prometheus/jmx_exporter</url>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>${integration-test.compiler.release}</maven.compiler.source>
+        <maven.compiler.target>${integration-test.compiler.release}</maven.compiler.target>
+        <maven.compiler.release>${integration-test.compiler.release}</maven.compiler.release>
         <automatic.module.name>io.prometheus.jmx.test</automatic.module.name>
     </properties>
 
@@ -146,18 +146,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <configuration>
-                    <java>
-                        <palantirJavaFormat>
-                            <version>${palantir.java.format.version}</version>
-                            <style>PALANTIR</style>
-                        </palantirJavaFormat>
-                    </java>
-                </configuration>
-            </plugin>
+
         </plugins>
     </build>
 
