@@ -22,9 +22,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import java.lang.management.ManagementFactory;
 import java.util.logging.LogManager;
-import javax.management.MBeanServer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,25 +36,7 @@ public class JmxCollectorTest {
     public static void classSetUp() throws Exception {
         LogManager.getLogManager().readConfiguration(JmxCollectorTest.class.getResourceAsStream("/logging.properties"));
 
-        // Get the Platform MBean Server.
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-
-        // Register the MBeans.
-        CollidingName.registerBeans(mbs);
-        PerformanceMetrics.registerBean(mbs);
-        TotalValue.registerBean(mbs);
-        Cassandra.registerBean(mbs);
-        CassandraMetrics.registerBean(mbs);
-        Hadoop.registerBean(mbs);
-        HadoopDataNode.registerBean(mbs);
-        ExistDb.registerBean(mbs);
-        BeanWithEnum.registerBean(mbs);
-        TomcatServlet.registerBean(mbs);
-        Bool.registerBean(mbs);
-        Camel.registerBean(mbs);
-        CustomValue.registerBean(mbs);
-        StringValue.registerBean(mbs);
-        KafkaClient.registerBean(mbs);
+        TestMBeanRegistry.registerTestMBeans();
     }
 
     @BeforeEach

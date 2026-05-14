@@ -137,4 +137,18 @@ public class VariableResolverTest {
                     .hasMessageContaining("Invalid environment variable name");
         }
     }
+
+    @Nested
+    class EnvironmentVariableValueTests {
+
+        @Test
+        void resolveExistingVariableWithNonEmptyValue() {
+            String pathValue = System.getenv("PATH");
+            if (pathValue != null && !pathValue.trim().isEmpty()) {
+                String result = VariableResolver.resolveVariable("${PATH}");
+                assertThat(result).isNotNull();
+                assertThat(result).isNotEmpty();
+            }
+        }
+    }
 }
