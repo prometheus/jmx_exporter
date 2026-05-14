@@ -9,6 +9,7 @@ target/
 .project
 .settings/
 .classpath
+**/.flattened-pom.xml
 dependency-reduced-pom.xml
 pom.xml.versionsBackup
 integration_test_suite/integration_tests/src/test/resources/common/**.jar

@@ -21,25 +21,59 @@
 
     <properties>
         <revision>1.5.0-post</revision>
-        <palantir.java.format.version>2.90.0</palantir.java.format.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
-        <project.reporting.sourceEncoding>UTF-8</project.reporting.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Build settings -->
+        <integration-test.compiler.release>17</integration-test.compiler.release>
+        <jacoco.skip>false</jacoco.skip>
+        <maven.compiler.release>8</maven.compiler.release>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <maven.compiler.release>8</maven.compiler.release>
-        <prometheus.metrics.version>1.5.1</prometheus.metrics.version>
-        <junit.version>6.0.3</junit.version>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <palantir-java-format.version>2.90.0</palantir-java-format.version>
+        <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.testSourceEncoding>UTF-8</project.build.testSourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.reporting.sourceEncoding>UTF-8</project.reporting.sourceEncoding>
+        <!-- Dependency versions -->
         <assertj.version>3.27.7</assertj.version>
         <ayza.version>10.0.4</ayza.version>
-        <snakeyaml.version>2.6</snakeyaml.version>
-        <slf4j.version>2.1.0-alpha1</slf4j.version>
-        <logback.version>1.5.32</logback.version>
-        <testcontainers.version>2.0.5</testcontainers.version>
-        <okhttp.version>5.3.2</okhttp.version>
         <commons-compress.version>1.28.0</commons-compress.version>
+        <junit.version>6.0.3</junit.version>
+        <logback.version>1.5.32</logback.version>
+        <okhttp.version>5.3.2</okhttp.version>
+        <opentest4j.version>1.3.0</opentest4j.version>
         <paramixel.version>4.0.0</paramixel.version>
+        <prometheus.metrics.version>1.5.1</prometheus.metrics.version>
+        <slf4j.version>2.1.0-alpha1</slf4j.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
+        <!-- Plugin versions -->
+        <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+        <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
+        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+        <maven-bundle-plugin.version>6.0.2</maven-bundle-plugin.version>
+        <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-dependency-plugin.version>3.10.0</maven-dependency-plugin.version>
+        <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
+        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
+        <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+        <maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
+        <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
+        <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
+        <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>
     </properties>
 
     <modules>
@@ -161,7 +195,7 @@
             <dependency>
                 <groupId>org.opentest4j</groupId>
                 <artifactId>opentest4j</artifactId>
-                <version>1.3.0</version>
+                <version>${opentest4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.paramixel</groupId>
@@ -171,70 +205,68 @@
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>${maven-shade-plugin.version}</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-    </dependencies>
 
     <build>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.4</version>
+                    <version>${maven-install-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>${maven-resources-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.15.0</version>
+                    <version>${maven-compiler-plugin.version}</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
+                        <release>${maven.compiler.release}</release>
                         <compilerArgument>-Xbootclasspath/a:${env.JAVA_HOME}/lib/</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>${maven-surefire-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>${maven-jar-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>${maven-clean-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>${maven-site-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.6.2</version>
+                    <version>${maven-shade-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>${maven-failsafe-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>${maven-release-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>${maven-dependency-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.12.0</version>
+                    <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
                         <encoding>UTF-8</encoding>
                         <docencoding>UTF-8</docencoding>
@@ -245,28 +277,45 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.8</version>
+                    <version>${maven-gpg-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>${maven-source-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.6.2</version>
+                    <version>${maven-enforcer-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>enforce-maven</id>
+                            <inherited>true</inherited>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireMavenVersion>
+                                        <version>3.9.6</version>
+                                    </requireMavenVersion>
+                                </rules>
+                                <fail>true</fail>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>${maven-assembly-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.4</version>
+                    <version>${maven-deploy-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.21.0</version>
+                    <version>${versions-maven-plugin.version}</version>
                     <configuration>
                         <rulesUri>file://${maven.multiModuleProjectDirectory}/version-rules.xml</rulesUri>
                     </configuration>
@@ -274,24 +323,24 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>${build-helper-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.coderplus.maven.plugins</groupId>
                     <artifactId>copy-rename-maven-plugin</artifactId>
-                    <version>1.0.1</version>
+                    <version>${copy-rename-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>${spotless-maven-plugin.version}</version>
                     <configuration>
                         <licenseHeader>
                             <file>${maven.multiModuleProjectDirectory}/license-header.txt</file>
                         </licenseHeader>
                         <java>
                             <palantirJavaFormat>
-                                <version>${palantir.java.format.version}</version>
+                                <version>${palantir-java-format.version}</version>
                                 <style>PALANTIR</style>
                             </palantirJavaFormat>
                         </java>
@@ -313,21 +362,24 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>${central.publishing.maven.plugin.version}</version>
+                    <version>${central-publishing-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.14</version>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <configuration>
+                        <skip>${jacoco.skip}</skip>
+                    </configuration>
                     <executions>
                         <execution>
-                            <id>prepare-agent</id>
+                            <id>jacoco-prepare-agent</id>
                             <goals>
                                 <goal>prepare-agent</goal>
                             </goals>
                         </execution>
                         <execution>
-                            <id>report</id>
+                            <id>jacoco-report</id>
                             <phase>test</phase>
                             <goals>
                                 <goal>report</goal>
@@ -335,35 +387,27 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>${maven-bundle-plugin.version}</version>
+                    <extensions>true</extensions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>${flatten-maven-plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-maven</id>
-                        <inherited>true</inherited>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireMavenVersion>
-                                    <version>3.9.6</version>
-                                </requireMavenVersion>
-                            </rules>
-                            <fail>true</fail>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>6.0.2</version>
                 <extensions>true</extensions>
             </plugin>
             <plugin>
@@ -374,6 +418,30 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -381,7 +449,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.9.0</version>
+                <version>${maven-project-info-reports-plugin.version}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -409,6 +477,30 @@
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <configuration>
+                            <updatePomFile>true</updatePomFile>
+                            <flattenMode>ossrh</flattenMode>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>flatten</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>flatten</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>flatten.clean</id>
+                                <phase>clean</phase>
+                                <goals>
+                                    <goal>clean</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-deploy-plugin</artifactId>
