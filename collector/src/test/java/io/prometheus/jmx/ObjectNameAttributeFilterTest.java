@@ -16,7 +16,8 @@
 
 package io.prometheus.jmx;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -207,6 +209,75 @@ public class ObjectNameAttributeFilterTest {
         assertThat(filter.includeObjectNameAttributesIsEmpty()).isFalse();
     }
 
+    @Nested
+    class AutoExcludeDisabledTests {
+
+        @Test
+        public void testAutoExcludeDisabled() throws Exception {
+            ObjectNameAttributeFilter filter = initAutoExcludeDisabledFilter();
+
+            assertThat(filter.includeObjectNameAttributesIsEmpty()).isTrue();
+        }
+
+        @Test
+        public void testAddIsNoopWhenAutoExcludeDisabled() throws Exception {
+            ObjectNameAttributeFilter filter = initAutoExcludeDisabledFilter();
+
+            ObjectName objectName = new ObjectName("test:Type=Test");
+            filter.add(objectName, "SomeAttribute");
+
+            assertThat(filter.exclude(objectName, "SomeAttribute")).isFalse();
+        }
+
+        @Test
+        public void testOnlyKeepMBeansIsNoopWhenAutoExcludeDisabled() throws Exception {
+            ObjectNameAttributeFilter filter = initAutoExcludeDisabledFilter();
+
+            ObjectName objectName = new ObjectName("test:Type=Test");
+            filter.add(objectName, "SomeAttribute");
+
+            Set<ObjectName> emptySet = Collections.emptySet();
+            filter.onlyKeepMBeans(emptySet);
+
+            assertThat(filter.exclude(objectName, "SomeAttribute")).isFalse();
+        }
+    }
+
+    @Nested
+    class MalformedObjectNameTests {
+
+        @Test
+        public void testCreateWithMalformedObjectNameThrowsRuntimeException() {
+            String yaml = "---\n" + "excludeObjectNameAttributes:\n" + "  \"==invalid==\":\n" + "    - \"Attr\"\n";
+
+            assertThatThrownBy(() -> ObjectNameAttributeFilter.create(new Yaml().load(yaml)))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Invalid configuration format");
+        }
+    }
+
+    @Nested
+    class ExcludeWithNonMatchingAttributeTests {
+
+        @Test
+        public void testExcludeWithObjectNameInMapButNonMatchingAttribute() throws Exception {
+            ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
+
+            boolean result = filter.exclude(new ObjectName("java.lang:type=Runtime"), "NonExistentAttribute");
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        public void testExcludeWithNonMatchingObjectName() throws Exception {
+            ObjectNameAttributeFilter filter = initNonEmptyConfigFilter();
+
+            boolean result = filter.exclude(new ObjectName("java.lang:type=Memory"), "ClassPath");
+
+            assertThat(result).isFalse();
+        }
+    }
+
     private static ObjectNameAttributeFilter initEmptyConfigFilter() {
         return ObjectNameAttributeFilter.create(
                 new Yaml().load("---\n" + "excludeObjectNameAttributes: {}\n" + "includeObjectNameAttributes: {}\n"));
@@ -226,6 +297,14 @@ public class ObjectNameAttributeFilterTest {
                         + "    - \"ThreadCount\"\n"
                         + "  \"java.lang:type=ClassLoading\":\n"
                         + "    - \"LoadedClassCount\"\n"));
+    }
+
+    private static ObjectNameAttributeFilter initAutoExcludeDisabledFilter() {
+        return ObjectNameAttributeFilter.create(new Yaml()
+                .load("---\n"
+                        + "autoExcludeObjectNameAttributes: false\n"
+                        + "excludeObjectNameAttributes: {}\n"
+                        + "includeObjectNameAttributes: {}\n"));
     }
 
     private static Set<ObjectName> getAliveMBeans() throws MalformedObjectNameException {
