@@ -16,21 +16,20 @@
 
 package io.prometheus.jmx.common.authenticator;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.prometheus.jmx.common.util.Precondition;
-import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.time.Duration;
 
 /**
- * LRU cache for credentials.
+ * A thread-safe bounded cache for credentials backed by Caffeine.
  *
- * <p>Provides caching for both valid and invalid credentials to improve authentication
- * performance.
+ * <p>The cache evicts entries based on a maximum weight in bytes, using the UTF-8 encoded byte size
+ * of the credential's string representation as the weight. Entries larger than the configured
+ * maximum value size are not cached.
  *
- * <p>Entries larger than the configured maximum value size are not cached. Once the cache reaches
- * the configured maximum number of entries, the least recently used entry is evicted.
- *
- * <p>Thread-safety: This class is thread-safe. All public methods are synchronized.
+ * <p>Thread-safety: This class is thread-safe. All public methods delegate to the underlying
+ * Caffeine cache, which provides concurrent access.
  */
 public class CredentialsCache {
 
@@ -44,7 +43,13 @@ public class CredentialsCache {
      */
     public static final int DEFAULT_MAX_ENTRIES = 100;
 
-    private static final Byte PRESENT = (byte) 1;
+    /**
+     * Default maximum cache weight in bytes ({@value #DEFAULT_MAX_VALUE_SIZE_BYTES} * {@value #DEFAULT_MAX_ENTRIES}).
+     */
+    public static final long DEFAULT_MAX_WEIGHT_BYTES = (long) DEFAULT_MAX_VALUE_SIZE_BYTES * DEFAULT_MAX_ENTRIES;
+
+    private static final Boolean VALID = Boolean.TRUE;
+    private static final Boolean INVALID = Boolean.FALSE;
 
     /**
      * Maximum cacheable credential size in bytes.
@@ -52,72 +57,127 @@ public class CredentialsCache {
     private final int maxValueSizeBytes;
 
     /**
-     * Maximum number of cached credentials.
+     * Maximum cache weight in bytes.
      */
-    private final int maxEntries;
+    private final long maxWeightBytes;
 
     /**
-     * LRU cache for credential lookups.
+     * The backing Caffeine cache.
+     */
+    private final Cache<Credentials, Boolean> cache;
+
+    /**
+     * Constructs a credentials cache with the specified per-entry and weight limits.
      *
-     * <p>Uses access-order to implement classic LRU semantics.
+     * @param maxValueSizeBytes maximum size of a single cached credential value in bytes, must be
+     *     positive
+     * @param maxWeightBytes maximum total cache weight in bytes, must be positive
      */
-    private final LinkedHashMap<Credentials, Byte> cache;
+    public CredentialsCache(int maxValueSizeBytes, long maxWeightBytes) {
+        this(maxValueSizeBytes, maxWeightBytes, Duration.ZERO);
+    }
 
     /**
-     * Constructs a credentials cache with the specified limits.
+     * Constructs a credentials cache with the specified per-entry, weight, and TTL limits.
+     *
+     * <p>If TTL is {@link Duration#ZERO}, entries have no time-based expiry.
+     *
+     * @param maxValueSizeBytes maximum size of a single cached credential value in bytes, must be
+     *     positive
+     * @param maxWeightBytes maximum total cache weight in bytes, must be positive
+     * @param ttl time-to-live for cached entries, {@link Duration#ZERO} for no expiry
+     */
+    @SuppressWarnings("unchecked")
+    public CredentialsCache(int maxValueSizeBytes, long maxWeightBytes, Duration ttl) {
+        Precondition.isGreaterThanOrEqualTo(maxValueSizeBytes, 1);
+        Precondition.isGreaterThanOrEqualTo((int) Math.min(maxWeightBytes, Integer.MAX_VALUE), 1);
+
+        this.maxValueSizeBytes = maxValueSizeBytes;
+        this.maxWeightBytes = maxWeightBytes;
+
+        Caffeine<Credentials, Boolean> builder = Caffeine.newBuilder()
+                .maximumWeight(maxWeightBytes)
+                .weigher((Credentials credentials, Boolean ignored) -> credentials.byteSize());
+
+        if (!ttl.isZero() && !ttl.isNegative()) {
+            builder.expireAfterWrite(ttl);
+        }
+
+        this.cache = builder.build();
+    }
+
+    /**
+     * Constructs a credentials cache with the specified per-entry and entry-count limits.
+     *
+     * <p>The weight limit is computed as {@code maxValueSizeBytes * maxEntries}.
      *
      * @param maxValueSizeBytes maximum size of a single cached credential value in bytes, must be
      *     positive
      * @param maxEntries maximum number of cached credentials, must be positive
      */
     public CredentialsCache(int maxValueSizeBytes, int maxEntries) {
-        Precondition.isGreaterThanOrEqualTo(maxValueSizeBytes, 1);
-        Precondition.isGreaterThanOrEqualTo(maxEntries, 1);
-
-        this.maxValueSizeBytes = maxValueSizeBytes;
-        this.maxEntries = maxEntries;
-        this.cache = new LinkedHashMap<>(16, 0.75f, true);
+        this(maxValueSizeBytes, (long) maxValueSizeBytes * maxEntries);
     }
 
     /**
-     * Adds credentials to the cache.
+     * Adds credentials to the cache as valid.
      *
      * <p>If the credentials size exceeds the maximum value size, they are not cached. If the
-     * credentials are already present, they are refreshed as the most recently used entry.
-     * Otherwise, the least recently used entries are evicted until there is room for the new
-     * entry.
+     * credentials are already present, they are refreshed as a recently used entry.
      *
      * @param credentials credentials to add, must not be {@code null}
      */
-    public synchronized void add(Credentials credentials) {
+    public void add(Credentials credentials) {
         Precondition.notNull(credentials, "credentials is null");
 
-        if (calculateSizeBytes(credentials) > maxValueSizeBytes) {
+        if (credentials.byteSize() > maxValueSizeBytes) {
             return;
         }
 
-        if (cache.get(credentials) != null) {
+        cache.put(credentials, VALID);
+    }
+
+    /**
+     * Adds credentials to the cache as invalid.
+     *
+     * <p>If the credentials size exceeds the maximum value size, they are not cached. If the
+     * credentials are already present, they are refreshed as a recently used entry.
+     *
+     * @param credentials credentials to add as invalid, must not be {@code null}
+     */
+    public void addInvalid(Credentials credentials) {
+        Precondition.notNull(credentials, "credentials is null");
+
+        if (credentials.byteSize() > maxValueSizeBytes) {
             return;
         }
 
-        while (cache.size() >= maxEntries) {
-            evictLeastRecentlyUsed();
-        }
+        cache.put(credentials, INVALID);
+    }
 
-        cache.put(credentials, PRESENT);
+    /**
+     * Returns the cached status of the specified credentials.
+     *
+     * @param credentials credentials to look up, must not be {@code null}
+     * @return {@code Boolean.TRUE} if valid, {@code Boolean.FALSE} if invalid, or {@code null} if
+     *     not cached
+     */
+    public Boolean get(Credentials credentials) {
+        Precondition.notNull(credentials, "credentials is null");
+        return cache.getIfPresent(credentials);
     }
 
     /**
      * Checks if the cache contains the specified credentials.
      *
-     * <p>A successful lookup refreshes the credentials as the most recently used entry.
+     * <p>A successful lookup refreshes the credentials' recency and frequency metadata.
      *
      * @param credentials credentials to check, must not be {@code null}
      * @return {@code true} if the cache contains the credentials, otherwise {@code false}
      */
-    public synchronized boolean contains(Credentials credentials) {
+    public boolean contains(Credentials credentials) {
         Precondition.notNull(credentials, "credentials is null");
-        return cache.get(credentials) != null;
+        return cache.getIfPresent(credentials) != null;
     }
 
     /**
@@ -126,9 +186,9 @@ public class CredentialsCache {
      * @param credentials credentials to remove, must not be {@code null}
      * @return {@code true} if the credentials were found and removed, otherwise {@code false}
      */
-    public synchronized boolean remove(Credentials credentials) {
+    public boolean remove(Credentials credentials) {
         Precondition.notNull(credentials, "credentials is null");
-        return cache.remove(credentials) != null;
+        return cache.asMap().remove(credentials) != null;
     }
 
     /**
@@ -141,43 +201,33 @@ public class CredentialsCache {
     }
 
     /**
-     * Returns the maximum number of cached credentials.
+     * Returns the maximum cache weight in bytes.
      *
-     * @return the maximum number of cached credentials
+     * @return the maximum cache weight in bytes
+     */
+    public long getMaxWeightBytes() {
+        return maxWeightBytes;
+    }
+
+    /**
+     * Returns the approximate maximum number of cached credentials.
+     *
+     * <p>This is a nominal value computed as {@code maxWeightBytes / maxValueSizeBytes}, rounded
+     * down.
+     *
+     * @return the approximate maximum number of cached credentials
      */
     public int getMaxEntries() {
-        return maxEntries;
+        return (int) (maxWeightBytes / maxValueSizeBytes);
     }
 
     /**
-     * Returns the current number of cached credentials.
+     * Returns an approximation of the current number of cached credentials.
      *
-     * @return the current number of cached credentials
+     * @return an approximate count of cached credentials
      */
-    public synchronized int getCurrentEntries() {
-        return cache.size();
-    }
-
-    /**
-     * Calculates the UTF-8 encoded byte size of the credentials' string representation.
-     *
-     * @param credentials the credentials to measure, must not be {@code null}
-     * @return the byte size of the credentials when encoded as UTF-8
-     */
-    private static int calculateSizeBytes(Credentials credentials) {
-        return credentials.toString().getBytes(StandardCharsets.UTF_8).length;
-    }
-
-    /**
-     * Evicts the least recently used entry from the cache.
-     *
-     * <p>Relies on the access-order iteration of {@link LinkedHashMap} to remove the oldest entry.
-     */
-    private void evictLeastRecentlyUsed() {
-        Iterator<Credentials> iterator = cache.keySet().iterator();
-        if (iterator.hasNext()) {
-            iterator.next();
-            iterator.remove();
-        }
+    public int getCurrentEntries() {
+        cache.cleanUp();
+        return (int) cache.estimatedSize();
     }
 }

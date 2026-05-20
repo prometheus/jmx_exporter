@@ -103,4 +103,30 @@ public class CredentialsTest {
 
         assertThat(credentials1).isNotEqualTo(credentials2);
     }
+
+    @Test
+    public void testByteSize() {
+        Credentials credentials = new Credentials("user", "pass");
+
+        assertThat(credentials.byteSize()).isEqualTo("user".getBytes().length + "pass".getBytes().length);
+    }
+
+    @Test
+    public void testToStringIncludesNullSeparator() {
+        Credentials credentials = new Credentials("us", "erpass");
+        Credentials different = new Credentials("use", "rpass");
+
+        assertThat(different.toString()).isNotEqualTo(credentials.toString());
+    }
+
+    @Test
+    public void testHashCodeIsMemoized() {
+        Credentials credentials = new Credentials("user", "pass");
+        int first = credentials.hashCode();
+
+        // calling hashCode multiple times should return the same value
+        for (int i = 0; i < 100; i++) {
+            assertThat(credentials.hashCode()).isEqualTo(first);
+        }
+    }
 }

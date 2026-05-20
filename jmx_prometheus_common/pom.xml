@@ -38,6 +38,10 @@
             <artifactId>collector</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.hakky54</groupId>
             <artifactId>ayza</artifactId>
         </dependency>

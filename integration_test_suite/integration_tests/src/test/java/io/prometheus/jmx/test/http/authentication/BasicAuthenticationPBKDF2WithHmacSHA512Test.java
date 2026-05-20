@@ -79,11 +79,19 @@ public class BasicAuthenticationPBKDF2WithHmacSHA512Test {
     private static Action argument(JmxExporterTestEnvironment environment) {
         Action setUp = setUp(environment);
         Action testHealthy = testHealthy();
+        Action testDefaultTextMetrics = testDefaultTextMetrics();
+        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
+        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
+        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
         Action tearDown = tearDown();
 
         return Container.builder(environment.getName())
                 .before(setUp)
                 .child(testHealthy)
+                .child(testDefaultTextMetrics)
+                .child(testOpenMetricsTextMetrics)
+                .child(testPrometheusTextMetrics)
+                .child(testPrometheusProtobufMetrics)
                 .after(tearDown)
                 .build();
     }

@@ -37,6 +37,7 @@
         <!-- Dependency versions -->
         <assertj.version>3.27.7</assertj.version>
         <ayza.version>10.0.4</ayza.version>
+        <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <junit.version>6.0.3</junit.version>
         <logback.version>1.5.32</logback.version>
@@ -141,6 +142,11 @@
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.hakky54</groupId>

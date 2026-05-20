@@ -881,6 +881,8 @@ public class HTTPServerFactory {
         } catch (GeneralSecurityException e) {
             throw new ConfigurationException(format(
                     "Invalid /httpServer/authentication/basic/algorithm, unsupported" + " algorithm [%s]", algorithm));
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationException(e.getMessage());
         }
     }
 

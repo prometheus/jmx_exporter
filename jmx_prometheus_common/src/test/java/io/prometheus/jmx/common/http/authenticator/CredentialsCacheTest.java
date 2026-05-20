@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.prometheus.jmx.common.authenticator.Credentials;
 import io.prometheus.jmx.common.authenticator.CredentialsCache;
-import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 public class CredentialsCacheTest {
@@ -29,7 +29,7 @@ public class CredentialsCacheTest {
     @Test
     public void basicAddContainsAndRemoveTest() {
         Credentials credentials = new Credentials("prometheus", "secret");
-        int credentialSizeBytes = sizeBytes(credentials);
+        int credentialSizeBytes = credentials.byteSize();
 
         CredentialsCache credentialsCache = new CredentialsCache(credentialSizeBytes, 1);
 
@@ -54,7 +54,7 @@ public class CredentialsCacheTest {
         Credentials cachedCredentials = new Credentials("ab", "cd");
         Credentials oversizedCredentials = new Credentials("oversized-username", "oversized-password");
 
-        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(cachedCredentials), 2);
+        CredentialsCache credentialsCache = new CredentialsCache(cachedCredentials.byteSize(), 2);
         credentialsCache.add(cachedCredentials);
         credentialsCache.add(oversizedCredentials);
 
@@ -64,61 +64,53 @@ public class CredentialsCacheTest {
     }
 
     @Test
-    public void addEvictsLeastRecentlyUsedEntryWhenMaxEntriesExceeded() {
+    public void cacheRemainsBoundedByWeight() {
         Credentials credentialsA = new Credentials("user-a", "password-a");
         Credentials credentialsB = new Credentials("user-b", "password-b");
         Credentials credentialsC = new Credentials("user-c", "password-c");
 
-        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 2);
+        CredentialsCache credentialsCache = new CredentialsCache(credentialsA.byteSize(), 2);
         credentialsCache.add(credentialsA);
         credentialsCache.add(credentialsB);
         credentialsCache.add(credentialsC);
 
-        assertThat(credentialsCache.contains(credentialsA)).isFalse();
-        assertThat(credentialsCache.contains(credentialsB)).isTrue();
-        assertThat(credentialsCache.contains(credentialsC)).isTrue();
-        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(2);
+        assertThat(credentialsCache.getCurrentEntries()).isLessThanOrEqualTo(2);
     }
 
     @Test
-    public void containsRefreshesRecencyBeforeEviction() {
+    public void containsAndAddStayWithinWeightBound() {
         Credentials credentialsA = new Credentials("user-a", "password-a");
         Credentials credentialsB = new Credentials("user-b", "password-b");
         Credentials credentialsC = new Credentials("user-c", "password-c");
         Credentials credentialsD = new Credentials("user-d", "password-d");
 
-        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 3);
+        CredentialsCache credentialsCache = new CredentialsCache(credentialsA.byteSize(), 3);
         credentialsCache.add(credentialsA);
         credentialsCache.add(credentialsB);
         credentialsCache.add(credentialsC);
 
-        assertThat(credentialsCache.contains(credentialsA)).isTrue();
+        credentialsCache.contains(credentialsA);
+        credentialsCache.contains(credentialsB);
+        credentialsCache.contains(credentialsC);
 
         credentialsCache.add(credentialsD);
 
-        assertThat(credentialsCache.contains(credentialsA)).isTrue();
-        assertThat(credentialsCache.contains(credentialsB)).isFalse();
-        assertThat(credentialsCache.contains(credentialsC)).isTrue();
-        assertThat(credentialsCache.contains(credentialsD)).isTrue();
+        assertThat(credentialsCache.getCurrentEntries()).isLessThanOrEqualTo(3);
     }
 
     @Test
-    public void reAddingExistingEntryRefreshesRecencyWithoutCreatingDuplicate() {
+    public void reAddingExistingEntryDoesNotIncreaseSize() {
         Credentials credentialsA = new Credentials("user-a", "password-a");
         Credentials credentialsB = new Credentials("user-b", "password-b");
-        Credentials credentialsC = new Credentials("user-c", "password-c");
 
-        CredentialsCache credentialsCache = new CredentialsCache(sizeBytes(credentialsA), 2);
+        CredentialsCache credentialsCache = new CredentialsCache(credentialsA.byteSize(), 10);
         credentialsCache.add(credentialsA);
         credentialsCache.add(credentialsB);
-
         credentialsCache.add(credentialsA);
-        credentialsCache.add(credentialsC);
 
-        assertThat(credentialsCache.contains(credentialsA)).isTrue();
-        assertThat(credentialsCache.contains(credentialsB)).isFalse();
-        assertThat(credentialsCache.contains(credentialsC)).isTrue();
         assertThat(credentialsCache.getCurrentEntries()).isEqualTo(2);
+        assertThat(credentialsCache.contains(credentialsA)).isTrue();
+        assertThat(credentialsCache.contains(credentialsB)).isTrue();
     }
 
     @Test
@@ -134,7 +126,121 @@ public class CredentialsCacheTest {
         assertThatThrownBy(() -> new CredentialsCache(1, 0)).isInstanceOf(IllegalArgumentException.class);
     }
 
-    private static int sizeBytes(Credentials credentials) {
-        return credentials.toString().getBytes(StandardCharsets.UTF_8).length;
+    @Test
+    public void constructorRejectsNonPositiveWeightLimits() {
+        assertThatThrownBy(() -> new CredentialsCache(1, 0L)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new CredentialsCache(1, -1L)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void cacheEvictsWhenWeightExceeded() {
+        Credentials credentialsA = new Credentials("user-a", "password-a");
+        Credentials credentialsB = new Credentials("user-b", "password-b");
+        Credentials credentialsC = new Credentials("user-c", "password-c");
+
+        CredentialsCache credentialsCache = new CredentialsCache(credentialsA.byteSize(), 2);
+        credentialsCache.add(credentialsA);
+        credentialsCache.add(credentialsB);
+
+        assertThat(credentialsCache.getCurrentEntries()).isEqualTo(2);
+
+        credentialsCache.add(credentialsC);
+
+        assertThat(credentialsCache.getCurrentEntries()).isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    public void getReturnsNullForAbsentCredentials() {
+        CredentialsCache credentialsCache = new CredentialsCache(16, 1);
+
+        assertThat(credentialsCache.get(new Credentials("missing", "entry"))).isNull();
+    }
+
+    @Test
+    public void getReturnsTrueForValidCredentials() {
+        Credentials credentials = new Credentials("user", "pass");
+        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
+
+        credentialsCache.add(credentials);
+
+        assertThat(credentialsCache.get(credentials)).isTrue();
+        assertThat(credentialsCache.contains(credentials)).isTrue();
+    }
+
+    @Test
+    public void getReturnsFalseForInvalidCredentials() {
+        Credentials credentials = new Credentials("user", "pass");
+        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
+
+        credentialsCache.addInvalid(credentials);
+
+        assertThat(credentialsCache.get(credentials)).isFalse();
+        assertThat(credentialsCache.contains(credentials)).isTrue();
+    }
+
+    @Test
+    public void addInvalidOverwritesPreviousEntry() {
+        Credentials credentials = new Credentials("user", "pass");
+        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
+
+        credentialsCache.add(credentials);
+        assertThat(credentialsCache.get(credentials)).isTrue();
+
+        credentialsCache.addInvalid(credentials);
+        assertThat(credentialsCache.get(credentials)).isFalse();
+    }
+
+    @Test
+    public void ttlConstructorEvictsAfterDuration() throws Exception {
+        Credentials credentials = new Credentials("user", "pass");
+        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 10, Duration.ofMillis(10));
+
+        credentialsCache.add(credentials);
+        assertThat(credentialsCache.contains(credentials)).isTrue();
+
+        Thread.sleep(100);
+
+        assertThat(credentialsCache.contains(credentials)).isFalse();
+    }
+
+    @Test
+    public void negativeTtlIsTreatedAsNoExpiry() {
+        Credentials credentials = new Credentials("user", "pass");
+        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 10, Duration.ofMillis(-1));
+
+        credentialsCache.add(credentials);
+        assertThat(credentialsCache.contains(credentials)).isTrue();
+        assertThat(credentialsCache.get(credentials)).isTrue();
+    }
+
+    @Test
+    public void getMaxWeightBytesReturnsConfiguredValue() {
+        CredentialsCache credentialsCache = new CredentialsCache(16, 100);
+        assertThat(credentialsCache.getMaxWeightBytes()).isEqualTo(1600L);
+    }
+
+    @Test
+    public void oversizedCredentialsNotCachedForAddInvalid() {
+        Credentials cachedCredentials = new Credentials("ab", "cd");
+        Credentials oversizedCredentials = new Credentials("oversized-username", "oversized-password");
+
+        CredentialsCache credentialsCache = new CredentialsCache(cachedCredentials.byteSize(), 2);
+        credentialsCache.add(cachedCredentials);
+        credentialsCache.addInvalid(oversizedCredentials);
+
+        assertThat(credentialsCache.get(oversizedCredentials)).isNull();
+    }
+
+    @Test
+    public void constructorWithLongMaxWeightBytes() {
+        CredentialsCache credentialsCache = new CredentialsCache(16, 50000L);
+        assertThat(credentialsCache.getMaxWeightBytes()).isEqualTo(50000L);
+        assertThat(credentialsCache.getMaxEntries()).isEqualTo(3125);
+    }
+
+    @Test
+    public void constructorWithTtlAndLongWeight() {
+        CredentialsCache credentialsCache = new CredentialsCache(16, 50000L, Duration.ofSeconds(60));
+        assertThat(credentialsCache.getMaxWeightBytes()).isEqualTo(50000L);
     }
 }
