@@ -42,6 +42,26 @@ public class Credentials {
     private final String password;
 
     /**
+     * Pre-computed UTF-8 encoded username bytes for constant-time comparison.
+     */
+    private final byte[] usernameBytes;
+
+    /**
+     * Pre-computed UTF-8 encoded password bytes for constant-time comparison.
+     */
+    private final byte[] passwordBytes;
+
+    /**
+     * Pre-computed hash code.
+     */
+    private final int hash;
+
+    /**
+     * Pre-computed UTF-8 byte size of username + password.
+     */
+    private final int byteSize;
+
+    /**
      * Constructs credentials with the specified username and password.
      *
      * @param username the username, must not be {@code null}
@@ -50,37 +70,39 @@ public class Credentials {
     public Credentials(String username, String password) {
         this.username = username;
         this.password = password;
+        this.usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        this.passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        this.hash = Objects.hash(username, password);
+        this.byteSize = usernameBytes.length + passwordBytes.length;
     }
 
     /**
-     * Returns the total size of the credentials in characters.
+     * Returns the UTF-8 byte size of the concatenated username and password.
      *
-     * <p>This is the sum of the username and password lengths, used for cache size accounting.
-     *
-     * @return the total size in characters
+     * @return the total size in bytes
      */
-    public int size() {
-        return username.length() + password.length();
+    public int byteSize() {
+        return byteSize;
     }
 
     /**
-     * Returns the concatenated username and password without a separator.
+     * Returns the concatenated username and password separated by a null character.
      *
-     * <p>Used as a cache key by {@link CredentialsCache}. The lack of a separator is intentional
-     * because cache size accounting uses the combined length.
+     * <p>The null separator prevents edge-case collisions where boundaries between username and
+     * password could be ambiguous (e.g., {@code ("us", "erpass")} vs {@code ("use", "rpass")}).
      *
-     * @return the concatenated username and password
+     * @return the concatenated username and password with a null separator
      */
     @Override
     public String toString() {
-        return username + password;
+        return username + "\0" + password;
     }
 
     /**
      * Compares credentials for equality using constant-time comparison.
      *
-     * <p>Uses {@link MessageDigest#isEqual(byte[], byte[])} on UTF-8 encoded username and password
-     * to prevent timing side-channel attacks.
+     * <p>Uses {@link MessageDigest#isEqual(byte[], byte[])} on pre-computed UTF-8 encoded username
+     * and password byte arrays to prevent timing side-channel attacks.
      *
      * @param o the object to compare against
      * @return {@code true} if the object is a {@code Credentials} with matching username and
@@ -91,16 +113,12 @@ public class Credentials {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Credentials credentials = (Credentials) o;
-        return MessageDigest.isEqual(
-                        username.getBytes(StandardCharsets.UTF_8),
-                        credentials.username.getBytes(StandardCharsets.UTF_8))
-                && MessageDigest.isEqual(
-                        password.getBytes(StandardCharsets.UTF_8),
-                        credentials.password.getBytes(StandardCharsets.UTF_8));
+        return MessageDigest.isEqual(this.usernameBytes, credentials.usernameBytes)
+                && MessageDigest.isEqual(this.passwordBytes, credentials.passwordBytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, password);
+        return hash;
     }
 }

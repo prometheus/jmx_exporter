@@ -17,8 +17,10 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 
 public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
@@ -408,6 +410,91 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
         assertThat(authenticator.checkCredentials(VALID_USERNAME, "bad")).isFalse();
         assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
                 .isTrue();
+    }
+
+    @Test
+    public void testCanonicalBitKeyLengthSemantics() throws Exception {
+        String algorithm = "PBKDF2WithHmacSHA256";
+        int iterations = 1000;
+        int keyLength = 128;
+        String hash = "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9";
+
+        PBKDF2Authenticator authenticator =
+                new PBKDF2Authenticator("/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
+
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+    }
+
+    @Test
+    public void testInvalidKeyLengthSemantics() {
+        String algorithm = "PBKDF2WithHmacSHA256";
+        int iterations = 1000;
+        int keyLength = 256;
+        String hash = "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9";
+
+        assertThatThrownBy(() ->
+                        new PBKDF2Authenticator("/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("does not match configured keyLength");
+    }
+
+    @Test
+    public void testLegacyByteKeyLengthSemantics() throws Exception {
+        String algorithm = "PBKDF2WithHmacSHA256";
+        int iterations = 1000;
+        int keyLength = 16;
+        String hash = "B6:9C:5C:8A:10:3E:41:7B:BA:18:FC:E1:F2:0C:BC:D9";
+
+        PBKDF2Authenticator authenticator =
+                new PBKDF2Authenticator("/", VALID_USERNAME, hash, algorithm, SALT, iterations, keyLength);
+
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+    }
+
+    @Test
+    public void testGeneratePasswordHashViaReflection() throws Exception {
+        Method method = PBKDF2Authenticator.class.getDeclaredMethod(
+                "generatePasswordHash", String.class, String.class, int.class, int.class, String.class);
+        method.setAccessible(true);
+
+        String hash = (String) method.invoke(null, "PBKDF2WithHmacSHA256", SALT, 1000, 128, VALID_PASSWORD);
+
+        assertThat(hash).isNotNull();
+        assertThat(hash).isNotEmpty();
+        assertThat(hash).matches("[0-9a-f]+");
+    }
+
+    @Test
+    public void testToLowerCaseHexadecimalViaReflection() throws Exception {
+        Method method = PBKDF2Authenticator.class.getDeclaredMethod("toLowerCaseHexadecimal", byte[].class);
+        method.setAccessible(true);
+
+        byte[] input = new byte[] {0x00, 0x0f, (byte) 0xff, (byte) 0xab};
+        String result = (String) method.invoke(null, (Object) input);
+
+        assertThat(result).isEqualTo("000fffab");
+    }
+
+    @Test
+    public void testCheckCredentialsWithNullUsername() throws Exception {
+        PBKDF2Authenticator authenticator = createPBKDF2WithHmacSHA256Authenticator();
+        assertThat(authenticator.checkCredentials(null, VALID_PASSWORD)).isFalse();
+    }
+
+    @Test
+    public void testCheckCredentialsWithNullPassword() throws Exception {
+        PBKDF2Authenticator authenticator = createPBKDF2WithHmacSHA256Authenticator();
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, null)).isFalse();
+    }
+
+    @Test
+    public void testCreateSecretKeyFactoryThrowsForInvalidAlgorithm() throws Exception {
+        Method method = PBKDF2Authenticator.class.getDeclaredMethod("createSecretKeyFactory", String.class);
+        method.setAccessible(true);
+
+        assertThatThrownBy(() -> method.invoke(null, "INVALID_ALGORITHM")).hasCauseInstanceOf(RuntimeException.class);
     }
 
     private PBKDF2Authenticator createPBKDF2WithHmacSHA256Authenticator() throws Exception {
