@@ -17,67 +17,74 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
+import io.prometheus.jmx.test.support.NetworkFactory;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
- * Manages an isolated JMX exporter Docker container that exposes multiple ports
- * for testing multiple exporter instances simultaneously.
+ * Test environment for the isolator Java agent mode, managing a single Docker container
+ * that runs the JMX exporter as a Java agent inside the application JVM.
+ *
+ * <p>The environment creates its own Docker network when initialized without one, and
+ * tears down containers and networks on {@link #close()}.
  */
-public class IsolatorExporterTestEnvironment {
+public class IsolatorExporterTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
     private static final int BASE_PORT = 8888;
 
     private final String id;
+    private final Class<?> testClass;
     private final String javaDockerImage;
 
-    private Class<?> testClass;
     private String baseUrl;
     private Network network;
+    private boolean ownsNetwork;
     private GenericContainer<?> javaAgentApplicationContainer;
 
     /**
-     * Creates an isolator exporter test environment using the specified Java Docker image.
+     * Creates an isolator exporter test environment for the specified test class and Java Docker image.
      *
-     * @param javaDockerImage the Docker image name for the Java application container
+     * @param testClass the test class used to resolve classpath resource mappings
+     * @param javaDockerImage the Java Docker image name for the application container
+     * @throws NullPointerException if {@code testClass} or {@code javaDockerImage} is {@code null}
      */
-    public IsolatorExporterTestEnvironment(String javaDockerImage) {
+    public IsolatorExporterTestEnvironment(Class<?> testClass, String javaDockerImage) {
         this.id = UUID.randomUUID().toString();
-        this.javaDockerImage = javaDockerImage;
+        this.testClass = Objects.requireNonNull(testClass);
+        this.javaDockerImage = Objects.requireNonNull(javaDockerImage);
         this.baseUrl = BASE_URL;
     }
 
     /**
-     * Returns the display name of the test environment.
+     * Returns a human-readable name identifying this environment and its Java Docker image.
      *
-     * @return the display name of the test environment
+     * @return the display name of this environment
      */
-    public String getName() {
+    public String name() {
         return "IsolatorJavaAgent / " + javaDockerImage;
     }
 
     /**
-     * Returns the unique identifier of the test environment.
+     * Returns the unique identifier for this environment instance.
      *
-     * @return the unique identifier of the test environment
+     * @return the unique identifier
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Sets the base URL for constructing test request URLs.
+     * Sets the base URL used to construct request URLs, returning this instance for chaining.
      *
-     * @param baseUrl the base URL (e.g., {@code http://localhost})
-     * @return this test environment for method chaining
+     * @param baseUrl the base URL (e.g. {@code "http://localhost"}); must not be {@code null}
+     * @return this environment instance
      */
     public IsolatorExporterTestEnvironment setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -85,7 +92,7 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Returns the Java Docker image name used for the application container.
+     * Returns the Java Docker image name used by the application container.
      *
      * @return the Java Docker image name
      */
@@ -94,57 +101,92 @@ public class IsolatorExporterTestEnvironment {
     }
 
     /**
-     * Starts the Docker container for the test environment.
-     *
-     * @param testClass the test class whose classpath resources configure the container
-     * @param network the Docker network for inter-container communication
+     * Initializes this environment by creating a new Docker network and starting
+     * the application container. The network is owned and will be closed on {@link #close()}.
      */
-    public void initialize(Class<?> testClass, Network network) {
-        this.testClass = testClass;
-        this.network = network;
+    public void initialize() {
+        initialize(NetworkFactory.createNetwork(), true);
+    }
+
+    /**
+     * Initializes this environment using an existing Docker network. The network is
+     * <em>not</em> owned and will not be closed on {@link #close()}.
+     *
+     * @param network the shared Docker network; must not be {@code null}
+     */
+    public void initialize(Network network) {
+        initialize(network, false);
+    }
+
+    private void initialize(Network network, boolean ownsNetwork) {
+        this.network = Objects.requireNonNull(network);
+        this.ownsNetwork = ownsNetwork;
 
         javaAgentApplicationContainer = createJavaAgentApplicationContainer();
         javaAgentApplicationContainer.start();
     }
 
     /**
-     * Constructs a URL by appending the specified path to the base URL for the given port index.
+     * Returns whether the application container is currently running.
      *
-     * @param index the port index (0, 1, or 2) selecting which exposed exporter port to use
-     * @param path the path to append (with or without a leading slash)
-     * @return the full URL
+     * @return {@code true} if the container is running; {@code false} otherwise
+     */
+    public boolean isRunning() {
+        return javaAgentApplicationContainer != null && javaAgentApplicationContainer.isRunning();
+    }
+
+    /**
+     * Constructs a URL for the specified port index and path.
+     *
+     * @param index the zero-based port offset added to the base port
+     * @param path the URL path; a leading slash is optional
+     * @return the fully constructed URL
      */
     public String getUrl(int index, String path) {
         return !path.startsWith("/") ? getBaseUrl(index) + "/" + path : getBaseUrl(index) + path;
     }
 
     /**
-     * Returns the base URL including the dynamically mapped port for the specified port index.
+     * Returns the base URL including the mapped port for the specified index.
      *
-     * @param index the port index (0, 1, or 2) selecting which exposed exporter port to use
-     * @return the base URL with the mapped port
+     * @param index the zero-based port offset added to the base port
+     * @return the base URL with port, e.g. {@code "http://localhost:32768"}
      */
     public String getBaseUrl(int index) {
         int port = javaAgentApplicationContainer.getMappedPort(BASE_PORT + index);
         return baseUrl + ":" + port;
     }
 
-    /**
-     * Stops the Docker container and releases resources.
-     */
-    public void destroy() {
-        if (javaAgentApplicationContainer != null) {
-            javaAgentApplicationContainer.stop();
-            javaAgentApplicationContainer = null;
+    @Override
+    public void close() {
+        GenericContainer<?> container = javaAgentApplicationContainer;
+        stopQuietly();
+        ContainerSupport.waitForShutdown(container);
+        closeNetworkIfOwned();
+    }
+
+    private void closeNetworkIfOwned() {
+        if (ownsNetwork && network != null) {
+            try {
+                ContainerSupport.waitForShutdown(network);
+            } finally {
+                network = null;
+                ownsNetwork = false;
+            }
         }
     }
 
-    /**
-     * Creates a Docker container for the Java Agent mode, exposing multiple exporter ports
-     * (8888, 8889, 8890) for isolated metric scraping.
-     *
-     * @return the configured GenericContainer
-     */
+    private void stopQuietly() {
+        if (javaAgentApplicationContainer != null) {
+            try {
+                javaAgentApplicationContainer.stop();
+            } catch (Exception ignored) {
+            } finally {
+                javaAgentApplicationContainer = null;
+            }
+        }
+    }
+
     private GenericContainer<?> createJavaAgentApplicationContainer() {
         return new GenericContainer<>(javaDockerImage)
                 .waitingFor(Wait.forListeningPort())
@@ -158,22 +200,19 @@ public class IsolatorExporterTestEnvironment {
                 .withNetwork(network)
                 .withNetworkAliases("application")
                 .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*\\n", 1))
-                .withStartupTimeout(Duration.ofMillis(60000))
+                .withStartupTimeout(Duration.ofSeconds(60))
                 .withWorkingDirectory("/temp");
     }
 
     /**
-     * Creates a stream of isolator exporter test environments for all configured Java Docker images.
+     * Creates one test environment per configured Java Docker image for the given test class.
      *
-     * @return a stream of {@link IsolatorExporterTestEnvironment} instances
+     * @param testClass the test class used to resolve classpath resource mappings
+     * @return an unmodifiable list of test environments, one per Java Docker image
      */
-    public static Stream<IsolatorExporterTestEnvironment> createEnvironments() {
-        Collection<IsolatorExporterTestEnvironment> collection = new ArrayList<>();
-
-        JavaDockerImages.names().forEach(dockerImageName -> {
-            collection.add(new IsolatorExporterTestEnvironment(dockerImageName));
-        });
-
-        return collection.stream();
+    public static List<IsolatorExporterTestEnvironment> createTestEnvironments(Class<?> testClass) {
+        return JavaDockerImages.names().stream()
+                .map(dockerImageName -> new IsolatorExporterTestEnvironment(testClass, dockerImageName))
+                .toList();
     }
 }

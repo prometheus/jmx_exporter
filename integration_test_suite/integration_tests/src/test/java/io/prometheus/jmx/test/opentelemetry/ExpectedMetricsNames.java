@@ -203,7 +203,7 @@ public class ExpectedMetricsNames {
      * Constructor
      */
     private ExpectedMetricsNames() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

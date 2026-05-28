@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.filter;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -27,20 +26,20 @@ import java.util.function.Predicate;
  */
 public class PKCS12KeyStoreExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
-    private final Set<String> filteredDockerImages;
+    private final Set<String> filteredDockerImages = Set.of(
+            "eclipse-temurin:8-alpine",
+            "ghcr.io/graalvm/jdk:java8",
+            "ibmjava:8",
+            "ibmjava:8-jre",
+            "ibmjava:8-sdk",
+            "ibmjava:8-sfj",
+            "ibmjava:11");
 
     /**
      * Creates a filter that excludes Java 8 and IBM Java images incompatible with PKCS12 keystores.
      */
     public PKCS12KeyStoreExporterTestEnvironmentFilter() {
-        filteredDockerImages = new HashSet<>();
-        filteredDockerImages.add("eclipse-temurin:8-alpine");
-        filteredDockerImages.add("ghcr.io/graalvm/jdk:java8");
-        filteredDockerImages.add("ibmjava:8");
-        filteredDockerImages.add("ibmjava:8-jre");
-        filteredDockerImages.add("ibmjava:8-sdk");
-        filteredDockerImages.add("ibmjava:8-sfj");
-        filteredDockerImages.add("ibmjava:11");
+        // Intentionally empty
     }
 
     /**

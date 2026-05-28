@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Immutable accessor for nested map structures using path-based syntax.
@@ -37,12 +38,11 @@ import java.util.Set;
  * <p>Example usage:
  *
  * <pre>{@code
- * Map<Object, Object> config = Map.of(
- *     "server", Map.of(
- *         "port", 8080,
- *         "host", "localhost"
- *     )
- * );
+ * Map<Object, Object> server = new java.util.LinkedHashMap<Object, Object>();
+ * server.put("port", 8080);
+ * server.put("host", "localhost");
+ * Map<Object, Object> config = new java.util.LinkedHashMap<Object, Object>();
+ * config.put("server", server);
  * MapAccessor accessor = MapAccessor.of(config);
  * Optional<Object> port = accessor.get("/server/port");  // Returns Optional[8080]
  * boolean hasHost = accessor.containsPath("/server/host");  // Returns true
@@ -126,7 +126,7 @@ public class MapAccessor {
      * @return an {@link Optional} containing the value, or an empty {@link Optional}
      * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
      */
-    public Optional<Object> get(String path) {
+    public Optional<Object> getPath(String path) {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
@@ -154,6 +154,88 @@ public class MapAccessor {
         }
 
         return Optional.ofNullable(current);
+    }
+
+    /**
+     * @deprecated use {@link #getPath(String)} instead
+     */
+    @Deprecated
+    public Optional<Object> get(String path) {
+        return getPath(path);
+    }
+
+    /**
+     * Gets the value at the specified path and maps it to the requested type.
+     *
+     * <p>Returns an empty {@link Optional} if the path does not exist, the value is {@code null},
+     * or the value is not an instance of {@code type}.
+     *
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @param type the target type to cast to, must not be {@code null}
+     * @param <T> the target type
+     * @return an {@link Optional} containing the typed value, or an empty {@link Optional}
+     * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
+     */
+    public <T> Optional<T> getPath(String path, Class<T> type) {
+        if (type == null) {
+            throw new IllegalArgumentException("type is null");
+        }
+
+        return getPath(path).filter(type::isInstance).map(type::cast);
+    }
+
+    /**
+     * @deprecated use {@link #getPath(String, Class)} instead
+     */
+    @Deprecated
+    public <T> Optional<T> get(String path, Class<T> type) {
+        return getPath(path, type);
+    }
+
+    /**
+     * Gets the value at the specified path and maps it with the provided function.
+     *
+     * <p>Returns an empty {@link Optional} if the path does not exist or the value is {@code
+     * null}. The mapper is applied only when a non-null value exists at the path.
+     *
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @param mapper mapping function to convert the value, must not be {@code null}
+     * @param <T> the mapped type
+     * @return an {@link Optional} containing the mapped value, or an empty {@link Optional}
+     * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
+     */
+    public <T> Optional<T> getPath(String path, Function<Object, ? extends T> mapper) {
+        if (mapper == null) {
+            throw new IllegalArgumentException("mapper is null");
+        }
+
+        return getPath(path).map(mapper);
+    }
+
+    /**
+     * @deprecated use {@link #getPath(String, Function)} instead
+     */
+    @Deprecated
+    public <T> Optional<T> get(String path, Function<Object, ? extends T> mapper) {
+        return getPath(path, mapper);
+    }
+
+    /**
+     * Checks whether a path exists and contains a non-null value compatible with {@code type}.
+     *
+     * @param path the path to check, must start with {@code /}, must not be {@code null} or blank
+     * @param type the expected type, must not be {@code null}
+     * @param <T> the expected type
+     * @return {@code true} if the path exists and the value is a non-null instance of {@code
+     *     type}, otherwise {@code false}
+     * @throws IllegalArgumentException if {@code path} is {@code null}, blank, or malformed
+     */
+    public <T> boolean containsPath(String path, Class<T> type) {
+        if (type == null) {
+            throw new IllegalArgumentException("type is null");
+        }
+
+        return getPath(path, type).isPresent();
     }
 
     /**

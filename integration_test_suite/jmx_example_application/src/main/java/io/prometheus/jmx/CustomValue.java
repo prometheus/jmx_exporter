@@ -31,7 +31,7 @@ public class CustomValue implements CustomValueMBean {
      * Constructs a new instance.
      */
     public CustomValue() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

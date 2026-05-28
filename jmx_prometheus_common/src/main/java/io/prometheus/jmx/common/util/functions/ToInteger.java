@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Object, Integer> toInteger = new ToInteger(() -> new ConfigurationException("Invalid integer"));
+ * Function<Object, Integer> toInteger = ToInteger.of(() -> new ConfigurationException("Invalid integer"));
  * Integer result = toInteger.apply("42");  // Returns 42
  * Integer result2 = toInteger.apply(100);  // Returns 100
  * }</pre>
@@ -50,11 +50,10 @@ public class ToInteger implements Function<Object, Integer> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ToInteger(Supplier<? extends RuntimeException> supplier) {
+    private ToInteger(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Converts the given object to an {@link Integer}.
      *
@@ -74,5 +73,9 @@ public class ToInteger implements Function<Object, Integer> {
         } catch (Throwable t) {
             throw supplier.get();
         }
+    }
+
+    public static ToInteger of(Supplier<? extends RuntimeException> supplier) {
+        return new ToInteger(supplier);
     }
 }

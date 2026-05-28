@@ -64,7 +64,7 @@ public class AuthenticatorPlugin extends Authenticator {
      * Constructs a new instance.
      */
     public AuthenticatorPlugin() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

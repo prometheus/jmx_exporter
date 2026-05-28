@@ -59,7 +59,7 @@ public class OpenTelemetryExporterFactory {
      * <p>This is a utility class with only static methods.
      */
     private OpenTelemetryExporterFactory() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -89,7 +89,7 @@ public class OpenTelemetryExporterFactory {
             if (rootMapAccessor.containsPath("/openTelemetry")) {
                 MapAccessor openTelemetryMapAccessor = rootMapAccessor
                         .get("/openTelemetry")
-                        .map(new ToMapAccessor(ConfigurationException.supplier(
+                        .map(ToMapAccessor.of(ConfigurationException.supplier(
                                 "Invalid configuration for" + " /openTelemetry must be a map")))
                         .orElse(null);
 
@@ -100,27 +100,27 @@ public class OpenTelemetryExporterFactory {
 
                     openTelemetryMapAccessor
                             .get("/endpoint")
-                            .map(new ToString(ConfigurationException.supplier(
+                            .map(ToString.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/endpoint" + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier(
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/endpoint" + " must not be blank")))
-                            .map(new IsURL(ConfigurationException.supplier(
+                            .map(IsURL.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/endpoint" + " must be a URL")))
                             .ifPresent(openTelemetryExporterBuilder::endpoint);
 
                     openTelemetryMapAccessor
                             .get("/protocol")
-                            .map(new ToString(ConfigurationException.supplier(
+                            .map(ToString.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/protocol" + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier(
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/protocol" + " must not be blank")))
                             .ifPresent(openTelemetryExporterBuilder::protocol);
 
                     openTelemetryMapAccessor
                             .get("/interval")
-                            .map(new ToInteger(ConfigurationException.supplier(
+                            .map(ToInteger.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/interval" + " must be an integer")))
-                            .map(new IntegerInRange(
+                            .map(IntegerInRange.of(
                                     1,
                                     Integer.MAX_VALUE,
                                     ConfigurationException.supplier("Invalid configuration for"
@@ -130,10 +130,10 @@ public class OpenTelemetryExporterFactory {
 
                     openTelemetryMapAccessor
                             .get("/timeoutSeconds")
-                            .map(new ToInteger(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ToInteger.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/timeoutSeconds"
                                     + " must be an integer")))
-                            .map(new IntegerInRange(
+                            .map(IntegerInRange.of(
                                     1,
                                     Integer.MAX_VALUE,
                                     ConfigurationException.supplier("Invalid configuration for"
@@ -143,9 +143,9 @@ public class OpenTelemetryExporterFactory {
 
                     openTelemetryMapAccessor
                             .get("/headers")
-                            .map(new ToMap(ConfigurationException.supplier(
+                            .map(ToMap.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/headers must be a" + " map")))
-                            .map(new ValidMap(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ValidMap.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/headers must"
                                     + " contains valid string"
                                     + " keys/values")))
@@ -153,10 +153,10 @@ public class OpenTelemetryExporterFactory {
 
                     openTelemetryMapAccessor
                             .get("/resourceAttributes")
-                            .map(new ToMap(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ToMap.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/resourceAttributes"
                                     + " must be a map")))
-                            .map(new ValidMap(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ValidMap.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/resourceAttributes"
                                     + " must contains valid string"
                                     + " keys/values")))
@@ -164,39 +164,39 @@ public class OpenTelemetryExporterFactory {
 
                     openTelemetryMapAccessor
                             .get("/serviceInstanceId")
-                            .map(new ToString(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ToString.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceInstanceId"
                                     + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier("Invalid configuration for"
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceInstanceId"
                                     + " must not be blank")))
                             .ifPresent(openTelemetryExporterBuilder::serviceInstanceId);
 
                     openTelemetryMapAccessor
                             .get("/serviceNamespace")
-                            .map(new ToString(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ToString.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceNamespace"
                                     + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier("Invalid configuration for"
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceNamespace"
                                     + " must not be blank")))
                             .ifPresent(openTelemetryExporterBuilder::serviceNamespace);
 
                     openTelemetryMapAccessor
                             .get("/serviceName")
-                            .map(new ToString(ConfigurationException.supplier(
+                            .map(ToString.of(ConfigurationException.supplier(
                                     "Invalid configuration for" + " /openTelemetry/serviceName" + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier("Invalid configuration for"
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceName"
                                     + " must not be blank")))
                             .ifPresent(openTelemetryExporterBuilder::serviceName);
 
                     openTelemetryMapAccessor
                             .get("/serviceVersion")
-                            .map(new ToString(ConfigurationException.supplier("Invalid configuration for"
+                            .map(ToString.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceVersion"
                                     + " must be a string")))
-                            .map(new StringIsNotBlank(ConfigurationException.supplier("Invalid configuration for"
+                            .map(StringIsNotBlank.of(ConfigurationException.supplier("Invalid configuration for"
                                     + " /openTelemetry/serviceVersion"
                                     + " must not be blank")))
                             .ifPresent(openTelemetryExporterBuilder::serviceVersion);

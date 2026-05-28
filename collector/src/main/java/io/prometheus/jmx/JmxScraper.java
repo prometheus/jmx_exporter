@@ -252,6 +252,7 @@ class JmxScraper {
             try {
                 callable.call();
             } catch (Exception ignored) {
+                // Intentionally empty
             }
         }
     }

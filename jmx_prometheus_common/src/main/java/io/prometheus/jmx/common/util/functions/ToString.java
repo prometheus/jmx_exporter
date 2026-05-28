@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Object, String> toString = new ToString(() -> new ConfigurationException("Invalid string"));
+ * Function<Object, String> toString = ToString.of(() -> new ConfigurationException("Invalid string"));
  * String result = toString.apply("hello");  // Returns "hello"
  * String result2 = toString.apply(42);  // Returns "42"
  * }</pre>
@@ -50,11 +50,10 @@ public class ToString implements Function<Object, String> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ToString(Supplier<? extends RuntimeException> supplier) {
+    private ToString(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Converts the given object to a string representation.
      *
@@ -77,5 +76,9 @@ public class ToString implements Function<Object, String> {
         } catch (Throwable t) {
             throw supplier.get();
         }
+    }
+
+    public static ToString of(Supplier<? extends RuntimeException> supplier) {
+        return new ToString(supplier);
     }
 }

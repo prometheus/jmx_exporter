@@ -37,172 +37,112 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import org.paramixel.core.Action;
-import org.paramixel.core.Context;
-import org.paramixel.core.Factory;
-import org.paramixel.core.Paramixel;
-import org.paramixel.core.action.Container;
-import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
-import org.paramixel.core.support.Cleanup;
-import org.paramixel.core.support.Retry;
-import org.testcontainers.containers.Network;
+import java.util.stream.Collectors;
+import org.paramixel.api.Paramixel;
+import org.paramixel.api.Runner;
+import org.paramixel.api.action.Instance;
+import org.paramixel.api.action.Lifecycle;
+import org.paramixel.api.action.Parallel;
+import org.paramixel.api.action.Spec;
+import org.paramixel.api.support.Retry;
 
 public class StartupDelayTest {
 
-    private static final String ENVIRONMENT_KEY = "environment";
-    private static final String NETWORK_KEY = "network";
+    private final JmxExporterTestEnvironment environment;
 
-    public static void main(String[] args) {
-        Factory.defaultRunner().runAndExit(actionFactory());
+    public static void main(String[] args) throws Throwable {
+        Runner.defaultRunner().runAndExit(factory());
     }
 
-    @Paramixel.ActionFactory
-    public static Action actionFactory() {
-        var parallelBuilder = Parallel.builder(StartupDelayTest.class.getName());
-        for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()
+    @Paramixel.Factory
+    public static Spec<?> factory() throws Throwable {
+        var environments = JmxExporterTestEnvironment.createTestEnvironments(StartupDelayTest.class).stream()
                 .filter(env -> env.getJmxExporterMode() == JmxExporterMode.JavaAgent)
-                .toList()) {
-            parallelBuilder.child(argument(environment));
-        }
-        return parallelBuilder.build();
+                .collect(Collectors.toList());
+
+        return Parallel.of(StartupDelayTest.class.getName())
+                .each(
+                        environments,
+                        environment -> Instance.of(environment.name(), () -> new StartupDelayTest(environment))
+                                .child(Lifecycle.<StartupDelayTest>of("lifecycle")
+                                        .before("setUp()", StartupDelayTest::setUp)
+                                        .child("testHealthy()", StartupDelayTest::testHealthy)
+                                        .child("testDefaultTextMetrics()", StartupDelayTest::testDefaultTextMetrics)
+                                        .child(
+                                                "testOpenMetricsTextMetrics()",
+                                                StartupDelayTest::testOpenMetricsTextMetrics)
+                                        .child(
+                                                "testPrometheusTextMetrics()",
+                                                StartupDelayTest::testPrometheusTextMetrics)
+                                        .child(
+                                                "testPrometheusProtobufMetrics()",
+                                                StartupDelayTest::testPrometheusProtobufMetrics)
+                                        .after("tearDown()", StartupDelayTest::tearDown)));
     }
 
-    private static Action argument(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        Action setUp = setUp(jmxExporterTestEnvironment);
-        Action testHealthy = testHealthy();
-        Action testDefaultTextMetrics = testDefaultTextMetrics();
-        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
-        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
-        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
-        Action tearDown = tearDown();
-
-        return Container.builder(jmxExporterTestEnvironment.getName())
-                .before(setUp)
-                .child(testHealthy)
-                .child(testDefaultTextMetrics)
-                .child(testOpenMetricsTextMetrics)
-                .child(testPrometheusTextMetrics)
-                .child(testPrometheusProtobufMetrics)
-                .after(tearDown)
-                .build();
+    private StartupDelayTest(JmxExporterTestEnvironment environment) {
+        this.environment = environment;
     }
 
-    private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        return Direct.builder("setUp")
-                .runnable(context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    jmxExporterTestEnvironment.initialize(StartupDelayTest.class, network);
-                    var store = context.getStore();
-                    store.put(NETWORK_KEY, network);
-                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
-                })
-                .build();
+    public void setUp() throws Throwable {
+        environment.initialize();
     }
 
-    private static Action testHealthy() {
-        return Direct.builder("testHealthy")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.HEALTHY);
+    public void testHealthy() throws Throwable {
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
 
-                    Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
-                            .retryOn(t -> t instanceof AssertionError || t instanceof Exception)
-                            .runAndThrow(() -> {
-                                HttpResponse httpResponse = HttpClient.sendRequest(url);
-                                assertHealthyResponse(httpResponse);
-                            });
-                })
-                .build();
+        Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
+                .retryOn(t -> t instanceof AssertionError || t instanceof Exception)
+                .runAndThrow(() -> {
+                    HttpResponse httpResponse = HttpClient.sendRequest(url);
+                    assertHealthyResponse(httpResponse);
+                });
     }
 
-    private static Action testDefaultTextMetrics() {
-        return Direct.builder("testDefaultTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testDefaultTextMetrics() throws Throwable {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    HttpResponse httpResponse = sendRequestWithRetry(url);
+        HttpResponse httpResponse = sendRequestWithRetry(url);
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
     }
 
-    private static Action testOpenMetricsTextMetrics() {
-        return Direct.builder("testOpenMetricsTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testOpenMetricsTextMetrics() throws Throwable {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    HttpResponse httpResponse = sendRequestWithRetry(
-                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        HttpResponse httpResponse =
+                sendRequestWithRetry(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusTextMetrics() {
-        return Direct.builder("testPrometheusTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testPrometheusTextMetrics() throws Throwable {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    HttpResponse httpResponse = sendRequestWithRetry(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        HttpResponse httpResponse =
+                sendRequestWithRetry(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusProtobufMetrics() {
-        return Direct.builder("testPrometheusProtobufMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testPrometheusProtobufMetrics() throws Throwable {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    HttpResponse httpResponse = sendRequestWithRetry(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        HttpResponse httpResponse =
+                sendRequestWithRetry(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    private static Action tearDown() {
-        return Direct.builder("tearDown")
-                .runnable(context -> {
-                    var store = context.getStore();
-                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
-                    JmxExporterTestEnvironment environment = store.remove(
-                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                            .orElse(null);
-
-                    if (network != null && environment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(environment)
-                                .addCloseable(network)
-                                .runAndThrow();
-                    }
-                })
-                .build();
+    public void tearDown() {
+        environment.close();
     }
 
-    private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    private static HttpResponse sendRequestWithRetry(String url) throws Throwable {
+    private HttpResponse sendRequestWithRetry(String url) throws Throwable {
         return sendRequestWithRetry(url, null, null);
     }
 
-    private static HttpResponse sendRequestWithRetry(String url, String header, String value) throws Throwable {
+    private HttpResponse sendRequestWithRetry(String url, String header, String value) throws Throwable {
         final HttpResponse[] responseHolder = new HttpResponse[1];
 
         Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
@@ -215,10 +155,7 @@ public class StartupDelayTest {
         return responseHolder[0];
     }
 
-    private static void assertMetricsResponse(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();

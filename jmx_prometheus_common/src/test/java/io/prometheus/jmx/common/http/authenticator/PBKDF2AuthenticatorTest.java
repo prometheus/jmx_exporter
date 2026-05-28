@@ -454,6 +454,30 @@ public class PBKDF2AuthenticatorTest extends BaseAuthenticatorTest {
     }
 
     @Test
+    public void testInvalidHexCharacterThrowsException() {
+        assertThatThrownBy(() ->
+                        new PBKDF2Authenticator("/", VALID_USERNAME, "GG", "PBKDF2WithHmacSHA256", SALT, 1000, 128))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("non-hexadecimal");
+    }
+
+    @Test
+    public void testMixedInvalidHexCharacterThrowsException() {
+        assertThatThrownBy(() ->
+                        new PBKDF2Authenticator("/", VALID_USERNAME, "0Z", "PBKDF2WithHmacSHA256", SALT, 1000, 128))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("non-hexadecimal");
+    }
+
+    @Test
+    public void testOddLengthHexThrowsException() {
+        assertThatThrownBy(() ->
+                        new PBKDF2Authenticator("/", VALID_USERNAME, "ABC", "PBKDF2WithHmacSHA256", SALT, 1000, 128))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("even length");
+    }
+
+    @Test
     public void testGeneratePasswordHashViaReflection() throws Exception {
         Method method = PBKDF2Authenticator.class.getDeclaredMethod(
                 "generatePasswordHash", String.class, String.class, int.class, int.class, String.class);

@@ -31,8 +31,10 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Object, MapAccessor> toMapAccessor = new ToMapAccessor(() -> new ConfigurationException("Invalid map"));
- * MapAccessor result = toMapAccessor.apply(Map.of("key", "value"));
+ * Function<Object, MapAccessor> toMapAccessor = ToMapAccessor.of(() -> new ConfigurationException("Invalid map"));
+ * Map<String, String> values = new java.util.LinkedHashMap<String, String>();
+ * values.put("key", "value");
+ * MapAccessor result = toMapAccessor.apply(values);
  * }</pre>
  *
  * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
@@ -52,11 +54,10 @@ public class ToMapAccessor implements Function<Object, MapAccessor> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ToMapAccessor(Supplier<? extends RuntimeException> supplier) {
+    private ToMapAccessor(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Casts the given object to a map and wraps it in a {@link MapAccessor}.
      *
@@ -72,5 +73,9 @@ public class ToMapAccessor implements Function<Object, MapAccessor> {
         } catch (ClassCastException e) {
             throw supplier.get();
         }
+    }
+
+    public static ToMapAccessor of(Supplier<? extends RuntimeException> supplier) {
+        return new ToMapAccessor(supplier);
     }
 }

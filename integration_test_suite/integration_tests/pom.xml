@@ -23,10 +23,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.opentest4j</groupId>
-            <artifactId>opentest4j</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>jmx_prometheus_common</artifactId>
         </dependency>
@@ -71,11 +67,6 @@
         <dependency>
             <groupId>org.paramixel</groupId>
             <artifactId>core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>

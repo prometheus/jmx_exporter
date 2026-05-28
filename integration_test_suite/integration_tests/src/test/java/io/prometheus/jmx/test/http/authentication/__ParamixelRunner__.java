@@ -16,14 +16,12 @@
 
 package io.prometheus.jmx.test.http.authentication;
 
-import org.paramixel.core.Factory;
-import org.paramixel.core.Selector;
+import org.paramixel.api.Runner;
+import org.paramixel.api.selector.Selector;
 
 public class __ParamixelRunner__ {
 
     public static void main(String[] args) {
-        Factory.defaultRunner()
-                .runAndExit(
-                        Selector.builder().packageOf(__ParamixelRunner__.class).build());
+        Runner.defaultRunner().runAndExit(Selector.packageTreeOf(__ParamixelRunner__.class));
     }
 }

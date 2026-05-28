@@ -18,6 +18,7 @@ package io.prometheus.jmx.common.util.functions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,14 +26,14 @@ public class ToBooleanTest {
 
     @Test
     public void testApplyBooleanInput() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toBoolean.apply(Boolean.TRUE)).isTrue();
         assertThat(toBoolean.apply(Boolean.FALSE)).isFalse();
     }
 
     @Test
     public void testApplyTrueString() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toBoolean.apply("true")).isTrue();
         assertThat(toBoolean.apply("TRUE")).isTrue();
         assertThat(toBoolean.apply("True")).isTrue();
@@ -40,7 +41,7 @@ public class ToBooleanTest {
 
     @Test
     public void testApplyFalseString() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toBoolean.apply("false")).isFalse();
         assertThat(toBoolean.apply("FALSE")).isFalse();
         assertThat(toBoolean.apply("False")).isFalse();
@@ -48,24 +49,39 @@ public class ToBooleanTest {
 
     @Test
     public void testApplyNullThrowsIllegalArgumentException() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("should not be thrown"));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> toBoolean.apply(null));
     }
 
     @Test
-    public void testApplyInvalidStringReturnsFalse() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
-        assertThat(toBoolean.apply("not a boolean")).isFalse();
+    public void testApplyInvalidStringThrows() {
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("invalid boolean"));
+        assertThatThrownBy(() -> toBoolean.apply("not a boolean")).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    public void testApplyEmptyStringReturnsFalse() {
-        ToBoolean toBoolean = new ToBoolean(() -> new RuntimeException("should not be thrown"));
-        assertThat(toBoolean.apply("")).isFalse();
+    public void testApplyEmptyStringThrows() {
+        ToBoolean toBoolean = ToBoolean.of(() -> new RuntimeException("invalid boolean"));
+        assertThatThrownBy(() -> toBoolean.apply("")).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ToBoolean(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ToBoolean.of(null));
+    }
+
+    @Test
+    public void testApplyThrowsSupplierExceptionOnCastException() {
+        RuntimeException expectedException = new RuntimeException("conversion failed");
+        ToBoolean toBoolean = ToBoolean.of(() -> expectedException);
+
+        Object nonStringNonBoolean = new Object() {
+            @Override
+            public String toString() {
+                throw new RuntimeException("toString explosion");
+            }
+        };
+
+        assertThatThrownBy(() -> toBoolean.apply(nonStringNonBoolean)).isSameAs(expectedException);
     }
 }

@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.filter;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -27,18 +26,14 @@ import java.util.function.Predicate;
  */
 public class PBKDF2WithHmacExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
-    private final Set<String> filteredDockerImages;
+    private final Set<String> filteredDockerImages =
+            Set.of("ibmjava:8", "ibmjava:8-jre", "ibmjava:8-sdk", "ibmjava:8-sfj");
 
     /**
      * Creates a filter that excludes IBM Java 8 images incompatible with PBKDF2WithHmac.
      */
     public PBKDF2WithHmacExporterTestEnvironmentFilter() {
-        // Filter out Docker image names that don't support PBKDF2 with HMAC
-        filteredDockerImages = new HashSet<>();
-        filteredDockerImages.add("ibmjava:8");
-        filteredDockerImages.add("ibmjava:8-jre");
-        filteredDockerImages.add("ibmjava:8-sdk");
-        filteredDockerImages.add("ibmjava:8-sfj");
+        // Intentionally empty
     }
 
     /**

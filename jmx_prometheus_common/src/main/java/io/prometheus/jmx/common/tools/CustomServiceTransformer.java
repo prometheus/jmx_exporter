@@ -70,7 +70,7 @@ public class CustomServiceTransformer implements ResourceTransformer {
      * <p>Default constructor for use by Maven Shade plugin.
      */
     public CustomServiceTransformer() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

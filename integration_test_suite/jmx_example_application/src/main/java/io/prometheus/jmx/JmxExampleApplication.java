@@ -34,7 +34,7 @@ public class JmxExampleApplication {
      * Private constructor to prevent instantiation of this utility class.
      */
     private JmxExampleApplication() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

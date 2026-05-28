@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Object, Boolean> toBoolean = new ToBoolean(() -> new ConfigurationException("Invalid boolean"));
+ * Function<Object, Boolean> toBoolean = ToBoolean.of(() -> new ConfigurationException("Invalid boolean"));
  * Boolean result = toBoolean.apply("true");  // Returns true
  * Boolean result2 = toBoolean.apply(false);  // Returns false
  * }</pre>
@@ -50,11 +50,10 @@ public class ToBoolean implements Function<Object, Boolean> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ToBoolean(Supplier<? extends RuntimeException> supplier) {
+    private ToBoolean(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Converts the given object to a {@link Boolean}.
      *
@@ -68,17 +67,35 @@ public class ToBoolean implements Function<Object, Boolean> {
     @Override
     public Boolean apply(Object value) {
         if (value == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("value is null");
         }
 
         try {
             if (value instanceof Boolean) {
                 return (Boolean) value;
             } else {
-                return Boolean.valueOf(value.toString());
+                String s = value.toString().trim().toLowerCase();
+                switch (s) {
+                    case "true":
+                    case "yes":
+                    case "on":
+                    case "1":
+                        return Boolean.TRUE;
+                    case "false":
+                    case "no":
+                    case "off":
+                    case "0":
+                        return Boolean.FALSE;
+                    default:
+                        throw supplier.get();
+                }
             }
         } catch (Throwable t) {
             throw supplier.get();
         }
+    }
+
+    public static ToBoolean of(Supplier<? extends RuntimeException> supplier) {
+        return new ToBoolean(supplier);
     }
 }

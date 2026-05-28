@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Integer, Integer> validator = new IntegerInRange(1, 100, () -> new ConfigurationException("Value out of range"));
+ * Function<Integer, Integer> validator = IntegerInRange.of(1, 100, () -> new ConfigurationException("Value out of range"));
  * Integer result = validator.apply(50);  // Returns 50
  * validator.apply(200);  // Throws ConfigurationException
  * }</pre>
@@ -62,13 +62,12 @@ public class IntegerInRange implements Function<Integer, Integer> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public IntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
+    private IntegerInRange(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.minimum = minimum;
         this.maximum = maximum;
         this.supplier = supplier;
     }
-
     /**
      * Validates that the integer is within the configured inclusive range.
      *
@@ -84,5 +83,9 @@ public class IntegerInRange implements Function<Integer, Integer> {
         }
 
         return value;
+    }
+
+    public static IntegerInRange of(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
+        return new IntegerInRange(minimum, maximum, supplier);
     }
 }

@@ -52,7 +52,7 @@ public class MatchedRuleToMetricSnapshotsConverter {
      * Constructor
      */
     public MatchedRuleToMetricSnapshotsConverter() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

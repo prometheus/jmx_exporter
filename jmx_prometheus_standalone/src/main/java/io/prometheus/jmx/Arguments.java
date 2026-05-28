@@ -220,10 +220,10 @@ public class Arguments {
     /**
      * Converts the arguments array to a string representation for error messages.
      *
-     * <p>Handles {@code null} and empty strings specially, representing them as
-     * {@code "(null)"} and {@code ""} respectively.
+     * <p>Handles {@code null} and blank strings specially, representing them as
+     * {@code "(null)"} and {@code ""} respectively. Non-null, non-blank strings are appended as-is.
      *
-     * @param arguments the arguments array to convert, may be {@code null}
+     * @param arguments the arguments array to convert
      * @return a space-separated string representation of the arguments
      */
     private static String toString(String[] arguments) {
@@ -237,6 +237,8 @@ public class Arguments {
             } else if (argument.trim().isEmpty()) {
                 String trimmedArgument = argument.trim();
                 stringBuilder.append("\"").append(trimmedArgument).append("\"");
+            } else {
+                stringBuilder.append(argument);
             }
         }
 

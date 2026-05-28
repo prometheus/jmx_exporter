@@ -29,4 +29,14 @@ public class EnvironmentException extends RuntimeException {
     public EnvironmentException(String message) {
         super(message);
     }
+
+    /**
+     * Creates an environment exception with the specified detail message and cause.
+     *
+     * @param message the detail message describing the environment failure
+     * @param cause the underlying cause
+     */
+    public EnvironmentException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

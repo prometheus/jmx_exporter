@@ -95,7 +95,7 @@ public class Credentials {
      */
     @Override
     public String toString() {
-        return username + "\0" + password;
+        return "Credentials{username='" + username + "'}";
     }
 
     /**
@@ -113,8 +113,9 @@ public class Credentials {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Credentials credentials = (Credentials) o;
-        return MessageDigest.isEqual(this.usernameBytes, credentials.usernameBytes)
-                && MessageDigest.isEqual(this.passwordBytes, credentials.passwordBytes);
+        boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, credentials.usernameBytes);
+        boolean passwordMatches = MessageDigest.isEqual(this.passwordBytes, credentials.passwordBytes);
+        return usernameMatches & passwordMatches;
     }
 
     @Override

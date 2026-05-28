@@ -25,54 +25,54 @@ public class StringIsNotBlankTest {
 
     @Test
     public void testApplyValidString() {
-        StringIsNotBlank stringIsNotBlank = new StringIsNotBlank(() -> new RuntimeException("should not be thrown"));
+        StringIsNotBlank stringIsNotBlank = StringIsNotBlank.of(() -> new RuntimeException("should not be thrown"));
         assertThat(stringIsNotBlank.apply("hello")).isEqualTo("hello");
     }
 
     @Test
     public void testApplyStringWithWhitespace() {
-        StringIsNotBlank stringIsNotBlank = new StringIsNotBlank(() -> new RuntimeException("should not be thrown"));
+        StringIsNotBlank stringIsNotBlank = StringIsNotBlank.of(() -> new RuntimeException("should not be thrown"));
         assertThat(stringIsNotBlank.apply("  hello world  ")).isEqualTo("  hello world  ");
     }
 
     @Test
     public void testApplyEmptyStringThrowsSupplierException() {
         StringIsNotBlank stringIsNotBlank =
-                new StringIsNotBlank(() -> new UnsupportedOperationException("blank string"));
+                StringIsNotBlank.of(() -> new UnsupportedOperationException("blank string"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> stringIsNotBlank.apply(""));
     }
 
     @Test
     public void testApplyWhitespaceOnlyThrowsSupplierException() {
         StringIsNotBlank stringIsNotBlank =
-                new StringIsNotBlank(() -> new UnsupportedOperationException("blank string"));
+                StringIsNotBlank.of(() -> new UnsupportedOperationException("blank string"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> stringIsNotBlank.apply("   "));
     }
 
     @Test
     public void testApplyTabOnlyThrowsSupplierException() {
         StringIsNotBlank stringIsNotBlank =
-                new StringIsNotBlank(() -> new UnsupportedOperationException("blank string"));
+                StringIsNotBlank.of(() -> new UnsupportedOperationException("blank string"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> stringIsNotBlank.apply("\t"));
     }
 
     @Test
     public void testApplyNewlineOnlyThrowsSupplierException() {
         StringIsNotBlank stringIsNotBlank =
-                new StringIsNotBlank(() -> new UnsupportedOperationException("blank string"));
+                StringIsNotBlank.of(() -> new UnsupportedOperationException("blank string"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> stringIsNotBlank.apply("\n"));
     }
 
     @Test
     public void testApplyMixedWhitespaceThrowsSupplierException() {
         StringIsNotBlank stringIsNotBlank =
-                new StringIsNotBlank(() -> new UnsupportedOperationException("blank string"));
+                StringIsNotBlank.of(() -> new UnsupportedOperationException("blank string"));
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> stringIsNotBlank.apply(" \t \r \n "));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new StringIsNotBlank(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> StringIsNotBlank.of(null));
     }
 }

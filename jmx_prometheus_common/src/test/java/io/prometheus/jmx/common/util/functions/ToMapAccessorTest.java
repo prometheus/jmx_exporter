@@ -28,7 +28,7 @@ public class ToMapAccessorTest {
 
     @Test
     public void testApplyValidMap() {
-        ToMapAccessor toMapAccessor = new ToMapAccessor(() -> new RuntimeException("should not be thrown"));
+        ToMapAccessor toMapAccessor = ToMapAccessor.of(() -> new RuntimeException("should not be thrown"));
         Map<Object, Object> input = new LinkedHashMap<>();
         input.put("key", "value");
         MapAccessor result = toMapAccessor.apply(input);
@@ -39,20 +39,20 @@ public class ToMapAccessorTest {
     @Test
     public void testApplyNullThrowsIllegalArgumentException() {
         ToMapAccessor toMapAccessor =
-                new ToMapAccessor(() -> new UnsupportedOperationException("map accessor conversion failed"));
+                ToMapAccessor.of(() -> new UnsupportedOperationException("map accessor conversion failed"));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> toMapAccessor.apply(null));
     }
 
     @Test
     public void testApplyNonMapThrowsSupplierException() {
         ToMapAccessor toMapAccessor =
-                new ToMapAccessor(() -> new UnsupportedOperationException("map accessor conversion failed"));
+                ToMapAccessor.of(() -> new UnsupportedOperationException("map accessor conversion failed"));
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> toMapAccessor.apply("not a map"));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ToMapAccessor(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ToMapAccessor.of(null));
     }
 }

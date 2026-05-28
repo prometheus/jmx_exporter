@@ -23,13 +23,46 @@
 set -e
 set -o pipefail
 
-if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
-    echo "Usage: $0 <JAVA DOCKER IMAGE> <PROMETHEUS DOCKER IMAGE> [parallelism]"
-    exit 1
+usage() {
+  echo "Usage: $0 <JAVA DOCKER IMAGE> <PROMETHEUS DOCKER IMAGE> [parallelism] [-D<name>[=<value>] ...]"
+  echo "Quote -D values containing shell metacharacters, for example:"
+  echo "  $0 <JAVA DOCKER IMAGE> <PROMETHEUS DOCKER IMAGE> [parallelism] '-Dparamixel.match.class=^(?!.*PBKDF).*'"
+}
+
+if [[ "$#" -lt 2 ]]; then
+  usage
+  exit 1
 fi
 
+JAVA_DOCKER_IMAGE="$1"
+PROMETHEUS_DOCKER_IMAGE="$2"
+shift 2
+
 CPU_COUNT="$(nproc)"
-PARALLELISM="${3:-$CPU_COUNT}"
+PARALLELISM="$CPU_COUNT"
+PARALLELISM_SET=false
+JAVA_FLAGS=()
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -D*)
+      JAVA_FLAGS+=("$1")
+      ;;
+    [1-9]*)
+      if [[ "$PARALLELISM_SET" == true ]]; then
+        usage
+        exit 1
+      fi
+      PARALLELISM="$1"
+      PARALLELISM_SET=true
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
   echo "Error: parallelism must be an integer greater than 0"
@@ -37,9 +70,9 @@ if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
 fi
 
 (
-  export JAVA_DOCKER_IMAGES="$1"
-  export PROMETHEUS_DOCKER_IMAGES="$2"
+  export JAVA_DOCKER_IMAGES="$JAVA_DOCKER_IMAGE"
+  export PROMETHEUS_DOCKER_IMAGES="$PROMETHEUS_DOCKER_IMAGE"
   docker pull "$JAVA_DOCKER_IMAGES"
   docker pull "$PROMETHEUS_DOCKER_IMAGES"
-  ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}"
+  ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}" "${JAVA_FLAGS[@]}"
 ) 2>&1 | tee targeted-test.log

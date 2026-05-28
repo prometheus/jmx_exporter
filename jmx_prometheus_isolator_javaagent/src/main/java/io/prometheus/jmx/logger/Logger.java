@@ -18,8 +18,8 @@ package io.prometheus.jmx.logger;
 
 import static java.lang.String.format;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.SimpleFormatter;
@@ -43,7 +43,7 @@ import java.util.logging.SimpleFormatter;
  * </ul>
  *
  * <p>Thread-safety: This class is thread-safe. The underlying logger is thread-safe, and
- * the date format uses thread-local storage.
+ * date formatting uses a thread-safe {@link DateTimeFormatter}.
  */
 public class Logger {
 
@@ -63,10 +63,9 @@ public class Logger {
                     || "true".equals(System.getProperty("jmx.prometheus.exporter.developer.debug"));
 
     /**
-     * Thread-local date format for log timestamps.
+     * Thread-safe date formatter for log timestamps.
      */
-    private static final ThreadLocal<SimpleDateFormat> SIMPLE_DATE_FORMAT_THREAD_LOCAL =
-            ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     /**
      * Constructs a logger for the specified class.
@@ -127,7 +126,7 @@ public class Logger {
      * @param message the message to log
      */
     public void trace(String message) {
-        trace("%s", message);
+        log(Level.TRACE, message);
     }
 
     /**
@@ -156,7 +155,7 @@ public class Logger {
      * @param message the message to log
      */
     public void info(String message) {
-        info("%s", message);
+        log(Level.INFO, message);
     }
 
     /**
@@ -185,7 +184,7 @@ public class Logger {
      * @param message the message to log
      */
     public void warn(String message) {
-        warn("%s", message);
+        log(Level.WARN, message);
     }
 
     /**
@@ -214,7 +213,7 @@ public class Logger {
      * @param message the message to log
      */
     public void error(String message) {
-        error("%s", message);
+        log(Level.ERROR, message);
     }
 
     /**
@@ -239,59 +238,75 @@ public class Logger {
     }
 
     /**
-     * Method to log a message
+     * Logs a pre-formatted message at the given level.
      *
-     * @param level the level
-     * @param format the format
-     * @param objects the objects
+     * <p>Skips {@link String#format} since the message is already a plain string.
+     *
+     * @param level   the level
+     * @param message the pre-formatted message
      */
-    private void log(Level level, String format, Object... objects) {
+    private void log(Level level, String message) {
         java.util.logging.Level julLevel = decode(level);
-        if (julLevel != null && LOGGER.isLoggable(julLevel)) {
-            LOGGER.log(julLevel, format(format, objects));
+        boolean loggable = julLevel != null && LOGGER.isLoggable(julLevel);
+        boolean debug = JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG;
+        if (loggable) {
+            LOGGER.log(julLevel, message);
         }
-
-        if (JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG) {
-            String timestamp = SIMPLE_DATE_FORMAT_THREAD_LOCAL.get().format(new Date());
-            String threadName = Thread.currentThread().getName();
-            String loggerName = LOGGER.getName();
-            String message = format(format, objects);
-
-            System.out.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, Level.TRACE, loggerName, message);
+        if (debug) {
+            developerDebug(level, message);
         }
     }
 
     /**
-     * Method to decode a Level to a java.util.logging.Level
+     * Logs a formatted message at the given level.
      *
-     * @param level the level
-     * @return the java.util.logging.Level
+     * @param level   the level
+     * @param format  the format string
+     * @param objects the objects to format
      */
-    private static java.util.logging.Level decode(Level level) {
-        java.util.logging.Level julLevel;
-
-        switch (level) {
-            case TRACE: {
-                julLevel = java.util.logging.Level.FINEST;
-                break;
+    private void log(Level level, String format, Object... objects) {
+        java.util.logging.Level julLevel = decode(level);
+        boolean loggable = julLevel != null && LOGGER.isLoggable(julLevel);
+        boolean debug = JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG;
+        if (loggable || debug) {
+            String message = format(format, objects);
+            if (loggable) {
+                LOGGER.log(julLevel, message);
             }
-            case INFO: {
-                julLevel = java.util.logging.Level.INFO;
-                break;
-            }
-            case WARN: {
-                julLevel = java.util.logging.Level.WARNING;
-                break;
-            }
-            case ERROR: {
-                julLevel = java.util.logging.Level.SEVERE;
-                break;
-            }
-            default: {
-                julLevel = null;
+            if (debug) {
+                developerDebug(level, message);
             }
         }
+    }
 
-        return julLevel;
+    /**
+     * Writes a log message to stdout with timestamp, thread, level, and logger name.
+     */
+    private void developerDebug(Level level, String message) {
+        String timestamp = DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        String threadName = Thread.currentThread().getName();
+        String loggerName = LOGGER.getName();
+        System.out.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
+    }
+
+    /**
+     * Decodes a {@link Level} to a {@link java.util.logging.Level}.
+     *
+     * @param level the level to decode
+     * @return the corresponding {@link java.util.logging.Level}, or {@code null} if unknown
+     */
+    private static java.util.logging.Level decode(Level level) {
+        switch (level) {
+            case TRACE:
+                return java.util.logging.Level.FINEST;
+            case INFO:
+                return java.util.logging.Level.INFO;
+            case WARN:
+                return java.util.logging.Level.WARNING;
+            case ERROR:
+                return java.util.logging.Level.SEVERE;
+            default:
+                return null;
+        }
     }
 }

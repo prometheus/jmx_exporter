@@ -40,6 +40,6 @@ public class JmxExporterPath {
      * Private constructor to prevent instantiation.
      */
     private JmxExporterPath() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 }

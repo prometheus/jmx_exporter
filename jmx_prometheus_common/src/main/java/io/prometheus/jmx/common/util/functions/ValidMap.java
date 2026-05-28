@@ -30,9 +30,14 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Map<String, String>, Map<String, String>> validator = new ValidMap(() -> new ConfigurationException("Invalid map"));
- * Map<String, String> result = validator.apply(Map.of("key", "value"));  // Returns the map
- * validator.apply(Map.of("key", ""));  // Throws ConfigurationException
+ * Function<Map<String, String>, Map<String, String>> validator = ValidMap.of(() -> new ConfigurationException("Invalid map"));
+ * Map<String, String> valid = new java.util.LinkedHashMap<String, String>();
+ * valid.put("key", "value");
+ * Map<String, String> result = validator.apply(valid);  // Returns the map
+ *
+ * Map<String, String> invalid = new java.util.LinkedHashMap<String, String>();
+ * invalid.put("key", "");
+ * validator.apply(invalid);  // Throws ConfigurationException
  * }</pre>
  *
  * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
@@ -51,11 +56,10 @@ public class ValidMap implements Function<Map<String, String>, Map<String, Strin
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ValidMap(Supplier<? extends RuntimeException> supplier) {
+    private ValidMap(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Validates that all keys and values in the map are non-null and non-blank strings.
      *
@@ -70,11 +74,18 @@ public class ValidMap implements Function<Map<String, String>, Map<String, Strin
             String key = entry.getKey();
             String value = entry.getValue();
 
-            if (key == null || key.trim().isEmpty() || value == null || value.isEmpty()) {
+            if (key == null
+                    || key.trim().isEmpty()
+                    || value == null
+                    || value.trim().isEmpty()) {
                 throw supplier.get();
             }
         }
 
         return map;
+    }
+
+    public static ValidMap of(Supplier<? extends RuntimeException> supplier) {
+        return new ValidMap(supplier);
     }
 }

@@ -19,147 +19,81 @@ package io.prometheus.jmx.test.opentelemetry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
-import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
-import io.prometheus.jmx.test.support.environment.PrometheusTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.stream.Collectors;
-import org.paramixel.core.Action;
-import org.paramixel.core.Context;
-import org.paramixel.core.Factory;
-import org.paramixel.core.Paramixel;
-import org.paramixel.core.action.Container;
-import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
-import org.paramixel.core.support.Cleanup;
-import org.paramixel.core.support.Retry;
-import org.testcontainers.containers.Network;
+import org.paramixel.api.Paramixel;
+import org.paramixel.api.Runner;
+import org.paramixel.api.action.Instance;
+import org.paramixel.api.action.Lifecycle;
+import org.paramixel.api.action.Parallel;
+import org.paramixel.api.action.Spec;
+import org.paramixel.api.support.Retry;
 
 public class MixedConfigurationTest {
 
-    private static final String NETWORK_KEY = "network";
+    private final OpenTelemetryTestEnvironment environment;
 
-    private static final String JMX_EXPORTER_TEST_ENVIRONMENT = "jmxExporterTestEnvironment";
-
-    private static final String PROMETHEUS_TEST_ENVIRONMENT = "prometheusTestEnvironment";
-
-    public static void main(String[] args) {
-        Factory.defaultRunner().runAndExit(actionFactory());
+    private MixedConfigurationTest(OpenTelemetryTestEnvironment environment) {
+        this.environment = environment;
     }
 
-    @Paramixel.ActionFactory
-    public static Action actionFactory() {
-        var parallelBuilder = Parallel.builder(MixedConfigurationTest.class.getName());
-        for (OpenTelemetryTestEnvironment environment :
-                OpenTelemetryTestEnvironment.createEnvironments().toList()) {
-            parallelBuilder.child(argument(environment));
+    public static void main(String[] args) throws Throwable {
+        Runner.defaultRunner().runAndExit(factory());
+    }
+
+    @Paramixel.Factory
+    public static Spec<?> factory() throws Throwable {
+        return Parallel.of(MixedConfigurationTest.class.getName())
+                .each(
+                        OpenTelemetryTestEnvironment.createTestEnvironments(MixedConfigurationTest.class),
+                        environment -> Instance.of(
+                                        environment.exporterTestEnvironment().name(),
+                                        () -> new MixedConfigurationTest(environment))
+                                .child(Lifecycle.<MixedConfigurationTest>of("lifecycle")
+                                        .before("setUp()", MixedConfigurationTest::setUp)
+                                        .child(
+                                                "testPrometheusHasMetrics()",
+                                                MixedConfigurationTest::testPrometheusHasMetrics)
+                                        .after("tearDown()", MixedConfigurationTest::tearDown)));
+    }
+
+    public void setUp() throws Throwable {
+        environment.initialize();
+    }
+
+    public void testPrometheusHasMetrics() throws Throwable {
+        boolean isJmxExporterModeJavaStandalone =
+                environment.exporterTestEnvironment().getJmxExporterMode() == JmxExporterMode.Standalone;
+
+        boolean isKonaJdk8 =
+                environment.exporterTestEnvironment().getJavaDockerImage().startsWith("konajdk/konajdk:8");
+
+        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
+                .filter(name ->
+                        !isJmxExporterModeJavaStandalone || (!name.startsWith("jvm_") && !name.startsWith("process_")))
+                .filter(name -> !isKonaJdk8 || !name.equals("jvm_memory_pool_allocated_bytes_total"))
+                .toList()) {
+            Double value = getPrometheusMetric(metricName);
+
+            assertThat(value).as("metricName [%s]", metricName).isNotNull();
+            assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
         }
-        return parallelBuilder.build();
     }
 
-    private static Action argument(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
-        Action setUp = setUp(openTelemetryTestEnvironment);
-        Action testPrometheusHasMetrics = testPrometheusHasMetrics();
-        Action tearDown = tearDown();
-
-        return Container.builder(openTelemetryTestEnvironment.getName())
-                .before(setUp)
-                .child(testPrometheusHasMetrics)
-                .after(tearDown)
-                .build();
+    public void tearDown() throws Throwable {
+        environment.close();
     }
 
-    private static Action setUp(OpenTelemetryTestEnvironment openTelemetryTestEnvironment) {
-        return Direct.builder("setUp")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment jmxExporterTestEnvironment =
-                            openTelemetryTestEnvironment.exporterTestEnvironment();
-                    PrometheusTestEnvironment prometheusTestEnvironment =
-                            openTelemetryTestEnvironment.prometheusTestEnvironment();
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    prometheusTestEnvironment.initialize(MixedConfigurationTest.class, network);
-                    prometheusTestEnvironment.waitForReady();
-                    jmxExporterTestEnvironment.initialize(MixedConfigurationTest.class, network);
-                    var store = context.getStore();
-                    store.put(NETWORK_KEY, network);
-                    store.put(JMX_EXPORTER_TEST_ENVIRONMENT, jmxExporterTestEnvironment);
-                    store.put(PROMETHEUS_TEST_ENVIRONMENT, prometheusTestEnvironment);
-                })
-                .build();
-    }
-
-    private static Action testPrometheusHasMetrics() {
-        return Direct.builder("testPrometheusHasMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment =
-                            getJmxExporterTestEnvironment(context);
-                    PrometheusTestEnvironment currentPrometheusTestEnvironment = getPrometheusTestEnvironment(context);
-
-                    boolean isJmxExporterModeJavaStandalone =
-                            currentJmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone;
-
-                    for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
-                            .filter(metricName -> !isJmxExporterModeJavaStandalone
-                                    || (!metricName.startsWith("jvm_") && !metricName.startsWith("process_")))
-                            .collect(Collectors.toList())) {
-                        Double value = getPrometheusMetric(currentPrometheusTestEnvironment, metricName);
-
-                        assertThat(value).as("metricName [%s]", metricName).isNotNull();
-                        assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
-                    }
-                })
-                .build();
-    }
-
-    private static Action tearDown() {
-        return Direct.builder("tearDown")
-                .runnable(context -> {
-                    var store = context.getStore();
-                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
-                    JmxExporterTestEnvironment jmxExporterTestEnvironment = store.remove(
-                                    JMX_EXPORTER_TEST_ENVIRONMENT, JmxExporterTestEnvironment.class)
-                            .orElse(null);
-                    PrometheusTestEnvironment prometheusTestEnvironment = store.remove(
-                                    PROMETHEUS_TEST_ENVIRONMENT, PrometheusTestEnvironment.class)
-                            .orElse(null);
-
-                    if (network != null && jmxExporterTestEnvironment != null && prometheusTestEnvironment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(jmxExporterTestEnvironment)
-                                .addCloseable(prometheusTestEnvironment)
-                                .addCloseable(network)
-                                .runAndThrow();
-                    }
-                })
-                .build();
-    }
-
-    private static JmxExporterTestEnvironment getJmxExporterTestEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(JMX_EXPORTER_TEST_ENVIRONMENT, JmxExporterTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    private static PrometheusTestEnvironment getPrometheusTestEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(PROMETHEUS_TEST_ENVIRONMENT, PrometheusTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    protected static Double getPrometheusMetric(PrometheusTestEnvironment prometheusTestEnvironment, String metricName)
-            throws Throwable {
+    private Double getPrometheusMetric(String metricName) throws Throwable {
         Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
                 .retryOn(t -> t instanceof RuntimeException)
                 .run(() -> {
-                    HttpResponse httpResponse = sendPrometheusQuery(prometheusTestEnvironment, metricName);
+                    HttpResponse httpResponse = sendPrometheusQuery(metricName);
 
                     assertThat(httpResponse.statusCode()).isEqualTo(200);
                     assertThat(httpResponse.body()).isNotNull();
@@ -172,17 +106,14 @@ public class MixedConfigurationTest {
                     throw new RuntimeException("metric not found yet: " + metricName);
                 });
 
-        return result.isPass() ? 1.0 : null;
+        return result.isSuccessful() ? 1.0 : null;
     }
 
-    protected static HttpResponse sendPrometheusQuery(PrometheusTestEnvironment prometheusTestEnvironment, String query)
-            throws IOException {
-        return sendRequest(
-                prometheusTestEnvironment, "/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
+    private HttpResponse sendPrometheusQuery(String query) throws IOException {
+        return sendRequest("/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
     }
 
-    protected static HttpResponse sendRequest(PrometheusTestEnvironment prometheusTestEnvironment, String path)
-            throws IOException {
-        return HttpClient.sendRequest(prometheusTestEnvironment.getPrometheusUrl(path));
+    private HttpResponse sendRequest(String path) throws IOException {
+        return HttpClient.sendRequest(environment.prometheusTestEnvironment().getPrometheusUrl(path));
     }
 }

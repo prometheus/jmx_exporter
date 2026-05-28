@@ -18,6 +18,8 @@ jobs:
           java-version: '25'
           distribution: 'corretto'
           cache: maven
+      - name: Validate formatting (Spotless)
+        run: ./mvnw --batch-mode spotless:check
       - name: Build
         run: |
           ./run-quick-test.sh

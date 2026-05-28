@@ -46,7 +46,7 @@ public class MetricsParser {
      * Private constructor to prevent instantiation.
      */
     private MetricsParser() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -157,7 +157,7 @@ public class MetricsParser {
                     if (line.startsWith("# TYPE")) {
                         type = line.substring(line.lastIndexOf(" ")).trim().toUpperCase(Locale.US);
                     } else if (line.startsWith("# UNIT")) {
-                        // INTENTIONALLY BLANK
+                        // Intentionally empty
                     } else if (line.startsWith("# HELP")) {
                         help = line.substring("# HELP".length()).trim();
                         break;
@@ -226,8 +226,8 @@ public class MetricsParser {
 
                 for (Metrics.Metric metric : metricFamily.getMetricList()) {
                     switch (metricType) {
-                        case COUNTER: {
-                            Metrics.Counter counter = metric.getCounter();
+                        case COUNTER -> {
+                            var counter = metric.getCounter();
 
                             collection.add(new Metric(
                                     Metric.Type.COUNTER,
@@ -235,19 +235,15 @@ public class MetricsParser {
                                     name,
                                     toLabels(metric.getLabelList()),
                                     counter.getValue()));
-
-                            break;
                         }
-                        case GAUGE: {
-                            Metrics.Gauge gauge = metric.getGauge();
+                        case GAUGE -> {
+                            var gauge = metric.getGauge();
 
                             collection.add(new Metric(
                                     Metric.Type.GAUGE, help, name, toLabels(metric.getLabelList()), gauge.getValue()));
-
-                            break;
                         }
-                        case UNTYPED: {
-                            Metrics.Untyped untyped = metric.getUntyped();
+                        case UNTYPED -> {
+                            var untyped = metric.getUntyped();
 
                             collection.add(new Metric(
                                     Metric.Type.UNTYPED,
@@ -255,19 +251,15 @@ public class MetricsParser {
                                     name,
                                     toLabels(metric.getLabelList()),
                                     untyped.getValue()));
-
-                            break;
                         }
-                        case SUMMARY: {
+                        case SUMMARY -> {
                             // TODO refactor to support Summary metrics
-                            break;
                         }
-                        default: {
+                        default ->
                             throw new MetricsParserException(format(
                                     "Exception parsing Protobuf metrics. MetricsParser"
                                             + " doesn't support metric type [%s]",
                                     metricType));
-                        }
                     }
                 }
             }
@@ -290,7 +282,7 @@ public class MetricsParser {
     private static String readHelpLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
         if (line != null) {
-            line = line.substring("# HELP".length()).trim();
+            line = line.substring("# HELP".length()).strip();
         }
         return line;
     }
@@ -304,7 +296,7 @@ public class MetricsParser {
      */
     private static String readTypeLine(LineReader lineReader) throws IOException {
         String line = lineReader.readLine();
-        return line.substring(line.lastIndexOf(" ")).trim();
+        return line.substring(line.lastIndexOf(" ")).strip();
     }
 
     /**
@@ -330,20 +322,30 @@ public class MetricsParser {
      * @param help the metric help text
      * @param metricLine the raw metric line containing name, labels, and value
      * @return a new {@link Metric} instance
+     * @throws MetricsParserException if the metric line is malformed (missing required spaces
+     *     or missing value)
      */
     private static Metric createMetric(String type, String help, String metricLine) {
         String name;
-        TreeMap<String, String> labels = new TreeMap<>();
+        var labels = new TreeMap<String, String>();
 
         int curlyBraceIndex = metricLine.indexOf("{");
         if (curlyBraceIndex > 1) {
             name = metricLine.substring(0, curlyBraceIndex);
             labels = parseLabels(metricLine.substring(curlyBraceIndex, metricLine.lastIndexOf("}") + 1));
         } else {
-            name = metricLine.substring(0, metricLine.indexOf(" "));
+            int spaceIndex = metricLine.indexOf(" ");
+            if (spaceIndex < 1) {
+                throw new MetricsParserException(format("Malformed metric line (no space found) [%s]", metricLine));
+            }
+            name = metricLine.substring(0, spaceIndex);
         }
 
-        double value = Double.parseDouble(metricLine.substring(metricLine.lastIndexOf(" ")));
+        int lastSpaceIndex = metricLine.lastIndexOf(" ");
+        if (lastSpaceIndex < 0) {
+            throw new MetricsParserException(format("Malformed metric line (no value found) [%s]", metricLine));
+        }
+        double value = Double.parseDouble(metricLine.substring(lastSpaceIndex));
 
         if (type.equalsIgnoreCase("COUNTER")) {
             return new Metric(Metric.Type.COUNTER, help, name, labels, value);
@@ -414,9 +416,9 @@ public class MetricsParser {
      * @return a sorted map of label names to their values
      */
     private static TreeMap<String, String> toLabels(List<Metrics.LabelPair> labelPairs) {
-        TreeMap<String, String> labels = new TreeMap<>();
+        var labels = new TreeMap<String, String>();
 
-        for (Metrics.LabelPair labelPair : labelPairs) {
+        for (var labelPair : labelPairs) {
             labels.put(labelPair.getName(), labelPair.getValue());
         }
 
@@ -438,8 +440,8 @@ public class MetricsParser {
          * @param reader the reader to read lines from; wrapped in a {@link BufferedReader} if not already one
          */
         public LineReader(Reader reader) {
-            if (reader instanceof BufferedReader) {
-                this.bufferedReader = (BufferedReader) reader;
+            if (reader instanceof BufferedReader bufferedReader) {
+                this.bufferedReader = bufferedReader;
             } else {
                 this.bufferedReader = new BufferedReader(reader);
             }
@@ -480,7 +482,7 @@ public class MetricsParser {
                 try {
                     bufferedReader.close();
                 } catch (Throwable t) {
-                    // INTENTIONALLY BLANK
+                    // Intentionally empty
                 }
 
                 bufferedReader = null;

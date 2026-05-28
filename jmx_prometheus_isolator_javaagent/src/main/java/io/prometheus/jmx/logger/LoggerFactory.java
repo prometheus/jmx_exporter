@@ -65,7 +65,7 @@ public class LoggerFactory {
      * <p>This is a utility class with only static methods.
      */
     private LoggerFactory() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
