@@ -142,6 +142,65 @@ public class MatchedRulesCacheTest {
 
             assertThat(key).isNotNull();
         }
+
+        @Test
+        void cacheKeyDefensiveCopyPreventsMutationBreakingLookup() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey key = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
+            MatchedRule rule = createMatchedRule("test_name");
+
+            MatchedRulesCache cache = new MatchedRulesCache();
+            cache.put(key, rule);
+
+            props.put("extra", "value");
+            keys.add("key2");
+
+            assertThat(cache.get(key)).isSameAs(rule);
+        }
+
+        @Test
+        void cacheKeyDefensiveCopyPreventsHashCodeDrift() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey key = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
+            int hashCodeBefore = key.hashCode();
+
+            props.put("extra", "value");
+            keys.add("key2");
+
+            int hashCodeAfter = key.hashCode();
+            assertThat(hashCodeAfter).isEqualTo(hashCodeBefore);
+        }
+
+        @Test
+        void cacheKeyEqualsConsistentAfterExternalMutation() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey key1 = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
+
+            LinkedHashMap<String, String> props2 = new LinkedHashMap<>();
+            props2.put("type", "test");
+            ArrayList<String> keys2 = new ArrayList<>();
+            keys2.add("key1");
+
+            MatchedRulesCache.CacheKey key2 = new MatchedRulesCache.CacheKey("domain", props2, keys2, "attr");
+
+            assertThat(key1).isEqualTo(key2);
+
+            props.put("extra", "value");
+
+            assertThat(key1).isEqualTo(key2);
+        }
     }
 
     @Nested
