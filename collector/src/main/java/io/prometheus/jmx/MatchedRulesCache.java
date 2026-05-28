@@ -134,10 +134,10 @@ public class MatchedRulesCache {
         public CacheKey(
                 String domain, LinkedHashMap<String, String> beanProperties, List<String> attrKeys, String attrName) {
             this.domain = domain;
-            this.beanProperties = beanProperties;
-            this.attrKeys = attrKeys;
+            this.beanProperties = new LinkedHashMap<>(beanProperties);
+            this.attrKeys = new ArrayList<>(attrKeys);
             this.attrName = attrName;
-            this.cachedHashCode = Objects.hash(domain, beanProperties, attrKeys, attrName);
+            this.cachedHashCode = Objects.hash(domain, this.beanProperties, this.attrKeys, attrName);
         }
 
         @Override
