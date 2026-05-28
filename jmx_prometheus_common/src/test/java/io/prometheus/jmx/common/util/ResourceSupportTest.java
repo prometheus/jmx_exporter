@@ -22,9 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -75,6 +77,52 @@ public class ResourceSupportTest {
     @Test
     public void testLoadNonExistent() {
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> ResourceSupport.load("/nonExistentResource.txt"));
+    }
+
+    @Test
+    public void testLoadFromInputStreamClosesStreamOnReadFailure() {
+        AtomicBoolean closed = new AtomicBoolean(false);
+        InputStream leakyStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new IOException("simulated read failure");
+            }
+
+            @Override
+            public void close() throws IOException {
+                closed.set(true);
+                super.close();
+            }
+        };
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> ResourceSupport.loadFromInputStream(leakyStream));
+
+        assertThat(closed).isTrue();
+    }
+
+    @Test
+    public void testLoadFromInputStreamClosesStreamOnSuccess() throws IOException {
+        AtomicBoolean closed = new AtomicBoolean(false);
+        InputStream trackingStream = new InputStream() {
+            private final byte[] data = "line1\nline2\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            private int pos = 0;
+
+            @Override
+            public int read() throws IOException {
+                if (pos >= data.length) return -1;
+                return data[pos++] & 0xFF;
+            }
+
+            @Override
+            public void close() throws IOException {
+                closed.set(true);
+                super.close();
+            }
+        };
+
+        ResourceSupport.loadFromInputStream(trackingStream);
+
+        assertThat(closed).isTrue();
     }
 
     @Test

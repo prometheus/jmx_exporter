@@ -91,12 +91,27 @@ public class ResourceSupport {
             resource = "/" + resource;
         }
 
-        StringBuilder stringBuilder = new StringBuilder();
-
-        InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource);
-        if (inputStream == null) {
-            throw new IOException("Resource [" + resource + "] not found");
+        try (InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource)) {
+            if (inputStream == null) {
+                throw new IOException("Resource [" + resource + "] not found");
+            }
+            return loadFromInputStream(inputStream);
         }
+    }
+
+    /**
+     * Loads the content of an input stream as a string.
+     *
+     * <p>Reads the input stream using UTF-8 encoding. Lines are joined using the platform line
+     * separator.
+     *
+     * @param inputStream the input stream to read, must not be {@code null}
+     * @return the input stream content as a string
+     * @throws IOException if the input stream cannot be read
+     * @throws NullPointerException if {@code inputStream} is {@code null}
+     */
+    static String loadFromInputStream(InputStream inputStream) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
 
         try (BufferedReader bufferedReader =
                 new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
