@@ -74,13 +74,12 @@ public class IsolatorJavaAgent {
     private static final String THREAD_NAME = "isolator-javaagent";
 
     /**
-     * Default constructor for IsolatorJavaAgent.
+     * Private constructor to prevent instantiation.
      *
-     * <p>This constructor is intentionally empty as this is a utility class with only static
-     * methods.
+     * <p>This is a utility class with only static methods.
      */
-    public IsolatorJavaAgent() {
-        // INTENTIONALLY BLANK
+    private IsolatorJavaAgent() {
+        // Intentionally empty
     }
 
     /**
@@ -90,7 +89,7 @@ public class IsolatorJavaAgent {
      * {@link #premain(String, Instrumentation)} for actual initialization.
      *
      * @param agentArgument the agent argument string containing comma-separated jar configurations,
-     *     may be {@code null} or empty
+     *     must not be {@code null} or empty
      * @param instrumentation the instrumentation instance provided by the JVM, may be {@code null}
      *     in some environments
      */
@@ -105,7 +104,8 @@ public class IsolatorJavaAgent {
      * Parses the agent arguments, creates isolated classloaders for each JMX exporter, and starts
      * each in a separate thread.
      *
-     * <p>On failure, logs the error and exits the JVM with status code 1.
+     * <p>On failure, logs the error and exits the JVM with status code 1. All exceptions are
+     * handled internally and do not propagate to the caller.
      *
      * @param agentArgument the agent argument string containing comma-separated jar configurations,
      *     must not be {@code null} or empty
@@ -120,6 +120,11 @@ public class IsolatorJavaAgent {
         LOGGER.info("agent argument [%s]", agentArgument);
 
         try {
+            if (agentArgument == null || agentArgument.trim().isEmpty()) {
+                throw new IllegalArgumentException("Agent argument must not be null or empty; expected format: "
+                        + "/path/to/exporter1.jar=config1,/path/to/exporter2.jar=config2");
+            }
+
             List<String> javaAgentArguments =
                     Arrays.stream(agentArgument.split(",")).map(String::trim).collect(Collectors.toList());
 
@@ -164,45 +169,71 @@ public class IsolatorJavaAgent {
     /**
      * Runs a JMX exporter agent in an isolated classloader.
      *
-     * <p>Creates a new thread with the agent's classloader as the context classloader, loads the
-     * Java agent class, and invokes its {@code agentmain} method. The thread blocks with a timeout
-     * to ensure agent startup completes.
+     * <p>Creates a new daemon thread with the agent's classloader as the context classloader, loads
+     * the Java agent class, and invokes its {@code agentmain} method. The calling thread blocks
+     * with a timeout of {@value #TIMEOUT_MILLISECONDS} ms for agent startup to complete.
      *
-     * @param agentArgument the agent argument to pass to the agent
-     * @param instrumentation the instrumentation instance from the JVM
-     * @param classLoader the isolated classloader for the agent
-     * @throws Throwable if agent startup fails or times out
+     * <p>If the agent thread does not complete within the timeout, it is interrupted via {@link
+     * Thread#interrupt()} and a warning is logged. The daemon thread will not block JVM shutdown.
+     *
+     * <p>Thread-safety: This method is thread-safe. Each invocation creates and manages its own
+     * thread and {@link AtomicReference}.
+     *
+     * @param agentArgument the agent argument to pass to the agent, must not be {@code null}
+     * @param instrumentation the instrumentation instance from the JVM, may be {@code null}
+     * @param classLoader the isolated classloader for the agent, must not be {@code null}
+     * @throws Throwable if agent startup fails within the timeout period
      */
     private static void runJavaAgent(String agentArgument, Instrumentation instrumentation, ClassLoader classLoader)
             throws Throwable {
         final AtomicReference<Throwable> throwableAtomicReference = new AtomicReference<>();
 
-        Thread thread = new Thread(() -> {
-            try {
-                // Set the context class loader to the new URLClassLoader
-                // so that any spawned threads have the correct classloader
-                Thread.currentThread().setContextClassLoader(classLoader);
-
-                // Load the Java agent class
-                Class<?> javaAgentClass = classLoader.loadClass(JAVA_AGENT_CLASS_NAME);
-
-                // Resolve the Java agent main method
-                Method javaAgentMainMethod =
-                        javaAgentClass.getMethod(AGENT_MAIN_METHOD, String.class, Instrumentation.class);
-
-                // Invoke the Java agent main method
-                javaAgentMainMethod.invoke(null, agentArgument, instrumentation);
-            } catch (Throwable t) {
-                throwableAtomicReference.set(t);
-            }
-        });
+        Thread thread =
+                new Thread(() -> runAgentTask(agentArgument, instrumentation, classLoader, throwableAtomicReference));
 
         thread.setName(THREAD_NAME);
+        thread.setDaemon(true);
         thread.start();
         thread.join(TIMEOUT_MILLISECONDS, 0);
 
+        if (thread.isAlive()) {
+            thread.interrupt();
+            LOGGER.warn("Agent startup thread timed out after %d ms and was interrupted", TIMEOUT_MILLISECONDS);
+        }
+
         if (throwableAtomicReference.get() != null) {
             throw throwableAtomicReference.get();
+        }
+    }
+
+    /**
+     * Runs the agent main method within the isolated classloader.
+     *
+     * <p>Sets the context classloader, loads the agent class, resolves the {@code agentmain}
+     * method, and invokes it. Any thrown exception is captured in the provided {@link
+     * AtomicReference} for propagation to the calling thread.
+     *
+     * <p>This method is designed for use as a {@link Runnable} target, extracted from a
+     * lambda for clarity per Java 8 method reference idioms.
+     *
+     * @param agentArgument the agent argument to pass to the agent, must not be {@code null}
+     * @param instrumentation the instrumentation instance from the JVM, may be {@code null}
+     * @param classLoader the isolated classloader for the agent, must not be {@code null}
+     * @param errorRef the {@link AtomicReference} to capture any thrown exception
+     */
+    private static void runAgentTask(
+            String agentArgument,
+            Instrumentation instrumentation,
+            ClassLoader classLoader,
+            AtomicReference<Throwable> errorRef) {
+        try {
+            Thread.currentThread().setContextClassLoader(classLoader);
+            Class<?> javaAgentClass = classLoader.loadClass(JAVA_AGENT_CLASS_NAME);
+            Method javaAgentMainMethod =
+                    javaAgentClass.getMethod(AGENT_MAIN_METHOD, String.class, Instrumentation.class);
+            javaAgentMainMethod.invoke(null, agentArgument, instrumentation);
+        } catch (Throwable t) {
+            errorRef.set(t);
         }
     }
 }

@@ -24,7 +24,9 @@ public class TestMBeanRegistry {
 
     private static final AtomicBoolean registered = new AtomicBoolean(false);
 
-    private TestMBeanRegistry() {}
+    private TestMBeanRegistry() {
+        // Intentionally empty
+    }
 
     public static synchronized void registerTestMBeans() throws Exception {
         if (registered.getAndSet(true)) {

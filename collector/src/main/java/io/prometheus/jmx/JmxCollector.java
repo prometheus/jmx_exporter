@@ -44,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -83,7 +84,9 @@ public class JmxCollector implements MultiCollector {
     private final Mode mode;
 
     /**
-     * Class to implement ExtraMetric
+     * Represents an extra metric to be exported.
+     * <p>
+     * Package-private class used internally to define custom metrics.
      */
     static class ExtraMetric {
 
@@ -93,7 +96,9 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
-     * Class to implement Rule
+     * Represents a rule for matching and transforming JMX metrics.
+     * <p>
+     * Package-private class used internally to define metric collection rules.
      */
     static class Rule {
 
@@ -117,7 +122,9 @@ public class JmxCollector implements MultiCollector {
         List<String> protocols = Collections.emptyList();
         List<String> ciphers = Collections.emptyList();
 
-        public SslProperties() {}
+        public SslProperties() {
+            // Intentionally empty
+        }
 
         public SslProperties(boolean enabled) {
             this.enabled = enabled;
@@ -140,7 +147,9 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
-     * Class to implement MetricCustomizer
+     * Customizes metric collection for specific MBeans.
+     * <p>
+     * Allows configuration of MBean filtering, attributes-as-labels, and extra metrics.
      */
     public static class MetricCustomizer {
         MBeanFilter mbeanFilter;
@@ -148,15 +157,17 @@ public class JmxCollector implements MultiCollector {
         List<ExtraMetric> extraMetrics;
 
         /**
-         * Constructor
+         * Creates a new MetricCustomizer with default values.
          */
         public MetricCustomizer() {
-            // INTENTIONALLY BLANK
+            // Intentionally empty
         }
     }
 
     /**
-     * Class to implement MBeanFilter
+     * Filters MBeans based on domain and properties.
+     * <p>
+     * Used to select specific MBeans for metric customization.
      */
     public static class MBeanFilter {
 
@@ -164,10 +175,10 @@ public class JmxCollector implements MultiCollector {
         Map<String, String> properties;
 
         /**
-         * Constructor
+         * Creates a new MBeanFilter with default values.
          */
         public MBeanFilter() {
-            // INTENTIONALLY BLANK
+            // Intentionally empty
         }
     }
 
@@ -208,9 +219,9 @@ public class JmxCollector implements MultiCollector {
     /**
      * Constructor
      *
-     * @param in in
-     * @throws IOException IOException
-     * @throws MalformedObjectNameException MalformedObjectNameException
+     * @param in the configuration file, must not be null
+     * @throws IOException if an I/O error occurs
+     * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(File in) throws IOException, MalformedObjectNameException {
         this(in, null);
@@ -219,12 +230,13 @@ public class JmxCollector implements MultiCollector {
     /**
      * Constructor
      *
-     * @param in in
-     * @param mode mode
-     * @throws IOException IOException
-     * @throws MalformedObjectNameException MalformedObjectNameException
+     * @param in the configuration file, must not be null
+     * @param mode the collector mode, may be null
+     * @throws IOException if an I/O error occurs
+     * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
+        Objects.requireNonNull(in, "configuration file must not be null");
         configFile = in;
         this.mode = mode;
         try (FileReader fr = new FileReader(in)) {
@@ -237,10 +249,11 @@ public class JmxCollector implements MultiCollector {
     /**
      * Constructor
      *
-     * @param yamlConfig yamlConfig
-     * @throws MalformedObjectNameException MalformedObjectNameException
+     * @param yamlConfig the YAML configuration string, must not be null
+     * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
+        Objects.requireNonNull(yamlConfig, "YAML configuration must not be null");
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(yamlConfig));
         mode = null;
     }
@@ -248,30 +261,32 @@ public class JmxCollector implements MultiCollector {
     /**
      * Constructor
      *
-     * @param inputStream inputStream
-     * @throws MalformedObjectNameException MalformedObjectNameException
+     * @param inputStream the input stream containing YAML configuration, must not be null
+     * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
+        Objects.requireNonNull(inputStream, "input stream must not be null");
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(inputStream));
         mode = null;
     }
 
     /**
-     * Method to register the JmxCollector
+     * Registers this collector with the default Prometheus registry.
      *
-     * @return the JmxCollector
+     * @return this JmxCollector instance for method chaining
      */
     public JmxCollector register() {
         return register(PrometheusRegistry.defaultRegistry);
     }
 
     /**
-     * Method to register the JmxCollector
+     * Registers this collector with the specified Prometheus registry.
      *
-     * @param prometheusRegistry prometheusRegistry
-     * @return the JmxCollector
+     * @param prometheusRegistry the registry to register with, must not be null
+     * @return this JmxCollector instance for method chaining
      */
     public JmxCollector register(PrometheusRegistry prometheusRegistry) {
+        Objects.requireNonNull(prometheusRegistry, "Prometheus registry must not be null");
         configReloadSuccess = Counter.builder()
                 .name("jmx_config_reload_success_total")
                 .help("Number of times configuration have successfully been reloaded.")

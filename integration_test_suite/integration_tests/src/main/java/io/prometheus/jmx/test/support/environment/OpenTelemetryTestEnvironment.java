@@ -17,42 +17,57 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
+import io.prometheus.jmx.test.support.NetworkFactory;
 import io.prometheus.jmx.test.support.PrometheusDockerImages;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
+import org.testcontainers.containers.Network;
 
 /**
- * Combines a Prometheus test environment and a JMX exporter test environment
- * for OpenTelemetry integration testing.
+ * Composite test environment combining a {@link PrometheusTestEnvironment} and a
+ * {@link JmxExporterTestEnvironment} for OpenTelemetry integration testing.
+ *
+ * <p>The environment initializes both sub-environments on a shared Docker network and
+ * tears them down on {@link #close()}.
  */
-public class OpenTelemetryTestEnvironment {
+public class OpenTelemetryTestEnvironment implements AutoCloseable {
 
     private final String id;
+    private final Class<?> testClass;
     private final PrometheusTestEnvironment prometheusTestEnvironment;
     private final JmxExporterTestEnvironment jmxExporterTestEnvironment;
+
+    private String prometheusReadyUsername;
+    private String prometheusReadyPassword;
+    private Network network;
+    private boolean ownsNetwork;
 
     /**
      * Creates an OpenTelemetry test environment combining a Prometheus and JMX exporter environment.
      *
-     * @param prometheusTestEnvironment the Prometheus test environment for scraping and OTLP reception
-     * @param jmxExporterTestEnvironment the JMX exporter test environment providing the metrics source
+     * @param testClass the test class used to resolve classpath resource mappings
+     * @param prometheusTestEnvironment the Prometheus test environment for scrape target verification
+     * @param jmxExporterTestEnvironment the JMX exporter test environment providing the exporter
+     * @throws NullPointerException if any argument is {@code null}
      */
     public OpenTelemetryTestEnvironment(
+            Class<?> testClass,
             PrometheusTestEnvironment prometheusTestEnvironment,
             JmxExporterTestEnvironment jmxExporterTestEnvironment) {
         this.id = UUID.randomUUID().toString();
-        this.prometheusTestEnvironment = prometheusTestEnvironment;
-        this.jmxExporterTestEnvironment = jmxExporterTestEnvironment;
+        this.testClass = Objects.requireNonNull(testClass);
+        this.prometheusTestEnvironment = Objects.requireNonNull(prometheusTestEnvironment);
+        this.jmxExporterTestEnvironment = Objects.requireNonNull(jmxExporterTestEnvironment);
     }
 
     /**
-     * Returns the display name of the test environment, combining mode and Docker images.
+     * Returns a human-readable name identifying this environment, its mode, and Docker images.
      *
-     * @return the display name of the test environment
+     * @return the display name of this environment
      */
-    public String getName() {
+    public String name() {
         return jmxExporterTestEnvironment.getJmxExporterMode()
                 + " ("
                 + jmxExporterTestEnvironment.getJavaDockerImage()
@@ -62,50 +77,131 @@ public class OpenTelemetryTestEnvironment {
     }
 
     /**
-     * Returns the unique identifier of the test environment.
+     * Returns the unique identifier for this environment instance.
      *
-     * @return the unique identifier of the test environment
+     * @return the unique identifier
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Returns the Prometheus test environment used for OTLP reception and scraping.
+     * Returns the Prometheus test environment used for scrape target verification.
      *
-     * @return the {@link PrometheusTestEnvironment}
+     * @return the Prometheus test environment
      */
     public PrometheusTestEnvironment prometheusTestEnvironment() {
         return prometheusTestEnvironment;
     }
 
     /**
-     * Returns the JMX exporter test environment providing the metrics source.
+     * Returns the JMX exporter test environment providing the exporter instance.
      *
-     * @return the {@link JmxExporterTestEnvironment}
+     * @return the JMX exporter test environment
      */
     public JmxExporterTestEnvironment exporterTestEnvironment() {
         return jmxExporterTestEnvironment;
     }
 
     /**
-     * Creates a stream of OpenTelemetry test environments for all combinations
-     * of configured Prometheus and Java Docker images and exporter modes.
+     * Configures basic authentication credentials to use when waiting for Prometheus to become ready.
      *
-     * @return a stream of {@link OpenTelemetryTestEnvironment} instances
+     * @param username the basic authentication username; must not be {@code null}
+     * @param password the basic authentication password; must not be {@code null}
+     * @return this environment instance for method chaining
      */
-    public static Stream<OpenTelemetryTestEnvironment> createEnvironments() {
-        List<OpenTelemetryTestEnvironment> openTelemetryTestEnvironments = new ArrayList<>();
+    public OpenTelemetryTestEnvironment withPrometheusReadyBasicAuthentication(String username, String password) {
+        this.prometheusReadyUsername = username;
+        this.prometheusReadyPassword = password;
+        return this;
+    }
 
-        PrometheusDockerImages.names()
-                .forEach(prometheusDockerImage -> JavaDockerImages.names().forEach(javaDockerImage -> {
-                    for (JmxExporterMode jmxExporterMode : JmxExporterMode.values()) {
-                        openTelemetryTestEnvironments.add(new OpenTelemetryTestEnvironment(
-                                new PrometheusTestEnvironment(prometheusDockerImage),
-                                new JmxExporterTestEnvironment(javaDockerImage, jmxExporterMode)));
-                    }
-                }));
+    /**
+     * Initializes this environment by creating a new Docker network, starting the Prometheus
+     * and JMX exporter sub-environments, and waiting for Prometheus to become ready.
+     *
+     * @throws Throwable if initialization of either sub-environment fails; suppressed
+     *                   exceptions are attached for partial cleanup failures
+     */
+    public void initialize() throws Throwable {
+        this.ownsNetwork = true;
+        this.network = NetworkFactory.createNetwork();
 
-        return openTelemetryTestEnvironments.stream();
+        try {
+            prometheusTestEnvironment.initialize(network);
+            if (prometheusReadyUsername != null && prometheusReadyPassword != null) {
+                prometheusTestEnvironment.waitForReady(prometheusReadyUsername, prometheusReadyPassword);
+            } else {
+                prometheusTestEnvironment.waitForReady();
+            }
+            jmxExporterTestEnvironment.initialize(network);
+        } catch (Throwable t) {
+            Throwable failure = t;
+
+            try {
+                jmxExporterTestEnvironment.close();
+            } catch (Throwable closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+
+            try {
+                prometheusTestEnvironment.close();
+            } catch (Throwable closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+
+            try {
+                closeNetworkIfOwned();
+            } catch (Throwable closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+
+            throw failure;
+        }
+    }
+
+    /**
+     * Returns whether both the Prometheus and JMX exporter environments are currently running.
+     *
+     * @return {@code true} if both sub-environments are running; {@code false} otherwise
+     */
+    public boolean isRunning() {
+        return prometheusTestEnvironment.isRunning() && jmxExporterTestEnvironment.isRunning();
+    }
+
+    @Override
+    public void close() {
+        jmxExporterTestEnvironment.close();
+        prometheusTestEnvironment.close();
+        closeNetworkIfOwned();
+    }
+
+    private void closeNetworkIfOwned() {
+        if (ownsNetwork && network != null) {
+            try {
+                ContainerSupport.waitForShutdown(network);
+            } finally {
+                network = null;
+                ownsNetwork = false;
+            }
+        }
+    }
+
+    /**
+     * Creates one test environment per combination of configured Prometheus Docker image,
+     * Java Docker image, and JMX exporter mode for the given test class.
+     *
+     * @param testClass the test class used to resolve classpath resource mappings
+     * @return an unmodifiable list of test environments covering all image and mode combinations
+     */
+    public static List<OpenTelemetryTestEnvironment> createTestEnvironments(Class<?> testClass) {
+        return PrometheusDockerImages.names().stream()
+                .flatMap(prometheusDockerImage -> JavaDockerImages.names().stream()
+                        .flatMap(javaDockerImage -> Arrays.stream(JmxExporterMode.values())
+                                .map(jmxExporterMode -> new OpenTelemetryTestEnvironment(
+                                        testClass,
+                                        new PrometheusTestEnvironment(testClass, prometheusDockerImage),
+                                        new JmxExporterTestEnvironment(testClass, javaDockerImage, jmxExporterMode)))))
+                .toList();
     }
 }

@@ -25,7 +25,7 @@ public class ToIntegerTest {
 
     @Test
     public void testApplyValidIntegerString() {
-        ToInteger toInteger = new ToInteger(() -> new RuntimeException("should not be thrown"));
+        ToInteger toInteger = ToInteger.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toInteger.apply("42")).isEqualTo(42);
         assertThat(toInteger.apply("0")).isEqualTo(0);
         assertThat(toInteger.apply("-123")).isEqualTo(-123);
@@ -34,37 +34,37 @@ public class ToIntegerTest {
 
     @Test
     public void testApplyIntegerInput() {
-        ToInteger toInteger = new ToInteger(() -> new RuntimeException("should not be thrown"));
+        ToInteger toInteger = ToInteger.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toInteger.apply(42)).isEqualTo(42);
     }
 
     @Test
     public void testApplyNumericString() {
-        ToInteger toInteger = new ToInteger(() -> new RuntimeException("should not be thrown"));
+        ToInteger toInteger = ToInteger.of(() -> new RuntimeException("should not be thrown"));
         assertThat(toInteger.apply("123")).isEqualTo(123);
     }
 
     @Test
     public void testApplyNullThrowsIllegalArgumentException() {
-        ToInteger toInteger = new ToInteger(() -> new RuntimeException("should not be thrown"));
+        ToInteger toInteger = ToInteger.of(() -> new RuntimeException("should not be thrown"));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> toInteger.apply(null));
     }
 
     @Test
     public void testApplyInvalidStringThrowsSupplierException() {
-        ToInteger toInteger = new ToInteger(() -> new UnsupportedOperationException("parse failed"));
+        ToInteger toInteger = ToInteger.of(() -> new UnsupportedOperationException("parse failed"));
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> toInteger.apply("not a number"));
     }
 
     @Test
     public void testApplyEmptyStringThrowsSupplierException() {
-        ToInteger toInteger = new ToInteger(() -> new UnsupportedOperationException("parse failed"));
+        ToInteger toInteger = ToInteger.of(() -> new UnsupportedOperationException("parse failed"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toInteger.apply(""));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ToInteger(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ToInteger.of(null));
     }
 }

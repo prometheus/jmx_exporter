@@ -19,6 +19,7 @@ package io.prometheus.jmx;
 import io.prometheus.jmx.common.ConfigurationException;
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.util.AutoClosableShutdownHook;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
@@ -83,7 +84,7 @@ public class JavaAgent {
      * <p>This is a utility class with only static methods.
      */
     private JavaAgent() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -134,8 +135,8 @@ public class JavaAgent {
 
             int startDelaySeconds = mapAccessor
                     .get("/startDelaySeconds")
-                    .map(new ToInteger(ConfigurationException.supplier("/startDelaySeconds must be an integer")))
-                    .map(new IntegerInRange(
+                    .map(ToInteger.of(ConfigurationException.supplier("/startDelaySeconds must be an integer")))
+                    .map(IntegerInRange.of(
                             0,
                             Integer.MAX_VALUE,
                             ConfigurationException.supplier("/startDelaySeconds must be non-negative")))
@@ -159,6 +160,13 @@ public class JavaAgent {
      * exporter. This is useful when the target application needs time to initialize its MBeans
      * before the exporter starts collecting metrics.
      *
+     * <p>If the sleep delay is interrupted (e.g., during JVM shutdown), the interrupt flag is
+     * restored via {@link Thread#currentThread() Thread.currentThread()}.{@link Thread#interrupt()
+     * interrupt()}, a warning is logged, and the thread terminates gracefully without calling
+     * {@link #handleError(Throwable, OpenTelemetryExporter, HTTPServer) handleError()}. This
+     * prevents an interruption during the startup delay from triggering a JVM-wide shutdown via
+     * {@link System#exit(int) System.exit()}.
+     *
      * @param startDelaySeconds the delay in seconds before starting, must be non-negative
      * @param arguments the parsed agent arguments, must not be {@code null}
      * @param file the configuration file, must not be {@code null}
@@ -171,6 +179,9 @@ public class JavaAgent {
                     try {
                         Thread.sleep(startDelaySeconds * 1000L);
                         start(arguments, file, mapAccessor);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        LOGGER.warn("Startup delay of %d seconds interrupted", startDelaySeconds);
                     } catch (Throwable t) {
                         handleError(t, null, null);
                     }
@@ -215,7 +226,7 @@ public class JavaAgent {
 
             boolean excludeJvmMetrics = mapAccessor
                     .get("/excludeJvmMetrics")
-                    .map(new ToBoolean(ConfigurationException.supplier("/excludeJvmMetrics must be a boolean")))
+                    .map(ToBoolean.of(ConfigurationException.supplier("/excludeJvmMetrics must be a boolean")))
                     .orElse(false);
 
             if (!excludeJvmMetrics) {
@@ -341,7 +352,7 @@ public class JavaAgent {
             try {
                 autoCloseable.close();
             } catch (Throwable t) {
-                // INTENTIONALLY BLANK
+                // Intentionally empty
             }
         }
     }

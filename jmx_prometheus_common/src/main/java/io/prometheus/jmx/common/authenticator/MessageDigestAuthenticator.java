@@ -133,8 +133,9 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         }
 
         byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, password);
-        boolean isValid = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8))
-                && MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
+        boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8));
+        boolean passwordMatches = MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
+        boolean isValid = usernameMatches & passwordMatches;
 
         if (isValid) {
             credentialsCache.add(credentials);
@@ -211,7 +212,14 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
         byte[] bytes = new byte[len / 2];
 
         for (int i = 0; i < len; i += 2) {
-            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+            int highNibble = Character.digit(hex.charAt(i), 16);
+            int lowNibble = Character.digit(hex.charAt(i + 1), 16);
+
+            if (highNibble < 0 || lowNibble < 0) {
+                throw new IllegalArgumentException("Hex string contains a non-hexadecimal character");
+            }
+
+            bytes[i / 2] = (byte) ((highNibble << 4) + lowNibble);
         }
 
         return bytes;

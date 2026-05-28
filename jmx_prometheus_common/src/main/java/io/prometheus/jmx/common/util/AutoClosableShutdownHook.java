@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.prometheus.jmx;
+package io.prometheus.jmx.common.util;
 
 /**
  * Shutdown hook for closing AutoCloseable resources during JVM shutdown.
@@ -62,7 +62,7 @@ public class AutoClosableShutdownHook extends Thread {
         try {
             autoCloseable.close();
         } catch (Throwable t) {
-            // INTENTIONALLY BLANK
+            // Intentionally empty
         }
     }
 }

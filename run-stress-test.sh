@@ -23,13 +23,37 @@
 
 set -o pipefail
 
-if [[ "$#" -gt 1 ]]; then
-  echo "Usage: $0 [parallelism]"
-  exit 1
-fi
+usage() {
+  echo "Usage: $0 [parallelism] [-D<name>[=<value>] ...]"
+  echo "Quote -D values containing shell metacharacters, for example:"
+  echo "  $0 [parallelism] '-Dparamixel.match.class=^(?!.*PBKDF).*'"
+}
 
 CPU_COUNT="$(nproc)"
-PARALLELISM="${1:-$CPU_COUNT}"
+PARALLELISM="$CPU_COUNT"
+PARALLELISM_SET=false
+JAVA_FLAGS=()
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -D*)
+      JAVA_FLAGS+=("$1")
+      ;;
+    [1-9]*)
+      if [[ "$PARALLELISM_SET" == true ]]; then
+        usage
+        exit 1
+      fi
+      PARALLELISM="$1"
+      PARALLELISM_SET=true
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
   echo "Error: parallelism must be an integer greater than 0"
@@ -45,7 +69,7 @@ fi
     DATE=$(date)
     echo "STRESS-TEST-START    ${DATE}"
 
-    ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}"
+    ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}" "${JAVA_FLAGS[@]}"
     if [[ "$?" -ne 0 ]];
     then
       DATE=$(date)

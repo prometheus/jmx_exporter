@@ -22,8 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.http.HttpResponseBody;
-import io.prometheus.jmx.test.support.metrics.impl.MetricCollectionAssertion;
-import io.prometheus.jmx.test.support.metrics.impl.MetricMapAssertion;
+import io.prometheus.jmx.test.support.metrics.impl.MetricAssertionImpl;
 import java.util.Collection;
 import java.util.Map;
 
@@ -77,7 +76,7 @@ public interface MetricAssertion {
      * Asserts that exactly one metric matching the configured criteria is present.
      *
      * @return this assertion for method chaining
-     * @throws org.opentest4j.AssertionFailedError if no matching metric is found or multiple match
+     * @throws org.paramixel.api.exception.FailException if no matching metric is found or multiple match
      */
     MetricAssertion isPresent();
 
@@ -87,7 +86,7 @@ public interface MetricAssertion {
      *
      * @param condition the condition controlling the presence expectation
      * @return this assertion for method chaining
-     * @throws org.opentest4j.AssertionFailedError if the presence expectation is violated
+     * @throws org.paramixel.api.exception.FailException if the presence expectation is violated
      */
     MetricAssertion isPresentWhen(boolean condition);
 
@@ -95,7 +94,7 @@ public interface MetricAssertion {
      * Asserts that no metric matching the configured criteria is present.
      *
      * @return this assertion for method chaining
-     * @throws org.opentest4j.AssertionFailedError if a matching metric is found
+     * @throws org.paramixel.api.exception.FailException if a matching metric is found
      */
     MetricAssertion isNotPresent();
 
@@ -105,7 +104,7 @@ public interface MetricAssertion {
      *
      * @param condition the condition controlling the absence expectation
      * @return this assertion for method chaining
-     * @throws org.opentest4j.AssertionFailedError if the absence expectation is violated
+     * @throws org.paramixel.api.exception.FailException if the absence expectation is violated
      */
     MetricAssertion isNotPresentWhen(boolean condition);
 
@@ -116,7 +115,7 @@ public interface MetricAssertion {
      * @return a {@link MetricAssertion} for fluent matching
      */
     static MetricAssertion assertMetric(Collection<Metric> metrics) {
-        return new MetricCollectionAssertion(metrics);
+        return new MetricAssertionImpl(metrics);
     }
 
     /**
@@ -126,7 +125,7 @@ public interface MetricAssertion {
      * @return a {@link MetricAssertion} for fluent matching
      */
     static MetricAssertion assertMetric(Map<String, Collection<Metric>> metrics) {
-        return new MetricMapAssertion(metrics);
+        return new MetricAssertionImpl(metrics);
     }
 
     /**

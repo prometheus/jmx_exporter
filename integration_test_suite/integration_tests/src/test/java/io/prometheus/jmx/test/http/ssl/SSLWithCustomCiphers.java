@@ -42,26 +42,22 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import nl.altindag.ssl.SSLFactory;
 import org.assertj.core.util.Strings;
-import org.paramixel.core.Action;
-import org.paramixel.core.Context;
-import org.paramixel.core.Factory;
-import org.paramixel.core.Paramixel;
-import org.paramixel.core.action.Container;
-import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
-import org.paramixel.core.support.Cleanup;
-import org.testcontainers.containers.Network;
+import org.paramixel.api.Paramixel;
+import org.paramixel.api.Runner;
+import org.paramixel.api.action.Instance;
+import org.paramixel.api.action.Lifecycle;
+import org.paramixel.api.action.Parallel;
+import org.paramixel.api.action.Spec;
 
 public class SSLWithCustomCiphers {
 
-    private static final String ENVIRONMENT_KEY = "environment";
-    private static final String NETWORK_KEY = "network";
+    private final JmxExporterTestEnvironment environment;
 
-    private static final String BASE_URL = "https://localhost";
     private static final String[] DEFAULT_CIPHERS = {
         "TLS_AES_256_GCM_SHA384",
         "TLS_AES_128_GCM_SHA256",
@@ -95,8 +91,8 @@ public class SSLWithCustomCiphers {
         "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
     };
 
-    public static void main(String[] args) {
-        Factory.defaultRunner().runAndExit(actionFactory());
+    public static void main(String[] args) throws Throwable {
+        Runner.defaultRunner().runAndExit(factory());
     }
 
     private static SSLContext initSSLContextForClientAuth(JmxExporterMode mode, String[] ciphers) throws Exception {
@@ -117,196 +113,128 @@ public class SSLWithCustomCiphers {
                 .getSslContext();
     }
 
-    @Paramixel.ActionFactory
-    public static Action actionFactory() {
-        var parallelBuilder = Parallel.builder(SSLWithCustomCiphers.class.getName());
-        for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()
+    @Paramixel.Factory
+    public static Spec<?> factory() throws Throwable {
+        var environments = JmxExporterTestEnvironment.createTestEnvironments(SSLWithCustomCiphers.class).stream()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
-                .map(e -> e.setBaseUrl(BASE_URL))
-                .toList()) {
-            parallelBuilder.child(argument(environment));
-        }
-        return parallelBuilder.build();
+                .collect(Collectors.toList());
+
+        return Parallel.of(SSLWithCustomCiphers.class.getName())
+                .each(
+                        environments,
+                        environment -> Instance.of(environment.name(), () -> new SSLWithCustomCiphers(environment))
+                                .child(Lifecycle.<SSLWithCustomCiphers>of("lifecycle")
+                                        .before("setUp()", SSLWithCustomCiphers::setUp)
+                                        .child("testHealthy()", SSLWithCustomCiphers::testHealthy)
+                                        .child(
+                                                "testCallingServerWithNonMatchingSslCiphers()",
+                                                SSLWithCustomCiphers::testCallingServerWithNonMatchingSslCiphers)
+                                        .child("testDefaultTextMetrics()", SSLWithCustomCiphers::testDefaultTextMetrics)
+                                        .child(
+                                                "testOpenMetricsTextMetrics()",
+                                                SSLWithCustomCiphers::testOpenMetricsTextMetrics)
+                                        .child(
+                                                "testPrometheusTextMetrics()",
+                                                SSLWithCustomCiphers::testPrometheusTextMetrics)
+                                        .child(
+                                                "testPrometheusProtobufMetrics()",
+                                                SSLWithCustomCiphers::testPrometheusProtobufMetrics)
+                                        .after("tearDown()", SSLWithCustomCiphers::tearDown)));
     }
 
-    private static Action argument(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        Action setUp = setUp(jmxExporterTestEnvironment);
-        Action testHealthy = testHealthy();
-        Action testCallingServerWithNonMatchingSslCiphers = testCallingServerWithNonMatchingSslCiphers();
-        Action testDefaultTextMetrics = testDefaultTextMetrics();
-        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
-        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
-        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
-        Action tearDown = tearDown();
-
-        return Container.builder(jmxExporterTestEnvironment.getName())
-                .before(setUp)
-                .child(testHealthy)
-                .child(testCallingServerWithNonMatchingSslCiphers)
-                .child(testDefaultTextMetrics)
-                .child(testOpenMetricsTextMetrics)
-                .child(testPrometheusTextMetrics)
-                .child(testPrometheusProtobufMetrics)
-                .after(tearDown)
-                .build();
+    private SSLWithCustomCiphers(JmxExporterTestEnvironment environment) {
+        this.environment = environment;
     }
 
-    private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        return Direct.builder("setUp")
-                .runnable(context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    jmxExporterTestEnvironment.initialize(SSLWithCustomCiphers.class, network);
-                    var store = context.getStore();
-                    store.put(NETWORK_KEY, network);
-                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
-                })
-                .build();
+    public void setUp() throws Throwable {
+        environment.setBaseUrl("https://localhost");
+        environment.initialize();
     }
 
-    private static Action testHealthy() {
-        return Direct.builder("testHealthy")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.HEALTHY);
-
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
-
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
-                    assertHealthyResponse(httpResponse);
-                })
-                .build();
+    public void tearDown() {
+        environment.close();
     }
 
-    private static Action testCallingServerWithNonMatchingSslCiphers() {
-        return Direct.builder("testCallingServerWithNonMatchingSslCiphers")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testHealthy() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-                    String[] nonMatchingCiphers = {"TLS_DHE_DSS_WITH_AES_128_CBC_SHA"};
-                    assertThatThrownBy(() -> HttpClient.sendRequest(
-                                    url,
-                                    initSSLContextForClientAuth(environment.getJmxExporterMode(), nonMatchingCiphers)))
-                            .isInstanceOf(SSLHandshakeException.class);
-                })
-                .build();
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        assertHealthyResponse(httpResponse);
     }
 
-    private static Action testDefaultTextMetrics() {
-        return Direct.builder("testDefaultTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testCallingServerWithNonMatchingSslCiphers() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
-                })
-                .build();
+        String[] nonMatchingCiphers = {"TLS_DHE_DSS_WITH_AES_128_CBC_SHA"};
+        assertThatThrownBy(() -> HttpClient.sendRequest(
+                        url, initSSLContextForClientAuth(environment.getJmxExporterMode(), nonMatchingCiphers)))
+                .isInstanceOf(SSLHandshakeException.class);
     }
 
-    private static Action testOpenMetricsTextMetrics() {
-        return Direct.builder("testOpenMetricsTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testDefaultTextMetrics() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                        HttpClient.sendRequest(
-                                url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                    });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> HttpClient.sendRequest(url));
 
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
-                            initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
-
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                })
-                .build();
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
     }
 
-    private static Action testPrometheusTextMetrics() {
-        return Direct.builder("testPrometheusTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testOpenMetricsTextMetrics() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                        HttpClient.sendRequest(
-                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                    });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        });
 
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
-                            initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusProtobufMetrics() {
-        return Direct.builder("testPrometheusProtobufMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testPrometheusTextMetrics() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-                        HttpClient.sendRequest(
-                                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                    });
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        });
 
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url,
-                            HttpHeader.ACCEPT,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
-                            initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_TEXT_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
 
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                })
-                .build();
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
-    private static Action tearDown() {
-        return Direct.builder("tearDown")
-                .runnable(context -> {
-                    var store = context.getStore();
-                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
-                    JmxExporterTestEnvironment environment = store.remove(
-                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                            .orElse(null);
+    public void testPrometheusProtobufMetrics() throws Exception {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    if (network != null && environment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(environment)
-                                .addCloseable(network)
-                                .runAndThrow();
-                    }
-                })
-                .build();
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+            HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        });
+
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url,
+                HttpHeader.ACCEPT,
+                MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString(),
+                initSSLContextForClientAuth(environment.getJmxExporterMode(), DEFAULT_CIPHERS));
+
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    private static void assertMetricsResponse(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -321,10 +249,9 @@ public class SSLWithCustomCiphers {
             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
         });
 
-        boolean isJmxExporterModeJavaAgent =
-                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName = jmxExporterTestEnvironment.getJmxExporterMode().getBuildInfoName();
+        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

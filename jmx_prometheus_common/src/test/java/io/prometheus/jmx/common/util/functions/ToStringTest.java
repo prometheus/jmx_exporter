@@ -25,14 +25,14 @@ public class ToStringTest {
 
     @Test
     public void testApplyStringInput() {
-        ToString toString = new ToString(() -> new RuntimeException("should not be thrown"));
+        ToString toString = ToString.of(() -> new RuntimeException("should not be thrown"));
         String result = toString.apply("hello world");
         assertThat(result).isEqualTo("hello world");
     }
 
     @Test
     public void testApplyObjectWithToString() {
-        ToString toString = new ToString(() -> new RuntimeException("should not be thrown"));
+        ToString toString = ToString.of(() -> new RuntimeException("should not be thrown"));
         Integer integer = 42;
         String result = toString.apply(integer);
         assertThat(result).isEqualTo("42");
@@ -40,7 +40,7 @@ public class ToStringTest {
 
     @Test
     public void testApplyCustomObject() {
-        ToString toString = new ToString(() -> new RuntimeException("should not be thrown"));
+        ToString toString = ToString.of(() -> new RuntimeException("should not be thrown"));
         Object customObject = new Object() {
             @Override
             public String toString() {
@@ -53,13 +53,13 @@ public class ToStringTest {
 
     @Test
     public void testApplyNullThrowsIllegalArgumentException() {
-        ToString toString = new ToString(() -> new RuntimeException("should not be thrown"));
+        ToString toString = ToString.of(() -> new RuntimeException("should not be thrown"));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> toString.apply(null));
     }
 
     @Test
     public void testApplyToStringThrowsSupplierException() {
-        ToString toString = new ToString(() -> new UnsupportedOperationException("toString failed"));
+        ToString toString = ToString.of(() -> new UnsupportedOperationException("toString failed"));
         Object failingObject = new Object() {
             @Override
             public String toString() {
@@ -71,6 +71,6 @@ public class ToStringTest {
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ToString(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ToString.of(null));
     }
 }

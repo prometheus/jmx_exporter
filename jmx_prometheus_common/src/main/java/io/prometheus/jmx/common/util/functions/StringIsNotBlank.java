@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<String, String> validator = new StringIsNotBlank(() -> new ConfigurationException("String is blank"));
+ * Function<String, String> validator = StringIsNotBlank.of(() -> new ConfigurationException("String is blank"));
  * String result = validator.apply("hello");  // Returns "hello"
  * validator.apply("   ");  // Throws ConfigurationException
  * }</pre>
@@ -50,11 +50,10 @@ public class StringIsNotBlank implements Function<String, String> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public StringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
+    private StringIsNotBlank(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Validates that the string is not blank.
      *
@@ -69,5 +68,9 @@ public class StringIsNotBlank implements Function<String, String> {
         }
 
         return value;
+    }
+
+    public static StringIsNotBlank of(Supplier<? extends RuntimeException> supplier) {
+        return new StringIsNotBlank(supplier);
     }
 }

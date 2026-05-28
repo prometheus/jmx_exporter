@@ -48,7 +48,7 @@ public class ContainerLogConsumer implements Consumer<OutputFrame> {
     @Override
     public void accept(OutputFrame outputFrame) {
         if (outputFrame != null) {
-            String string = outputFrame.getUtf8StringWithoutLineEnding().trim();
+            var string = outputFrame.getUtf8StringWithoutLineEnding().strip();
             if (!string.isBlank()) {
                 System.out.println("[" + prefix + "] " + dockerImage + " | " + string);
             }

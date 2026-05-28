@@ -46,7 +46,7 @@ public class ResourceSupport {
      * <p>This is a utility class with only static methods.
      */
     private ResourceSupport() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -67,7 +67,7 @@ public class ResourceSupport {
         try (InputStream inputStream = ResourceSupport.class.getResourceAsStream(resource)) {
             hasResource = inputStream != null;
         } catch (Throwable t) {
-            // INTENTIONALLY BLANK
+            // Intentionally empty
         }
 
         return hasResource;

@@ -25,7 +25,7 @@ public final class VariableResolver {
      * Constructor
      */
     private VariableResolver() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

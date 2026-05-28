@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import io.prometheus.jmx.common.HTTPServerFactory;
 import io.prometheus.jmx.common.OpenTelemetryExporterFactory;
+import io.prometheus.jmx.common.util.AutoClosableShutdownHook;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.common.util.YamlSupport;
@@ -64,7 +65,7 @@ public class Standalone {
      * <p>This is a utility class with only static methods.
      */
     private Standalone() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

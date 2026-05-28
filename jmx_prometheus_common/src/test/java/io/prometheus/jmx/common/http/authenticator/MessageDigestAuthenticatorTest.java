@@ -17,6 +17,7 @@
 package io.prometheus.jmx.common.http.authenticator;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import java.lang.reflect.Method;
@@ -111,6 +112,27 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
         String result = (String) method.invoke(null, (Object) input);
 
         assertThat(result).isEqualTo("000fffab");
+    }
+
+    @Test
+    public void testInvalidHexCharacterThrowsException() {
+        assertThatThrownBy(() -> new MessageDigestAuthenticator("/", VALID_USERNAME, "GG", "SHA-256", SALT))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("non-hexadecimal");
+    }
+
+    @Test
+    public void testMixedInvalidHexCharacterThrowsException() {
+        assertThatThrownBy(() -> new MessageDigestAuthenticator("/", VALID_USERNAME, "0Z", "SHA-256", SALT))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("non-hexadecimal");
+    }
+
+    @Test
+    public void testOddLengthHexThrowsException() {
+        assertThatThrownBy(() -> new MessageDigestAuthenticator("/", VALID_USERNAME, "ABC", "SHA-256", SALT))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("even length");
     }
 
     @Test

@@ -29,181 +29,108 @@ import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
 import io.prometheus.jmx.test.support.metrics.MetricsParser;
+import java.io.IOException;
 import java.util.Collection;
-import org.paramixel.core.Action;
-import org.paramixel.core.Context;
-import org.paramixel.core.Factory;
-import org.paramixel.core.Paramixel;
-import org.paramixel.core.action.Container;
-import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
-import org.paramixel.core.support.Cleanup;
-import org.testcontainers.containers.Network;
+import java.util.stream.Collectors;
+import org.paramixel.api.Paramixel;
+import org.paramixel.api.Runner;
+import org.paramixel.api.action.Instance;
+import org.paramixel.api.action.Lifecycle;
+import org.paramixel.api.action.Parallel;
+import org.paramixel.api.action.Spec;
 
 public class EnvironmentVariableRMISSLTest {
 
-    private static final String ENVIRONMENT_KEY = "environment";
+    private final JmxExporterTestEnvironment environment;
 
-    private static final String NETWORK_KEY = "network";
-
-    public static void main(String[] args) {
-        Factory.defaultRunner().runAndExit(actionFactory());
+    private EnvironmentVariableRMISSLTest(JmxExporterTestEnvironment environment) {
+        this.environment = environment;
     }
 
-    @Paramixel.ActionFactory
-    public static Action actionFactory() {
-        var parallelBuilder = Parallel.builder(EnvironmentVariableRMISSLTest.class.getName());
-        for (JmxExporterTestEnvironment environment : JmxExporterTestEnvironment.createEnvironments()
-                .filter(exporterTestEnvironment ->
-                        exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.Standalone)
-                .filter(exporterTestEnvironment ->
-                        !exporterTestEnvironment.getJavaDockerImage().contains("graalvm/jdk:java8"))
-                .filter(exporterTestEnvironment ->
-                        !exporterTestEnvironment.getJavaDockerImage().contains("ibmjava"))
-                .toList()) {
-            parallelBuilder.child(argument(environment));
-        }
-        return parallelBuilder.build();
+    public static void main(String[] args) throws Throwable {
+        Runner.defaultRunner().runAndExit(factory());
     }
 
-    private static Action argument(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        Action setUp = setUp(jmxExporterTestEnvironment);
-        Action testHealthy = testHealthy();
-        Action testDefaultTextMetrics = testDefaultTextMetrics();
-        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
-        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
-        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
-        Action tearDown = tearDown();
+    @Paramixel.Factory
+    public static Spec<?> factory() throws Throwable {
+        var environments =
+                JmxExporterTestEnvironment.createTestEnvironments(EnvironmentVariableRMISSLTest.class).stream()
+                        .filter(e -> e.getJmxExporterMode() == JmxExporterMode.Standalone)
+                        .filter(e -> !e.getJavaDockerImage().contains("graalvm/jdk:java8"))
+                        .filter(e -> !e.getJavaDockerImage().contains("ibmjava"))
+                        .collect(Collectors.toList());
 
-        return Container.builder(jmxExporterTestEnvironment.getName())
-                .before(setUp)
-                .child(testHealthy)
-                .child(testDefaultTextMetrics)
-                .child(testOpenMetricsTextMetrics)
-                .child(testPrometheusTextMetrics)
-                .child(testPrometheusProtobufMetrics)
-                .after(tearDown)
-                .build();
+        return Parallel.of(EnvironmentVariableRMISSLTest.class.getName())
+                .each(
+                        environments,
+                        env -> Instance.of(env.name(), () -> new EnvironmentVariableRMISSLTest(env))
+                                .child(Lifecycle.<EnvironmentVariableRMISSLTest>of("lifecycle")
+                                        .before("setUp()", EnvironmentVariableRMISSLTest::setUp)
+                                        .child("testHealthy()", EnvironmentVariableRMISSLTest::testHealthy)
+                                        .child(
+                                                "testDefaultTextMetrics()",
+                                                EnvironmentVariableRMISSLTest::testDefaultTextMetrics)
+                                        .child(
+                                                "testOpenMetricsTextMetrics()",
+                                                EnvironmentVariableRMISSLTest::testOpenMetricsTextMetrics)
+                                        .child(
+                                                "testPrometheusTextMetrics()",
+                                                EnvironmentVariableRMISSLTest::testPrometheusTextMetrics)
+                                        .child(
+                                                "testPrometheusProtobufMetrics()",
+                                                EnvironmentVariableRMISSLTest::testPrometheusProtobufMetrics)
+                                        .after("tearDown()", EnvironmentVariableRMISSLTest::tearDown)));
     }
 
-    private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        return Direct.builder("setUp")
-                .runnable(context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    jmxExporterTestEnvironment.initialize(EnvironmentVariableRMISSLTest.class, network);
-                    var store = context.getStore();
-                    store.put(NETWORK_KEY, network);
-                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
-                })
-                .build();
+    public void setUp() throws Throwable {
+        environment.initialize();
     }
 
-    private static Action testHealthy() {
-        return Direct.builder("testHealthy")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getEnvironment(context);
-                    String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                })
-                .build();
+    public void testHealthy() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertHealthyResponse(httpResponse);
     }
 
-    private static Action testDefaultTextMetrics() {
-        return Direct.builder("testDefaultTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getEnvironment(context);
-                    String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertMetricsResponse(currentJmxExporterTestEnvironment, httpResponse, MetricsContentType.DEFAULT);
-                })
-                .build();
+    public void testDefaultTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
     }
 
-    private static Action testOpenMetricsTextMetrics() {
-        return Direct.builder("testOpenMetricsTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getEnvironment(context);
-                    String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                    assertMetricsResponse(
-                            currentJmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                })
-                .build();
+    public void testOpenMetricsTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusTextMetrics() {
-        return Direct.builder("testPrometheusTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getEnvironment(context);
-                    String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                    assertMetricsResponse(
-                            currentJmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                })
-                .build();
+    public void testPrometheusTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusProtobufMetrics() {
-        return Direct.builder("testPrometheusProtobufMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment currentJmxExporterTestEnvironment = getEnvironment(context);
-                    String url = currentJmxExporterTestEnvironment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                    assertMetricsResponse(
-                            currentJmxExporterTestEnvironment,
-                            httpResponse,
-                            MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                })
-                .build();
+    public void testPrometheusProtobufMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    private static Action tearDown() {
-        return Direct.builder("tearDown")
-                .runnable(context -> {
-                    var store = context.getStore();
-                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
-                    JmxExporterTestEnvironment environment = store.remove(
-                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                            .orElse(null);
-
-                    if (network != null && environment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(environment)
-                                .addCloseable(network)
-                                .runAndThrow();
-                    }
-                })
-                .build();
+    public void tearDown() throws Throwable {
+        environment.close();
     }
 
-    private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    private static void assertMetricsResponse(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
 
-        boolean isJmxExporterModeJavaAgent =
-                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName = jmxExporterTestEnvironment.getJmxExporterMode().getBuildInfoName();
+        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)

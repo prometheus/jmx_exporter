@@ -27,7 +27,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyValidMap() {
-        ValidMap validMap = new ValidMap(() -> new RuntimeException("should not be thrown"));
+        ValidMap validMap = ValidMap.of(() -> new RuntimeException("should not be thrown"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put("key1", "value1");
         input.put("key2", "value2");
@@ -37,7 +37,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyEmptyMap() {
-        ValidMap validMap = new ValidMap(() -> new RuntimeException("should not be thrown"));
+        ValidMap validMap = ValidMap.of(() -> new RuntimeException("should not be thrown"));
         Map<String, String> input = new LinkedHashMap<>();
         Map<String, String> result = validMap.apply(input);
         assertThat(result).isSameAs(input);
@@ -45,7 +45,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyNullKeyThrowsSupplierException() {
-        ValidMap validMap = new ValidMap(() -> new UnsupportedOperationException("invalid map"));
+        ValidMap validMap = ValidMap.of(() -> new UnsupportedOperationException("invalid map"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put(null, "value");
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> validMap.apply(input));
@@ -53,7 +53,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyEmptyKeyThrowsSupplierException() {
-        ValidMap validMap = new ValidMap(() -> new UnsupportedOperationException("invalid map"));
+        ValidMap validMap = ValidMap.of(() -> new UnsupportedOperationException("invalid map"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put("", "value");
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> validMap.apply(input));
@@ -61,7 +61,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyBlankKeyThrowsSupplierException() {
-        ValidMap validMap = new ValidMap(() -> new UnsupportedOperationException("invalid map"));
+        ValidMap validMap = ValidMap.of(() -> new UnsupportedOperationException("invalid map"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put("   ", "value");
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> validMap.apply(input));
@@ -69,7 +69,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyNullValueThrowsSupplierException() {
-        ValidMap validMap = new ValidMap(() -> new UnsupportedOperationException("invalid map"));
+        ValidMap validMap = ValidMap.of(() -> new UnsupportedOperationException("invalid map"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put("key", null);
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> validMap.apply(input));
@@ -77,7 +77,7 @@ public class ValidMapTest {
 
     @Test
     public void testApplyEmptyValueThrowsSupplierException() {
-        ValidMap validMap = new ValidMap(() -> new UnsupportedOperationException("invalid map"));
+        ValidMap validMap = ValidMap.of(() -> new UnsupportedOperationException("invalid map"));
         Map<String, String> input = new LinkedHashMap<>();
         input.put("key", "");
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> validMap.apply(input));
@@ -85,6 +85,6 @@ public class ValidMapTest {
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ValidMap(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ValidMap.of(null));
     }
 }

@@ -46,7 +46,7 @@ public class BuildInfoMetrics {
      * Constructor
      */
     public BuildInfoMetrics() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

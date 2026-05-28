@@ -100,6 +100,17 @@ public class ArgumentsTest {
                 "0.0.0.0",
                 12345,
                 "/opt/prometheus/jmx_exporter/config-file.yaml"),
+        // Regression: port:file format was previously handled by a dead
+        // switch (matcher.groupCount()) case 2 branch that never executed
+        // because groupCount() always returns 3, matching only by accident
+        // via case 3. This test verifies group content detection, not count.
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "65535:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                65535,
+                "/opt/prometheus/config.yaml"),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config.yaml",

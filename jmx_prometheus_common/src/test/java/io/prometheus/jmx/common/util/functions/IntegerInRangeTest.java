@@ -25,52 +25,52 @@ public class IntegerInRangeTest {
 
     @Test
     public void testApplyValueAtMinimum() {
-        IntegerInRange integerInRange = new IntegerInRange(1, 10, () -> new RuntimeException("should not be thrown"));
+        IntegerInRange integerInRange = IntegerInRange.of(1, 10, () -> new RuntimeException("should not be thrown"));
         assertThat(integerInRange.apply(1)).isEqualTo(1);
     }
 
     @Test
     public void testApplyValueAtMaximum() {
-        IntegerInRange integerInRange = new IntegerInRange(1, 10, () -> new RuntimeException("should not be thrown"));
+        IntegerInRange integerInRange = IntegerInRange.of(1, 10, () -> new RuntimeException("should not be thrown"));
         assertThat(integerInRange.apply(10)).isEqualTo(10);
     }
 
     @Test
     public void testApplyValueWithinRange() {
-        IntegerInRange integerInRange = new IntegerInRange(1, 10, () -> new RuntimeException("should not be thrown"));
+        IntegerInRange integerInRange = IntegerInRange.of(1, 10, () -> new RuntimeException("should not be thrown"));
         assertThat(integerInRange.apply(5)).isEqualTo(5);
     }
 
     @Test
     public void testApplyValueBelowMinimumThrowsSupplierException() {
         IntegerInRange integerInRange =
-                new IntegerInRange(1, 10, () -> new UnsupportedOperationException("out of range"));
+                IntegerInRange.of(1, 10, () -> new UnsupportedOperationException("out of range"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> integerInRange.apply(0));
     }
 
     @Test
     public void testApplyValueAboveMaximumThrowsSupplierException() {
         IntegerInRange integerInRange =
-                new IntegerInRange(1, 10, () -> new UnsupportedOperationException("out of range"));
+                IntegerInRange.of(1, 10, () -> new UnsupportedOperationException("out of range"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> integerInRange.apply(11));
     }
 
     @Test
     public void testApplyNegativeRange() {
         IntegerInRange integerInRange =
-                new IntegerInRange(-100, -50, () -> new RuntimeException("should not be thrown"));
+                IntegerInRange.of(-100, -50, () -> new RuntimeException("should not be thrown"));
         assertThat(integerInRange.apply(-75)).isEqualTo(-75);
     }
 
     @Test
     public void testApplyNegativeRangeBelowMinimumThrows() {
         IntegerInRange integerInRange =
-                new IntegerInRange(-100, -50, () -> new UnsupportedOperationException("out of range"));
+                IntegerInRange.of(-100, -50, () -> new UnsupportedOperationException("out of range"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> integerInRange.apply(-101));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new IntegerInRange(1, 10, null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> IntegerInRange.of(1, 10, null));
     }
 }

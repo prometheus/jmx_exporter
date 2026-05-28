@@ -21,28 +21,10 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Represents an HTTP response body that can be accessed as a byte array or decoded string.
+ *
+ * @param bytes the raw bytes of the HTTP response body
  */
-public class HttpResponseBody {
-
-    private final byte[] bytes;
-
-    /**
-     * Creates an HTTP response body from the raw byte content.
-     *
-     * @param bytes the raw bytes of the response body
-     */
-    public HttpResponseBody(byte[] bytes) {
-        this.bytes = bytes;
-    }
-
-    /**
-     * Returns the raw bytes of the response body.
-     *
-     * @return the response body as a byte array
-     */
-    public byte[] bytes() {
-        return bytes;
-    }
+public record HttpResponseBody(byte[] bytes) {
 
     /**
      * Decodes the response body as a UTF-8 string.

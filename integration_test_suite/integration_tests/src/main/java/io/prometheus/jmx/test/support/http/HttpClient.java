@@ -18,9 +18,7 @@ package io.prometheus.jmx.test.support.http;
 
 import java.io.IOException;
 import java.net.UnknownServiceException;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -40,7 +38,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 /**
  * Sends HTTP requests using OkHttp with configurable timeouts, SSL contexts,
@@ -52,7 +49,7 @@ public class HttpClient {
      * Private constructor to prevent instantiation.
      */
     private HttpClient() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -200,22 +197,20 @@ public class HttpClient {
             HttpRequest httpRequest, int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext)
             throws IOException {
 
-        OkHttpClient httpClient = getHttpClient(connectTimeout, writeTimeout, readTimeout, sslContext);
+        var httpClient = getHttpClient(connectTimeout, writeTimeout, readTimeout, sslContext);
 
-        HttpRequest.Method method = httpRequest.method();
-        Request.Builder requestBuilder = new Request.Builder().url(httpRequest.url());
+        var method = httpRequest.method();
+        var requestBuilder = new Request.Builder().url(httpRequest.url());
 
-        // Add headers
-        for (Map.Entry<String, List<String>> header : httpRequest.headers().entrySet()) {
+        for (var header : httpRequest.headers().entrySet()) {
             for (String value : header.getValue()) {
                 requestBuilder.addHeader(header.getKey(), value);
             }
         }
 
-        // Set method and body
         RequestBody body = null;
         if (method == HttpRequest.Method.POST || method == HttpRequest.Method.PUT) {
-            String bodyContent = httpRequest.body();
+            var bodyContent = httpRequest.body();
             if (bodyContent != null && !bodyContent.isEmpty()) {
                 body = RequestBody.create(bodyContent, TEXT_MEDIA_TYPE);
             } else {
@@ -224,43 +219,30 @@ public class HttpClient {
         }
 
         switch (method) {
-            case GET: {
-                requestBuilder.get();
-                break;
-            }
-            case POST: {
-                requestBuilder.post(body);
-                break;
-            }
-            case PUT: {
-                requestBuilder.put(body);
-                break;
-            }
+            case GET -> requestBuilder.get();
+            case POST -> requestBuilder.post(body);
+            case PUT -> requestBuilder.put(body);
         }
 
-        Request request = requestBuilder.build();
+        var request = requestBuilder.build();
 
-        // Execute request with automatic retry handling (OkHttp handles retries internally)
         try (Response response = httpClient.newCall(request).execute()) {
             int status = response.code();
-            String message = response.message();
+            var message = response.message();
 
             Map<String, List<String>> headers = new HashMap<>();
-            for (String headerName : response.headers().names()) {
-                headers.put(headerName.toUpperCase(Locale.US), Collections.singletonList(response.header(headerName)));
+            for (var headerName : response.headers().names()) {
+                headers.put(headerName.toUpperCase(Locale.US), List.of(response.header(headerName)));
             }
 
             byte[] responseBody = null;
-            ResponseBody responseBodyObj = response.body();
+            var responseBodyObj = response.body();
             if (responseBodyObj != null) {
                 responseBody = responseBodyObj.bytes();
             }
 
             return new HttpResponse(status, message, headers, responseBody);
         } catch (UnknownServiceException e) {
-            // Wrap UnknownServiceException as SSLHandshakeException for API compatibility
-            // OkHttp throws UnknownServiceException when cipher suites don't match,
-            // but Apache HttpClient threw SSLHandshakeException
             throw new SSLHandshakeException("SSL handshake failed: " + e.getMessage());
         }
     }
@@ -332,7 +314,7 @@ public class HttpClient {
         // Use a compatible connection spec that will accept whatever the SSLContext provides
         // This prevents UnknownServiceException when custom SSLContext has restricted cipher suites
         List<ConnectionSpec> connectionSpecs =
-                Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
+                List.of(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
 
         return new OkHttpClient.Builder()
                 .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)

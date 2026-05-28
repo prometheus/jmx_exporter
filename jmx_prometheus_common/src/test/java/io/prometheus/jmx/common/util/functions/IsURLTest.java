@@ -25,62 +25,62 @@ public class IsURLTest {
 
     @Test
     public void testApplyValidHttpUrl() {
-        IsURL isURL = new IsURL(() -> new RuntimeException("should not be thrown"));
+        IsURL isURL = IsURL.of(() -> new RuntimeException("should not be thrown"));
         assertThat(isURL.apply("http://localhost:8080")).isEqualTo("http://localhost:8080");
     }
 
     @Test
     public void testApplyValidHttpsUrl() {
-        IsURL isURL = new IsURL(() -> new RuntimeException("should not be thrown"));
+        IsURL isURL = IsURL.of(() -> new RuntimeException("should not be thrown"));
         assertThat(isURL.apply("https://example.com")).isEqualTo("https://example.com");
     }
 
     @Test
     public void testApplyValidUrlWithPath() {
-        IsURL isURL = new IsURL(() -> new RuntimeException("should not be thrown"));
+        IsURL isURL = IsURL.of(() -> new RuntimeException("should not be thrown"));
         assertThat(isURL.apply("http://localhost:8080/metrics")).isEqualTo("http://localhost:8080/metrics");
     }
 
     @Test
     public void testApplyValidUrlWithQueryParams() {
-        IsURL isURL = new IsURL(() -> new RuntimeException("should not be thrown"));
+        IsURL isURL = IsURL.of(() -> new RuntimeException("should not be thrown"));
         assertThat(isURL.apply("http://localhost:8080/path?key=value&key2=value2"))
                 .isEqualTo("http://localhost:8080/path?key=value&key2=value2");
     }
 
     @Test
     public void testApplyValidUrlWithFragment() {
-        IsURL isURL = new IsURL(() -> new RuntimeException("should not be thrown"));
+        IsURL isURL = IsURL.of(() -> new RuntimeException("should not be thrown"));
         assertThat(isURL.apply("http://localhost:8080/path#fragment")).isEqualTo("http://localhost:8080/path#fragment");
     }
 
     @Test
     public void testApplyEmptyStringThrowsSupplierException() {
-        IsURL isURL = new IsURL(() -> new UnsupportedOperationException("invalid URL"));
+        IsURL isURL = IsURL.of(() -> new UnsupportedOperationException("invalid URL"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> isURL.apply(""));
     }
 
     @Test
     public void testApplyBlankStringThrowsSupplierException() {
-        IsURL isURL = new IsURL(() -> new UnsupportedOperationException("invalid URL"));
+        IsURL isURL = IsURL.of(() -> new UnsupportedOperationException("invalid URL"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> isURL.apply("   "));
     }
 
     @Test
     public void testApplyMalformedUrlNoSchemeThrowsSupplierException() {
-        IsURL isURL = new IsURL(() -> new UnsupportedOperationException("invalid URL"));
+        IsURL isURL = IsURL.of(() -> new UnsupportedOperationException("invalid URL"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> isURL.apply("localhost:8080"));
     }
 
     @Test
     public void testApplyMalformedUrlInvalidCharsThrowsIllegalArgumentException() {
-        IsURL isURL = new IsURL(() -> new UnsupportedOperationException("invalid URL"));
+        IsURL isURL = IsURL.of(() -> new UnsupportedOperationException("invalid URL"));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> isURL.apply("http://[invalid url]/path"));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new IsURL(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> IsURL.of(null));
     }
 }

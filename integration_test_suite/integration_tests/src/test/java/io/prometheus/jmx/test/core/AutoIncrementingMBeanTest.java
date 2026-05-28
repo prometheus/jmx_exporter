@@ -37,178 +37,108 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import org.opentest4j.AssertionFailedError;
-import org.paramixel.core.Action;
-import org.paramixel.core.Context;
-import org.paramixel.core.Factory;
-import org.paramixel.core.Paramixel;
-import org.paramixel.core.action.Container;
-import org.paramixel.core.action.Direct;
-import org.paramixel.core.action.Parallel;
-import org.paramixel.core.support.Cleanup;
-import org.testcontainers.containers.Network;
+import org.paramixel.api.Paramixel;
+import org.paramixel.api.Runner;
+import org.paramixel.api.action.Instance;
+import org.paramixel.api.action.Lifecycle;
+import org.paramixel.api.action.Parallel;
+import org.paramixel.api.action.Spec;
+import org.paramixel.api.exception.FailException;
 
 public class AutoIncrementingMBeanTest {
 
-    private static final String ENVIRONMENT_KEY = "environment";
+    private final JmxExporterTestEnvironment environment;
 
-    private static final String NETWORK_KEY = "network";
-
-    public static void main(String[] args) {
-        Factory.defaultRunner().runAndExit(actionFactory());
+    public static void main(String[] args) throws Throwable {
+        Runner.defaultRunner().runAndExit(factory());
     }
 
-    @Paramixel.ActionFactory
-    public static Action actionFactory() {
-        var parallelBuilder = Parallel.builder(AutoIncrementingMBeanTest.class.getName());
-        for (JmxExporterTestEnvironment environment :
-                JmxExporterTestEnvironment.createEnvironments().toList()) {
-            parallelBuilder.child(argument(environment));
-        }
-        return parallelBuilder.build();
+    @Paramixel.Factory
+    public static Spec<?> factory() throws Throwable {
+        return Parallel.of(AutoIncrementingMBeanTest.class.getName())
+                .each(
+                        JmxExporterTestEnvironment.createTestEnvironments(AutoIncrementingMBeanTest.class),
+                        environment -> Instance.of(environment.name(), () -> new AutoIncrementingMBeanTest(environment))
+                                .child(Lifecycle.<AutoIncrementingMBeanTest>of("lifecycle")
+                                        .before("setUp()", AutoIncrementingMBeanTest::setUp)
+                                        .child("testHealthy()", AutoIncrementingMBeanTest::testHealthy)
+                                        .child(
+                                                "testDefaultTextMetrics()",
+                                                AutoIncrementingMBeanTest::testDefaultTextMetrics)
+                                        .child(
+                                                "testOpenMetricsTextMetrics()",
+                                                AutoIncrementingMBeanTest::testOpenMetricsTextMetrics)
+                                        .child(
+                                                "testPrometheusTextMetrics()",
+                                                AutoIncrementingMBeanTest::testPrometheusTextMetrics)
+                                        .child(
+                                                "testPrometheusProtobufMetrics()",
+                                                AutoIncrementingMBeanTest::testPrometheusProtobufMetrics)
+                                        .child(
+                                                "testAutoIncrementingMBean()",
+                                                AutoIncrementingMBeanTest::testAutoIncrementingMBean)
+                                        .after("tearDown()", AutoIncrementingMBeanTest::tearDown)));
     }
 
-    private static Action argument(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        Action setUp = setUp(jmxExporterTestEnvironment);
-        Action testHealthy = testHealthy();
-        Action testDefaultTextMetrics = testDefaultTextMetrics();
-        Action testOpenMetricsTextMetrics = testOpenMetricsTextMetrics();
-        Action testPrometheusTextMetrics = testPrometheusTextMetrics();
-        Action testPrometheusProtobufMetrics = testPrometheusProtobufMetrics();
-        Action testAutoIncrementingMBean = testAutoIncrementingMBean();
-        Action tearDown = tearDown();
-
-        return Container.builder(jmxExporterTestEnvironment.getName())
-                .before(setUp)
-                .child(testHealthy)
-                .child(testDefaultTextMetrics)
-                .child(testOpenMetricsTextMetrics)
-                .child(testPrometheusTextMetrics)
-                .child(testPrometheusProtobufMetrics)
-                .child(testAutoIncrementingMBean)
-                .after(tearDown)
-                .build();
+    private AutoIncrementingMBeanTest(JmxExporterTestEnvironment environment) {
+        this.environment = environment;
     }
 
-    private static Action setUp(JmxExporterTestEnvironment jmxExporterTestEnvironment) {
-        return Direct.builder("setUp")
-                .runnable(context -> {
-                    Network network = Network.newNetwork();
-                    network.getId();
-                    jmxExporterTestEnvironment.initialize(AutoIncrementingMBeanTest.class, network);
-                    var store = context.getStore();
-                    store.put(NETWORK_KEY, network);
-                    store.put(ENVIRONMENT_KEY, jmxExporterTestEnvironment);
-                })
-                .build();
+    public void setUp() throws Throwable {
+        environment.initialize();
     }
 
-    private static Action testHealthy() {
-        return Direct.builder("testHealthy")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.HEALTHY);
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                })
-                .build();
+    public void testHealthy() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.HEALTHY);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertHealthyResponse(httpResponse);
     }
 
-    private static Action testDefaultTextMetrics() {
-        return Direct.builder("testDefaultTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.DEFAULT);
-                })
-                .build();
+    public void testDefaultTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
     }
 
-    private static Action testOpenMetricsTextMetrics() {
-        return Direct.builder("testOpenMetricsTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
-                })
-                .build();
+    public void testOpenMetricsTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusTextMetrics() {
-        return Direct.builder("testPrometheusTextMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
-                })
-                .build();
+    public void testPrometheusTextMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
     }
 
-    private static Action testPrometheusProtobufMetrics() {
-        return Direct.builder("testPrometheusProtobufMetrics")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
-                    HttpResponse httpResponse = HttpClient.sendRequest(
-                            url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
-                    assertMetricsResponse(environment, httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
-                })
-                .build();
+    public void testPrometheusProtobufMetrics() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    private static Action testAutoIncrementingMBean() {
-        return Direct.builder("testAutoIncrementingMBean")
-                .runnable(context -> {
-                    JmxExporterTestEnvironment environment = getEnvironment(context);
-                    String url = environment.getUrl(JmxExporterPath.METRICS);
+    public void testAutoIncrementingMBean() throws IOException {
+        String url = environment.getUrl(JmxExporterPath.METRICS);
 
-                    double value1 = collect(url);
-                    double value2 = collect(url);
-                    double value3 = collect(url);
+        double value1 = collect(url);
+        double value2 = collect(url);
+        double value3 = collect(url);
 
-                    assertThat(value2).isGreaterThan(value1);
-                    assertThat(value2).isEqualTo(value1 + 1);
-                    assertThat(value3).isGreaterThan(value2);
-                    assertThat(value3).isEqualTo(value2 + 1);
-                })
-                .build();
+        assertThat(value2).isGreaterThan(value1);
+        assertThat(value2).isEqualTo(value1 + 1);
+        assertThat(value3).isGreaterThan(value2);
+        assertThat(value3).isEqualTo(value2 + 1);
     }
 
-    private static Action tearDown() {
-        return Direct.builder("tearDown")
-                .runnable(context -> {
-                    var store = context.getStore();
-                    Network network = store.remove(NETWORK_KEY, Network.class).orElse(null);
-                    JmxExporterTestEnvironment environment = store.remove(
-                                    ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                            .orElse(null);
-
-                    if (network != null && environment != null) {
-                        Cleanup.of(Cleanup.Mode.FORWARD)
-                                .addCloseable(environment)
-                                .addCloseable(network)
-                                .runAndThrow();
-                    }
-                })
-                .build();
+    public void tearDown() {
+        environment.close();
     }
 
-    private static JmxExporterTestEnvironment getEnvironment(Context context) {
-        return context.getParent()
-                .getStore()
-                .get(ENVIRONMENT_KEY, JmxExporterTestEnvironment.class)
-                .orElseThrow();
-    }
-
-    private static void assertMetricsResponse(
-            JmxExporterTestEnvironment jmxExporterTestEnvironment,
-            HttpResponse httpResponse,
-            MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
         Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
@@ -223,10 +153,9 @@ public class AutoIncrementingMBeanTest {
             metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
         });
 
-        boolean isJmxExporterModeJavaAgent =
-                jmxExporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
+        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
 
-        String buildInfoName = jmxExporterTestEnvironment.getJmxExporterMode().getBuildInfoName();
+        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
 
         assertMetric(metrics)
                 .ofType(Metric.Type.GAUGE)
@@ -304,7 +233,7 @@ public class AutoIncrementingMBeanTest {
                 .isPresent();
     }
 
-    private static double collect(String url) throws IOException {
+    private double collect(String url) throws IOException {
         HttpResponse httpResponse = HttpClient.sendRequest(url);
 
         assertMetricsContentType(httpResponse, MetricsContentType.DEFAULT);
@@ -321,6 +250,6 @@ public class AutoIncrementingMBeanTest {
             return optionalValue.get();
         }
 
-        throw new AssertionFailedError("Metric name [io_prometheus_jmx_autoIncrementing] s not present");
+        throw new FailException("Metric name [io_prometheus_jmx_autoIncrementing] s not present");
     }
 }

@@ -28,6 +28,10 @@ import io.prometheus.metrics.model.snapshots.UnknownSnapshot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -408,9 +412,108 @@ public class MatchedRuleToMetricSnapshotsConverterTest {
         }
     }
 
+    @Nested
+    class TraceLoggingTests {
+
+        private java.util.logging.Logger julLogger;
+        private ConverterTestLogHandler testLogHandler;
+
+        @BeforeEach
+        void setUp() {
+            julLogger = java.util.logging.Logger.getLogger(MatchedRuleToMetricSnapshotsConverter.class.getName());
+            testLogHandler = new ConverterTestLogHandler();
+            julLogger.addHandler(testLogHandler);
+            julLogger.setLevel(java.util.logging.Level.ALL);
+        }
+
+        @AfterEach
+        void tearDown() {
+            julLogger.removeHandler(testLogHandler);
+        }
+
+        @Test
+        void convertLogsMatchedRulesWhenTraceEnabled() {
+            List<MatchedRule> matchedRules = new ArrayList<>();
+            matchedRules.add(new MatchedRule(
+                    "traced_metric", "domain<type=T>attr: 1", "UNKNOWN", "help", of("l"), of("v1"), 1.0, 1.0));
+            matchedRules.add(new MatchedRule(
+                    "traced_metric", "domain<type=T>attr: 2", "UNKNOWN", "help", of("l"), of("v2"), 2.0, 1.0));
+
+            MatchedRuleToMetricSnapshotsConverter.convert(matchedRules);
+
+            assertThat(testLogHandler.getRecords()).hasSize(2);
+        }
+    }
+
+    @Nested
+    class GetDomainNameWithDuplicateLabelsTests {
+
+        @Test
+        void noColonInMatchNameWithDuplicateLabelsUsesFullMatchNameAsObjectname() {
+            List<MatchedRule> matchedRules = new ArrayList<>();
+            matchedRules.add(
+                    new MatchedRule("nocolon_metric", "noColonA", "UNKNOWN", "help", of("l"), of("v"), 1.0, 1.0));
+            matchedRules.add(
+                    new MatchedRule("nocolon_metric", "noColonB", "UNKNOWN", "help", of("l"), of("v"), 2.0, 1.0));
+
+            MetricSnapshots metricSnapshots = MatchedRuleToMetricSnapshotsConverter.convert(matchedRules);
+
+            MetricSnapshot snapshot = metricSnapshots.iterator().next();
+            assertThat(snapshot.getDataPoints()).hasSize(2);
+
+            String objectname0 = snapshot.getDataPoints().get(0).getLabels().get("_objectname");
+            String objectname1 = snapshot.getDataPoints().get(1).getLabels().get("_objectname");
+            assertThat(objectname0).isEqualTo("noColonA");
+            assertThat(objectname1).isEqualTo("noColonB");
+        }
+
+        @Test
+        void colonAtPositionZeroWithDuplicateLabelsUsesFullMatchNameAsObjectname() {
+            List<MatchedRule> matchedRules = new ArrayList<>();
+            matchedRules.add(
+                    new MatchedRule("zerocolon_metric", ":zeroA", "UNKNOWN", "help", of("l"), of("v"), 1.0, 1.0));
+            matchedRules.add(
+                    new MatchedRule("zerocolon_metric", ":zeroB", "UNKNOWN", "help", of("l"), of("v"), 2.0, 1.0));
+
+            MetricSnapshots metricSnapshots = MatchedRuleToMetricSnapshotsConverter.convert(matchedRules);
+
+            MetricSnapshot snapshot = metricSnapshots.iterator().next();
+            assertThat(snapshot.getDataPoints()).hasSize(2);
+
+            String objectname0 = snapshot.getDataPoints().get(0).getLabels().get("_objectname");
+            String objectname1 = snapshot.getDataPoints().get(1).getLabels().get("_objectname");
+            assertThat(objectname0).isEqualTo(":zeroA");
+            assertThat(objectname1).isEqualTo(":zeroB");
+        }
+    }
+
     private static List<String> of(String... strings) {
         List<String> list = new ArrayList<>();
         Collections.addAll(list, strings);
         return list;
+    }
+
+    private static class ConverterTestLogHandler extends Handler {
+
+        private final List<LogRecord> records = new ArrayList<>();
+
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+
+        @Override
+        public void flush() {
+            // Intentionally empty
+        }
+
+        @Override
+        public void close() throws SecurityException {
+            // Intentionally empty
+        }
+
+        List<LogRecord> getRecords() {
+            return records;
+        }
     }
 }

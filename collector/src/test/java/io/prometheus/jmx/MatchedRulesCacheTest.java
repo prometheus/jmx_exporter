@@ -99,6 +99,18 @@ public class MatchedRulesCacheTest {
         }
 
         @Test
+        void cacheKeyEqualsWithNullReturnsFalse() {
+            MatchedRulesCache.CacheKey key1 = createCacheKey("domain1");
+            assertThat(key1).isNotEqualTo(null);
+        }
+
+        @Test
+        void cacheKeyEqualsWithDifferentTypeReturnsFalse() {
+            MatchedRulesCache.CacheKey key1 = createCacheKey("domain1");
+            assertThat(key1).isNotEqualTo("not a CacheKey");
+        }
+
+        @Test
         void cacheKeyEqualsWithNull() {
             MatchedRulesCache.CacheKey key = createCacheKey("domain");
             assertThat(key).isNotEqualTo(null);

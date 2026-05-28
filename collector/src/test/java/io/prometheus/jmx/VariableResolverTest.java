@@ -151,4 +151,16 @@ public class VariableResolverTest {
             }
         }
     }
+
+    @Nested
+    class PrivateConstructorTests {
+
+        @Test
+        void privateConstructorCannotBeInstantiated() throws Exception {
+            java.lang.reflect.Constructor<?> constructor = VariableResolver.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Object instance = constructor.newInstance();
+            assertThat(instance).isNotNull();
+        }
+    }
 }

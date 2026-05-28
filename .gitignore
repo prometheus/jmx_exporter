@@ -19,3 +19,4 @@ smoke-test.log
 regression-test.log
 RELEASE
 __pycache__/
+.opencode/

@@ -36,14 +36,14 @@ import java.security.MessageDigest;
 public class PlaintextAuthenticator extends BasicAuthenticator {
 
     /**
-     * The expected username for authentication.
+     * The expected username for authentication, encoded as UTF-8 bytes for constant-time comparison.
      */
-    private final String username;
+    private final byte[] usernameBytes;
 
     /**
-     * The expected password for authentication.
+     * The expected password for authentication, encoded as UTF-8 bytes for constant-time comparison.
      */
-    private final String password;
+    private final byte[] passwordBytes;
 
     /**
      * Constructs a plaintext authenticator with the specified credentials.
@@ -60,8 +60,8 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
         Precondition.notNullOrEmpty(username);
         Precondition.notNullOrEmpty(password);
 
-        this.username = username;
-        this.password = password;
+        this.usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        this.passwordBytes = password.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -81,9 +81,8 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        return MessageDigest.isEqual(
-                        this.username.getBytes(StandardCharsets.UTF_8), username.getBytes(StandardCharsets.UTF_8))
-                && MessageDigest.isEqual(
-                        this.password.getBytes(StandardCharsets.UTF_8), password.getBytes(StandardCharsets.UTF_8));
+        boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8));
+        boolean passwordMatches = MessageDigest.isEqual(this.passwordBytes, password.getBytes(StandardCharsets.UTF_8));
+        return usernameMatches & passwordMatches;
     }
 }

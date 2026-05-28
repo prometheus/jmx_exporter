@@ -36,7 +36,7 @@ public class Precondition {
      * <p>This is a utility class with only static methods.
      */
     private Precondition() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

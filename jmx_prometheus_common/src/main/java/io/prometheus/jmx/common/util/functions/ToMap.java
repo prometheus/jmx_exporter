@@ -31,8 +31,11 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<Object, Map<String, String>> toMap = new ToMap(() -> new ConfigurationException("Invalid map"));
- * Map<String, String> result = toMap.apply(Map.of("key1", "value1", "key2", "value2"));
+ * Function<Object, Map<String, String>> toMap = ToMap.of(() -> new ConfigurationException("Invalid map"));
+ * Map<String, String> values = new java.util.LinkedHashMap<String, String>();
+ * values.put("key1", "value1");
+ * values.put("key2", "value2");
+ * Map<String, String> result = toMap.apply(values);
  * }</pre>
  *
  * <p>Thread-safety: This class is thread-safe. Each invocation operates on the input independently.
@@ -52,11 +55,10 @@ public class ToMap implements Function<Object, Map<String, String>> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public ToMap(Supplier<? extends RuntimeException> supplier) {
+    private ToMap(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Casts the given object to a map and converts all keys and values to trimmed strings.
      *
@@ -77,5 +79,9 @@ public class ToMap implements Function<Object, Map<String, String>> {
         } catch (Throwable t) {
             throw supplier.get();
         }
+    }
+
+    public static ToMap of(Supplier<? extends RuntimeException> supplier) {
+        return new ToMap(supplier);
     }
 }

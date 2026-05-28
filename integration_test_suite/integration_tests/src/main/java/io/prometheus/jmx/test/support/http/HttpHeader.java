@@ -35,6 +35,6 @@ public class HttpHeader {
      * Private constructor to prevent instantiation.
      */
     private HttpHeader() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 }

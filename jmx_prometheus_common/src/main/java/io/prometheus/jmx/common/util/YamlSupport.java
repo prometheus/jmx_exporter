@@ -43,7 +43,7 @@ public class YamlSupport {
      * <p>This is a utility class with only static methods.
      */
     private YamlSupport() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

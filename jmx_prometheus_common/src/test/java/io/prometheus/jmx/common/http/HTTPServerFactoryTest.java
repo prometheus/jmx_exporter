@@ -167,6 +167,232 @@ public class HTTPServerFactoryTest {
         assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
+    @Test
+    public void createAndStartHTTPServerWithoutInetAddress() throws Exception {
+        File config = new File(temporaryFolder, "no_inetAddress");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 2");
+        writer.println("    maximum: 5");
+        writer.println("    keepAliveTime: 60");
+        writer.close();
+
+        httpServer = HTTPServerFactory.createAndStartHTTPServer(PrometheusRegistry.defaultRegistry, config);
+        assertThat(httpServer).isNotNull();
+        assertThat(httpServer.getPort()).isGreaterThan(0);
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithCustomMetricsPath() throws Exception {
+        File config = new File(temporaryFolder, "custom_metrics");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  metrics:");
+        writer.println("    path: /custom/metrics");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithBlankMetricsPath() throws Exception {
+        File config = new File(temporaryFolder, "blank_metrics");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  metrics:");
+        writer.println("    path: \"   \"");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithInvalidKeepAliveTime() throws Exception {
+        File config = new File(temporaryFolder, "invalid_keepalive");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 10");
+        writer.println("    keepAliveTime: 0");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithNegativeKeepAliveTime() throws Exception {
+        File config = new File(temporaryFolder, "negative_keepalive");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 10");
+        writer.println("    keepAliveTime: -5");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithNonIntegerKeepAliveTime() throws Exception {
+        File config = new File(temporaryFolder, "non_integer_keepalive");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 10");
+        writer.println("    keepAliveTime: abc");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithPlaintextAuthentication() throws Exception {
+        File config = new File(temporaryFolder, "plaintext_auth");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      password: testpass");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithPlaintextAuthenticationAndVariable() throws Exception {
+        File config = new File(temporaryFolder, "plaintext_auth_var");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      password: testpass");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithSHA256Authentication() throws Exception {
+        File config = new File(temporaryFolder, "sha256_auth");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      algorithm: SHA-256");
+        writer.println("      passwordHash: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d15ee50");
+        writer.println("      salt: testsalt");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithPBKDF2Authentication() throws Exception {
+        File config = new File(temporaryFolder, "pbkdf2_auth");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      algorithm: PBKDF2WithHmacSHA256");
+        writer.println("      passwordHash: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d15ee50");
+        writer.println("      salt: testsalt");
+        writer.println("      iterations: 600000");
+        writer.println("      keyLength: 256");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithPBKDF2AuthenticationDefaultIterations() throws Exception {
+        File config = new File(temporaryFolder, "pbkdf2_default_iter");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      algorithm: PBKDF2WithHmacSHA1");
+        writer.println("      passwordHash: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d15ee50");
+        writer.println("      salt: testsalt");
+        writer.println("      keyLength: 256");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithInvalidAlgorithm() throws Exception {
+        File config = new File(temporaryFolder, "invalid_algorithm");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      algorithm: INVALID-ALGO");
+        writer.println("      passwordHash: somehash");
+        writer.println("      salt: testsalt");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithBlankPassword() throws Exception {
+        File config = new File(temporaryFolder, "blank_password");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      password: \"   \"");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithMissingPassword() throws Exception {
+        File config = new File(temporaryFolder, "missing_password");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      password:");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void createAndStartHTTPServerWithMissingSalt() throws Exception {
+        File config = new File(temporaryFolder, "missing_salt");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  authentication:");
+        writer.println("    basic:");
+        writer.println("      username: testuser");
+        writer.println("      algorithm: SHA-256");
+        writer.println("      passwordHash: somehash");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
     private HTTPServer startServer(File config) throws IOException {
         return HTTPServerFactory.createAndStartHTTPServer(
                 PrometheusRegistry.defaultRegistry, InetAddress.getByName("0.0.0.0"), 0, config);

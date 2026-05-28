@@ -200,47 +200,23 @@ public class Arguments {
         String filename;
 
         if (matcher.matches()) {
-            switch (matcher.groupCount()) {
-                case 2: {
-                    httpEnabled = true;
-                    host = DEFAULT_HOST;
+            httpEnabled = true;
 
-                    try {
-                        port = Integer.parseInt(matcher.group(1));
-                    } catch (NumberFormatException e) {
-                        throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
-                    }
+            String group1 = matcher.group(1);
+            host = group1 != null ? group1 : DEFAULT_HOST;
 
-                    if (port < MIN_PORT || port > MAX_PORT) {
-                        throw new ConfigurationException(
-                                format("Port must be between %d and %d [%d]", MIN_PORT, MAX_PORT, port));
-                    }
-                    filename = matcher.group(2);
-                    break;
-                }
-                case 3: {
-                    httpEnabled = true;
-                    String group1 = matcher.group(1);
-                    host = group1 != null ? group1 : DEFAULT_HOST;
-
-                    if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
-                        int hostLength = host.length();
-                        host = host.substring(1, hostLength - 1);
-                    }
-
-                    port = Integer.parseInt(matcher.group(2));
-
-                    if (port < MIN_PORT || port > MAX_PORT) {
-                        throw new ConfigurationException(
-                                format("Port must be between %d and %d [%d]", MIN_PORT, MAX_PORT, port));
-                    }
-                    filename = matcher.group(3);
-                    break;
-                }
-                default: {
-                    throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
-                }
+            if (host.startsWith("[") && host.endsWith("]") && host.length() > 3) {
+                host = host.substring(1, host.length() - 1);
             }
+
+            port = Integer.parseInt(matcher.group(2));
+
+            if (port < MIN_PORT || port > MAX_PORT) {
+                throw new ConfigurationException(
+                        format("Port must be between %d and %d [%d]", MIN_PORT, MAX_PORT, port));
+            }
+
+            filename = matcher.group(3);
 
             if (host.trim().isEmpty()) {
                 throw new ConfigurationException(format("Malformed arguments for [%s]", agentArgument));

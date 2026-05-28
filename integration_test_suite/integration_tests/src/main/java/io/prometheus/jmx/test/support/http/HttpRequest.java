@@ -129,7 +129,7 @@ public class HttpRequest {
          * Private constructor to enforce use of {@link HttpRequest#builder()}.
          */
         private Builder() {
-            // INTENTIONALLY BLANK
+            // Intentionally empty
         }
 
         /**

@@ -30,9 +30,9 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
     private static final long MEMORY_BYTES = 1073741824;
     private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
 
-    private static final String NOFILE = "nofile";
-    private static final long UFILE_SOFT = 65536L;
-    private static final long UFILE_HARD = 65536L;
+    private static final String LIMIT_TYPE_NOFILE = "nofile";
+    private static final long NOFILE_SOFT_LIMIT = 65536L;
+    private static final long NOFILE_HARD_LIMIT = 65536L;
 
     private static final ContainerCmdModifier SINGLETON = new ContainerCmdModifier();
 
@@ -40,7 +40,7 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
      * Private constructor to enforce singleton pattern.
      */
     private ContainerCmdModifier() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**
@@ -55,7 +55,7 @@ public class ContainerCmdModifier implements Consumer<CreateContainerCmd> {
             hostConfig
                     .withMemory(MEMORY_BYTES)
                     .withMemorySwap(MEMORY_SWAP_BYTES)
-                    .withUlimits(new Ulimit[] {new Ulimit(NOFILE, UFILE_SOFT, UFILE_HARD)});
+                    .withUlimits(new Ulimit[] {new Ulimit(LIMIT_TYPE_NOFILE, NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT)});
         }
     }
 

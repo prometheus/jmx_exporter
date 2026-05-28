@@ -27,7 +27,7 @@ public class ToMapTest {
 
     @Test
     public void testApplyValidMap() {
-        ToMap toMap = new ToMap(() -> new RuntimeException("should not be thrown"));
+        ToMap toMap = ToMap.of(() -> new RuntimeException("should not be thrown"));
         Map<Object, Object> input = new LinkedHashMap<>();
         input.put("key1", "value1");
         input.put("key2", "value2");
@@ -40,7 +40,7 @@ public class ToMapTest {
 
     @Test
     public void testApplyTrimsKeysAndValues() {
-        ToMap toMap = new ToMap(() -> new RuntimeException("should not be thrown"));
+        ToMap toMap = ToMap.of(() -> new RuntimeException("should not be thrown"));
         Map<Object, Object> input = new LinkedHashMap<>();
         input.put(" key1 ", " value1 ");
         Map<String, String> result = toMap.apply(input);
@@ -49,7 +49,7 @@ public class ToMapTest {
 
     @Test
     public void testApplyEmptyMap() {
-        ToMap toMap = new ToMap(() -> new RuntimeException("should not be thrown"));
+        ToMap toMap = ToMap.of(() -> new RuntimeException("should not be thrown"));
         Map<Object, Object> input = new LinkedHashMap<>();
         Map<String, String> result = toMap.apply(input);
         assertThat(result).isNotNull();
@@ -58,18 +58,18 @@ public class ToMapTest {
 
     @Test
     public void testApplyNullThrowsSupplierException() {
-        ToMap toMap = new ToMap(() -> new UnsupportedOperationException("map conversion failed"));
+        ToMap toMap = ToMap.of(() -> new UnsupportedOperationException("map conversion failed"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toMap.apply(null));
     }
 
     @Test
     public void testApplyNonMapThrowsSupplierException() {
-        ToMap toMap = new ToMap(() -> new UnsupportedOperationException("map conversion failed"));
+        ToMap toMap = ToMap.of(() -> new UnsupportedOperationException("map conversion failed"));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toMap.apply("not a map"));
     }
 
     @Test
     public void testConstructorNullSupplier() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new ToMap(null));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> ToMap.of(null));
     }
 }

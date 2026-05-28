@@ -31,7 +31,7 @@ public class StringValue implements StringValueMBean {
      * Constructs a new instance.
      */
     public StringValue() {
-        // INTENTIONALLY BLANK
+        // Intentionally empty
     }
 
     /**

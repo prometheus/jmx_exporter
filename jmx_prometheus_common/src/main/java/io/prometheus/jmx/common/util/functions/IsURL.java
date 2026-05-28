@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  * <p>Example usage:
  *
  * <pre>{@code
- * Function<String, String> validator = new IsURL(() -> new ConfigurationException("Invalid URL"));
+ * Function<String, String> validator = IsURL.of(() -> new ConfigurationException("Invalid URL"));
  * String result = validator.apply("http://localhost:8080");  // Returns the URL string
  * validator.apply("not a url");  // Throws ConfigurationException
  * }</pre>
@@ -53,11 +53,10 @@ public class IsURL implements Function<String, String> {
      *     {@code null}
      * @throws NullPointerException if {@code supplier} is {@code null}
      */
-    public IsURL(Supplier<? extends RuntimeException> supplier) {
+    private IsURL(Supplier<? extends RuntimeException> supplier) {
         Precondition.notNull(supplier);
         this.supplier = supplier;
     }
-
     /**
      * Validates that the string is a well-formed URL.
      *
@@ -78,5 +77,9 @@ public class IsURL implements Function<String, String> {
         } catch (MalformedURLException e) {
             throw supplier.get();
         }
+    }
+
+    public static IsURL of(Supplier<? extends RuntimeException> supplier) {
+        return new IsURL(supplier);
     }
 }
