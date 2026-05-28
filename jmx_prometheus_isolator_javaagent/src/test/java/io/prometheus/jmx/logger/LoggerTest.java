@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Formatter;
@@ -39,19 +39,34 @@ public class LoggerTest {
     private java.util.logging.Logger julLogger;
     private TestLogHandler testLogHandler;
     private Logger logger;
+    private boolean originalDeveloperDebug;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         logger = LoggerFactory.getLogger(LoggerTest.class);
         julLogger = java.util.logging.Logger.getLogger(LoggerTest.class.getName());
         testLogHandler = new TestLogHandler();
         julLogger.addHandler(testLogHandler);
         julLogger.setLevel(java.util.logging.Level.ALL);
+        originalDeveloperDebug = getDeveloperDebug();
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         julLogger.removeHandler(testLogHandler);
+        setDeveloperDebug(originalDeveloperDebug);
+    }
+
+    private static boolean getDeveloperDebug() throws Exception {
+        Field field = Logger.class.getDeclaredField("DEVELOPER_DEBUG");
+        field.setAccessible(true);
+        return field.getBoolean(null);
+    }
+
+    private static void setDeveloperDebug(boolean value) throws Exception {
+        Field field = Logger.class.getDeclaredField("DEVELOPER_DEBUG");
+        field.setAccessible(true);
+        field.set(null, value);
     }
 
     @Nested
@@ -270,6 +285,84 @@ public class LoggerTest {
         }
     }
 
+    @Nested
+    class JulLevelMappingTests {
+
+        @Test
+        void traceMapsToFinest() {
+            assertThat(Level.TRACE.julLevel()).isEqualTo(java.util.logging.Level.FINEST);
+        }
+
+        @Test
+        void infoMapsToInfo() {
+            assertThat(Level.INFO.julLevel()).isEqualTo(java.util.logging.Level.INFO);
+        }
+
+        @Test
+        void warnMapsToWarning() {
+            assertThat(Level.WARN.julLevel()).isEqualTo(java.util.logging.Level.WARNING);
+        }
+
+        @Test
+        void errorMapsToSevere() {
+            assertThat(Level.ERROR.julLevel()).isEqualTo(java.util.logging.Level.SEVERE);
+        }
+
+        @Test
+        void julLevelReturnsNonNullForAllLevelValues() {
+            for (Level level : Level.values()) {
+                assertThat(level.julLevel()).isNotNull();
+            }
+        }
+    }
+
+    @Nested
+    class DeveloperDebugTests {
+
+        @BeforeEach
+        void enableDeveloperDebug() throws Exception {
+            setDeveloperDebug(true);
+        }
+
+        @AfterEach
+        void restoreDeveloperDebug() throws Exception {
+            setDeveloperDebug(originalDeveloperDebug);
+        }
+
+        @Test
+        void developerDebugWritesToStdout() {
+            PrintStream originalOut = System.out;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(baos, true));
+            try {
+                logger.info("debug test message");
+
+                String output = baos.toString();
+                assertThat(output).contains("debug test message");
+                assertThat(output).contains(LoggerTest.class.getName());
+            } finally {
+                System.setOut(originalOut);
+            }
+        }
+
+        @Test
+        void developerDebugIncludesTimestampThreadAndLevel() {
+            PrintStream originalOut = System.out;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(baos, true));
+            try {
+                logger.warn("warn message");
+
+                String output = baos.toString();
+                assertThat(output).contains(" | ");
+                assertThat(output).contains(Thread.currentThread().getName());
+                assertThat(output).contains(LoggerTest.class.getName());
+            } finally {
+                System.setOut(originalOut);
+            }
+        }
+    }
+
     private static class NullFormatterHandler extends Handler {
 
         @Override
@@ -290,125 +383,6 @@ public class LoggerTest {
         @Override
         public Formatter getFormatter() {
             return null;
-        }
-    }
-
-    @Nested
-    class DecodeMappingTests {
-
-        @Test
-        void decodeReturnsNonNullForAllLevelValues() throws Exception {
-            Method decodeMethod = Logger.class.getDeclaredMethod("decode", Level.class);
-            decodeMethod.setAccessible(true);
-
-            for (Level level : Level.values()) {
-                Object result = decodeMethod.invoke(null, level);
-                assertThat(result).isNotNull();
-            }
-        }
-
-        @Test
-        void decodeMapsTraceToFinest() throws Exception {
-            Method decodeMethod = Logger.class.getDeclaredMethod("decode", Level.class);
-            decodeMethod.setAccessible(true);
-
-            Object result = decodeMethod.invoke(null, Level.TRACE);
-            assertThat(result).isEqualTo(java.util.logging.Level.FINEST);
-        }
-
-        @Test
-        void decodeMapsInfoToInfo() throws Exception {
-            Method decodeMethod = Logger.class.getDeclaredMethod("decode", Level.class);
-            decodeMethod.setAccessible(true);
-
-            Object result = decodeMethod.invoke(null, Level.INFO);
-            assertThat(result).isEqualTo(java.util.logging.Level.INFO);
-        }
-
-        @Test
-        void decodeMapsWarnToWarning() throws Exception {
-            Method decodeMethod = Logger.class.getDeclaredMethod("decode", Level.class);
-            decodeMethod.setAccessible(true);
-
-            Object result = decodeMethod.invoke(null, Level.WARN);
-            assertThat(result).isEqualTo(java.util.logging.Level.WARNING);
-        }
-
-        @Test
-        void decodeMapsErrorToSevere() throws Exception {
-            Method decodeMethod = Logger.class.getDeclaredMethod("decode", Level.class);
-            decodeMethod.setAccessible(true);
-
-            Object result = decodeMethod.invoke(null, Level.ERROR);
-            assertThat(result).isEqualTo(java.util.logging.Level.SEVERE);
-        }
-    }
-
-    @Nested
-    class DeveloperDebugTests {
-
-        private String originalProp;
-
-        @BeforeEach
-        void setDebugProperty() {
-            originalProp = System.getProperty("jmx.prometheus.exporter.developer.debug");
-            System.setProperty("jmx.prometheus.exporter.developer.debug", "true");
-        }
-
-        @AfterEach
-        void clearDebugProperty() {
-            if (originalProp != null) {
-                System.setProperty("jmx.prometheus.exporter.developer.debug", originalProp);
-            } else {
-                System.clearProperty("jmx.prometheus.exporter.developer.debug");
-            }
-        }
-
-        @Test
-        void developerDebugWritesToStdout() {
-            PrintStream originalOut = System.out;
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            System.setOut(new PrintStream(baos, true));
-            try {
-                Logger debugLogger = createFreshLogger(DeveloperDebugTests.class);
-
-                debugLogger.info("debug test message");
-
-                String output = baos.toString();
-                assertThat(output).contains("debug test message");
-                assertThat(output).contains(DeveloperDebugTests.class.getName());
-            } finally {
-                System.setOut(originalOut);
-            }
-        }
-
-        @Test
-        void developerDebugIncludesTimestampThreadAndLevel() {
-            PrintStream originalOut = System.out;
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            System.setOut(new PrintStream(baos, true));
-            try {
-                Logger debugLogger = createFreshLogger(DeveloperDebugTests.class);
-
-                debugLogger.warn("warn message");
-
-                String output = baos.toString();
-                assertThat(output).contains(" | ");
-                assertThat(output).contains(Thread.currentThread().getName());
-                assertThat(output).contains(DeveloperDebugTests.class.getName());
-            } finally {
-                System.setOut(originalOut);
-            }
-        }
-
-        private Logger createFreshLogger(Class<?> clazz) {
-            try {
-                Constructor<Logger> constructor = Logger.class.getDeclaredConstructor(Class.class);
-                constructor.setAccessible(true);
-                return constructor.newInstance(clazz);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

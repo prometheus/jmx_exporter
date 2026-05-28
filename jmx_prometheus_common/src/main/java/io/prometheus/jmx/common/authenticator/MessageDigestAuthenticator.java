@@ -51,6 +51,13 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     private static final int MAXIMUM_CREDENTIAL_CACHE_ENTRIES = CredentialsCache.DEFAULT_MAX_ENTRIES;
 
     /**
+     * Hexadecimal characters for converting bytes to hex strings.
+     */
+    private static final char[] HEXADECIMAL_CHARACTERS = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+
+    /**
      * The expected username for authentication.
      */
     private final byte[] usernameBytes;
@@ -190,8 +197,8 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
 
         for (int i = 0, j = 0; i < len; i++) {
             int v = bytes[i] & 0xFF;
-            result[j++] = Integer.toHexString(v >>> 4).charAt(0);
-            result[j++] = Integer.toHexString(v & 0x0F).charAt(0);
+            result[j++] = HEXADECIMAL_CHARACTERS[v >>> 4];
+            result[j++] = HEXADECIMAL_CHARACTERS[v & 0x0F];
         }
 
         return new String(result);

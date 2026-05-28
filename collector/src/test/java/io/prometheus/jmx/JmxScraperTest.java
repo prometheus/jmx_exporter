@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -77,9 +76,9 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                new LinkedList<>(),
+                new ArrayList<>(),
                 filter,
-                new LinkedList<>(),
+                new ArrayList<>(),
                 receiver,
                 cache);
     }
@@ -92,7 +91,7 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                new LinkedList<>(),
+                new ArrayList<>(),
                 filter,
                 customizers,
                 receiver,
@@ -361,7 +360,7 @@ public class JmxScraperTest {
 
                 LinkedHashMap<String, String> beanProperties = new LinkedHashMap<>();
                 beanProperties.put("type", "Test");
-                LinkedList<String> attrKeys = new LinkedList<>();
+                List<String> attrKeys = new ArrayList<>();
                 attrKeys.add("key1");
 
                 stdoutWriter.recordBean(
@@ -595,7 +594,7 @@ public class JmxScraperTest {
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
                 Map<String, String> attributesAsLabelsWithValues,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String attrType,
                 String attrDescription,
@@ -621,7 +620,7 @@ public class JmxScraperTest {
         final String domain;
         final LinkedHashMap<String, String> beanProperties;
         final Map<String, String> attributesAsLabelsWithValues;
-        final LinkedList<String> attrKeys;
+        final List<String> attrKeys;
         final String attrName;
         final String attrType;
         final String attrDescription;
@@ -631,7 +630,7 @@ public class JmxScraperTest {
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
                 Map<String, String> attributesAsLabelsWithValues,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String attrType,
                 String attrDescription,
@@ -682,9 +681,9 @@ public class JmxScraperTest {
                     "",
                     sslProperties,
                     Collections.singletonList(null),
-                    new LinkedList<>(),
+                    new ArrayList<>(),
                     filter,
-                    new LinkedList<>(),
+                    new ArrayList<>(),
                     receiver,
                     cache);
 
@@ -703,9 +702,9 @@ public class JmxScraperTest {
                     "",
                     sslProperties,
                     Collections.singletonList(null),
-                    new LinkedList<>(),
+                    new ArrayList<>(),
                     filter,
-                    new LinkedList<>(),
+                    new ArrayList<>(),
                     receiver,
                     cache);
 

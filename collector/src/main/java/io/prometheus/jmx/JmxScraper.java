@@ -21,12 +21,12 @@ import io.prometheus.jmx.logger.Logger;
 import io.prometheus.jmx.logger.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -82,7 +82,7 @@ class JmxScraper {
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
                 Map<String, String> attributesAsLabelsWithValues,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String attrType,
                 String attrDescription,
@@ -330,7 +330,7 @@ class JmxScraper {
                         mBeanDomain,
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         attributesAsLabelsWithValues,
-                        new LinkedList<>(),
+                        new ArrayList<>(),
                         extraMetric.name,
                         "UNKNOWN",
                         extraMetric.description,
@@ -364,7 +364,7 @@ class JmxScraper {
                         mBeanDomain,
                         jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
                         attributesAsLabelsWithValues,
-                        new LinkedList<>(),
+                        new ArrayList<>(),
                         attributeName,
                         mBeanAttributeInfo.getType(),
                         mBeanAttributeInfo.getDescription(),
@@ -435,7 +435,7 @@ class JmxScraper {
                     mbeanName.getDomain(),
                     jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
                     new HashMap<>(),
-                    new LinkedList<>(),
+                    new ArrayList<>(),
                     attributeName,
                     attr.getType(),
                     attr.getDescription(),
@@ -453,7 +453,7 @@ class JmxScraper {
             String domain,
             LinkedHashMap<String, String> beanProperties,
             Map<String, String> attributesAsLabelsWithValues,
-            LinkedList<String> attrKeys,
+            List<String> attrKeys,
             String attrName,
             String attrType,
             String attrDescription,
@@ -482,7 +482,7 @@ class JmxScraper {
             LOGGER.trace("%s%s%s scrape: compositedata", domain, beanProperties, attrName);
             CompositeData composite = (CompositeData) value;
             CompositeType type = composite.getCompositeType();
-            attrKeys = new LinkedList<>(attrKeys);
+            attrKeys = new ArrayList<>(attrKeys);
             attrKeys.add(attrName);
             for (String key : type.keySet()) {
                 String typeName = type.getType(key).getTypeName();
@@ -514,7 +514,7 @@ class JmxScraper {
             Set<String> valueKeys = new TreeSet<>(type.keySet());
             rowKeys.forEach(valueKeys::remove);
 
-            LinkedList<String> extendedAttrKeys = new LinkedList<>(attrKeys);
+            List<String> extendedAttrKeys = new ArrayList<>(attrKeys);
             extendedAttrKeys.add(attrName);
             for (Object compositeDataValue : tds.values()) {
                 if (compositeDataValue instanceof CompositeData) {
@@ -527,14 +527,16 @@ class JmxScraper {
                             // Nested tabulardata will repeat the 'key' label, so
                             // append a suffix to distinguish each.
                             int suffixCount = 0;
-                            while (l2s.containsKey(idx)) {
-                                idx = idx + "_";
+                            StringBuilder idxBuilder = new StringBuilder(idx);
+                            while (l2s.containsKey(idxBuilder.toString())) {
+                                idxBuilder.append("_");
                                 suffixCount++;
                                 if (suffixCount > 1000) {
                                     throw new IllegalStateException(
                                             "Too many key collisions in TabularData processing");
                                 }
                             }
+                            idx = idxBuilder.toString();
 
                             if (obj instanceof CompositeData) {
                                 // TabularData key is a composite key
@@ -542,7 +544,11 @@ class JmxScraper {
                                 CompositeType ct = compositeKey.getCompositeType();
                                 for (final String compositeKeyIdx : ct.keySet()) {
                                     l2s.put(
-                                            idx + "_" + compositeKeyIdx,
+                                            new StringBuilder(idx.length() + 1 + compositeKeyIdx.length())
+                                                    .append(idx)
+                                                    .append('_')
+                                                    .append(compositeKeyIdx)
+                                                    .toString(),
                                             compositeKey.get(compositeKeyIdx).toString());
                                 }
                             } else {
@@ -552,7 +558,7 @@ class JmxScraper {
                         }
                     }
                     for (String valueIdx : valueKeys) {
-                        LinkedList<String> attrNames = extendedAttrKeys;
+                        List<String> attrNames = extendedAttrKeys;
                         String typeName = type.getType(valueIdx).getTypeName();
                         String name = valueIdx;
                         if (valueIdx.equalsIgnoreCase("value")) {
@@ -615,12 +621,19 @@ class JmxScraper {
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
                 Map<String, String> attributesAsLabelsWithValues,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String attrType,
                 String attrDescription,
                 Object value) {
-            System.out.println(domain + beanProperties + attrKeys + attrName + ": " + value);
+            System.out.println(new StringBuilder(256)
+                    .append(domain)
+                    .append(beanProperties)
+                    .append(attrKeys)
+                    .append(attrName)
+                    .append(": ")
+                    .append(value)
+                    .toString());
         }
     }
 
@@ -629,7 +642,7 @@ class JmxScraper {
      */
     public static void main(String[] args) throws Exception {
         ObjectNameAttributeFilter objectNameAttributeFilter = ObjectNameAttributeFilter.create(new HashMap<>());
-        List<ObjectName> objectNames = new LinkedList<>();
+        List<ObjectName> objectNames = new ArrayList<>();
         objectNames.add(null);
         if (args.length >= 3) {
             new JmxScraper(
@@ -640,9 +653,9 @@ class JmxScraper {
                                     ? new SslProperties(true)
                                     : new SslProperties(false),
                             objectNames,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             objectNameAttributeFilter,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -653,9 +666,9 @@ class JmxScraper {
                             "",
                             new SslProperties(false),
                             objectNames,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             objectNameAttributeFilter,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();
@@ -666,9 +679,9 @@ class JmxScraper {
                             "",
                             new SslProperties(false),
                             objectNames,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             objectNameAttributeFilter,
-                            new LinkedList<>(),
+                            new ArrayList<>(),
                             new StdoutWriter(),
                             new JmxMBeanPropertyCache())
                     .doScrape();

@@ -151,26 +151,23 @@ public class MatchedRule {
 
     @Override
     public String toString() {
-        return "MatchedRule{"
-                + "name='"
-                + name
-                + '\''
-                + ", matchName='"
-                + matchName
-                + '\''
-                + ", type='"
-                + type
-                + '\''
-                + ", help='"
-                + help
-                + '\''
-                + ", labels="
-                + labels
-                + ", value="
-                + value
-                + ", valueFactor="
-                + valueFactor
-                + '}';
+        return new StringBuilder(128)
+                .append("MatchedRule{name='")
+                .append(name)
+                .append("', matchName='")
+                .append(matchName)
+                .append("', type='")
+                .append(type)
+                .append("', help='")
+                .append(help)
+                .append("', labels=")
+                .append(labels)
+                .append(", value=")
+                .append(value)
+                .append(", valueFactor=")
+                .append(valueFactor)
+                .append('}')
+                .toString();
     }
 
     @Override
