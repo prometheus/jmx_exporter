@@ -53,12 +53,17 @@ public class Logger {
     private final java.util.logging.Logger LOGGER;
 
     /**
+     * Cached logger name for developer debug output.
+     */
+    private final String loggerName;
+
+    /**
      * Flag indicating if developer debug mode is enabled.
      *
      * <p>When enabled, logs are also written to stdout in addition to the normal logging
-     * destination.
+     * destination. Evaluated once at class load time.
      */
-    private final boolean JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG =
+    private static volatile boolean DEVELOPER_DEBUG =
             "true".equals(System.getenv("JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG"))
                     || "true".equals(System.getProperty("jmx.prometheus.exporter.developer.debug"));
 
@@ -74,6 +79,7 @@ public class Logger {
      */
     Logger(Class<?> clazz) {
         LOGGER = java.util.logging.Logger.getLogger(clazz.getName());
+        loggerName = LOGGER.getName();
 
         // Override the default formatter for the logger if it is SimpleFormatter
         for (Handler handler : LOGGER.getHandlers()) {
@@ -90,7 +96,7 @@ public class Logger {
      * @return {@code true} if TRACE logging is enabled, {@code false} otherwise
      */
     public boolean isTraceEnabled() {
-        return isLoggable(Level.TRACE);
+        return LOGGER.isLoggable(Level.TRACE.julLevel());
     }
 
     /**
@@ -99,7 +105,7 @@ public class Logger {
      * @return {@code true} if INFO logging is enabled, {@code false} otherwise
      */
     public boolean isInfoEnabled() {
-        return isLoggable(Level.INFO);
+        return LOGGER.isLoggable(Level.INFO.julLevel());
     }
 
     /**
@@ -108,7 +114,7 @@ public class Logger {
      * @return {@code true} if WARN logging is enabled, {@code false} otherwise
      */
     public boolean isWarnEnabled() {
-        return isLoggable(Level.WARN);
+        return LOGGER.isLoggable(Level.WARN.julLevel());
     }
 
     /**
@@ -117,7 +123,7 @@ public class Logger {
      * @return {@code true} if ERROR logging is enabled, {@code false} otherwise
      */
     public boolean isErrorEnabled() {
-        return isLoggable(Level.ERROR);
+        return LOGGER.isLoggable(Level.ERROR.julLevel());
     }
 
     /**
@@ -227,17 +233,6 @@ public class Logger {
     }
 
     /**
-     * Returns whether the specified level is loggable.
-     *
-     * @param level the level to check
-     * @return {@code true} if the level is loggable, {@code false} otherwise
-     */
-    private boolean isLoggable(Level level) {
-        java.util.logging.Level julLevel = decode(level);
-        return julLevel != null && LOGGER.isLoggable(julLevel);
-    }
-
-    /**
      * Logs a pre-formatted message at the given level.
      *
      * <p>Skips {@link String#format} since the message is already a plain string.
@@ -246,9 +241,9 @@ public class Logger {
      * @param message the pre-formatted message
      */
     private void log(Level level, String message) {
-        java.util.logging.Level julLevel = decode(level);
-        boolean loggable = julLevel != null && LOGGER.isLoggable(julLevel);
-        boolean debug = JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG;
+        java.util.logging.Level julLevel = level.julLevel();
+        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean debug = DEVELOPER_DEBUG;
         if (loggable) {
             LOGGER.log(julLevel, message);
         }
@@ -265,9 +260,9 @@ public class Logger {
      * @param objects the objects to format
      */
     private void log(Level level, String format, Object... objects) {
-        java.util.logging.Level julLevel = decode(level);
-        boolean loggable = julLevel != null && LOGGER.isLoggable(julLevel);
-        boolean debug = JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG;
+        java.util.logging.Level julLevel = level.julLevel();
+        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean debug = DEVELOPER_DEBUG;
         if (loggable || debug) {
             String message = format(format, objects);
             if (loggable) {
@@ -285,28 +280,6 @@ public class Logger {
     private void developerDebug(Level level, String message) {
         String timestamp = DATE_TIME_FORMATTER.format(LocalDateTime.now());
         String threadName = Thread.currentThread().getName();
-        String loggerName = LOGGER.getName();
         System.out.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
-    }
-
-    /**
-     * Decodes a {@link Level} to a {@link java.util.logging.Level}.
-     *
-     * @param level the level to decode
-     * @return the corresponding {@link java.util.logging.Level}, or {@code null} if unknown
-     */
-    private static java.util.logging.Level decode(Level level) {
-        switch (level) {
-            case TRACE:
-                return java.util.logging.Level.FINEST;
-            case INFO:
-                return java.util.logging.Level.INFO;
-            case WARN:
-                return java.util.logging.Level.WARNING;
-            case ERROR:
-                return java.util.logging.Level.SEVERE;
-            default:
-                return null;
-        }
     }
 }

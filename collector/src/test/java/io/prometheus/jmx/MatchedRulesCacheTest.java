@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,7 @@ public class MatchedRulesCacheTest {
     private MatchedRulesCache.CacheKey createCacheKey(String domain) {
         LinkedHashMap<String, String> props = new LinkedHashMap<>();
         props.put("type", "test");
-        LinkedList<String> keys = new LinkedList<>();
+        ArrayList<String> keys = new ArrayList<>();
         keys.add("key1");
         return new MatchedRulesCache.CacheKey(domain, props, keys, "attr");
     }
@@ -75,7 +74,7 @@ public class MatchedRulesCacheTest {
         void cacheKeyEqualsWithDifferentAttrName() {
             LinkedHashMap<String, String> props = new LinkedHashMap<>();
             props.put("type", "test");
-            LinkedList<String> keys = new LinkedList<>();
+            ArrayList<String> keys = new ArrayList<>();
             keys.add("key1");
 
             MatchedRulesCache.CacheKey key1 = new MatchedRulesCache.CacheKey("domain", props, keys, "attr1");
@@ -125,7 +124,7 @@ public class MatchedRulesCacheTest {
         @Test
         void cacheKeyWithEmptyBeanProperties() {
             LinkedHashMap<String, String> props = new LinkedHashMap<>();
-            LinkedList<String> keys = new LinkedList<>();
+            ArrayList<String> keys = new ArrayList<>();
             keys.add("key1");
 
             MatchedRulesCache.CacheKey key = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
@@ -137,7 +136,7 @@ public class MatchedRulesCacheTest {
         void cacheKeyWithEmptyAttrKeys() {
             LinkedHashMap<String, String> props = new LinkedHashMap<>();
             props.put("type", "test");
-            LinkedList<String> keys = new LinkedList<>();
+            ArrayList<String> keys = new ArrayList<>();
 
             MatchedRulesCache.CacheKey key = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
 

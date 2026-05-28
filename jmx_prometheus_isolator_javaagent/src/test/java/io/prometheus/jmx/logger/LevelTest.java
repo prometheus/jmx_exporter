@@ -36,4 +36,12 @@ public class LevelTest {
         assertThat(Level.valueOf("WARN")).isEqualTo(Level.WARN);
         assertThat(Level.valueOf("ERROR")).isEqualTo(Level.ERROR);
     }
+
+    @Test
+    public void testJulLevelMapping() {
+        assertThat(Level.TRACE.julLevel()).isEqualTo(java.util.logging.Level.FINEST);
+        assertThat(Level.INFO.julLevel()).isEqualTo(java.util.logging.Level.INFO);
+        assertThat(Level.WARN.julLevel()).isEqualTo(java.util.logging.Level.WARNING);
+        assertThat(Level.ERROR.julLevel()).isEqualTo(java.util.logging.Level.SEVERE);
+    }
 }

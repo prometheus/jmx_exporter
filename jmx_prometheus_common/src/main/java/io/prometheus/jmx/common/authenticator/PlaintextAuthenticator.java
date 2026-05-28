@@ -28,12 +28,27 @@ import java.security.MessageDigest;
  * consider using {@link MessageDigestAuthenticator} or {@link PBKDF2Authenticator} for more
  * secure password handling.
  *
- * <p>Thread-safety: This class is thread-safe. Password comparison is constant-time.
+ * <p>This authenticator caches both valid and invalid credentials in a single cache to improve
+ * authentication performance, using a maximum credential size of 5 KiB and an approximately
+ * 500 KiB maximum cache weight.
+ *
+ * <p>Thread-safety: This class is thread-safe. Credential cache operations are thread-safe,
+ * backed by Caffeine. Password hash comparison is constant-time.
  *
  * @see MessageDigestAuthenticator
  * @see PBKDF2Authenticator
  */
 public class PlaintextAuthenticator extends BasicAuthenticator {
+
+    /**
+     * Maximum size for a single cached credential value in bytes (5 KiB).
+     */
+    private static final int MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES = CredentialsCache.DEFAULT_MAX_VALUE_SIZE_BYTES;
+
+    /**
+     * Maximum number of entries per credential cache.
+     */
+    private static final int MAXIMUM_CREDENTIAL_CACHE_ENTRIES = CredentialsCache.DEFAULT_MAX_ENTRIES;
 
     /**
      * The expected username for authentication, encoded as UTF-8 bytes for constant-time comparison.
@@ -44,6 +59,11 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
      * The expected password for authentication, encoded as UTF-8 bytes for constant-time comparison.
      */
     private final byte[] passwordBytes;
+
+    /**
+     * Single cache for valid and invalid credentials.
+     */
+    private final CredentialsCache credentialsCache;
 
     /**
      * Constructs a plaintext authenticator with the specified credentials.
@@ -62,13 +82,18 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
 
         this.usernameBytes = username.getBytes(StandardCharsets.UTF_8);
         this.passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        this.credentialsCache =
+                new CredentialsCache(MAXIMUM_CREDENTIAL_VALUE_SIZE_BYTES, MAXIMUM_CREDENTIAL_CACHE_ENTRIES);
     }
 
     /**
-     * Validates the presented credentials against the configured plaintext username and password.
+     * Validates the presented credentials using a single valid/invalid cache and constant-time
+     * comparison.
      *
-     * <p>Both the username and password are compared using constant-time equality checks via
+     * <p>The cache is checked first. If found, the cached result is returned. If not found,
+     * both the username and password are compared using constant-time equality checks via
      * {@link MessageDigest#isEqual(byte[], byte[])} to prevent timing side-channel attacks.
+     * The result is then stored in the cache.
      *
      * @param username the presented username, may be {@code null}
      * @param password the presented password, may be {@code null}
@@ -81,8 +106,22 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
             return false;
         }
 
+        Credentials credentials = new Credentials(username, password);
+        Boolean cached = credentialsCache.get(credentials);
+        if (cached != null) {
+            return cached;
+        }
+
         boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8));
         boolean passwordMatches = MessageDigest.isEqual(this.passwordBytes, password.getBytes(StandardCharsets.UTF_8));
-        return usernameMatches & passwordMatches;
+        boolean isValid = usernameMatches & passwordMatches;
+
+        if (isValid) {
+            credentialsCache.add(credentials);
+        } else {
+            credentialsCache.addInvalid(credentials);
+        }
+
+        return isValid;
     }
 }

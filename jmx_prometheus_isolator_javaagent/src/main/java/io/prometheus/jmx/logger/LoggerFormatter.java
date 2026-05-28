@@ -43,6 +43,22 @@ class LoggerFormatter extends Formatter {
         String loggerName = record.getLoggerName();
         String message = formatMessage(record);
 
-        return String.format("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
+        return new StringBuilder(timestamp.length()
+                        + threadName.length()
+                        + level.length()
+                        + (loggerName != null ? loggerName.length() : 0)
+                        + message.length()
+                        + 10)
+                .append(timestamp)
+                .append(" | ")
+                .append(threadName)
+                .append(" | ")
+                .append(level)
+                .append(" | ")
+                .append(loggerName)
+                .append(" | ")
+                .append(message)
+                .append(System.lineSeparator())
+                .toString();
     }
 }

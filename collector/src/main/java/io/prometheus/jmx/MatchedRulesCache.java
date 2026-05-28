@@ -119,8 +119,9 @@ public class MatchedRulesCache {
     public static class CacheKey {
         private final String domain;
         private final LinkedHashMap<String, String> beanProperties;
-        private final LinkedList<String> attrKeys;
+        private final List<String> attrKeys;
         private final String attrName;
+        private final int cachedHashCode;
 
         /**
          * Constructor
@@ -131,14 +132,12 @@ public class MatchedRulesCache {
          * @param attrName the attribute name
          */
         public CacheKey(
-                String domain,
-                LinkedHashMap<String, String> beanProperties,
-                LinkedList<String> attrKeys,
-                String attrName) {
+                String domain, LinkedHashMap<String, String> beanProperties, List<String> attrKeys, String attrName) {
             this.domain = domain;
             this.beanProperties = beanProperties;
             this.attrKeys = attrKeys;
             this.attrName = attrName;
+            this.cachedHashCode = Objects.hash(domain, beanProperties, attrKeys, attrName);
         }
 
         @Override
@@ -154,7 +153,7 @@ public class MatchedRulesCache {
 
         @Override
         public int hashCode() {
-            return Objects.hash(domain, beanProperties, attrKeys, attrName);
+            return cachedHashCode;
         }
     }
 }

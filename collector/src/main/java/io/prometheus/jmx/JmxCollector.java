@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -729,9 +728,17 @@ public class JmxCollector implements MultiCollector {
         // [] and () are special in regexes, so switch to <>.
         private String angleBrackets(String s) {
             if (s.length() < 2) {
-                return "<" + s + ">";
+                return new StringBuilder(s.length() + 2)
+                        .append('<')
+                        .append(s)
+                        .append('>')
+                        .toString();
             }
-            return "<" + s.substring(1, s.length() - 1) + ">";
+            return new StringBuilder(s.length())
+                    .append('<')
+                    .append(s, 1, s.length() - 1)
+                    .append('>')
+                    .toString();
         }
 
         // Add the matched rule to the cached rules and tag it as not stale
@@ -746,7 +753,7 @@ public class JmxCollector implements MultiCollector {
                 String matchName,
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String help,
                 Double value,
@@ -801,7 +808,7 @@ public class JmxCollector implements MultiCollector {
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
                 Map<String, String> attributesAsLabelsWithValues,
-                LinkedList<String> attrKeys,
+                List<String> attrKeys,
                 String attrName,
                 String attrType,
                 String attrDescription,
@@ -825,19 +832,40 @@ public class JmxCollector implements MultiCollector {
             String attrKeysStr = attrKeys.toString();
 
             if (matchedRule.isUnmatched()) {
-                String beanName = domain + angleBrackets(beanPropertiesStr) + angleBrackets(attrKeysStr);
+                String beanPropertiesBrackets = angleBrackets(beanPropertiesStr);
+                String attrKeysBrackets = angleBrackets(attrKeysStr);
+                String beanName = new StringBuilder(
+                                domain.length() + beanPropertiesBrackets.length() + attrKeysBrackets.length())
+                        .append(domain)
+                        .append(beanPropertiesBrackets)
+                        .append(attrKeysBrackets)
+                        .toString();
 
                 // Build the HELP string from the bean metadata.
-                String help = domain
-                        + ":name="
-                        + beanProperties.get("name")
-                        + ",type="
-                        + beanProperties.get("type")
-                        + ",attribute="
-                        + attrName;
+                String beanNameProp = beanProperties.get("name");
+                String beanTypeProp = beanProperties.get("type");
+                String help = new StringBuilder(domain.length()
+                                + 6
+                                + (beanNameProp != null ? beanNameProp.length() : 4)
+                                + 6
+                                + (beanTypeProp != null ? beanTypeProp.length() : 4)
+                                + 11
+                                + attrName.length())
+                        .append(domain)
+                        .append(":name=")
+                        .append(beanNameProp)
+                        .append(",type=")
+                        .append(beanTypeProp)
+                        .append(",attribute=")
+                        .append(attrName)
+                        .toString();
                 // Add the attrDescription to the HELP if it exists and is useful.
                 if (attrDescription != null && !attrDescription.equals(attrName)) {
-                    help = attrDescription + " " + help;
+                    help = new StringBuilder(attrDescription.length() + 1 + help.length())
+                            .append(attrDescription)
+                            .append(' ')
+                            .append(help)
+                            .toString();
                 }
 
                 for (Rule rule : config.rules) {
@@ -861,7 +889,12 @@ public class JmxCollector implements MultiCollector {
                         attributeName = attrName;
                     }
 
-                    String matchName = beanName + attributeName + ": " + matchBeanValue;
+                    String matchName = new StringBuilder(beanName.length() + attributeName.length() + 2 + 16)
+                            .append(beanName)
+                            .append(attributeName)
+                            .append(": ")
+                            .append(matchBeanValue)
+                            .toString();
 
                     Matcher matcher = null;
                     if (rule.pattern != null) {
