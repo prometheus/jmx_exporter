@@ -4,4 +4,11 @@
     <ignoreVersions>
         <ignoreVersion type="regex">.*[-_\.](alpha|Alpha|ALPHA|b|beta|Dev|Beta|BETA|rc|RC|M|EA|SNAPSHOT)[-_\.]?[0-9]*</ignoreVersion>
     </ignoreVersions>
+    <rules>
+        <rule groupId="com.github.ben-manes.caffeine" artifactId="caffeine">
+            <ignoreVersions>
+                <ignoreVersion type="regex">3\..*</ignoreVersion>
+            </ignoreVersions>
+        </rule>
+    </rules>
 </ruleset>
