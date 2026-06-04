@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.NetworkFactory;
 import io.prometheus.jmx.test.support.PrometheusDockerImages;
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +28,9 @@ import org.testcontainers.containers.Network;
  * Composite test environment combining a {@link PrometheusTestEnvironment} and a
  * {@link JmxExporterTestEnvironment} for OpenTelemetry integration testing.
  *
- * <p>The environment initializes both sub-environments on a shared Docker network and
- * tears them down on {@link #close()}.
+ * <p>The environment initializes both sub-environments on a shared Docker network passed
+ * via {@link #initialize(Network)}. The caller is responsible for network creation and
+ * teardown; this class only manages the sub-environment lifecycles.
  */
 public class OpenTelemetryTestEnvironment implements AutoCloseable {
 
@@ -42,7 +42,6 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
     private String prometheusReadyUsername;
     private String prometheusReadyPassword;
     private Network network;
-    private boolean ownsNetwork;
 
     /**
      * Creates an OpenTelemetry test environment combining a Prometheus and JMX exporter environment.
@@ -117,15 +116,15 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Initializes this environment by creating a new Docker network, starting the Prometheus
+     * Initializes this environment on the specified Docker network, starting the Prometheus
      * and JMX exporter sub-environments, and waiting for Prometheus to become ready.
      *
+     * @param network the shared Docker network; must not be {@code null}
      * @throws Throwable if initialization of either sub-environment fails; suppressed
      *                   exceptions are attached for partial cleanup failures
      */
-    public void initialize() throws Throwable {
-        this.ownsNetwork = true;
-        this.network = NetworkFactory.createNetwork();
+    public void initialize(Network network) throws Throwable {
+        this.network = Objects.requireNonNull(network);
 
         try {
             prometheusTestEnvironment.initialize(network);
@@ -150,12 +149,6 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
                 failure.addSuppressed(closeFailure);
             }
 
-            try {
-                closeNetworkIfOwned();
-            } catch (Throwable closeFailure) {
-                failure.addSuppressed(closeFailure);
-            }
-
             throw failure;
         }
     }
@@ -173,18 +166,15 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
     public void close() {
         jmxExporterTestEnvironment.close();
         prometheusTestEnvironment.close();
-        closeNetworkIfOwned();
     }
 
-    private void closeNetworkIfOwned() {
-        if (ownsNetwork && network != null) {
-            try {
-                ContainerSupport.waitForShutdown(network);
-            } finally {
-                network = null;
-                ownsNetwork = false;
-            }
-        }
+    /**
+     * Returns the Docker network shared by the sub-environments.
+     *
+     * @return the Docker network; may be {@code null} if not yet initialized
+     */
+    public Network getNetwork() {
+        return network;
     }
 
     /**

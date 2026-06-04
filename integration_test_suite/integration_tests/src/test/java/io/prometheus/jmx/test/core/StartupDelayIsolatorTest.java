@@ -24,6 +24,7 @@ import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
+import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -46,12 +47,15 @@ import org.paramixel.api.action.Scope;
 import org.paramixel.api.action.Sequence;
 import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
+import org.testcontainers.containers.Network;
 
 public class StartupDelayIsolatorTest {
 
     private static final int JAVA_AGENT_COUNT = 2;
 
     private final IsolatorExporterTestEnvironment environment;
+
+    private Network network;
 
     public static void main(String[] args) throws Throwable {
         Runner.defaultRunner().runAndExit(factory());
@@ -110,7 +114,8 @@ public class StartupDelayIsolatorTest {
     }
 
     public void setUp() throws Throwable {
-        environment.initialize();
+        network = NetworkSupport.create();
+        environment.initialize(network);
     }
 
     public void testHealthy() throws Throwable {
@@ -171,6 +176,7 @@ public class StartupDelayIsolatorTest {
 
     public void tearDown() {
         environment.close();
+        NetworkSupport.close(network);
     }
 
     private HttpResponse sendRequestWithRetry(String url) throws Throwable {

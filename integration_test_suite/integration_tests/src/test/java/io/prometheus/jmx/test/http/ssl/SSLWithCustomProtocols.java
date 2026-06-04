@@ -27,6 +27,7 @@ import static org.paramixel.api.Context.withInstance;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.filter.PKCS12KeyStoreExporterTestEnvironmentFilter;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
@@ -58,10 +59,13 @@ import org.paramixel.api.action.Instance;
 import org.paramixel.api.action.Scope;
 import org.paramixel.api.action.Sequence;
 import org.paramixel.api.action.Step;
+import org.testcontainers.containers.Network;
 
 public class SSLWithCustomProtocols {
 
     private final JmxExporterTestEnvironment environment;
+
+    private Network network;
 
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
 
@@ -151,11 +155,13 @@ public class SSLWithCustomProtocols {
 
     public void setUp() throws Throwable {
         environment.setBaseUrl("https://localhost");
-        environment.initialize();
+        network = NetworkSupport.create();
+        environment.initialize(network);
     }
 
     public void tearDown() {
         environment.close();
+        NetworkSupport.close(network);
     }
 
     public void testHealthy() throws Exception {

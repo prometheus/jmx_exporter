@@ -24,6 +24,7 @@ import static org.paramixel.api.Context.withInstance;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -41,10 +42,12 @@ import org.paramixel.api.action.Instance;
 import org.paramixel.api.action.Scope;
 import org.paramixel.api.action.Sequence;
 import org.paramixel.api.action.Step;
+import org.testcontainers.containers.Network;
 
 public class MinimalRMISSLTest {
 
     private final JmxExporterTestEnvironment environment;
+    private Network network;
 
     private MinimalRMISSLTest(JmxExporterTestEnvironment environment) {
         this.environment = environment;
@@ -103,7 +106,8 @@ public class MinimalRMISSLTest {
     }
 
     public void setUp() throws Throwable {
-        environment.initialize();
+        network = NetworkSupport.create();
+        environment.initialize(network);
     }
 
     public void testHealthy() throws IOException {
@@ -141,6 +145,7 @@ public class MinimalRMISSLTest {
 
     public void tearDown() throws Throwable {
         environment.close();
+        NetworkSupport.close(network);
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {

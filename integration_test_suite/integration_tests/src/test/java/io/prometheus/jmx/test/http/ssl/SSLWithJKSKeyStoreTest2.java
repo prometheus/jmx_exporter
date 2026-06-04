@@ -25,6 +25,7 @@ import static org.paramixel.api.Context.withInstance;
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
+import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -47,10 +48,13 @@ import org.paramixel.api.action.Instance;
 import org.paramixel.api.action.Scope;
 import org.paramixel.api.action.Sequence;
 import org.paramixel.api.action.Step;
+import org.testcontainers.containers.Network;
 
 public class SSLWithJKSKeyStoreTest2 {
 
     private final JmxExporterTestEnvironment environment;
+
+    private Network network;
 
     public static void main(String[] args) throws Throwable {
         Runner.defaultRunner().runAndExit(factory());
@@ -113,11 +117,13 @@ public class SSLWithJKSKeyStoreTest2 {
 
     public void setUp() throws Throwable {
         environment.setBaseUrl("https://localhost");
-        environment.initialize();
+        network = NetworkSupport.create();
+        environment.initialize(network);
     }
 
     public void tearDown() {
         environment.close();
+        NetworkSupport.close(network);
     }
 
     public void testHealthy() throws IOException {
