@@ -85,6 +85,16 @@ public class IntegerInRange implements Function<Integer, Integer> {
         return value;
     }
 
+    /**
+     * Creates an IntegerInRange validator with the specified range and exception supplier.
+     *
+     * @param minimum the minimum allowed value (inclusive)
+     * @param maximum the maximum allowed value (inclusive)
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @return a new IntegerInRange instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static IntegerInRange of(int minimum, int maximum, Supplier<? extends RuntimeException> supplier) {
         return new IntegerInRange(minimum, maximum, supplier);
     }

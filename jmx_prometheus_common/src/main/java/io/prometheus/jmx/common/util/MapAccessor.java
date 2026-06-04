@@ -157,6 +157,10 @@ public class MapAccessor {
     }
 
     /**
+     * Gets the value at the specified path.
+     *
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @return an {@link Optional} containing the value, or an empty {@link Optional}
      * @deprecated use {@link #getPath(String)} instead
      */
     @Deprecated
@@ -185,6 +189,12 @@ public class MapAccessor {
     }
 
     /**
+     * Gets the value at the specified path and maps it to the requested type.
+     *
+     * @param <T> the target type
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @param type the target type to cast to, must not be {@code null}
+     * @return an {@link Optional} containing the typed value, or an empty {@link Optional}
      * @deprecated use {@link #getPath(String, Class)} instead
      */
     @Deprecated
@@ -213,6 +223,12 @@ public class MapAccessor {
     }
 
     /**
+     * Gets the value at the specified path and maps it with the provided function.
+     *
+     * @param <T> the mapped type
+     * @param path the path to get, must start with {@code /}, must not be {@code null} or blank
+     * @param mapper mapping function to convert the value, must not be {@code null}
+     * @return an {@link Optional} containing the mapped value, or an empty {@link Optional}
      * @deprecated use {@link #getPath(String, Function)} instead
      */
     @Deprecated

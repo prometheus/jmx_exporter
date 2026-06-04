@@ -85,6 +85,14 @@ public class ValidMap implements Function<Map<String, String>, Map<String, Strin
         return map;
     }
 
+    /**
+     * Creates a ValidMap validator with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @return a new ValidMap instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ValidMap of(Supplier<? extends RuntimeException> supplier) {
         return new ValidMap(supplier);
     }

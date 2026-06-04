@@ -75,6 +75,14 @@ public class ToInteger implements Function<Object, Integer> {
         }
     }
 
+    /**
+     * Creates a ToInteger function with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @return a new ToInteger instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ToInteger of(Supplier<? extends RuntimeException> supplier) {
         return new ToInteger(supplier);
     }

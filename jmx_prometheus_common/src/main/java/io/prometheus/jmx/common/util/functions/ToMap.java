@@ -81,6 +81,14 @@ public class ToMap implements Function<Object, Map<String, String>> {
         }
     }
 
+    /**
+     * Creates a ToMap function with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @return a new ToMap instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ToMap of(Supplier<? extends RuntimeException> supplier) {
         return new ToMap(supplier);
     }

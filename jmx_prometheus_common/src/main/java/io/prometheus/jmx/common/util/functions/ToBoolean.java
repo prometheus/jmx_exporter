@@ -95,6 +95,14 @@ public class ToBoolean implements Function<Object, Boolean> {
         }
     }
 
+    /**
+     * Creates a ToBoolean function with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @return a new ToBoolean instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ToBoolean of(Supplier<? extends RuntimeException> supplier) {
         return new ToBoolean(supplier);
     }
