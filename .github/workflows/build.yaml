@@ -21,6 +21,19 @@ jobs:
       - name: Validate formatting (Spotless)
         run: ./mvnw --batch-mode spotless:check
       - name: Build
-        run: |
-          ./run-quick-test.sh
-          ./mvnw --batch-mode javadoc:jar
+        run: ./run-quick-test.sh
+
+  documentation:
+    name: Build Documentation
+    runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
+      - name: Build documentation
+        run: ./scripts/build-documentation.sh
