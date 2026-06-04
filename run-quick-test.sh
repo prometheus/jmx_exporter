@@ -63,7 +63,18 @@ fi
 (
   export JAVA_DOCKER_IMAGES="amazoncorretto:24"
   export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.12.0"
-  docker pull "$JAVA_DOCKER_IMAGES"
-  docker pull "$PROMETHEUS_DOCKER_IMAGES"
+  echo "Pulling Docker image ${JAVA_DOCKER_IMAGES} ..."
+  docker pull "${JAVA_DOCKER_IMAGES}" > /dev/null 2>&1 || {
+    echo "Failed to pull Docker image ${JAVA_DOCKER_IMAGES}"
+    exit 1
+  }
+  echo "Successfully pulled Docker image ${JAVA_DOCKER_IMAGES}"
+
+  echo "Pulling Docker image ${PROMETHEUS_DOCKER_IMAGES} ..."
+  docker pull "${PROMETHEUS_DOCKER_IMAGES}" > /dev/null 2>&1 || {
+    echo "Failed to pull Docker image ${PROMETHEUS_DOCKER_IMAGES}"
+    exit 1
+  }
+  echo "Successfully pulled Docker image ${PROMETHEUS_DOCKER_IMAGES}"
   ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}" "${JAVA_FLAGS[@]}"
 ) 2>&1 | tee quick-test.log

@@ -26,16 +26,6 @@ cd "${SCRIPT_DIRECTORY}" || exit
 
 set -e
 
-function check_exit_code() {
-  if [ "$?" != "0" ];
-  then
-    echo "Failed to execute ${1}";
-    exit 1
-  fi
-}
-
 ./pull-smoke-test-java-docker-images.sh
-check_exit_code "./pull-smoke-test-java-docker-images.sh"
 
 ./pull-smoke-test-prometheus-docker-images.sh
-check_exit_code "./pull-smoke-test-prometheus-docker-images.sh"
