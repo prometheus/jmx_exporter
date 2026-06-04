@@ -79,6 +79,14 @@ public class IsURL implements Function<String, String> {
         }
     }
 
+    /**
+     * Creates an IsURL validator with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @return a new IsURL instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static IsURL of(Supplier<? extends RuntimeException> supplier) {
         return new IsURL(supplier);
     }

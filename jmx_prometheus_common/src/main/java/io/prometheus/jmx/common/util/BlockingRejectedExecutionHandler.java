@@ -28,6 +28,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
 
     /**
+     * Creates a BlockingRejectedExecutionHandler.
+     */
+    public BlockingRejectedExecutionHandler() {
+        // Intentionally empty
+    }
+
+    /**
      * Blocks the calling thread by attempting to put the rejected task into the executor's queue,
      * waiting until space becomes available.
      *

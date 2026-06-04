@@ -70,6 +70,14 @@ public class StringIsNotBlank implements Function<String, String> {
         return value;
     }
 
+    /**
+     * Creates a StringIsNotBlank validator with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when validation fails, must not be
+     *     {@code null}
+     * @return a new StringIsNotBlank instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static StringIsNotBlank of(Supplier<? extends RuntimeException> supplier) {
         return new StringIsNotBlank(supplier);
     }

@@ -78,6 +78,14 @@ public class ToString implements Function<Object, String> {
         }
     }
 
+    /**
+     * Creates a ToString function with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @return a new ToString instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ToString of(Supplier<? extends RuntimeException> supplier) {
         return new ToString(supplier);
     }

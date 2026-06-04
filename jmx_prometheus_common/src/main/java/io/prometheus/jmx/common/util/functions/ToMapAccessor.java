@@ -75,6 +75,14 @@ public class ToMapAccessor implements Function<Object, MapAccessor> {
         }
     }
 
+    /**
+     * Creates a ToMapAccessor function with the specified exception supplier.
+     *
+     * @param supplier supplier for the exception to throw when conversion fails, must not be
+     *     {@code null}
+     * @return a new ToMapAccessor instance
+     * @throws NullPointerException if {@code supplier} is {@code null}
+     */
     public static ToMapAccessor of(Supplier<? extends RuntimeException> supplier) {
         return new ToMapAccessor(supplier);
     }
