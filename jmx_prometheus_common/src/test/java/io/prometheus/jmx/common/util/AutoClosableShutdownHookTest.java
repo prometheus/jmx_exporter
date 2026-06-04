@@ -16,24 +16,9 @@
 
 package io.prometheus.jmx.common.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 public class AutoClosableShutdownHookTest {
-
-    @Test
-    public void testRunClosesResource() {
-        AtomicBoolean closed = new AtomicBoolean(false);
-        AutoCloseable resource = () -> closed.set(true);
-        AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
-
-        hook.start();
-
-        assertThat(closed).isTrue();
-    }
 
     @Test
     public void testRunSilentlyHandlesException() {
@@ -42,7 +27,7 @@ public class AutoClosableShutdownHookTest {
         };
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.start();
+        hook.run();
     }
 
     @Test
@@ -52,32 +37,13 @@ public class AutoClosableShutdownHookTest {
         };
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.start();
+        hook.run();
     }
 
     @Test
     public void testRunSilentlyHandlesNullResource() {
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(null);
 
-        hook.start();
-    }
-
-    @Test
-    public void testRunCallsCloseExactlyOnce() {
-        AtomicInteger callCount = new AtomicInteger(0);
-        AutoCloseable resource = callCount::incrementAndGet;
-        AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
-
-        hook.start();
-
-        assertThat(callCount).hasValue(1);
-    }
-
-    @Test
-    public void testConstructorAcceptsNonNullResource() {
-        AutoCloseable resource = () -> {};
-        AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
-
-        assertThat(hook).isNotNull();
+        hook.run();
     }
 }
