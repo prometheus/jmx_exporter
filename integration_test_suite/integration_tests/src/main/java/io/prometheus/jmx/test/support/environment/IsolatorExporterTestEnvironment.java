@@ -17,7 +17,6 @@
 package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import io.prometheus.jmx.test.support.NetworkFactory;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -31,8 +30,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * Test environment for the isolator Java agent mode, managing a single Docker container
  * that runs the JMX exporter as a Java agent inside the application JVM.
  *
- * <p>The environment creates its own Docker network when initialized without one, and
- * tears down containers and networks on {@link #close()}.
+ * <p>The environment requires a Docker network to be passed via {@link #initialize(Network)}.
+ * The caller is responsible for network creation and teardown; this class only manages
+ * the container lifecycle.
  */
 public class IsolatorExporterTestEnvironment implements AutoCloseable {
 
@@ -45,7 +45,6 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
 
     private String baseUrl;
     private Network network;
-    private boolean ownsNetwork;
     private GenericContainer<?> javaAgentApplicationContainer;
 
     /**
@@ -101,26 +100,14 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Initializes this environment by creating a new Docker network and starting
-     * the application container. The network is owned and will be closed on {@link #close()}.
-     */
-    public void initialize() {
-        initialize(NetworkFactory.createNetwork(), true);
-    }
-
-    /**
-     * Initializes this environment using an existing Docker network. The network is
-     * <em>not</em> owned and will not be closed on {@link #close()}.
+     * Initializes this environment using the specified Docker network and starts
+     * the application container. The caller is responsible for creating and closing
+     * the network.
      *
-     * @param network the shared Docker network; must not be {@code null}
+     * @param network the Docker network for the application container; must not be {@code null}
      */
     public void initialize(Network network) {
-        initialize(network, false);
-    }
-
-    private void initialize(Network network, boolean ownsNetwork) {
         this.network = Objects.requireNonNull(network);
-        this.ownsNetwork = ownsNetwork;
 
         javaAgentApplicationContainer = createJavaAgentApplicationContainer();
         javaAgentApplicationContainer.start();
@@ -162,18 +149,15 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
         GenericContainer<?> container = javaAgentApplicationContainer;
         stopQuietly();
         ContainerSupport.waitForShutdown(container);
-        closeNetworkIfOwned();
     }
 
-    private void closeNetworkIfOwned() {
-        if (ownsNetwork && network != null) {
-            try {
-                ContainerSupport.waitForShutdown(network);
-            } finally {
-                network = null;
-                ownsNetwork = false;
-            }
-        }
+    /**
+     * Returns the Docker network used by the application container.
+     *
+     * @return the Docker network; may be {@code null} if not yet initialized
+     */
+    public Network getNetwork() {
+        return network;
     }
 
     private void stopQuietly() {

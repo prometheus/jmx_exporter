@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
+import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -36,10 +37,12 @@ import org.paramixel.api.action.Scope;
 import org.paramixel.api.action.Sequence;
 import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
+import org.testcontainers.containers.Network;
 
 public class EnvironmentVariablesConfigurationTest {
 
     private final OpenTelemetryTestEnvironment environment;
+    private Network network;
 
     private EnvironmentVariablesConfigurationTest(OpenTelemetryTestEnvironment environment) {
         this.environment = environment;
@@ -80,7 +83,8 @@ public class EnvironmentVariablesConfigurationTest {
     }
 
     public void setUp() throws Throwable {
-        environment.initialize();
+        network = NetworkSupport.create();
+        environment.initialize(network);
     }
 
     public void testPrometheusHasMetrics() throws Throwable {
@@ -104,6 +108,7 @@ public class EnvironmentVariablesConfigurationTest {
 
     public void tearDown() throws Throwable {
         environment.close();
+        NetworkSupport.close(network);
     }
 
     private Double getPrometheusMetric(String metricName) throws Throwable {

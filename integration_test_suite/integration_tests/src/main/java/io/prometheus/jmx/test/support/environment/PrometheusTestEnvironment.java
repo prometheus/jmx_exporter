@@ -19,7 +19,6 @@ package io.prometheus.jmx.test.support.environment;
 import static java.lang.String.format;
 
 import io.prometheus.jmx.common.util.ResourceSupport;
-import io.prometheus.jmx.test.support.NetworkFactory;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -38,8 +37,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * Test environment for a Prometheus server instance, managing a Docker container
  * that scrapes the JMX exporter endpoints for integration testing.
  *
- * <p>The environment creates its own Docker network when initialized without one and
- * tears down the container and network on {@link #close()}.
+ * <p>The environment requires a Docker network to be passed via {@link #initialize(Network)}.
+ * The caller is responsible for network creation and teardown; this class only manages
+ * the Prometheus container lifecycle.
  */
 public class PrometheusTestEnvironment implements AutoCloseable {
 
@@ -51,7 +51,6 @@ public class PrometheusTestEnvironment implements AutoCloseable {
 
     private String baseUrl;
     private Network network;
-    private boolean ownsNetwork;
     private GenericContainer<?> prometheusContainer;
 
     /**
@@ -107,26 +106,14 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     /**
-     * Initializes this environment by creating a new Docker network and starting
-     * the Prometheus container. The network is owned and will be closed on {@link #close()}.
-     */
-    public void initialize() {
-        initialize(NetworkFactory.createNetwork(), true);
-    }
-
-    /**
-     * Initializes this environment using an existing Docker network. The network is
-     * <em>not</em> owned and will not be closed on {@link #close()}.
+     * Initializes this environment using the specified Docker network and starts
+     * the Prometheus container. The caller is responsible for creating and closing
+     * the network.
      *
-     * @param network the shared Docker network; must not be {@code null}
+     * @param network the Docker network for the Prometheus container; must not be {@code null}
      */
     public void initialize(Network network) {
-        initialize(network, false);
-    }
-
-    private void initialize(Network network, boolean ownsNetwork) {
         this.network = Objects.requireNonNull(network);
-        this.ownsNetwork = ownsNetwork;
 
         prometheusContainer = createPrometheusContainer();
         prometheusContainer.start();
@@ -202,23 +189,20 @@ public class PrometheusTestEnvironment implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns the Docker network used by the Prometheus container.
+     *
+     * @return the Docker network; may be {@code null} if not yet initialized
+     */
+    public Network getNetwork() {
+        return network;
+    }
+
     @Override
     public void close() {
         GenericContainer<?> container = prometheusContainer;
         stopQuietly();
         ContainerSupport.waitForShutdown(container);
-        closeNetworkIfOwned();
-    }
-
-    private void closeNetworkIfOwned() {
-        if (ownsNetwork && network != null) {
-            try {
-                ContainerSupport.waitForShutdown(network);
-            } finally {
-                network = null;
-                ownsNetwork = false;
-            }
-        }
     }
 
     private void stopQuietly() {
