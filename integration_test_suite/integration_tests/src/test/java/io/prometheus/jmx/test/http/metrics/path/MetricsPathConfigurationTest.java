@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class MetricsPathConfigurationTest {
 
@@ -57,27 +60,52 @@ public class MetricsPathConfigurationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(MetricsPathConfigurationTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        MetricsPathConfigurationTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(MetricsPathConfigurationTest.class),
-                        env -> Instance.of(env.name(), () -> new MetricsPathConfigurationTest(env))
-                                .child(Lifecycle.<MetricsPathConfigurationTest>of("lifecycle")
-                                        .before("setUp()", MetricsPathConfigurationTest::setUp)
-                                        .child("testHealthy()", MetricsPathConfigurationTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                MetricsPathConfigurationTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                MetricsPathConfigurationTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                MetricsPathConfigurationTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                MetricsPathConfigurationTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", MetricsPathConfigurationTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new MetricsPathConfigurationTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        MetricsPathConfigurationTest.class,
+                                                        MetricsPathConfigurationTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                MetricsPathConfigurationTest.class,
+                                                                MetricsPathConfigurationTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                MetricsPathConfigurationTest.class,
+                                                                MetricsPathConfigurationTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                MetricsPathConfigurationTest.class,
+                                                                MetricsPathConfigurationTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                MetricsPathConfigurationTest.class,
+                                                                MetricsPathConfigurationTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                MetricsPathConfigurationTest.class,
+                                                                MetricsPathConfigurationTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        MetricsPathConfigurationTest.class,
+                                                        MetricsPathConfigurationTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

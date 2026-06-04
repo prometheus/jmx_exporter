@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http.authentication;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BasicAuthenticationPlaintextTest2 {
 
@@ -58,28 +61,54 @@ public class BasicAuthenticationPlaintextTest2 {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicAuthenticationPlaintextTest2.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicAuthenticationPlaintextTest2.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(BasicAuthenticationPlaintextTest2.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(), () -> new BasicAuthenticationPlaintextTest2(environment))
-                                .child(Lifecycle.<BasicAuthenticationPlaintextTest2>of("lifecycle")
-                                        .before("setUp()", BasicAuthenticationPlaintextTest2::setUp)
-                                        .child("testHealthy()", BasicAuthenticationPlaintextTest2::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                BasicAuthenticationPlaintextTest2::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BasicAuthenticationPlaintextTest2::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BasicAuthenticationPlaintextTest2::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BasicAuthenticationPlaintextTest2::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BasicAuthenticationPlaintextTest2::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        BasicAuthenticationPlaintextTest2.class,
+                                                        BasicAuthenticationPlaintextTest2::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BasicAuthenticationPlaintextTest2.class,
+                                                                BasicAuthenticationPlaintextTest2::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPlaintextTest2.class,
+                                                                BasicAuthenticationPlaintextTest2
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPlaintextTest2.class,
+                                                                BasicAuthenticationPlaintextTest2
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPlaintextTest2.class,
+                                                                BasicAuthenticationPlaintextTest2
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPlaintextTest2.class,
+                                                                BasicAuthenticationPlaintextTest2
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        BasicAuthenticationPlaintextTest2.class,
+                                                        BasicAuthenticationPlaintextTest2::tearDown)))))
+                .build();
     }
 
     private BasicAuthenticationPlaintextTest2(JmxExporterTestEnvironment environment) {

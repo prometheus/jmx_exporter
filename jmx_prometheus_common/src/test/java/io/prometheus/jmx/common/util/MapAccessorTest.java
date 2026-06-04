@@ -462,6 +462,48 @@ public class MapAccessorTest {
     }
 
     @Nested
+    class NullParameterTests {
+
+        @Test
+        public void getPathWithNullTypeThrows() {
+            assertThatExceptionOfType(IllegalArgumentException.class)
+                    .isThrownBy(() -> mapAccessor.getPath("/key", (Class<?>) null))
+                    .withMessageContaining("type");
+        }
+
+        @Test
+        public void containsPathWithNullTypeThrows() {
+            assertThatExceptionOfType(IllegalArgumentException.class)
+                    .isThrownBy(() -> mapAccessor.containsPath("/key", (Class<?>) null))
+                    .withMessageContaining("type");
+        }
+
+        @Test
+        public void getPathWithNullMapperThrows() {
+            assertThatExceptionOfType(IllegalArgumentException.class)
+                    .isThrownBy(() -> mapAccessor.getPath("/key", (java.util.function.Function<Object, Object>) null))
+                    .withMessageContaining("mapper");
+        }
+
+        @Test
+        public void ofNullMapThrowsIllegalArgumentException() {
+            assertThatExceptionOfType(IllegalArgumentException.class)
+                    .isThrownBy(() -> MapAccessor.of(null))
+                    .withMessageContaining("map is null");
+        }
+
+        @Test
+        public void constructorWithNullMapThrowsIllegalArgumentException() throws Exception {
+            java.lang.reflect.Constructor<MapAccessor> constructor =
+                    MapAccessor.class.getDeclaredConstructor(Map.class);
+            constructor.setAccessible(true);
+            assertThatExceptionOfType(java.lang.reflect.InvocationTargetException.class)
+                    .isThrownBy(() -> constructor.newInstance((Object) null))
+                    .withCauseInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
     class TypedAccessorTests {
 
         @Test

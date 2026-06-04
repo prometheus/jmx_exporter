@@ -36,4 +36,19 @@ public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
             }
         }
     }
+
+    @Test
+    public void testCachedCredentials() {
+        BasicAuthenticator plainTextAuthenticator = new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
+
+        assertThat(plainTextAuthenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+
+        assertThat(plainTextAuthenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+
+        assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
+
+        assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
+    }
 }

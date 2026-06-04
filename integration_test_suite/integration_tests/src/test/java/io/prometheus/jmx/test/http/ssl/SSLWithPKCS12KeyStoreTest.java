@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -41,10 +42,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLWithPKCS12KeyStoreTest {
 
@@ -55,31 +58,55 @@ public class SSLWithPKCS12KeyStoreTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(SSLWithPKCS12KeyStoreTest.class).stream()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
                 .collect(Collectors.toList());
 
-        return Parallel.of(SSLWithPKCS12KeyStoreTest.class.getName())
-                .each(
+        return Each.parallel(
+                        SSLWithPKCS12KeyStoreTest.class.getName(),
                         environments,
-                        environment -> Instance.of(environment.name(), () -> new SSLWithPKCS12KeyStoreTest(environment))
-                                .child(Lifecycle.<SSLWithPKCS12KeyStoreTest>of("lifecycle")
-                                        .before("setUp()", SSLWithPKCS12KeyStoreTest::setUp)
-                                        .child("testHealthy()", SSLWithPKCS12KeyStoreTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                SSLWithPKCS12KeyStoreTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                SSLWithPKCS12KeyStoreTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                SSLWithPKCS12KeyStoreTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                SSLWithPKCS12KeyStoreTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", SSLWithPKCS12KeyStoreTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new SSLWithPKCS12KeyStoreTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLWithPKCS12KeyStoreTest.class,
+                                                        SSLWithPKCS12KeyStoreTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLWithPKCS12KeyStoreTest.class,
+                                                                SSLWithPKCS12KeyStoreTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithPKCS12KeyStoreTest.class,
+                                                                SSLWithPKCS12KeyStoreTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithPKCS12KeyStoreTest.class,
+                                                                SSLWithPKCS12KeyStoreTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithPKCS12KeyStoreTest.class,
+                                                                SSLWithPKCS12KeyStoreTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLWithPKCS12KeyStoreTest.class,
+                                                                SSLWithPKCS12KeyStoreTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLWithPKCS12KeyStoreTest.class,
+                                                        SSLWithPKCS12KeyStoreTest::tearDown)))))
+                .build();
     }
 
     private SSLWithPKCS12KeyStoreTest(JmxExporterTestEnvironment environment) {

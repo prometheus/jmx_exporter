@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http.ssl;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -36,10 +37,12 @@ import java.util.Collection;
 import java.util.Map;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
 
@@ -58,35 +61,60 @@ public class SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        var parallelSpec = Parallel.of(SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class.getName());
-        for (JmxExporterTestEnvironment environment :
-                JmxExporterTestEnvironment.createTestEnvironments(
-                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class)
-                        .stream()
-                        .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
-                        .toList()) {
-            parallelSpec.child(Instance.of(
-                            environment.name(),
-                            () -> new SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test(environment))
-                    .child(Lifecycle.<SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test>of("lifecycle")
-                            .before("setUp()", SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::setUp)
-                            .child("testHealthy()", SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::testHealthy)
-                            .child(
-                                    "testDefaultTextMetrics()",
-                                    SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::testDefaultTextMetrics)
-                            .child(
-                                    "testOpenMetricsTextMetrics()",
-                                    SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::testOpenMetricsTextMetrics)
-                            .child(
-                                    "testPrometheusTextMetrics()",
-                                    SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::testPrometheusTextMetrics)
-                            .child(
-                                    "testPrometheusProtobufMetrics()",
-                                    SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::testPrometheusProtobufMetrics)
-                            .after("tearDown()", SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::tearDown)));
-        }
-        return parallelSpec;
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class.getName(),
+                        JmxExporterTestEnvironment.createTestEnvironments(
+                                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class)
+                                .stream()
+                                .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
+                                .toList(),
+                        environment -> Instance.builder(
+                                        environment.name(),
+                                        () -> new SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
+                                                                        ::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                                SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test.class,
+                                                        SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test::tearDown)))))
+                .build();
     }
 
     private SSLAndBasicAuthenticationPBKDF2WithHmacSHA512Test(JmxExporterTestEnvironment environment) {

@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.opentelemetry;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class ConfigurationTest {
@@ -58,19 +61,27 @@ public class ConfigurationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(ConfigurationTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        ConfigurationTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(ConfigurationTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.exporterTestEnvironment().name(),
                                         () -> new ConfigurationTest(environment))
-                                .child(Lifecycle.<ConfigurationTest>of("lifecycle")
-                                        .before("setUp()", ConfigurationTest::setUp)
-                                        .child(
-                                                "testPrometheusHasMetrics()",
-                                                ConfigurationTest::testPrometheusHasMetrics)
-                                        .after("tearDown()", ConfigurationTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(ConfigurationTest.class, ConfigurationTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testPrometheusHasMetrics()",
+                                                        withInstance(
+                                                                ConfigurationTest.class,
+                                                                ConfigurationTest::testPrometheusHasMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(ConfigurationTest.class, ConfigurationTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

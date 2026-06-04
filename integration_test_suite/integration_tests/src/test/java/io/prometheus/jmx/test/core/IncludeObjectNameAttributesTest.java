@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -35,10 +36,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class IncludeObjectNameAttributesTest {
 
@@ -49,28 +52,54 @@ public class IncludeObjectNameAttributesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(IncludeObjectNameAttributesTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        IncludeObjectNameAttributesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(IncludeObjectNameAttributesTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(), () -> new IncludeObjectNameAttributesTest(environment))
-                                .child(Lifecycle.<IncludeObjectNameAttributesTest>of("lifecycle")
-                                        .before("setUp()", IncludeObjectNameAttributesTest::setUp)
-                                        .child("testHealthy()", IncludeObjectNameAttributesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                IncludeObjectNameAttributesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                IncludeObjectNameAttributesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                IncludeObjectNameAttributesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                IncludeObjectNameAttributesTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", IncludeObjectNameAttributesTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        IncludeObjectNameAttributesTest.class,
+                                                        IncludeObjectNameAttributesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                IncludeObjectNameAttributesTest.class,
+                                                                IncludeObjectNameAttributesTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                IncludeObjectNameAttributesTest.class,
+                                                                IncludeObjectNameAttributesTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                IncludeObjectNameAttributesTest.class,
+                                                                IncludeObjectNameAttributesTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                IncludeObjectNameAttributesTest.class,
+                                                                IncludeObjectNameAttributesTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                IncludeObjectNameAttributesTest.class,
+                                                                IncludeObjectNameAttributesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        IncludeObjectNameAttributesTest.class,
+                                                        IncludeObjectNameAttributesTest::tearDown)))))
+                .build();
     }
 
     private IncludeObjectNameAttributesTest(JmxExporterTestEnvironment environment) {

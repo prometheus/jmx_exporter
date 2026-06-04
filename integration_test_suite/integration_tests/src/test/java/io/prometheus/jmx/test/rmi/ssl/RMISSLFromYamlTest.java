@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.rmi.ssl;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -34,10 +35,12 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class RMISSLFromYamlTest {
 
@@ -52,31 +55,51 @@ public class RMISSLFromYamlTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(RMISSLFromYamlTest.class).stream()
                 .filter(e -> e.getJmxExporterMode() == JmxExporterMode.Standalone)
                 .filter(e -> !e.getJavaDockerImage().contains("graalvm/jdk:java8"))
                 .filter(e -> !e.getJavaDockerImage().contains("ibmjava"))
                 .collect(Collectors.toList());
 
-        return Parallel.of(RMISSLFromYamlTest.class.getName())
-                .each(
+        return Each.parallel(
+                        RMISSLFromYamlTest.class.getName(),
                         environments,
-                        env -> Instance.of(env.name(), () -> new RMISSLFromYamlTest(env))
-                                .child(Lifecycle.<RMISSLFromYamlTest>of("lifecycle")
-                                        .before("setUp()", RMISSLFromYamlTest::setUp)
-                                        .child("testHealthy()", RMISSLFromYamlTest::testHealthy)
-                                        .child("testDefaultTextMetrics()", RMISSLFromYamlTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                RMISSLFromYamlTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                RMISSLFromYamlTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                RMISSLFromYamlTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", RMISSLFromYamlTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new RMISSLFromYamlTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(RMISSLFromYamlTest.class, RMISSLFromYamlTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                RMISSLFromYamlTest.class,
+                                                                RMISSLFromYamlTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                RMISSLFromYamlTest.class,
+                                                                RMISSLFromYamlTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                RMISSLFromYamlTest.class,
+                                                                RMISSLFromYamlTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                RMISSLFromYamlTest.class,
+                                                                RMISSLFromYamlTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                RMISSLFromYamlTest.class,
+                                                                RMISSLFromYamlTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(RMISSLFromYamlTest.class, RMISSLFromYamlTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

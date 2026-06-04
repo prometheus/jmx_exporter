@@ -84,6 +84,36 @@ public class MatchedRulesCacheTest {
         }
 
         @Test
+        void cacheKeyEqualsWithDifferentBeanProperties() {
+            LinkedHashMap<String, String> props1 = new LinkedHashMap<>();
+            props1.put("type", "test1");
+            LinkedHashMap<String, String> props2 = new LinkedHashMap<>();
+            props2.put("type", "test2");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey key1 = new MatchedRulesCache.CacheKey("domain", props1, keys, "attr");
+            MatchedRulesCache.CacheKey key2 = new MatchedRulesCache.CacheKey("domain", props2, keys, "attr");
+
+            assertThat(key1).isNotEqualTo(key2);
+        }
+
+        @Test
+        void cacheKeyEqualsWithDifferentAttrKeys() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys1 = new ArrayList<>();
+            keys1.add("key1");
+            ArrayList<String> keys2 = new ArrayList<>();
+            keys2.add("key2");
+
+            MatchedRulesCache.CacheKey key1 = new MatchedRulesCache.CacheKey("domain", props, keys1, "attr");
+            MatchedRulesCache.CacheKey key2 = new MatchedRulesCache.CacheKey("domain", props, keys2, "attr");
+
+            assertThat(key1).isNotEqualTo(key2);
+        }
+
+        @Test
         void cacheKeyHashCodeConsistentWithEquals() {
             MatchedRulesCache.CacheKey key1 = createCacheKey("domain1");
             MatchedRulesCache.CacheKey key2 = createCacheKey("domain1");

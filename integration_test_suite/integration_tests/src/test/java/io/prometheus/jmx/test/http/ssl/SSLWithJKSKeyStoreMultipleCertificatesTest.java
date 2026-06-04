@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -40,10 +41,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLWithJKSKeyStoreMultipleCertificatesTest {
 
@@ -54,36 +57,62 @@ public class SSLWithJKSKeyStoreMultipleCertificatesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments =
                 JmxExporterTestEnvironment.createTestEnvironments(SSLWithJKSKeyStoreMultipleCertificatesTest.class)
                         .stream()
                         .filter(env -> !env.getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
                         .collect(Collectors.toList());
 
-        return Parallel.of(SSLWithJKSKeyStoreMultipleCertificatesTest.class.getName())
-                .each(
+        return Each.parallel(
+                        SSLWithJKSKeyStoreMultipleCertificatesTest.class.getName(),
                         environments,
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(),
                                         () -> new SSLWithJKSKeyStoreMultipleCertificatesTest(environment))
-                                .child(Lifecycle.<SSLWithJKSKeyStoreMultipleCertificatesTest>of("lifecycle")
-                                        .before("setUp()", SSLWithJKSKeyStoreMultipleCertificatesTest::setUp)
-                                        .child("testHealthy()", SSLWithJKSKeyStoreMultipleCertificatesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                SSLWithJKSKeyStoreMultipleCertificatesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                SSLWithJKSKeyStoreMultipleCertificatesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                SSLWithJKSKeyStoreMultipleCertificatesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                SSLWithJKSKeyStoreMultipleCertificatesTest
-                                                        ::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", SSLWithJKSKeyStoreMultipleCertificatesTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                        SSLWithJKSKeyStoreMultipleCertificatesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest
+                                                                        ::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                                SSLWithJKSKeyStoreMultipleCertificatesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLWithJKSKeyStoreMultipleCertificatesTest.class,
+                                                        SSLWithJKSKeyStoreMultipleCertificatesTest::tearDown)))))
+                .build();
     }
 
     private SSLWithJKSKeyStoreMultipleCertificatesTest(JmxExporterTestEnvironment environment) {

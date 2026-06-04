@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http.authentication;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BasicAuthenticationEnvironmentVariableTest {
 
@@ -58,31 +61,57 @@ public class BasicAuthenticationEnvironmentVariableTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicAuthenticationEnvironmentVariableTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicAuthenticationEnvironmentVariableTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(
                                 BasicAuthenticationEnvironmentVariableTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(),
                                         () -> new BasicAuthenticationEnvironmentVariableTest(environment))
-                                .child(Lifecycle.<BasicAuthenticationEnvironmentVariableTest>of("lifecycle")
-                                        .before("setUp()", BasicAuthenticationEnvironmentVariableTest::setUp)
-                                        .child("testHealthy()", BasicAuthenticationEnvironmentVariableTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                BasicAuthenticationEnvironmentVariableTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BasicAuthenticationEnvironmentVariableTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BasicAuthenticationEnvironmentVariableTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BasicAuthenticationEnvironmentVariableTest
-                                                        ::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BasicAuthenticationEnvironmentVariableTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        BasicAuthenticationEnvironmentVariableTest.class,
+                                                        BasicAuthenticationEnvironmentVariableTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BasicAuthenticationEnvironmentVariableTest.class,
+                                                                BasicAuthenticationEnvironmentVariableTest
+                                                                        ::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationEnvironmentVariableTest.class,
+                                                                BasicAuthenticationEnvironmentVariableTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationEnvironmentVariableTest.class,
+                                                                BasicAuthenticationEnvironmentVariableTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationEnvironmentVariableTest.class,
+                                                                BasicAuthenticationEnvironmentVariableTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationEnvironmentVariableTest.class,
+                                                                BasicAuthenticationEnvironmentVariableTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        BasicAuthenticationEnvironmentVariableTest.class,
+                                                        BasicAuthenticationEnvironmentVariableTest::tearDown)))))
+                .build();
     }
 
     private BasicAuthenticationEnvironmentVariableTest(JmxExporterTestEnvironment environment) {

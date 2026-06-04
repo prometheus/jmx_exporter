@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -40,10 +41,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class StartupDelayTest {
@@ -55,29 +58,48 @@ public class StartupDelayTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(StartupDelayTest.class).stream()
                 .filter(env -> env.getJmxExporterMode() == JmxExporterMode.JavaAgent)
                 .collect(Collectors.toList());
 
-        return Parallel.of(StartupDelayTest.class.getName())
-                .each(
+        return Each.parallel(
+                        StartupDelayTest.class.getName(),
                         environments,
-                        environment -> Instance.of(environment.name(), () -> new StartupDelayTest(environment))
-                                .child(Lifecycle.<StartupDelayTest>of("lifecycle")
-                                        .before("setUp()", StartupDelayTest::setUp)
-                                        .child("testHealthy()", StartupDelayTest::testHealthy)
-                                        .child("testDefaultTextMetrics()", StartupDelayTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                StartupDelayTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                StartupDelayTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                StartupDelayTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", StartupDelayTest::tearDown)));
+                        environment -> Instance.builder(environment.name(), () -> new StartupDelayTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(StartupDelayTest.class, StartupDelayTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                StartupDelayTest.class, StartupDelayTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayTest.class,
+                                                                StartupDelayTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayTest.class,
+                                                                StartupDelayTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayTest.class,
+                                                                StartupDelayTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                StartupDelayTest.class,
+                                                                StartupDelayTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(StartupDelayTest.class, StartupDelayTest::tearDown)))))
+                .build();
     }
 
     private StartupDelayTest(JmxExporterTestEnvironment environment) {
@@ -147,10 +169,8 @@ public class StartupDelayTest {
 
         Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(10)))
                 .retryOn(t -> t instanceof Exception)
-                .runAndThrow(() -> {
-                    responseHolder[0] =
-                            (header != null) ? HttpClient.sendRequest(url, header, value) : HttpClient.sendRequest(url);
-                });
+                .runAndThrow(() -> responseHolder[0] =
+                        (header != null) ? HttpClient.sendRequest(url, header, value) : HttpClient.sendRequest(url));
 
         return responseHolder[0];
     }

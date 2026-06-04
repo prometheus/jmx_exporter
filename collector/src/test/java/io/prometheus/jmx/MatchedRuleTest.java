@@ -270,6 +270,15 @@ public class MatchedRuleTest {
         }
 
         @Test
+        void equalsWithDifferentLabels() {
+            MatchedRule rule1 = new MatchedRule("name", "matchName", "GAUGE", "help", of("l1"), of("v1"), 1.0, 1.0);
+
+            MatchedRule rule2 = new MatchedRule("name", "matchName", "GAUGE", "help", of("l2"), of("v1"), 1.0, 1.0);
+
+            assertThat(rule1).isNotEqualTo(rule2);
+        }
+
+        @Test
         void equalsWithNull() {
             MatchedRule rule = new MatchedRule("name", "matchName", "GAUGE", "help", of("l1"), of("v1"), 1.0, 1.0);
 

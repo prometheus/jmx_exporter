@@ -19,7 +19,6 @@
 PWD="$PWD"
 function exit_trap() {
   cd "${PWD}" || exit
-  echo $?
 }
 trap exit_trap EXIT
 SCRIPT_DIRECTORY=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
@@ -33,8 +32,10 @@ function check_exit_code() {
   fi
 }
 
-grep -v '^#' integration_tests/src/test/resources/smoke-test-prometheus-docker-images.txt | while read -r LINE;
+while read -r LINE;
 do
-  docker pull "${LINE}"
+  echo "Pulling Docker image ${LINE} ..."
+  docker pull "${LINE}" > /dev/null 2>&1
   check_exit_code "${LINE}"
-done
+  echo "Successfully pulled Docker image ${LINE}"
+done < <(grep -v '^#' integration_tests/src/test/resources/smoke-test-prometheus-docker-images.txt)

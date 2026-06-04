@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.prometheus.jmx.common.util.MapAccessor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -60,22 +61,22 @@ class HTTPServerFactorySslReloadTest {
         Path keyStore = tempDir.resolve("keystore.jks");
         write(keyStore, "alpha");
 
-        Map<Object, Object> keyStoreConfig = new HashMap<Object, Object>();
+        Map<Object, Object> keyStoreConfig = new HashMap<>();
         keyStoreConfig.put("filename", keyStore.toString());
         keyStoreConfig.put("password", "secret");
         keyStoreConfig.put("type", "JKS");
 
-        Map<Object, Object> certificateConfig = new HashMap<Object, Object>();
+        Map<Object, Object> certificateConfig = new HashMap<>();
         certificateConfig.put("alias", "localhost");
 
-        Map<Object, Object> sslConfig = new HashMap<Object, Object>();
+        Map<Object, Object> sslConfig = new HashMap<>();
         sslConfig.put("keyStore", keyStoreConfig);
         sslConfig.put("certificate", certificateConfig);
 
-        Map<Object, Object> httpServerConfig = new HashMap<Object, Object>();
+        Map<Object, Object> httpServerConfig = new HashMap<>();
         httpServerConfig.put("ssl", sslConfig);
 
-        Map<Object, Object> config = new HashMap<Object, Object>();
+        Map<Object, Object> config = new HashMap<>();
         config.put("httpServer", httpServerConfig);
 
         MapAccessor rootMapAccessor = MapAccessor.of(config);
@@ -101,6 +102,10 @@ class HTTPServerFactorySslReloadTest {
     }
 
     private static void write(Path path, String value) throws Exception {
-        Files.write(path, value.getBytes("UTF-8"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(
+                path,
+                value.getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
     }
 }

@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.exception.FailException;
 
 public class AutoIncrementingMBeanTest {
@@ -54,30 +57,56 @@ public class AutoIncrementingMBeanTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(AutoIncrementingMBeanTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        AutoIncrementingMBeanTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(AutoIncrementingMBeanTest.class),
-                        environment -> Instance.of(environment.name(), () -> new AutoIncrementingMBeanTest(environment))
-                                .child(Lifecycle.<AutoIncrementingMBeanTest>of("lifecycle")
-                                        .before("setUp()", AutoIncrementingMBeanTest::setUp)
-                                        .child("testHealthy()", AutoIncrementingMBeanTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                AutoIncrementingMBeanTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                AutoIncrementingMBeanTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                AutoIncrementingMBeanTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                AutoIncrementingMBeanTest::testPrometheusProtobufMetrics)
-                                        .child(
-                                                "testAutoIncrementingMBean()",
-                                                AutoIncrementingMBeanTest::testAutoIncrementingMBean)
-                                        .after("tearDown()", AutoIncrementingMBeanTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new AutoIncrementingMBeanTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        AutoIncrementingMBeanTest.class,
+                                                        AutoIncrementingMBeanTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest
+                                                                        ::testPrometheusProtobufMetrics)))
+                                                .child(Step.of(
+                                                        "testAutoIncrementingMBean()",
+                                                        withInstance(
+                                                                AutoIncrementingMBeanTest.class,
+                                                                AutoIncrementingMBeanTest::testAutoIncrementingMBean))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        AutoIncrementingMBeanTest.class,
+                                                        AutoIncrementingMBeanTest::tearDown)))))
+                .build();
     }
 
     private AutoIncrementingMBeanTest(JmxExporterTestEnvironment environment) {

@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -42,10 +43,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class CombinedModeTest {
@@ -61,17 +64,27 @@ public class CombinedModeTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(CombinedModeTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        CombinedModeTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(CombinedModeTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.exporterTestEnvironment().name(),
                                         () -> new CombinedModeTest(environment))
-                                .child(Lifecycle.<CombinedModeTest>of("lifecycle")
-                                        .before("setUp()", CombinedModeTest::setUp)
-                                        .child("testPrometheusHasMetrics()", CombinedModeTest::testPrometheusHasMetrics)
-                                        .after("tearDown()", CombinedModeTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(CombinedModeTest.class, CombinedModeTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testPrometheusHasMetrics()",
+                                                        withInstance(
+                                                                CombinedModeTest.class,
+                                                                CombinedModeTest::testPrometheusHasMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(CombinedModeTest.class, CombinedModeTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

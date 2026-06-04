@@ -22,10 +22,14 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.LogManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JmxCollectorTest {
 
@@ -769,6 +773,15 @@ public class JmxCollectorTest {
 
         assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
+    }
+
+    @Test
+    public void collectDoesNotThrowWhenModeIsAgentWithStartDelaySeconds(@TempDir Path tempDir) throws Exception {
+        File configFile = tempDir.resolve("config.yml").toFile();
+        Files.write(configFile.toPath(), "---\nstartDelaySeconds: 1".getBytes());
+        JmxCollector jc = new JmxCollector(configFile, JmxCollector.Mode.AGENT);
+        jc.register(prometheusRegistry);
+        jc.collect();
     }
 
     private Double getSampleValue(String name, String[] labelNames, String[] labelValues) {

@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http.authentication;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BasicAuthenticationPBKDF2WithHmacSHA256Test {
 
@@ -58,33 +61,57 @@ public class BasicAuthenticationPBKDF2WithHmacSHA256Test {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicAuthenticationPBKDF2WithHmacSHA256Test.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicAuthenticationPBKDF2WithHmacSHA256Test.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(
                                 BasicAuthenticationPBKDF2WithHmacSHA256Test.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(),
                                         () -> new BasicAuthenticationPBKDF2WithHmacSHA256Test(environment))
-                                .child(Lifecycle.<BasicAuthenticationPBKDF2WithHmacSHA256Test>of("lifecycle")
-                                        .before("setUp()", BasicAuthenticationPBKDF2WithHmacSHA256Test::setUp)
-                                        .child(
-                                                "testHealthy()",
-                                                BasicAuthenticationPBKDF2WithHmacSHA256Test::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                BasicAuthenticationPBKDF2WithHmacSHA256Test::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BasicAuthenticationPBKDF2WithHmacSHA256Test::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BasicAuthenticationPBKDF2WithHmacSHA256Test::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
-                                                        ::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BasicAuthenticationPBKDF2WithHmacSHA256Test::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                        BasicAuthenticationPBKDF2WithHmacSHA256Test::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
+                                                                        ::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                                BasicAuthenticationPBKDF2WithHmacSHA256Test
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        BasicAuthenticationPBKDF2WithHmacSHA256Test.class,
+                                                        BasicAuthenticationPBKDF2WithHmacSHA256Test::tearDown)))))
+                .build();
     }
 
     private BasicAuthenticationPBKDF2WithHmacSHA256Test(JmxExporterTestEnvironment environment) {
