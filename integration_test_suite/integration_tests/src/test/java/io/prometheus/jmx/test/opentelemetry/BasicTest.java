@@ -17,6 +17,7 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
@@ -28,10 +29,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class BasicTest {
@@ -47,15 +50,21 @@ public class BasicTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(BasicTest.class),
-                        env -> Instance.of(env.name(), () -> new BasicTest(env))
-                                .child(Lifecycle.<BasicTest>of("lifecycle")
-                                        .before("setUp()", BasicTest::setUp)
-                                        .child("testPrometheusHasMetrics()", BasicTest::testPrometheusHasMetrics)
-                                        .after("tearDown()", BasicTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new BasicTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of("setUp()", withInstance(BasicTest.class, BasicTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testPrometheusHasMetrics()",
+                                                        withInstance(
+                                                                BasicTest.class, BasicTest::testPrometheusHasMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()", withInstance(BasicTest.class, BasicTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

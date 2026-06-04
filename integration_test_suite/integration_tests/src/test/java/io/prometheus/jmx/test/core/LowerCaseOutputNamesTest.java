@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class LowerCaseOutputNamesTest {
 
@@ -46,27 +49,51 @@ public class LowerCaseOutputNamesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(LowerCaseOutputNamesTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        LowerCaseOutputNamesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(LowerCaseOutputNamesTest.class),
-                        environment -> Instance.of(environment.name(), () -> new LowerCaseOutputNamesTest(environment))
-                                .child(Lifecycle.<LowerCaseOutputNamesTest>of("lifecycle")
-                                        .before("setUp()", LowerCaseOutputNamesTest::setUp)
-                                        .child("testHealthy()", LowerCaseOutputNamesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                LowerCaseOutputNamesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                LowerCaseOutputNamesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                LowerCaseOutputNamesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                LowerCaseOutputNamesTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", LowerCaseOutputNamesTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new LowerCaseOutputNamesTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        LowerCaseOutputNamesTest.class,
+                                                        LowerCaseOutputNamesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                LowerCaseOutputNamesTest.class,
+                                                                LowerCaseOutputNamesTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                LowerCaseOutputNamesTest.class,
+                                                                LowerCaseOutputNamesTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                LowerCaseOutputNamesTest.class,
+                                                                LowerCaseOutputNamesTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                LowerCaseOutputNamesTest.class,
+                                                                LowerCaseOutputNamesTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                LowerCaseOutputNamesTest.class,
+                                                                LowerCaseOutputNamesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        LowerCaseOutputNamesTest.class,
+                                                        LowerCaseOutputNamesTest::tearDown)))))
+                .build();
     }
 
     private LowerCaseOutputNamesTest(JmxExporterTestEnvironment environment) {

@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.rmi.ssl;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -34,10 +35,12 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class MinimalRMISSLTest {
 
@@ -52,31 +55,51 @@ public class MinimalRMISSLTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(MinimalRMISSLTest.class).stream()
                 .filter(e -> e.getJmxExporterMode() == JmxExporterMode.Standalone)
                 .filter(e -> !e.getJavaDockerImage().contains("graalvm/jdk:java8"))
                 .filter(e -> !e.getJavaDockerImage().contains("ibmjava"))
                 .collect(Collectors.toList());
 
-        return Parallel.of(MinimalRMISSLTest.class.getName())
-                .each(
+        return Each.parallel(
+                        MinimalRMISSLTest.class.getName(),
                         environments,
-                        env -> Instance.of(env.name(), () -> new MinimalRMISSLTest(env))
-                                .child(Lifecycle.<MinimalRMISSLTest>of("lifecycle")
-                                        .before("setUp()", MinimalRMISSLTest::setUp)
-                                        .child("testHealthy()", MinimalRMISSLTest::testHealthy)
-                                        .child("testDefaultTextMetrics()", MinimalRMISSLTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                MinimalRMISSLTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                MinimalRMISSLTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                MinimalRMISSLTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", MinimalRMISSLTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new MinimalRMISSLTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(MinimalRMISSLTest.class, MinimalRMISSLTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                MinimalRMISSLTest.class,
+                                                                MinimalRMISSLTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                MinimalRMISSLTest.class,
+                                                                MinimalRMISSLTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                MinimalRMISSLTest.class,
+                                                                MinimalRMISSLTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                MinimalRMISSLTest.class,
+                                                                MinimalRMISSLTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                MinimalRMISSLTest.class,
+                                                                MinimalRMISSLTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(MinimalRMISSLTest.class, MinimalRMISSLTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

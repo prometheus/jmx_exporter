@@ -45,4 +45,12 @@ public class LoggerFactoryTest {
         Logger logger = LoggerFactory.getLogger(LoggerFactoryTest.class);
         assertThat(logger).isNotNull();
     }
+
+    @Test
+    public void testPrivateConstructor() throws Exception {
+        java.lang.reflect.Constructor<LoggerFactory> constructor = LoggerFactory.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        Object instance = constructor.newInstance();
+        assertThat(instance).isNotNull();
+    }
 }

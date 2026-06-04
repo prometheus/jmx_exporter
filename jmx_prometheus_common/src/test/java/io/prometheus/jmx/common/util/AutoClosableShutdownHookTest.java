@@ -30,7 +30,7 @@ public class AutoClosableShutdownHookTest {
         AutoCloseable resource = () -> closed.set(true);
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.run();
+        hook.start();
 
         assertThat(closed).isTrue();
     }
@@ -42,7 +42,7 @@ public class AutoClosableShutdownHookTest {
         };
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.run();
+        hook.start();
     }
 
     @Test
@@ -52,14 +52,14 @@ public class AutoClosableShutdownHookTest {
         };
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.run();
+        hook.start();
     }
 
     @Test
     public void testRunSilentlyHandlesNullResource() {
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(null);
 
-        hook.run();
+        hook.start();
     }
 
     @Test
@@ -68,7 +68,7 @@ public class AutoClosableShutdownHookTest {
         AutoCloseable resource = callCount::incrementAndGet;
         AutoClosableShutdownHook hook = new AutoClosableShutdownHook(resource);
 
-        hook.run();
+        hook.start();
 
         assertThat(callCount).hasValue(1);
     }

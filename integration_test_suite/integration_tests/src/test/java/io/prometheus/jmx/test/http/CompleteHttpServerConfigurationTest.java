@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -36,10 +37,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class CompleteHttpServerConfigurationTest {
 
@@ -64,33 +67,59 @@ public class CompleteHttpServerConfigurationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments =
                 JmxExporterTestEnvironment.createTestEnvironments(CompleteHttpServerConfigurationTest.class).stream()
                         .filter(e -> !e.getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
                         .map(e -> e.setBaseUrl(BASE_URL))
                         .collect(Collectors.toList());
 
-        return Parallel.of(CompleteHttpServerConfigurationTest.class.getName())
-                .each(
+        return Each.parallel(
+                        CompleteHttpServerConfigurationTest.class.getName(),
                         environments,
-                        env -> Instance.of(env.name(), () -> new CompleteHttpServerConfigurationTest(env))
-                                .child(Lifecycle.<CompleteHttpServerConfigurationTest>of("lifecycle")
-                                        .before("setUp()", CompleteHttpServerConfigurationTest::setUp)
-                                        .child("testHealthy()", CompleteHttpServerConfigurationTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                CompleteHttpServerConfigurationTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                CompleteHttpServerConfigurationTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                CompleteHttpServerConfigurationTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                CompleteHttpServerConfigurationTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", CompleteHttpServerConfigurationTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new CompleteHttpServerConfigurationTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        CompleteHttpServerConfigurationTest.class,
+                                                        CompleteHttpServerConfigurationTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                CompleteHttpServerConfigurationTest.class,
+                                                                CompleteHttpServerConfigurationTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                CompleteHttpServerConfigurationTest.class,
+                                                                CompleteHttpServerConfigurationTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                CompleteHttpServerConfigurationTest.class,
+                                                                CompleteHttpServerConfigurationTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                CompleteHttpServerConfigurationTest.class,
+                                                                CompleteHttpServerConfigurationTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                CompleteHttpServerConfigurationTest.class,
+                                                                CompleteHttpServerConfigurationTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        CompleteHttpServerConfigurationTest.class,
+                                                        CompleteHttpServerConfigurationTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

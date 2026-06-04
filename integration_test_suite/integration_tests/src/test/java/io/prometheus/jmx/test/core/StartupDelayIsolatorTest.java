@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -38,10 +39,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class StartupDelayIsolatorTest {
@@ -55,27 +58,51 @@ public class StartupDelayIsolatorTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(StartupDelayIsolatorTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        StartupDelayIsolatorTest.class.getName(),
                         IsolatorExporterTestEnvironment.createTestEnvironments(StartupDelayIsolatorTest.class),
-                        environment -> Instance.of(environment.name(), () -> new StartupDelayIsolatorTest(environment))
-                                .child(Lifecycle.<StartupDelayIsolatorTest>of("lifecycle")
-                                        .before("setUp()", StartupDelayIsolatorTest::setUp)
-                                        .child("testHealthy()", StartupDelayIsolatorTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                StartupDelayIsolatorTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                StartupDelayIsolatorTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                StartupDelayIsolatorTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                StartupDelayIsolatorTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", StartupDelayIsolatorTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new StartupDelayIsolatorTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        StartupDelayIsolatorTest.class,
+                                                        StartupDelayIsolatorTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                StartupDelayIsolatorTest.class,
+                                                                StartupDelayIsolatorTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayIsolatorTest.class,
+                                                                StartupDelayIsolatorTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayIsolatorTest.class,
+                                                                StartupDelayIsolatorTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                StartupDelayIsolatorTest.class,
+                                                                StartupDelayIsolatorTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                StartupDelayIsolatorTest.class,
+                                                                StartupDelayIsolatorTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        StartupDelayIsolatorTest.class,
+                                                        StartupDelayIsolatorTest::tearDown)))))
+                .build();
     }
 
     private StartupDelayIsolatorTest(IsolatorExporterTestEnvironment environment) {

@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.http.authentication;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BasicAuthenticationSHA1Test {
 
@@ -58,28 +61,53 @@ public class BasicAuthenticationSHA1Test {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicAuthenticationSHA1Test.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicAuthenticationSHA1Test.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(BasicAuthenticationSHA1Test.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(), () -> new BasicAuthenticationSHA1Test(environment))
-                                .child(Lifecycle.<BasicAuthenticationSHA1Test>of("lifecycle")
-                                        .before("setUp()", BasicAuthenticationSHA1Test::setUp)
-                                        .child("testHealthy()", BasicAuthenticationSHA1Test::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                BasicAuthenticationSHA1Test::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BasicAuthenticationSHA1Test::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BasicAuthenticationSHA1Test::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BasicAuthenticationSHA1Test::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BasicAuthenticationSHA1Test::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        BasicAuthenticationSHA1Test.class,
+                                                        BasicAuthenticationSHA1Test::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BasicAuthenticationSHA1Test.class,
+                                                                BasicAuthenticationSHA1Test::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationSHA1Test.class,
+                                                                BasicAuthenticationSHA1Test::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationSHA1Test.class,
+                                                                BasicAuthenticationSHA1Test
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationSHA1Test.class,
+                                                                BasicAuthenticationSHA1Test
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BasicAuthenticationSHA1Test.class,
+                                                                BasicAuthenticationSHA1Test
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        BasicAuthenticationSHA1Test.class,
+                                                        BasicAuthenticationSHA1Test::tearDown)))))
+                .build();
     }
 
     private BasicAuthenticationSHA1Test(JmxExporterTestEnvironment environment) {

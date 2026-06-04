@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.rmi.ssl;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -34,10 +35,12 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class EnvironmentVariableRMISSLTest {
 
@@ -52,7 +55,7 @@ public class EnvironmentVariableRMISSLTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments =
                 JmxExporterTestEnvironment.createTestEnvironments(EnvironmentVariableRMISSLTest.class).stream()
                         .filter(e -> e.getJmxExporterMode() == JmxExporterMode.Standalone)
@@ -60,26 +63,51 @@ public class EnvironmentVariableRMISSLTest {
                         .filter(e -> !e.getJavaDockerImage().contains("ibmjava"))
                         .collect(Collectors.toList());
 
-        return Parallel.of(EnvironmentVariableRMISSLTest.class.getName())
-                .each(
+        return Each.parallel(
+                        EnvironmentVariableRMISSLTest.class.getName(),
                         environments,
-                        env -> Instance.of(env.name(), () -> new EnvironmentVariableRMISSLTest(env))
-                                .child(Lifecycle.<EnvironmentVariableRMISSLTest>of("lifecycle")
-                                        .before("setUp()", EnvironmentVariableRMISSLTest::setUp)
-                                        .child("testHealthy()", EnvironmentVariableRMISSLTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                EnvironmentVariableRMISSLTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                EnvironmentVariableRMISSLTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                EnvironmentVariableRMISSLTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                EnvironmentVariableRMISSLTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", EnvironmentVariableRMISSLTest::tearDown)));
+                        env -> Instance.builder(env.name(), () -> new EnvironmentVariableRMISSLTest(env))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        EnvironmentVariableRMISSLTest.class,
+                                                        EnvironmentVariableRMISSLTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                EnvironmentVariableRMISSLTest.class,
+                                                                EnvironmentVariableRMISSLTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariableRMISSLTest.class,
+                                                                EnvironmentVariableRMISSLTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariableRMISSLTest.class,
+                                                                EnvironmentVariableRMISSLTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariableRMISSLTest.class,
+                                                                EnvironmentVariableRMISSLTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariableRMISSLTest.class,
+                                                                EnvironmentVariableRMISSLTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        EnvironmentVariableRMISSLTest.class,
+                                                        EnvironmentVariableRMISSLTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

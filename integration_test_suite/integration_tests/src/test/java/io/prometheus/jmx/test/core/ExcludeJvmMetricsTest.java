@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -41,10 +42,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class ExcludeJvmMetricsTest {
 
@@ -57,32 +60,54 @@ public class ExcludeJvmMetricsTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(ExcludeJvmMetricsTest.class).stream()
                 .filter(exporterTestEnvironment ->
                         exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent)
                 .collect(Collectors.toList());
 
-        return Parallel.of(ExcludeJvmMetricsTest.class.getName())
-                .each(
+        return Each.parallel(
+                        ExcludeJvmMetricsTest.class.getName(),
                         environments,
-                        environment -> Instance.of(environment.name(), () -> new ExcludeJvmMetricsTest(environment))
-                                .child(Lifecycle.<ExcludeJvmMetricsTest>of("lifecycle")
-                                        .before("setUp()", ExcludeJvmMetricsTest::setUp)
-                                        .child("testHealthy()", ExcludeJvmMetricsTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                ExcludeJvmMetricsTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                ExcludeJvmMetricsTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                ExcludeJvmMetricsTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                ExcludeJvmMetricsTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", ExcludeJvmMetricsTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new ExcludeJvmMetricsTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        ExcludeJvmMetricsTest.class, ExcludeJvmMetricsTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                ExcludeJvmMetricsTest.class,
+                                                                ExcludeJvmMetricsTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                ExcludeJvmMetricsTest.class,
+                                                                ExcludeJvmMetricsTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                ExcludeJvmMetricsTest.class,
+                                                                ExcludeJvmMetricsTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                ExcludeJvmMetricsTest.class,
+                                                                ExcludeJvmMetricsTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                ExcludeJvmMetricsTest.class,
+                                                                ExcludeJvmMetricsTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        ExcludeJvmMetricsTest.class,
+                                                        ExcludeJvmMetricsTest::tearDown)))))
+                .build();
     }
 
     private ExcludeJvmMetricsTest(JmxExporterTestEnvironment environment) {

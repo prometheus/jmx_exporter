@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -38,10 +39,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BasicIsolatorTest {
 
@@ -60,25 +63,45 @@ public class BasicIsolatorTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicIsolatorTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicIsolatorTest.class.getName(),
                         IsolatorExporterTestEnvironment.createTestEnvironments(BasicIsolatorTest.class),
-                        environment -> Instance.of(environment.name(), () -> new BasicIsolatorTest(environment))
-                                .child(Lifecycle.<BasicIsolatorTest>of("lifecycle")
-                                        .before("setUp()", BasicIsolatorTest::setUp)
-                                        .child("testHealthy()", BasicIsolatorTest::testHealthy)
-                                        .child("testDefaultTextMetrics()", BasicIsolatorTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BasicIsolatorTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BasicIsolatorTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BasicIsolatorTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BasicIsolatorTest::tearDown)));
+                        environment -> Instance.builder(environment.name(), () -> new BasicIsolatorTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(BasicIsolatorTest.class, BasicIsolatorTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BasicIsolatorTest.class,
+                                                                BasicIsolatorTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BasicIsolatorTest.class,
+                                                                BasicIsolatorTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BasicIsolatorTest.class,
+                                                                BasicIsolatorTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BasicIsolatorTest.class,
+                                                                BasicIsolatorTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BasicIsolatorTest.class,
+                                                                BasicIsolatorTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(BasicIsolatorTest.class, BasicIsolatorTest::tearDown)))))
+                .build();
     }
 
     private BasicIsolatorTest(IsolatorExporterTestEnvironment environment) {

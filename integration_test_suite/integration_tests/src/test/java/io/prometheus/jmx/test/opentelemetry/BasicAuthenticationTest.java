@@ -17,6 +17,7 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
@@ -29,10 +30,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class BasicAuthenticationTest {
@@ -51,18 +54,34 @@ public class BasicAuthenticationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BasicAuthenticationTest.class.getName())
-                .each(OpenTelemetryTestEnvironment.createTestEnvironments(BasicAuthenticationTest.class), env -> {
-                    env.withPrometheusReadyBasicAuthentication(VALID_USER, VALUE_PASSWORD);
-                    return Instance.of(env.name(), () -> new BasicAuthenticationTest(env))
-                            .child(Lifecycle.<BasicAuthenticationTest>of("lifecycle")
-                                    .before("setUp()", BasicAuthenticationTest::setUp)
-                                    .child(
-                                            "testPrometheusHasMetrics()",
-                                            BasicAuthenticationTest::testPrometheusHasMetrics)
-                                    .after("tearDown()", BasicAuthenticationTest::tearDown));
-                });
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BasicAuthenticationTest.class.getName(),
+                        OpenTelemetryTestEnvironment.createTestEnvironments(BasicAuthenticationTest.class),
+                        env -> {
+                            env.withPrometheusReadyBasicAuthentication(VALID_USER, VALUE_PASSWORD);
+                            return Instance.builder(env.name(), () -> new BasicAuthenticationTest(env))
+                                    .body(Scope.builder("scenario")
+                                            .before(Step.of(
+                                                    "setUp()",
+                                                    withInstance(
+                                                            BasicAuthenticationTest.class,
+                                                            BasicAuthenticationTest::setUp)))
+                                            .body(Sequence.builder("tests")
+                                                    .child(Step.of(
+                                                            "testPrometheusHasMetrics()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest
+                                                                            ::testPrometheusHasMetrics))))
+                                            .after(Step.of(
+                                                    "tearDown()",
+                                                    withInstance(
+                                                            BasicAuthenticationTest.class,
+                                                            BasicAuthenticationTest::tearDown))))
+                                    .build();
+                        })
+                .build();
     }
 
     public void setUp() throws Throwable {

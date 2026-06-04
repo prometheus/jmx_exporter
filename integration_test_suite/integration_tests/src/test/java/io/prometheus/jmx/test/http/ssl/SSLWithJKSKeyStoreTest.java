@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -40,10 +41,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLWithJKSKeyStoreTest {
 
@@ -54,31 +57,54 @@ public class SSLWithJKSKeyStoreTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(SSLWithJKSKeyStoreTest.class).stream()
                 .filter(env -> !env.getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
                 .collect(Collectors.toList());
 
-        return Parallel.of(SSLWithJKSKeyStoreTest.class.getName())
-                .each(
+        return Each.parallel(
+                        SSLWithJKSKeyStoreTest.class.getName(),
                         environments,
-                        environment -> Instance.of(environment.name(), () -> new SSLWithJKSKeyStoreTest(environment))
-                                .child(Lifecycle.<SSLWithJKSKeyStoreTest>of("lifecycle")
-                                        .before("setUp()", SSLWithJKSKeyStoreTest::setUp)
-                                        .child("testHealthy()", SSLWithJKSKeyStoreTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                SSLWithJKSKeyStoreTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                SSLWithJKSKeyStoreTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                SSLWithJKSKeyStoreTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                SSLWithJKSKeyStoreTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", SSLWithJKSKeyStoreTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new SSLWithJKSKeyStoreTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLWithJKSKeyStoreTest.class, SSLWithJKSKeyStoreTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreTest.class,
+                                                                SSLWithJKSKeyStoreTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreTest.class,
+                                                                SSLWithJKSKeyStoreTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreTest.class,
+                                                                SSLWithJKSKeyStoreTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreTest.class,
+                                                                SSLWithJKSKeyStoreTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLWithJKSKeyStoreTest.class,
+                                                                SSLWithJKSKeyStoreTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLWithJKSKeyStoreTest.class,
+                                                        SSLWithJKSKeyStoreTest::tearDown)))))
+                .build();
     }
 
     private SSLWithJKSKeyStoreTest(JmxExporterTestEnvironment environment) {

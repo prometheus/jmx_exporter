@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class MetricCustomizersExtraMetricsTest {
 
@@ -46,28 +49,54 @@ public class MetricCustomizersExtraMetricsTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(MetricCustomizersExtraMetricsTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        MetricCustomizersExtraMetricsTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(MetricCustomizersExtraMetricsTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(), () -> new MetricCustomizersExtraMetricsTest(environment))
-                                .child(Lifecycle.<MetricCustomizersExtraMetricsTest>of("lifecycle")
-                                        .before("setUp()", MetricCustomizersExtraMetricsTest::setUp)
-                                        .child("testHealthy()", MetricCustomizersExtraMetricsTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                MetricCustomizersExtraMetricsTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                MetricCustomizersExtraMetricsTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                MetricCustomizersExtraMetricsTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                MetricCustomizersExtraMetricsTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", MetricCustomizersExtraMetricsTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        MetricCustomizersExtraMetricsTest.class,
+                                                        MetricCustomizersExtraMetricsTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                MetricCustomizersExtraMetricsTest.class,
+                                                                MetricCustomizersExtraMetricsTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersExtraMetricsTest.class,
+                                                                MetricCustomizersExtraMetricsTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersExtraMetricsTest.class,
+                                                                MetricCustomizersExtraMetricsTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersExtraMetricsTest.class,
+                                                                MetricCustomizersExtraMetricsTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersExtraMetricsTest.class,
+                                                                MetricCustomizersExtraMetricsTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        MetricCustomizersExtraMetricsTest.class,
+                                                        MetricCustomizersExtraMetricsTest::tearDown)))))
+                .build();
     }
 
     private MetricCustomizersExtraMetricsTest(JmxExporterTestEnvironment environment) {

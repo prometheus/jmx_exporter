@@ -20,6 +20,7 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -39,10 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class ThreadsConfigurationTest {
 
@@ -57,27 +60,51 @@ public class ThreadsConfigurationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(ThreadsConfigurationTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        ThreadsConfigurationTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(ThreadsConfigurationTest.class),
-                        environment -> Instance.of(environment.name(), () -> new ThreadsConfigurationTest(environment))
-                                .child(Lifecycle.<ThreadsConfigurationTest>of("lifecycle")
-                                        .before("setUp()", ThreadsConfigurationTest::setUp)
-                                        .child("testHealthy()", ThreadsConfigurationTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                ThreadsConfigurationTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                ThreadsConfigurationTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                ThreadsConfigurationTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                ThreadsConfigurationTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", ThreadsConfigurationTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new ThreadsConfigurationTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        ThreadsConfigurationTest.class,
+                                                        ThreadsConfigurationTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                ThreadsConfigurationTest.class,
+                                                                ThreadsConfigurationTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                ThreadsConfigurationTest.class,
+                                                                ThreadsConfigurationTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                ThreadsConfigurationTest.class,
+                                                                ThreadsConfigurationTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                ThreadsConfigurationTest.class,
+                                                                ThreadsConfigurationTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                ThreadsConfigurationTest.class,
+                                                                ThreadsConfigurationTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        ThreadsConfigurationTest.class,
+                                                        ThreadsConfigurationTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

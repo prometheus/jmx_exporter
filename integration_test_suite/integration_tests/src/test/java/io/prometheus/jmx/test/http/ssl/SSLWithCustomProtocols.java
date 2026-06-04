@@ -22,6 +22,7 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -51,10 +52,12 @@ import nl.altindag.ssl.SSLFactory;
 import org.assertj.core.util.Strings;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLWithCustomProtocols {
 
@@ -85,34 +88,61 @@ public class SSLWithCustomProtocols {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
+    public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(SSLWithCustomProtocols.class).stream()
                 .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
                 .collect(Collectors.toList());
 
-        return Parallel.of(SSLWithCustomProtocols.class.getName())
-                .each(
+        return Each.parallel(
+                        SSLWithCustomProtocols.class.getName(),
                         environments,
-                        environment -> Instance.of(environment.name(), () -> new SSLWithCustomProtocols(environment))
-                                .child(Lifecycle.<SSLWithCustomProtocols>of("lifecycle")
-                                        .before("setUp()", SSLWithCustomProtocols::setUp)
-                                        .child("testHealthy()", SSLWithCustomProtocols::testHealthy)
-                                        .child(
-                                                "testCallingServerWithNonMatchingSslProtocols()",
-                                                SSLWithCustomProtocols::testCallingServerWithNonMatchingSslProtocols)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                SSLWithCustomProtocols::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                SSLWithCustomProtocols::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                SSLWithCustomProtocols::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                SSLWithCustomProtocols::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", SSLWithCustomProtocols::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new SSLWithCustomProtocols(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLWithCustomProtocols.class, SSLWithCustomProtocols::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLWithCustomProtocols.class,
+                                                                SSLWithCustomProtocols::testHealthy)))
+                                                .child(
+                                                        Step.of(
+                                                                "testCallingServerWithNonMatchingSslProtocols()",
+                                                                withInstance(
+                                                                        SSLWithCustomProtocols.class,
+                                                                        SSLWithCustomProtocols
+                                                                                ::testCallingServerWithNonMatchingSslProtocols)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithCustomProtocols.class,
+                                                                SSLWithCustomProtocols::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithCustomProtocols.class,
+                                                                SSLWithCustomProtocols::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithCustomProtocols.class,
+                                                                SSLWithCustomProtocols::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLWithCustomProtocols.class,
+                                                                SSLWithCustomProtocols
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLWithCustomProtocols.class,
+                                                        SSLWithCustomProtocols::tearDown)))))
+                .build();
     }
 
     private SSLWithCustomProtocols(JmxExporterTestEnvironment environment) {

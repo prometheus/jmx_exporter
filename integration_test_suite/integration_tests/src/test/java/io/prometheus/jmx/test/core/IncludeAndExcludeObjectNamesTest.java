@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class IncludeAndExcludeObjectNamesTest {
 
@@ -46,28 +49,54 @@ public class IncludeAndExcludeObjectNamesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(IncludeAndExcludeObjectNamesTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        IncludeAndExcludeObjectNamesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(IncludeAndExcludeObjectNamesTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(), () -> new IncludeAndExcludeObjectNamesTest(environment))
-                                .child(Lifecycle.<IncludeAndExcludeObjectNamesTest>of("lifecycle")
-                                        .before("setUp()", IncludeAndExcludeObjectNamesTest::setUp)
-                                        .child("testHealthy()", IncludeAndExcludeObjectNamesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                IncludeAndExcludeObjectNamesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                IncludeAndExcludeObjectNamesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                IncludeAndExcludeObjectNamesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                IncludeAndExcludeObjectNamesTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", IncludeAndExcludeObjectNamesTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        IncludeAndExcludeObjectNamesTest.class,
+                                                        IncludeAndExcludeObjectNamesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                IncludeAndExcludeObjectNamesTest.class,
+                                                                IncludeAndExcludeObjectNamesTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                IncludeAndExcludeObjectNamesTest.class,
+                                                                IncludeAndExcludeObjectNamesTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                IncludeAndExcludeObjectNamesTest.class,
+                                                                IncludeAndExcludeObjectNamesTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                IncludeAndExcludeObjectNamesTest.class,
+                                                                IncludeAndExcludeObjectNamesTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                IncludeAndExcludeObjectNamesTest.class,
+                                                                IncludeAndExcludeObjectNamesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        IncludeAndExcludeObjectNamesTest.class,
+                                                        IncludeAndExcludeObjectNamesTest::tearDown)))))
+                .build();
     }
 
     private IncludeAndExcludeObjectNamesTest(JmxExporterTestEnvironment environment) {

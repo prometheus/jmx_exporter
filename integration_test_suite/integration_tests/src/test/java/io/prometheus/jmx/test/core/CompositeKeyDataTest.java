@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class CompositeKeyDataTest {
 
@@ -46,25 +49,46 @@ public class CompositeKeyDataTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(CompositeKeyDataTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        CompositeKeyDataTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(CompositeKeyDataTest.class),
-                        environment -> Instance.of(environment.name(), () -> new CompositeKeyDataTest(environment))
-                                .child(Lifecycle.<CompositeKeyDataTest>of("lifecycle")
-                                        .before("setUp()", CompositeKeyDataTest::setUp)
-                                        .child("testHealthy()", CompositeKeyDataTest::testHealthy)
-                                        .child("testDefaultTextMetrics()", CompositeKeyDataTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                CompositeKeyDataTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                CompositeKeyDataTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                CompositeKeyDataTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", CompositeKeyDataTest::tearDown)));
+                        environment -> Instance.builder(environment.name(), () -> new CompositeKeyDataTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(CompositeKeyDataTest.class, CompositeKeyDataTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                CompositeKeyDataTest.class,
+                                                                CompositeKeyDataTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                CompositeKeyDataTest.class,
+                                                                CompositeKeyDataTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                CompositeKeyDataTest.class,
+                                                                CompositeKeyDataTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                CompositeKeyDataTest.class,
+                                                                CompositeKeyDataTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                CompositeKeyDataTest.class,
+                                                                CompositeKeyDataTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        CompositeKeyDataTest.class, CompositeKeyDataTest::tearDown)))))
+                .build();
     }
 
     private CompositeKeyDataTest(JmxExporterTestEnvironment environment) {

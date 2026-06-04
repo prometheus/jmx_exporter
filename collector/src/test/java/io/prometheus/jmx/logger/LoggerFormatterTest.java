@@ -51,4 +51,16 @@ public class LoggerFormatterTest {
         long pipeCount = formatted.chars().filter(c -> c == '|').count();
         assertThat(pipeCount).isEqualTo(4);
     }
+
+    @Test
+    public void testFormatWithNullLoggerName() {
+        LoggerFormatter formatter = new LoggerFormatter();
+        LogRecord record = new LogRecord(Level.INFO, "message");
+        record.setMillis(System.currentTimeMillis());
+
+        String formatted = formatter.format(record);
+
+        assertThat(formatted).contains(" | null | message");
+        assertThat(formatted.endsWith(System.lineSeparator())).isTrue();
+    }
 }

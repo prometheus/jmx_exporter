@@ -18,6 +18,7 @@ package io.prometheus.jmx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -483,6 +484,25 @@ public class JmxScraperTest {
             boolean result = (boolean) method.invoke(scraper, testObjectName, customizer);
             assertThat(result).isFalse();
         }
+
+        @Test
+        void filterReturnsFalseWhenDomainMatchesButPropertiesDontMatch() throws Exception {
+            MBeanFilter mbeanFilter = new MBeanFilter();
+            mbeanFilter.domain = "test.domain";
+            HashMap<String, String> props = new HashMap<>();
+            props.put("type", "Test");
+            props.put("extra", "NotInBean");
+            mbeanFilter.properties = props;
+            MetricCustomizer customizer = new MetricCustomizer();
+            customizer.mbeanFilter = mbeanFilter;
+
+            Method method = JmxScraper.class.getDeclaredMethod(
+                    "filterMbeanByDomainAndProperties", ObjectName.class, MetricCustomizer.class);
+            method.setAccessible(true);
+
+            boolean result = (boolean) method.invoke(scraper, testObjectName, customizer);
+            assertThat(result).isFalse();
+        }
     }
 
     @Nested
@@ -647,6 +667,26 @@ public class JmxScraperTest {
     }
 
     @Nested
+    class ScrapeBeanRuntimeAttributeSkipTests {
+
+        @Test
+        void scrapeBeanSkipsSystemPropertiesForRuntimeMBean() throws Exception {
+            ObjectName runtimeName = new ObjectName("java.lang:type=Runtime");
+            MBeanAttributeInfo systemPropsAttr =
+                    new MBeanAttributeInfo("SystemProperties", "java.lang.String", "desc", true, false, false);
+            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
+            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {systemPropsAttr});
+            when(mockConn.getMBeanInfo(runtimeName)).thenReturn(mBeanInfo);
+            when(mockConn.getAttributes(eq(runtimeName), any(String[].class)))
+                    .thenReturn(
+                            new AttributeList(Collections.singletonList(new Attribute("SystemProperties", "value"))));
+
+            invokeScrapeBean(scraper, mockConn, runtimeName);
+            assertThat(receiver.getRecordedBeans()).isEmpty();
+        }
+    }
+
+    @Nested
     class SslPropertiesTests {
 
         @Test
@@ -756,6 +796,34 @@ public class JmxScraperTest {
 
             assertThatCode(() -> scrapeBean.invoke(scraper, mockConn, testObjectName))
                     .doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
+    class MainMethodTests {
+
+        @Test
+        void mainWithNoArgsUsesPlatformMBeanServer() {
+            assertThatCode(() -> JmxScraper.main(new String[0])).doesNotThrowAnyException();
+        }
+
+        @Test
+        void mainWithOneArgCoversShortArgBranch() {
+            String url = "service:jmx:rmi:///jndi/rmi://localhost:9999/jmxrmi";
+            assertThatExceptionOfType(Exception.class).isThrownBy(() -> JmxScraper.main(new String[] {url}));
+        }
+
+        @Test
+        void mainWithThreeArgsCoversLongArgBranch() {
+            String url = "service:jmx:rmi:///jndi/rmi://localhost:9999/jmxrmi";
+            assertThatExceptionOfType(Exception.class).isThrownBy(() -> JmxScraper.main(new String[] {url, "u", "p"}));
+        }
+
+        @Test
+        void mainWithThreeArgsAndNonSslFourthArg() {
+            String url = "service:jmx:rmi:///jndi/rmi://localhost:9999/jmxrmi";
+            assertThatExceptionOfType(Exception.class)
+                    .isThrownBy(() -> JmxScraper.main(new String[] {url, "u", "p", "notssl"}));
         }
     }
 }

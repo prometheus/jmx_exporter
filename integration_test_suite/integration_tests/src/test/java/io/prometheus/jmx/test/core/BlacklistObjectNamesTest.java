@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class BlacklistObjectNamesTest {
 
@@ -46,27 +49,51 @@ public class BlacklistObjectNamesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(BlacklistObjectNamesTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        BlacklistObjectNamesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(BlacklistObjectNamesTest.class),
-                        environment -> Instance.of(environment.name(), () -> new BlacklistObjectNamesTest(environment))
-                                .child(Lifecycle.<BlacklistObjectNamesTest>of("lifecycle")
-                                        .before("setUp()", BlacklistObjectNamesTest::setUp)
-                                        .child("testHealthy()", BlacklistObjectNamesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                BlacklistObjectNamesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                BlacklistObjectNamesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                BlacklistObjectNamesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                BlacklistObjectNamesTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", BlacklistObjectNamesTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new BlacklistObjectNamesTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        BlacklistObjectNamesTest.class,
+                                                        BlacklistObjectNamesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                BlacklistObjectNamesTest.class,
+                                                                BlacklistObjectNamesTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                BlacklistObjectNamesTest.class,
+                                                                BlacklistObjectNamesTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                BlacklistObjectNamesTest.class,
+                                                                BlacklistObjectNamesTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                BlacklistObjectNamesTest.class,
+                                                                BlacklistObjectNamesTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                BlacklistObjectNamesTest.class,
+                                                                BlacklistObjectNamesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        BlacklistObjectNamesTest.class,
+                                                        BlacklistObjectNamesTest::tearDown)))))
+                .build();
     }
 
     private BlacklistObjectNamesTest(JmxExporterTestEnvironment environment) {

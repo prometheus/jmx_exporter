@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class MetricCustomizersTest {
 
@@ -46,27 +49,49 @@ public class MetricCustomizersTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(MetricCustomizersTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        MetricCustomizersTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(MetricCustomizersTest.class),
-                        environment -> Instance.of(environment.name(), () -> new MetricCustomizersTest(environment))
-                                .child(Lifecycle.<MetricCustomizersTest>of("lifecycle")
-                                        .before("setUp()", MetricCustomizersTest::setUp)
-                                        .child("testHealthy()", MetricCustomizersTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                MetricCustomizersTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                MetricCustomizersTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                MetricCustomizersTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                MetricCustomizersTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", MetricCustomizersTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new MetricCustomizersTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        MetricCustomizersTest.class, MetricCustomizersTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                MetricCustomizersTest.class,
+                                                                MetricCustomizersTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersTest.class,
+                                                                MetricCustomizersTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersTest.class,
+                                                                MetricCustomizersTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersTest.class,
+                                                                MetricCustomizersTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersTest.class,
+                                                                MetricCustomizersTest::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        MetricCustomizersTest.class,
+                                                        MetricCustomizersTest::tearDown)))))
+                .build();
     }
 
     private MetricCustomizersTest(JmxExporterTestEnvironment environment) {

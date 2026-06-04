@@ -21,6 +21,7 @@ import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetri
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
@@ -48,10 +49,12 @@ import javax.net.ssl.TrustManagerFactory;
 import org.assertj.core.util.Strings;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class SSLWithTrustStoreAndClientAuth {
 
@@ -83,29 +86,56 @@ public class SSLWithTrustStoreAndClientAuth {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        var parallelSpec = Parallel.of(SSLWithTrustStoreAndClientAuth.class.getName());
-        for (JmxExporterTestEnvironment environment :
-                JmxExporterTestEnvironment.createTestEnvironments(SSLWithTrustStoreAndClientAuth.class).stream()
-                        .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
-                        .toList()) {
-            parallelSpec.child(Instance.of(environment.name(), () -> new SSLWithTrustStoreAndClientAuth(environment))
-                    .child(Lifecycle.<SSLWithTrustStoreAndClientAuth>of("lifecycle")
-                            .before("setUp()", SSLWithTrustStoreAndClientAuth::setUp)
-                            .child("testHealthy()", SSLWithTrustStoreAndClientAuth::testHealthy)
-                            .child("testDefaultTextMetrics()", SSLWithTrustStoreAndClientAuth::testDefaultTextMetrics)
-                            .child(
-                                    "testOpenMetricsTextMetrics()",
-                                    SSLWithTrustStoreAndClientAuth::testOpenMetricsTextMetrics)
-                            .child(
-                                    "testPrometheusTextMetrics()",
-                                    SSLWithTrustStoreAndClientAuth::testPrometheusTextMetrics)
-                            .child(
-                                    "testPrometheusProtobufMetrics()",
-                                    SSLWithTrustStoreAndClientAuth::testPrometheusProtobufMetrics)
-                            .after("tearDown()", SSLWithTrustStoreAndClientAuth::tearDown)));
-        }
-        return parallelSpec;
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        SSLWithTrustStoreAndClientAuth.class.getName(),
+                        JmxExporterTestEnvironment.createTestEnvironments(SSLWithTrustStoreAndClientAuth.class).stream()
+                                .filter(new PKCS12KeyStoreExporterTestEnvironmentFilter())
+                                .toList(),
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new SSLWithTrustStoreAndClientAuth(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        SSLWithTrustStoreAndClientAuth.class,
+                                                        SSLWithTrustStoreAndClientAuth::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                SSLWithTrustStoreAndClientAuth.class,
+                                                                SSLWithTrustStoreAndClientAuth::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithTrustStoreAndClientAuth.class,
+                                                                SSLWithTrustStoreAndClientAuth
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithTrustStoreAndClientAuth.class,
+                                                                SSLWithTrustStoreAndClientAuth
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                SSLWithTrustStoreAndClientAuth.class,
+                                                                SSLWithTrustStoreAndClientAuth
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                SSLWithTrustStoreAndClientAuth.class,
+                                                                SSLWithTrustStoreAndClientAuth
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        SSLWithTrustStoreAndClientAuth.class,
+                                                        SSLWithTrustStoreAndClientAuth::tearDown)))))
+                .build();
     }
 
     private SSLWithTrustStoreAndClientAuth(JmxExporterTestEnvironment environment) {

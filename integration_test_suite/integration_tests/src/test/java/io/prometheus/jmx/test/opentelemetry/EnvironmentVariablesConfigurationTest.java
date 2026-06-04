@@ -17,6 +17,7 @@
 package io.prometheus.jmx.test.opentelemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
@@ -28,10 +29,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 import org.paramixel.api.support.Retry;
 
 public class EnvironmentVariablesConfigurationTest {
@@ -47,20 +50,33 @@ public class EnvironmentVariablesConfigurationTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(EnvironmentVariablesConfigurationTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        EnvironmentVariablesConfigurationTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(
                                 EnvironmentVariablesConfigurationTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.exporterTestEnvironment().name(),
                                         () -> new EnvironmentVariablesConfigurationTest(environment))
-                                .child(Lifecycle.<EnvironmentVariablesConfigurationTest>of("lifecycle")
-                                        .before("setUp()", EnvironmentVariablesConfigurationTest::setUp)
-                                        .child(
-                                                "testPrometheusHasMetrics()",
-                                                EnvironmentVariablesConfigurationTest::testPrometheusHasMetrics)
-                                        .after("tearDown()", EnvironmentVariablesConfigurationTest::tearDown)));
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        EnvironmentVariablesConfigurationTest.class,
+                                                        EnvironmentVariablesConfigurationTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testPrometheusHasMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest
+                                                                        ::testPrometheusHasMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        EnvironmentVariablesConfigurationTest.class,
+                                                        EnvironmentVariablesConfigurationTest::tearDown)))))
+                .build();
     }
 
     public void setUp() throws Throwable {

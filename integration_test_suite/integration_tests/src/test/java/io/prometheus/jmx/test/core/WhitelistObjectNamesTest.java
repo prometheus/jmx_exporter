@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class WhitelistObjectNamesTest {
 
@@ -46,27 +49,51 @@ public class WhitelistObjectNamesTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(WhitelistObjectNamesTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        WhitelistObjectNamesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(WhitelistObjectNamesTest.class),
-                        environment -> Instance.of(environment.name(), () -> new WhitelistObjectNamesTest(environment))
-                                .child(Lifecycle.<WhitelistObjectNamesTest>of("lifecycle")
-                                        .before("setUp()", WhitelistObjectNamesTest::setUp)
-                                        .child("testHealthy()", WhitelistObjectNamesTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                WhitelistObjectNamesTest::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                WhitelistObjectNamesTest::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                WhitelistObjectNamesTest::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                WhitelistObjectNamesTest::testPrometheusProtobufMetrics)
-                                        .after("tearDown()", WhitelistObjectNamesTest::tearDown)));
+                        environment -> Instance.builder(
+                                        environment.name(), () -> new WhitelistObjectNamesTest(environment))
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        WhitelistObjectNamesTest.class,
+                                                        WhitelistObjectNamesTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                WhitelistObjectNamesTest.class,
+                                                                WhitelistObjectNamesTest::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                WhitelistObjectNamesTest.class,
+                                                                WhitelistObjectNamesTest::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                WhitelistObjectNamesTest.class,
+                                                                WhitelistObjectNamesTest::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                WhitelistObjectNamesTest.class,
+                                                                WhitelistObjectNamesTest::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                WhitelistObjectNamesTest.class,
+                                                                WhitelistObjectNamesTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
+                                                "tearDown()",
+                                                withInstance(
+                                                        WhitelistObjectNamesTest.class,
+                                                        WhitelistObjectNamesTest::tearDown)))))
+                .build();
     }
 
     private WhitelistObjectNamesTest(JmxExporterTestEnvironment environment) {

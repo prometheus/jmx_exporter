@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.core;
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
+import org.paramixel.api.action.Action;
+import org.paramixel.api.action.Each;
 import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Lifecycle;
-import org.paramixel.api.action.Parallel;
-import org.paramixel.api.action.Spec;
+import org.paramixel.api.action.Scope;
+import org.paramixel.api.action.Sequence;
+import org.paramixel.api.action.Step;
 
 public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
 
@@ -46,38 +49,63 @@ public class MetricCustomizersAttributesAsLabelsExtraMetricsTest {
     }
 
     @Paramixel.Factory
-    public static Spec<?> factory() throws Throwable {
-        return Parallel.of(MetricCustomizersAttributesAsLabelsExtraMetricsTest.class.getName())
-                .each(
+    public static Action factory() throws Throwable {
+        return Each.parallel(
+                        MetricCustomizersAttributesAsLabelsExtraMetricsTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(
                                 MetricCustomizersAttributesAsLabelsExtraMetricsTest.class),
-                        environment -> Instance.of(
+                        environment -> Instance.builder(
                                         environment.name(),
                                         () -> new MetricCustomizersAttributesAsLabelsExtraMetricsTest(environment))
-                                .child(Lifecycle.<MetricCustomizersAttributesAsLabelsExtraMetricsTest>of("lifecycle")
-                                        .before("setUp()", MetricCustomizersAttributesAsLabelsExtraMetricsTest::setUp)
-                                        .child(
-                                                "testHealthy()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest::testHealthy)
-                                        .child(
-                                                "testDefaultTextMetrics()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
-                                                        ::testDefaultTextMetrics)
-                                        .child(
-                                                "testOpenMetricsTextMetrics()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
-                                                        ::testOpenMetricsTextMetrics)
-                                        .child(
-                                                "testPrometheusTextMetrics()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
-                                                        ::testPrometheusTextMetrics)
-                                        .child(
-                                                "testPrometheusProtobufMetrics()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
-                                                        ::testPrometheusProtobufMetrics)
-                                        .after(
+                                .body(Scope.builder("scenario")
+                                        .before(Step.of(
+                                                "setUp()",
+                                                withInstance(
+                                                        MetricCustomizersAttributesAsLabelsExtraMetricsTest.class,
+                                                        MetricCustomizersAttributesAsLabelsExtraMetricsTest::setUp)))
+                                        .body(Sequence.builder("tests")
+                                                .child(Step.of(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        .class,
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        ::testHealthy)))
+                                                .child(Step.of(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        .class,
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(Step.of(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        .class,
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        .class,
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(Step.of(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        .class,
+                                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                        ::testPrometheusProtobufMetrics))))
+                                        .after(Step.of(
                                                 "tearDown()",
-                                                MetricCustomizersAttributesAsLabelsExtraMetricsTest::tearDown)));
+                                                withInstance(
+                                                        MetricCustomizersAttributesAsLabelsExtraMetricsTest.class,
+                                                        MetricCustomizersAttributesAsLabelsExtraMetricsTest
+                                                                ::tearDown)))))
+                .build();
     }
 
     private MetricCustomizersAttributesAsLabelsExtraMetricsTest(JmxExporterTestEnvironment environment) {
