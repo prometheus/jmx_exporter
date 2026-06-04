@@ -1,6 +1,6 @@
-# JMX Exporter
+[![Build Status](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml/badge.svg)](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml) [![Java 8+](https://img.shields.io/badge/Java-8%2B-brightgreen)](https://adoptium.net/) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-[![Build Status](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml/badge.svg)](https://github.com/prometheus/jmx_exporter/actions/workflows/build.yaml)
+# JMX Exporter
 
 The JMX Exporter is a collector to capture JMX MBean values.
 

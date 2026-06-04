@@ -49,6 +49,11 @@
 13. Sets post-release version: `{VERSION}-POST`
 14. Commits and pushes post-release version
 
+
+## Documentation Deployment
+
+Documentation deployment is manual and independent of software releases. Use the `Deploy Documentation` GitHub Actions workflow to publish the Docusaurus site from the selected workflow branch. Documentation updates do not require creating a release.
+
 ## Release Artifacts
 
 Release artifacts will be located in the `RELEASE` directory:
