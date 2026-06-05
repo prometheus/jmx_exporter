@@ -1,0 +1,7 @@
+excludeJvmMetrics: true
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+rules:
+  - pattern: ".*"

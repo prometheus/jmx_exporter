@@ -1,0 +1,3 @@
+rules:
+  - pattern: ".*"
+    cache: true

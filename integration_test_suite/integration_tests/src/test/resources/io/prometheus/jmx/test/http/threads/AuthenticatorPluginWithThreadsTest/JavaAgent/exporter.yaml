@@ -1,0 +1,11 @@
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120
+  authentication:
+    plugin:
+      class: io.prometheus.jmx.AuthenticatorPlugin
+      subjectAttributeName: io.prometheus.jmx.CustomAuthenticatorSubjectAttribute
+rules:
+  - pattern: ".*"

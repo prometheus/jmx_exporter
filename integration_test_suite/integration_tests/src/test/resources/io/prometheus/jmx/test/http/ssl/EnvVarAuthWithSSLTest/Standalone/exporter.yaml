@@ -1,0 +1,11 @@
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+  authentication:
+    basic:
+      username: ${TEST_USERNAME}
+      password: ${TEST_PASSWORD}
+hostPort: application:9999
+rules:
+  - pattern: ".*"

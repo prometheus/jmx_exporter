@@ -1,0 +1,11 @@
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

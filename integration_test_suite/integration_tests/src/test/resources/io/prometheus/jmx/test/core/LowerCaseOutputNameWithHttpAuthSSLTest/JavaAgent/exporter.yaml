@@ -1,0 +1,20 @@
+lowercaseOutputName: true
+httpServer:
+  ssl:
+    mutualTLS: false
+    keyStore:
+      filename: keystore.jks
+      type: JKS
+      password: changeit
+    trustStore:
+      filename: keystore.jks
+      type: JKS
+      password: changeit
+    certificate:
+      alias: localhost
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

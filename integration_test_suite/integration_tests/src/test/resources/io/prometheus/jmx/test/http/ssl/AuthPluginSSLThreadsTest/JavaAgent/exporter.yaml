@@ -1,0 +1,23 @@
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120
+  ssl:
+    mutualTLS: false
+    keyStore:
+      type: PKCS12
+      filename: keystore.pkcs12
+      password: changeit
+    trustStore:
+      type: PKCS12
+      filename: keystore.pkcs12
+      password: changeit
+    certificate:
+      alias: localhost
+  authentication:
+    plugin:
+      class: io.prometheus.jmx.AuthenticatorPlugin
+      subjectAttributeName: io.prometheus.jmx.CustomAuthenticatorSubjectAttribute
+rules:
+  - pattern: ".*"

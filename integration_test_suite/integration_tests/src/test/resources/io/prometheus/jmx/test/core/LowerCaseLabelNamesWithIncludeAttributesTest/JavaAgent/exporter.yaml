@@ -1,0 +1,9 @@
+lowercaseOutputLabelNames: true
+includeObjectNames:
+  - "java.lang:type=Threading"
+includeObjectNameAttributes:
+  "java.lang:type=Threading":
+    - "ThreadCount"
+    - "TotalStartedThreadCount"
+rules:
+  - pattern: ".*"

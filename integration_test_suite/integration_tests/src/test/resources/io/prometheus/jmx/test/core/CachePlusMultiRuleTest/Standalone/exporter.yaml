@@ -1,0 +1,9 @@
+hostPort: application:9999
+rules:
+  - pattern: "io\\.prometheus\\.jmx<type=customValue><>Value: (\\d+)"
+    name: cached_rule_metric
+    cache: true
+    type: GAUGE
+    labels:
+      captured: "$1"
+  - pattern: ".*"

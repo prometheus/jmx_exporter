@@ -1,0 +1,12 @@
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+  authentication:
+    basic:
+      username: Prometheus
+      algorithm: PBKDF2WithHmacSHA256
+      passwordHash: 02564821baef62cc927990c4e645f048
+      salt: 98LeBWIjca
+rules:
+  - pattern: ".*"

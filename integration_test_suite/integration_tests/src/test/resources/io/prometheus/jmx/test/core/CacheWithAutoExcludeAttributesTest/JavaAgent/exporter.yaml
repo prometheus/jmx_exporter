@@ -1,0 +1,4 @@
+autoExcludeObjectNameAttributes: false
+rules:
+  - pattern: ".*"
+    cache: true

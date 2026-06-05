@@ -1,0 +1,9 @@
+hostPort: application:9999
+rules:
+  - pattern: "io\\.prometheus\\.jmx<type=customValue><>Value: (\\d+)"
+    name: factored_value_with_labels
+    valueFactor: 2.0
+    type: GAUGE
+    labels:
+      source: "customValue"
+      multiplied_by: "2"

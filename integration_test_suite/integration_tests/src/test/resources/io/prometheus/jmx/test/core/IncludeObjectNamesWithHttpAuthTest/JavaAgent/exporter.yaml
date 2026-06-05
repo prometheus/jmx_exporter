@@ -1,0 +1,8 @@
+includeObjectNames: ["io.prometheus.jmx:*"]
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

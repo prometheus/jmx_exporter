@@ -1,0 +1,6 @@
+hostPort: application:9999
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+excludeObjectNames: ["java.lang:*"]
+rules:
+  - pattern: ".*"
