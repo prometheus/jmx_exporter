@@ -20,13 +20,11 @@ jobs:
   build:
     if: github.repository == 'prometheus/jmx_exporter'
     runs-on: ubuntu-24.04
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v6
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -36,7 +34,7 @@ jobs:
       - name: Build documentation
         run: ./scripts/build-documentation.sh
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./website/build
 
@@ -50,4 +48,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

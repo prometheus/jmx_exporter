@@ -92,6 +92,7 @@ const config = {
           {
             type: 'docsVersionDropdown',
             position: 'left',
+            className: 'navbar__item--docs-version',
           },
           {
             href: 'https://github.com/prometheus/jmx_exporter',
