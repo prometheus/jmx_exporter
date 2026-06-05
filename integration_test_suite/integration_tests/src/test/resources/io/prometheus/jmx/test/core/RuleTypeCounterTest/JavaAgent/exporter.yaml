@@ -1,0 +1,5 @@
+rules:
+  - pattern: "io.prometheus.jmx:type=autoIncrementing"
+    name: auto_increment_counter
+    type: COUNTER
+    value: Value

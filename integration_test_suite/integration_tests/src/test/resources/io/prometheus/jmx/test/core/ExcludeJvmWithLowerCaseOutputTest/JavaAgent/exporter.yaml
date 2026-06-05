@@ -1,0 +1,4 @@
+lowercaseOutputName: true
+excludeJvmMetrics: true
+rules:
+  - pattern: ".*"

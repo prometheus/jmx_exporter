@@ -1,0 +1,6 @@
+hostPort: application:9999
+rules:
+  - pattern: "io.prometheus.jmx:type=customValue"
+    name: custom_gauge_value
+    type: GAUGE
+    value: Value

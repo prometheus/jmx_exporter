@@ -1,0 +1,19 @@
+httpServer:
+  ssl:
+    mutualTLS: true
+    keyStore:
+      type: PKCS12
+      filename: keystore.pkcs12
+      password: changeit
+    trustStore:
+      type: PKCS12
+      filename: keystore.pkcs12
+      password: changeit
+    certificate:
+      alias: localhost
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

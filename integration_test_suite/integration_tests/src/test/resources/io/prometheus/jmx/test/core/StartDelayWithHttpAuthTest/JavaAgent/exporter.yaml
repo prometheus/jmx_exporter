@@ -1,0 +1,8 @@
+startDelaySeconds: 2
+httpServer:
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

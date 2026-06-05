@@ -1,0 +1,5 @@
+inferCounterTypeFromName: true
+rules:
+  - pattern: "io.prometheus.jmx:type=PerformanceMetricsMBean,name=.*"
+    type: COUNTER
+  - pattern: ".*"

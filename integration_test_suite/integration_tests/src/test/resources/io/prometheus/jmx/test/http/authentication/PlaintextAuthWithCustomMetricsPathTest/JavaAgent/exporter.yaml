@@ -1,0 +1,9 @@
+httpServer:
+  metrics:
+    path: /custom/metrics
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

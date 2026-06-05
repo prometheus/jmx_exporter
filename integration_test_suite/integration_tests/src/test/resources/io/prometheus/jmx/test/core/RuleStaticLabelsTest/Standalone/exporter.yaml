@@ -1,0 +1,9 @@
+hostPort: application:9999
+rules:
+  - pattern: "io.prometheus.jmx:type=customValue"
+    name: custom_value_with_static_labels
+    value: Value
+    labels:
+      env: production
+      service: myapp
+      region: us-east-1

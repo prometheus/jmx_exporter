@@ -1,0 +1,6 @@
+hostPort: application:9999
+rules:
+  - pattern: "io.prometheus.jmx:type=customValue"
+    name: custom_value_with_help
+    help: A custom gauge value from the JMX exporter test application
+    value: Value

@@ -1,0 +1,7 @@
+hostPort: application:9999
+lowercaseOutputName: true
+excludeObjectNameAttributes:
+  "java.lang:type=Threading":
+    - "ThreadCount"
+rules:
+  - pattern: ".*"

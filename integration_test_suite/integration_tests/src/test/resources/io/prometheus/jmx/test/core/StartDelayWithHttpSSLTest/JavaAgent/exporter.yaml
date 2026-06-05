@@ -1,0 +1,7 @@
+startDelaySeconds: 2
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+rules:
+  - pattern: ".*"

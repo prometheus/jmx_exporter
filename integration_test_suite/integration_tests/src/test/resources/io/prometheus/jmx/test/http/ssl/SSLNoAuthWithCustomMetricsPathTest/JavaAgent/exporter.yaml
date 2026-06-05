@@ -1,0 +1,8 @@
+httpServer:
+  metrics:
+    path: /custom/metrics
+  ssl:
+    certificate:
+      alias: localhost
+rules:
+  - pattern: ".*"

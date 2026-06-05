@@ -1,0 +1,14 @@
+httpServer:
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120
+  authentication:
+    basic:
+      username: Prometheus
+      algorithm: PBKDF2WithHmacSHA512
+      salt: 98LeBWIjca
+      passwordHash: CA:7E:D3:B7:DB:D3:19:A3:D2:CE:7A:10:2A:F4:2F:3B
+hostPort: application:9999
+rules:
+  - pattern: ".*"

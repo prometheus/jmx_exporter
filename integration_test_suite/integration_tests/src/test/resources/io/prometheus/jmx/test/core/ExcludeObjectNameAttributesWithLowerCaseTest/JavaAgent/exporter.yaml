@@ -1,0 +1,6 @@
+lowercaseOutputName: true
+excludeObjectNameAttributes:
+  "java.lang:type=Threading":
+    - "ThreadCount"
+rules:
+  - pattern: ".*"

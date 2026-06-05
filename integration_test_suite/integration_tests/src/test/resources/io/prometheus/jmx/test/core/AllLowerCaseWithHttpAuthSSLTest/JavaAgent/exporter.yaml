@@ -1,0 +1,12 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+httpServer:
+  ssl:
+    certificate:
+      alias: localhost
+  authentication:
+    basic:
+      username: Prometheus
+      password: secret
+rules:
+  - pattern: ".*"

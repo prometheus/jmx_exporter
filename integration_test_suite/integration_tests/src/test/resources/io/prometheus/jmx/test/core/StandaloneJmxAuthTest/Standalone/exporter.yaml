@@ -1,0 +1,5 @@
+hostPort: application:9999
+username: Prometheus
+password: secret
+rules:
+  - pattern: ".*"

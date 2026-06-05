@@ -1,0 +1,4 @@
+lowercaseOutputName: true
+rules:
+  - pattern: "io.prometheus.jmx.test:name=PerformanceMetricsMBean"
+    attrNameSnakeCase: true

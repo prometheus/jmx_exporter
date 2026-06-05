@@ -1,0 +1,13 @@
+httpServer:
+  metrics:
+    path: /custom/metrics
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120
+  ssl:
+    certificate:
+      alias: localhost
+hostPort: application:9999
+rules:
+  - pattern: ".*"

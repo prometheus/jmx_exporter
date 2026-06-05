@@ -1,0 +1,4 @@
+rules:
+  - pattern: "io.prometheus.jmx:type=customValue"
+    name: static_value
+    value: 42

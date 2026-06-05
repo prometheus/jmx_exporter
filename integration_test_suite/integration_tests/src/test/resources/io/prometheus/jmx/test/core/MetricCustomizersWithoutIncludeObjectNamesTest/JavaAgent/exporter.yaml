@@ -1,0 +1,9 @@
+metricCustomizers:
+  - mbeanFilter:
+      domain: io.prometheus.jmx
+      properties:
+        type: customValue
+    attributesAsLabels:
+      - Text
+rules:
+  - pattern: ".*"

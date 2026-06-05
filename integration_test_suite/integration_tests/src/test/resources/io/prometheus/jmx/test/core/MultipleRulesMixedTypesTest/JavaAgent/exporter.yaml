@@ -1,0 +1,11 @@
+rules:
+  - pattern: "io.prometheus.jmx:type=autoIncrementing"
+    name: auto_increment_metric
+    type: COUNTER
+    value: Value
+  - pattern: "io.prometheus.jmx:type=customValue"
+    name: custom_gauge_metric
+    type: GAUGE
+    value: Value
+  - pattern: ".*"
+    type: UNTYPED
