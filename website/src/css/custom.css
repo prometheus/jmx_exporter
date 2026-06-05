@@ -138,11 +138,32 @@
   }
 
   .navbar__items {
-    padding: 0.5rem;
+    padding: 0.25rem;
   }
 
   .navbar__brand {
     color: #ffffff;
+  }
+
+  .navbar__title {
+    display: none;
+  }
+
+  .navbar__item:has(.navbar__item--docs-version) {
+    display: block;
+    margin-left: 0.25rem;
+  }
+
+  .navbar__item--docs-version {
+    color: #ffffff;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .navbar__items--right [class*='colorModeToggle'] {
+    color: #ffffff;
+    display: flex;
+    margin-left: 0.25rem;
   }
 }
 
