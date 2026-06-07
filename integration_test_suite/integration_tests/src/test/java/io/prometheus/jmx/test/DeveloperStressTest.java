@@ -43,6 +43,8 @@ import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -62,10 +64,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DeveloperStressTest {
 
-    private static final Duration TEST_DURATION = Duration.ofMinutes(10);
+    private static final Duration TEST_DURATION = Duration.ofHours(1);
     private static final Duration TEST_STATISTICS_REPORT_INTERVAL = Duration.ofSeconds(10);
 
-    private static final int CLIENT_COUNT = 100;
+    private static final int CLIENT_COUNT = 50;
     private static final int CLIENT_MIN_SLEEP_MILLIS = 0;
     private static final int CLIENT_MAX_SLEEP_MILLIS = 1000;
 
@@ -82,6 +84,11 @@ public class DeveloperStressTest {
     private final AtomicLong requestCount = new AtomicLong();
     private final AtomicLong successCount = new AtomicLong();
     private final AtomicLong failureCount = new AtomicLong();
+    private final AtomicLong assertionFailureCount = new AtomicLong();
+    private final AtomicLong ioFailureCount = new AtomicLong();
+    private final AtomicLong timeoutFailureCount = new AtomicLong();
+    private final AtomicLong interruptedFailureCount = new AtomicLong();
+    private final AtomicLong otherFailureCount = new AtomicLong();
     private final AtomicLong lastStatisticsRequestCount = new AtomicLong();
     private final AtomicLong lastStatisticsNanos = new AtomicLong();
     private final AtomicReference<Throwable> firstFailure = new AtomicReference<>();
@@ -211,12 +218,17 @@ public class DeveloperStressTest {
                 intervalSeconds == 0 ? 0 : (currentRequestCount - previousRequestCount) / intervalSeconds;
 
         System.out.println(String.format(
-                "elapsed=%.1fs remaining=%.1fs requests=%d successes=%d failures=%d cumulativeRps=%.1f intervalRps=%.1f",
+                "elapsed=%.1fs remaining=%.1fs requests=%d successes=%d failures=%d assertionFailures=%d ioFailures=%d timeoutFailures=%d interruptedFailures=%d otherFailures=%d cumulativeRps=%.1f intervalRps=%.1f",
                 elapsedSeconds,
                 remainingSeconds,
                 currentRequestCount,
                 successCount.get(),
                 failureCount.get(),
+                assertionFailureCount.get(),
+                ioFailureCount.get(),
+                timeoutFailureCount.get(),
+                interruptedFailureCount.get(),
+                otherFailureCount.get(),
                 cumulativeRequestsPerSecond,
                 intervalRequestsPerSecond));
     }
@@ -225,8 +237,8 @@ public class DeveloperStressTest {
         long clientRequestCount = 0;
         while (System.nanoTime() < endNanos) {
             long requestNumber = requestCount.incrementAndGet();
+            StressRequest stressRequest = nextStressRequest(clientId, clientRequestCount);
             try {
-                StressRequest stressRequest = nextStressRequest(clientId, clientRequestCount);
                 HttpResponse httpResponse = sendStressRequest(stressRequest);
                 assertStressResponse(httpResponse, stressRequest);
                 successCount.incrementAndGet();
@@ -234,14 +246,36 @@ public class DeveloperStressTest {
                 clientRequestCount++;
                 sleepBetweenRequests();
             } catch (Throwable t) {
-                failureCount.incrementAndGet();
-                firstFailure.compareAndSet(
-                        null, new AssertionError("Client " + clientId + " failed on request " + requestNumber, t));
-                if (t instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
+                recordFailure(clientId, requestNumber, stressRequest, t);
                 return;
             }
+        }
+    }
+
+    private void recordFailure(int clientId, long requestNumber, StressRequest stressRequest, Throwable throwable) {
+        failureCount.incrementAndGet();
+        classifyFailure(throwable);
+        firstFailure.compareAndSet(
+                null,
+                new AssertionError(
+                        "Client " + clientId + " failed on request " + requestNumber + " (" + stressRequest + ")",
+                        throwable));
+        if (throwable instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void classifyFailure(Throwable throwable) {
+        if (throwable instanceof InterruptedException) {
+            interruptedFailureCount.incrementAndGet();
+        } else if (throwable instanceof SocketTimeoutException || throwable instanceof InterruptedIOException) {
+            timeoutFailureCount.incrementAndGet();
+        } else if (throwable instanceof IOException) {
+            ioFailureCount.incrementAndGet();
+        } else if (throwable instanceof AssertionError) {
+            assertionFailureCount.incrementAndGet();
+        } else {
+            otherFailureCount.incrementAndGet();
         }
     }
 
@@ -407,6 +441,11 @@ public class DeveloperStressTest {
         System.out.println("  requests: " + requestCount.get());
         System.out.println("  successes: " + successCount.get());
         System.out.println("  failures: " + failureCount.get());
+        System.out.println("  I/O failures: " + ioFailureCount.get());
+        System.out.println("  timeout failures: " + timeoutFailureCount.get());
+        System.out.println("  assertion failures: " + assertionFailureCount.get());
+        System.out.println("  interrupted failures: " + interruptedFailureCount.get());
+        System.out.println("  other failures: " + otherFailureCount.get());
         System.out.println("  elapsed seconds: " + elapsedSeconds);
         System.out.println("  requests/second: " + requestsPerSecond);
         if (failure != null) {
