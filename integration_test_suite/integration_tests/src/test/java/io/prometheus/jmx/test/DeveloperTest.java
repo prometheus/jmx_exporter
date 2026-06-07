@@ -20,7 +20,6 @@ import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResp
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
 import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.paramixel.api.Context.withInstance;
 
 import io.prometheus.jmx.AutoIncrementing;
 import io.prometheus.jmx.BuildInfoMetrics;
@@ -52,12 +51,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import org.paramixel.api.Runner;
-import org.paramixel.api.action.Action;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
 
 public class DeveloperTest {
 
@@ -71,32 +64,18 @@ public class DeveloperTest {
         // Intentionally empty
     }
 
-    public static void main(String[] args) throws Throwable {
-        Runner.defaultRunner().runAndExit(factory());
-    }
-
-    public static Action factory() throws Throwable {
-        return Instance.builder(DeveloperTest.class.getName(), DeveloperTest::new)
-                .body(Scope.builder("scenario")
-                        .before(Step.of("setUp()", withInstance(DeveloperTest.class, DeveloperTest::setUp)))
-                        .body(Sequence.builder("tests")
-                                .child(Step.of(
-                                        "testHealthy()", withInstance(DeveloperTest.class, DeveloperTest::testHealthy)))
-                                .child(Step.of(
-                                        "testDefaultTextMetrics()",
-                                        withInstance(DeveloperTest.class, DeveloperTest::testDefaultTextMetrics)))
-                                .child(Step.of(
-                                        "testOpenMetricsTextMetrics()",
-                                        withInstance(DeveloperTest.class, DeveloperTest::testOpenMetricsTextMetrics)))
-                                .child(Step.of(
-                                        "testPrometheusTextMetrics()",
-                                        withInstance(DeveloperTest.class, DeveloperTest::testPrometheusTextMetrics)))
-                                .child(Step.of(
-                                        "testPrometheusProtobufMetrics()",
-                                        withInstance(
-                                                DeveloperTest.class, DeveloperTest::testPrometheusProtobufMetrics))))
-                        .after(Step.of("tearDown()", withInstance(DeveloperTest.class, DeveloperTest::tearDown))))
-                .build();
+    public static void main(String[] args) throws Exception {
+        DeveloperTest developerTest = new DeveloperTest();
+        try {
+            developerTest.setUp();
+            developerTest.testHealthy();
+            developerTest.testDefaultTextMetrics();
+            developerTest.testOpenMetricsTextMetrics();
+            developerTest.testPrometheusTextMetrics();
+            developerTest.testPrometheusProtobufMetrics();
+        } finally {
+            developerTest.tearDown();
+        }
     }
 
     public void setUp() {
