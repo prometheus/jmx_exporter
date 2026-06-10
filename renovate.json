@@ -1,19 +1,32 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "dependencyDashboard": false,
   "packageRules": [
     {
-      "matchManagers": ["maven-wrapper"],
+      "matchManagers": [
+        "maven-wrapper"
+      ],
       "allowedVersions": "3.9.6",
       "groupName": "Maven wrapper pinned to 3.9.6"
     },
     {
-      "matchPackageNames": ["io.prometheus.jmx:jmx_example_application"],
+      "description": "Do not try to resolve internal Maven reactor modules from Maven repositories",
+      "matchManagers": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "io.prometheus.jmx:integration_test_suite",
+        "io.prometheus.jmx:jmx_example_application"
+      ],
       "enabled": false
     },
     {
-      "matchManagers": ["maven"],
+      "matchManagers": [
+        "maven"
+      ],
       "groupName": "Maven dependencies"
     }
   ]
