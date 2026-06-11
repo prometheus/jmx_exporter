@@ -37,7 +37,7 @@
         <!-- Dependency versions -->
         <assertj.version>3.27.7</assertj.version>
         <ayza.version>10.0.5</ayza.version>
-        <caffeine.version>3.2.4</caffeine.version>
+        <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <junit.version>6.1.0</junit.version>
         <logback.version>1.5.34</logback.version>
