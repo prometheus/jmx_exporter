@@ -31,8 +31,9 @@ class HadoopDataNode implements HadoopDataNodeMXBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("Hadoop:name=DataNodeInfo,service=DataNode");
-        HadoopDataNode mbean = new HadoopDataNode();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new HadoopDataNode(), mbeanName);
+        }
     }
 
     public Map<String, Map<String, Long>> getDatanodeNetworkCounts() {

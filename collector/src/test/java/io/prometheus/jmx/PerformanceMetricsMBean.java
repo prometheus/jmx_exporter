@@ -63,7 +63,8 @@ class PerformanceMetrics implements PerformanceMetricsMBean {
 
     static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName objectName = new ObjectName("io.prometheus.jmx.test:name=PerformanceMetricsMBean");
-        PerformanceMetrics bean = new PerformanceMetrics();
-        mbs.registerMBean(bean, objectName);
+        if (!mbs.isRegistered(objectName)) {
+            mbs.registerMBean(new PerformanceMetrics(), objectName);
+        }
     }
 }

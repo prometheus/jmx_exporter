@@ -34,7 +34,8 @@ class ArrayValue implements ArrayValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx.test:type=arrayValue");
-        ArrayValueMBean mbean = new ArrayValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new ArrayValue(), mbeanName);
+        }
     }
 }

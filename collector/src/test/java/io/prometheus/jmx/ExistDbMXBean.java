@@ -106,8 +106,9 @@ class ExistDb implements ExistDbMXBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mxbeanName = new ObjectName("org.exist.management.exist:type=ProcessReport");
-        ExistDb mxbean = new ExistDb();
-        mbs.registerMBean(mxbean, mxbeanName);
+        if (!mbs.isRegistered(mxbeanName)) {
+            mbs.registerMBean(new ExistDb(), mxbeanName);
+        }
     }
 
     public Map<QueryKey, RunningQuery> getRunningQueries() {

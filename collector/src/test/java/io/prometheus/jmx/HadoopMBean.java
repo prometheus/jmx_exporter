@@ -29,8 +29,9 @@ class Hadoop implements HadoopMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("hadoop:service=DataNode,name=DataNodeActivity-ams-hdd001-50010");
-        Hadoop mbean = new Hadoop();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new Hadoop(), mbeanName);
+        }
     }
 
     public int getreplaceBlockOpMinTime() {

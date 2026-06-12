@@ -37,7 +37,8 @@ class DateValue implements DateValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx.test:type=dateValue");
-        DateValueMBean mbean = new DateValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new DateValue(), mbeanName);
+        }
     }
 }

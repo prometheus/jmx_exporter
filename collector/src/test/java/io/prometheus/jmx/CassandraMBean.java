@@ -29,8 +29,9 @@ class Cassandra implements CassandraMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("org.apache.cassandra.concurrent:type=CONSISTENCY-MANAGER");
-        Cassandra mbean = new Cassandra();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new Cassandra(), mbeanName);
+        }
     }
 
     public int getActiveCount() {

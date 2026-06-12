@@ -35,7 +35,8 @@ class UnsupportedType implements UnsupportedTypeMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx.test:type=unsupportedType");
-        UnsupportedTypeMBean mbean = new UnsupportedType();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new UnsupportedType(), mbeanName);
+        }
     }
 }

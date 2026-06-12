@@ -38,11 +38,13 @@ class TotalValue implements TotalValueMBean {
 
     static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mxbeanName = new ObjectName("io.prometheus.jmx.test:type=Total-Value");
-        TotalValue mxbean = new TotalValue();
-        mbs.registerMBean(mxbean, mxbeanName);
+        if (!mbs.isRegistered(mxbeanName)) {
+            mbs.registerMBean(new TotalValue(), mxbeanName);
+        }
 
         mxbeanName = new ObjectName("io.prometheus.jmx.test:type=Total.Value");
-        mxbean = new TotalValue();
-        mbs.registerMBean(mxbean, mxbeanName);
+        if (!mbs.isRegistered(mxbeanName)) {
+            mbs.registerMBean(new TotalValue(), mxbeanName);
+        }
     }
 }
