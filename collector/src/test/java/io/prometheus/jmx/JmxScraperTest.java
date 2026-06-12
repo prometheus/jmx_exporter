@@ -66,7 +66,7 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                Collections.<ObjectName>emptyList(),
+                Collections.emptyList(),
                 filter,
                 Collections.<MetricCustomizer>emptyList(),
                 receiver,
@@ -81,7 +81,7 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                Collections.<ObjectName>emptyList(),
+                Collections.emptyList(),
                 filter,
                 customizers,
                 receiver,
@@ -183,9 +183,9 @@ public class JmxScraperTest {
                     "",
                     new SslProperties(false),
                     Collections.singletonList(includePattern),
-                    Collections.<ObjectName>emptyList(),
+                    Collections.emptyList(),
                     filter,
-                    Collections.<MetricCustomizer>emptyList(),
+                    Collections.emptyList(),
                     receiver,
                     cache);
         }
@@ -199,7 +199,7 @@ public class JmxScraperTest {
                     Collections.singletonList(includePattern),
                     excludePatterns,
                     filter,
-                    Collections.<MetricCustomizer>emptyList(),
+                    Collections.emptyList(),
                     receiver,
                     cache);
         }
@@ -278,7 +278,7 @@ public class JmxScraperTest {
                 ArrayValue.registerBean(platformServer);
                 JmxScraper scraper = createScraper(null);
                 scraper.doScrape();
-                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "NullValue".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "Scores".equals(b.attrName));
             } finally {
                 if (platformServer.isRegistered(beanName)) {
                     platformServer.unregisterMBean(beanName);
@@ -354,7 +354,7 @@ public class JmxScraperTest {
                 UnsupportedType.registerBean(platformServer);
                 JmxScraper scraper = createScraper(null);
                 scraper.doScrape();
-                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "NullValue".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "Location".equals(b.attrName));
             } finally {
                 if (platformServer.isRegistered(beanName)) {
                     platformServer.unregisterMBean(beanName);
@@ -448,9 +448,9 @@ public class JmxScraperTest {
                         "",
                         new SslProperties(false),
                         Collections.singletonList((ObjectName) null),
-                        Collections.<ObjectName>emptyList(),
+                        Collections.emptyList(),
                         filter,
-                        Collections.<MetricCustomizer>emptyList(),
+                        Collections.emptyList(),
                         freshReceiver,
                         cache);
                 freshScraper.doScrape();
