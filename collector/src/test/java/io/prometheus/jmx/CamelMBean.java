@@ -31,8 +31,9 @@ class Camel implements CamelMBean {
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName =
                 new ObjectName("org.apache.camel:context=my-camel-context,type=routes,name=\"my-route-name\"");
-        Camel mbean = new Camel();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new Camel(), mbeanName);
+        }
     }
 
     @Override

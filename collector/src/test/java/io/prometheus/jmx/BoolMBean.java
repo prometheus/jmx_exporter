@@ -31,8 +31,9 @@ class Bool implements BoolMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("boolean:Type=Test");
-        Bool mbean = new Bool();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new Bool(), mbeanName);
+        }
     }
 
     public boolean getTrue() {

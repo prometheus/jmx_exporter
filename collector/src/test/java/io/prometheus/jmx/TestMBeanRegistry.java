@@ -17,22 +17,15 @@
 package io.prometheus.jmx;
 
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.management.MBeanServer;
 
 public class TestMBeanRegistry {
-
-    private static final AtomicBoolean registered = new AtomicBoolean(false);
 
     private TestMBeanRegistry() {
         // Intentionally empty
     }
 
     public static synchronized void registerTestMBeans() throws Exception {
-        if (registered.getAndSet(true)) {
-            return;
-        }
-
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         CollidingName.registerBeans(mbs);

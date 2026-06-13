@@ -34,7 +34,8 @@ class NullValue implements NullValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx.test:type=nullValue");
-        NullValueMBean mbean = new NullValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new NullValue(), mbeanName);
+        }
     }
 }

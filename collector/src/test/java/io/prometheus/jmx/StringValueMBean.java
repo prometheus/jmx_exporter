@@ -45,7 +45,8 @@ class StringValue implements StringValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx:type=stringValue");
-        StringValueMBean mbean = new StringValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new StringValue(), mbeanName);
+        }
     }
 }

@@ -32,8 +32,9 @@ class CassandraMetrics implements CassandraMetricsMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("org.apache.cassandra.metrics:type=Compaction,name=CompletedTasks");
-        CassandraMetricsMBean mbean = new CassandraMetrics();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new CassandraMetrics(), mbeanName);
+        }
     }
 
     public float getValue() {

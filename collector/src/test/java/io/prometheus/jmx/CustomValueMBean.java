@@ -57,7 +57,8 @@ class CustomValue implements CustomValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx:type=customValue");
-        CustomValueMBean mbean = new CustomValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new CustomValue(), mbeanName);
+        }
     }
 }

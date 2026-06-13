@@ -42,7 +42,8 @@ class OptionalValue implements OptionalValueMBean {
 
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName = new ObjectName("io.prometheus.jmx.test:type=optionalValue");
-        OptionalValueMBean mbean = new OptionalValue();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new OptionalValue(), mbeanName);
+        }
     }
 }

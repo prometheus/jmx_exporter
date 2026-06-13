@@ -32,8 +32,9 @@ class KafkaClient implements DynamicMBean {
     public static void registerBean(MBeanServer mbs) throws JMException {
         ObjectName mbeanName =
                 new ObjectName("kafka.consumer:type=consumer-node-metrics,client-id=my-app-consumer,node-id=node-1");
-        KafkaClient mbean = new KafkaClient();
-        mbs.registerMBean(mbean, mbeanName);
+        if (!mbs.isRegistered(mbeanName)) {
+            mbs.registerMBean(new KafkaClient(), mbeanName);
+        }
     }
 
     @Override

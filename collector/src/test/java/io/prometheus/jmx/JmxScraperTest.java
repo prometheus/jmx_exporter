@@ -19,17 +19,13 @@ package io.prometheus.jmx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import io.prometheus.jmx.JmxCollector.MBeanFilter;
 import io.prometheus.jmx.JmxCollector.MetricCustomizer;
 import io.prometheus.jmx.JmxCollector.SslProperties;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,20 +36,14 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.management.Attribute;
 import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.management.RuntimeMBeanException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 public class JmxScraperTest {
 
-    private MBeanServerConnection mockConn;
     private ObjectName testObjectName;
     private RecordingMBeanReceiver receiver;
     private ObjectNameAttributeFilter filter;
@@ -62,7 +52,6 @@ public class JmxScraperTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        mockConn = mock(MBeanServerConnection.class);
         testObjectName = new ObjectName("test.domain:type=Test");
         receiver = new RecordingMBeanReceiver();
         filter = ObjectNameAttributeFilter.create(new HashMap<>());
@@ -77,9 +66,9 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                new ArrayList<>(),
+                Collections.emptyList(),
                 filter,
-                new ArrayList<>(),
+                Collections.<MetricCustomizer>emptyList(),
                 receiver,
                 cache);
     }
@@ -92,259 +81,385 @@ public class JmxScraperTest {
                 "",
                 new SslProperties(false),
                 Collections.singletonList(null),
-                new ArrayList<>(),
+                Collections.emptyList(),
                 filter,
                 customizers,
                 receiver,
                 cache);
     }
 
-    private void invokeScrapeBean(JmxScraper scraper, MBeanServerConnection conn, ObjectName name) throws Exception {
-        Method method = JmxScraper.class.getDeclaredMethod("scrapeBean", MBeanServerConnection.class, ObjectName.class);
-        method.setAccessible(true);
-        method.invoke(scraper, conn, name);
+    private static JmxScraper.MBeanReceiver createStdoutWriter() {
+        try {
+            Class<?> stdoutWriterClass = Class.forName("io.prometheus.jmx.JmxScraper$StdoutWriter");
+            java.lang.reflect.Constructor<?> constructor = stdoutWriterClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return (JmxScraper.MBeanReceiver) constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    @Nested
-    class ScrapeBeanErrorPathTests {
+    static class RecordingMBeanReceiver implements JmxScraper.MBeanReceiver {
 
-        @Test
-        void scrapeBeanWithJMExceptionFromGetMBeanInfoDoesNotThrow() throws Exception {
-            when(mockConn.getMBeanInfo(testObjectName)).thenThrow(new InstanceNotFoundException("mbean not found"));
+        private final List<RecordedBean> recordedBeans = new ArrayList<>();
 
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
+        @Override
+        public void recordBean(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
+                List<String> attrKeys,
+                String attrName,
+                String attrType,
+                String attrDescription,
+                Object value) {
+            recordedBeans.add(new RecordedBean(
+                    domain,
+                    beanProperties,
+                    attributesAsLabelsWithValues,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    value));
         }
 
-        @Test
-        void scrapeBeanWithNonReadableAttributeSkipsIt() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo nonReadableAttr =
-                    new MBeanAttributeInfo("NonReadableAttr", "java.lang.String", "desc", false, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {nonReadableAttr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
+        List<RecordedBean> getRecordedBeans() {
+            return recordedBeans;
         }
+    }
 
-        @Test
-        void scrapeBeanWithNullAttributesReturnsGracefully() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo readableAttr =
-                    new MBeanAttributeInfo("ReadableAttr", "java.lang.String", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {readableAttr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(null);
+    static class RecordedBean {
 
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
+        final String domain;
+        final LinkedHashMap<String, String> beanProperties;
+        final Map<String, String> attributesAsLabelsWithValues;
+        final List<String> attrKeys;
+        final String attrName;
+        final String attrType;
+        final String attrDescription;
+        final Object value;
 
-        @Test
-        void scrapeBeanWithGetAttributesExceptionFallsBackToOneByOne() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo readableAttr =
-                    new MBeanAttributeInfo("Attr1", "java.lang.String", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {readableAttr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenThrow(new RuntimeMBeanException(new RuntimeException("bulk get failed")));
-            when(mockConn.getAttribute(testObjectName, "Attr1")).thenReturn("value1");
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).attrName).isEqualTo("Attr1");
-        }
-
-        @Test
-        void scrapeBeanWithNullElementInAttributeListSkipsIt() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo readableAttr =
-                    new MBeanAttributeInfo("Attr1", "java.lang.String", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {readableAttr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(null);
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
-
-        @Test
-        void scrapeBeanWithNonAttributeElementInAttributeListSkipsIt() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo readableAttr =
-                    new MBeanAttributeInfo("Attr1", "java.lang.String", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {readableAttr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add("not an Attribute object");
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
-
-        @Test
-        void processAttributesOneByOneSkipsFailedAttributes() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr1 =
-                    new MBeanAttributeInfo("GoodAttr", "java.lang.String", "desc", true, false, false);
-            MBeanAttributeInfo attr2 =
-                    new MBeanAttributeInfo("BadAttr", "java.lang.String", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr1, attr2});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenThrow(new RuntimeMBeanException(new RuntimeException("bulk failed")));
-            when(mockConn.getAttribute(testObjectName, "GoodAttr")).thenReturn("goodValue");
-            when(mockConn.getAttribute(testObjectName, "BadAttr"))
-                    .thenThrow(new AttributeNotFoundException("not found"));
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).attrName).isEqualTo("GoodAttr");
+        RecordedBean(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
+                List<String> attrKeys,
+                String attrName,
+                String attrType,
+                String attrDescription,
+                Object value) {
+            this.domain = domain;
+            this.beanProperties = beanProperties;
+            this.attributesAsLabelsWithValues = attributesAsLabelsWithValues;
+            this.attrKeys = attrKeys;
+            this.attrName = attrName;
+            this.attrType = attrType;
+            this.attrDescription = attrDescription;
+            this.value = value;
         }
     }
 
     @Nested
-    class ProcessBeanValueTypeTests {
+    class DoScrapeWithRealMBeansTests {
 
-        @Test
-        void scrapeBeanWithNumberValueRecordsCorrectly() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr = new MBeanAttributeInfo("Count", "java.lang.Integer", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
+        private MBeanServer platformServer;
+        private ObjectNameAttributeFilter filter;
+        private JmxMBeanPropertyCache cache;
+        private RecordingMBeanReceiver receiver;
 
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("Count", 42));
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
+        @BeforeEach
+        void setUp() {
+            platformServer = ManagementFactory.getPlatformMBeanServer();
+            filter = ObjectNameAttributeFilter.create(new HashMap<>());
+            cache = new JmxMBeanPropertyCache();
+            receiver = new RecordingMBeanReceiver();
+        }
 
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).value).isEqualTo(42);
+        private JmxScraper createScraper(ObjectName includePattern) {
+            return new JmxScraper(
+                    "",
+                    "",
+                    "",
+                    new SslProperties(false),
+                    Collections.singletonList(includePattern),
+                    Collections.emptyList(),
+                    filter,
+                    Collections.emptyList(),
+                    receiver,
+                    cache);
+        }
+
+        private JmxScraper createScraperWithExclude(ObjectName includePattern, List<ObjectName> excludePatterns) {
+            return new JmxScraper(
+                    "",
+                    "",
+                    "",
+                    new SslProperties(false),
+                    Collections.singletonList(includePattern),
+                    excludePatterns,
+                    filter,
+                    Collections.emptyList(),
+                    receiver,
+                    cache);
         }
 
         @Test
-        void scrapeBeanWithNullValueDoesNotRecord() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr =
-                    new MBeanAttributeInfo("NullAttr", "java.lang.Object", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("NullAttr", null));
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
+        void scrapeStringValue() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx:type=stringValue");
+            try {
+                StringValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans())
+                        .anyMatch(b -> "Text".equals(b.attrName) && "value".equals(b.value));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
         }
 
         @Test
-        void scrapeBeanWithBooleanValueRecordsCorrectly() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr =
-                    new MBeanAttributeInfo("Enabled", "java.lang.Boolean", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("Enabled", true));
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).value).isEqualTo(true);
+        void scrapeBooleanValue() throws Exception {
+            ObjectName beanName = new ObjectName("boolean:Type=Test");
+            try {
+                Bool.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                List<RecordedBean> beans = receiver.getRecordedBeans();
+                assertThat(beans).anyMatch(b -> "True".equals(b.attrName) && Boolean.TRUE.equals(b.value));
+                assertThat(beans).anyMatch(b -> "False".equals(b.attrName) && Boolean.FALSE.equals(b.value));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
         }
 
         @Test
-        void scrapeBeanWithArrayValueDoesNotRecord() throws Exception {
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr =
-                    new MBeanAttributeInfo("ArrayAttr", "[Ljava.lang.String;", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr});
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("ArrayAttr", new String[] {"a", "b"}));
-            when(mockConn.getAttributes(eq(testObjectName), any(String[].class)))
-                    .thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, testObjectName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
-    }
-
-    @Nested
-    class RuntimeMBeanSkipTests {
-
-        @Test
-        void scrapeBeanSkipsSystemPropertiesAttributeForRuntimeMBean() throws Exception {
-            ObjectName runtimeName = new ObjectName("java.lang:type=Runtime");
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo sysPropsAttr =
-                    new MBeanAttributeInfo("SystemProperties", "java.util.Map", "desc", true, false, false);
-            MBeanAttributeInfo normalAttr =
-                    new MBeanAttributeInfo("StartTime", "java.lang.Long", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {sysPropsAttr, normalAttr});
-            when(mockConn.getMBeanInfo(runtimeName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("SystemProperties", new HashMap<>()));
-            attrList.add(new Attribute("StartTime", 100L));
-            when(mockConn.getAttributes(eq(runtimeName), any(String[].class))).thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, runtimeName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).attrName).isEqualTo("StartTime");
+        void scrapeNumberValue() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx:type=customValue");
+            try {
+                CustomValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans())
+                        .anyMatch(b -> "Value".equals(b.attrName)
+                                && Integer.valueOf(345).equals(b.value));
+                assertThat(receiver.getRecordedBeans())
+                        .anyMatch(b -> "Text".equals(b.attrName) && "value".equals(b.value));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
         }
 
         @Test
-        void scrapeBeanSkipsClassPathAttributeForRuntimeMBean() throws Exception {
-            ObjectName runtimeName = new ObjectName("java.lang:type=Runtime");
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo classPathAttr =
-                    new MBeanAttributeInfo("ClassPath", "java.lang.String", "desc", true, false, false);
-            MBeanAttributeInfo normalAttr =
-                    new MBeanAttributeInfo("Uptime", "java.lang.Long", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {classPathAttr, normalAttr});
-            when(mockConn.getMBeanInfo(runtimeName)).thenReturn(mBeanInfo);
-
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("ClassPath", "/path/to/classes"));
-            attrList.add(new Attribute("Uptime", 200L));
-            when(mockConn.getAttributes(eq(runtimeName), any(String[].class))).thenReturn(attrList);
-
-            invokeScrapeBean(scraper, mockConn, runtimeName);
-            assertThat(receiver.getRecordedBeans()).hasSize(1);
-            assertThat(receiver.getRecordedBeans().get(0).attrName).isEqualTo("Uptime");
+        void scrapeNullValueDoesNotRecord() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx.test:type=nullValue");
+            try {
+                NullValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "NullValue".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
         }
 
         @Test
-        void scrapeBeanSkipsFlightRecorderMBean() throws Exception {
-            ObjectName jfrName = new ObjectName("jdk.management.jfr:type=FlightRecorder");
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            MBeanAttributeInfo attr = new MBeanAttributeInfo("MaxSize", "java.lang.Long", "desc", true, false, false);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {attr});
-            when(mockConn.getMBeanInfo(jfrName)).thenReturn(mBeanInfo);
+        void scrapeArrayValueDoesNotRecord() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx.test:type=arrayValue");
+            try {
+                ArrayValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "Scores".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
+        }
 
-            AttributeList attrList = new AttributeList();
-            attrList.add(new Attribute("MaxSize", 100L));
-            when(mockConn.getAttributes(eq(jfrName), any(String[].class))).thenReturn(attrList);
+        @Test
+        void scrapeDateValueConvertsToEpoch() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx.test:type=dateValue");
+            try {
+                DateValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                RecordedBean dateBean = receiver.getRecordedBeans().stream()
+                        .filter(b -> "Timestamp".equals(b.attrName))
+                        .findFirst()
+                        .orElse(null);
+                assertThat(dateBean).isNotNull();
+                assertThat(dateBean.attrType).isEqualTo("java.lang.Double");
+                assertThat(dateBean.value).isEqualTo(1700000000.0);
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
+        }
 
-            invokeScrapeBean(scraper, mockConn, jfrName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
+        @Test
+        void scrapeEnumValueToString() throws Exception {
+            ObjectName beanName = new ObjectName("org.bean.enum:type=StateMetrics");
+            try {
+                BeanWithEnum.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                RecordedBean enumBean = receiver.getRecordedBeans().stream()
+                        .filter(b -> "State".equals(b.attrName))
+                        .findFirst()
+                        .orElse(null);
+                assertThat(enumBean).isNotNull();
+                assertThat(enumBean.value).isEqualTo("RUNNING");
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
+        }
+
+        @Test
+        void scrapeOptionalPresentUnwraps() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx.test:type=optionalValue");
+            try {
+                OptionalValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                RecordedBean optBean = receiver.getRecordedBeans().stream()
+                        .filter(b -> "OptionalPresent".equals(b.attrName))
+                        .findFirst()
+                        .orElse(null);
+                assertThat(optBean).isNotNull();
+                assertThat(optBean.value).isEqualTo(42);
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
+        }
+
+        @Test
+        void scrapeUnrecognizedTypeDoesNotRecord() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx.test:type=unsupportedType");
+            try {
+                UnsupportedType.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "Location".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
+        }
+
+        @Test
+        void doScrapeQueriesAndScrapesAllMatchingBeans() throws Exception {
+            ObjectName stringValueName = new ObjectName("io.prometheus.jmx:type=stringValue");
+            ObjectName customValueName = new ObjectName("io.prometheus.jmx:type=customValue");
+            ObjectName dateValueName = new ObjectName("io.prometheus.jmx.test:type=dateValue");
+            try {
+                StringValue.registerBean(platformServer);
+                CustomValue.registerBean(platformServer);
+                DateValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Text".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Value".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Timestamp".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(stringValueName)) {
+                    platformServer.unregisterMBean(stringValueName);
+                }
+                if (platformServer.isRegistered(customValueName)) {
+                    platformServer.unregisterMBean(customValueName);
+                }
+                if (platformServer.isRegistered(dateValueName)) {
+                    platformServer.unregisterMBean(dateValueName);
+                }
+            }
+        }
+
+        @Test
+        void doScrapeFiltersByIncludePattern() throws Exception {
+            ObjectName stringValueName = new ObjectName("io.prometheus.jmx:type=stringValue");
+            ObjectName nullValueName = new ObjectName("io.prometheus.jmx.test:type=nullValue");
+            try {
+                StringValue.registerBean(platformServer);
+                NullValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(new ObjectName("io.prometheus.jmx:*"));
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Text".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "NullValue".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(stringValueName)) {
+                    platformServer.unregisterMBean(stringValueName);
+                }
+                if (platformServer.isRegistered(nullValueName)) {
+                    platformServer.unregisterMBean(nullValueName);
+                }
+            }
+        }
+
+        @Test
+        void doScrapeRespectsExcludePattern() throws Exception {
+            ObjectName stringValueName = new ObjectName("io.prometheus.jmx:type=stringValue");
+            ObjectName nullValueName = new ObjectName("io.prometheus.jmx.test:type=nullValue");
+            try {
+                StringValue.registerBean(platformServer);
+                NullValue.registerBean(platformServer);
+                List<ObjectName> excludes = Collections.singletonList(new ObjectName("io.prometheus.jmx.test:*"));
+                JmxScraper scraper = createScraperWithExclude(null, excludes);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Text".equals(b.attrName));
+                assertThat(receiver.getRecordedBeans()).noneMatch(b -> "NullValue".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(stringValueName)) {
+                    platformServer.unregisterMBean(stringValueName);
+                }
+                if (platformServer.isRegistered(nullValueName)) {
+                    platformServer.unregisterMBean(nullValueName);
+                }
+            }
+        }
+
+        @Test
+        void doScrapeClearsOldCachedBeans() throws Exception {
+            ObjectName beanName = new ObjectName("io.prometheus.jmx:type=stringValue");
+            try {
+                StringValue.registerBean(platformServer);
+                JmxScraper scraper = createScraper(null);
+                scraper.doScrape();
+                assertThat(receiver.getRecordedBeans()).anyMatch(b -> "Text".equals(b.attrName));
+                platformServer.unregisterMBean(beanName);
+                RecordingMBeanReceiver freshReceiver = new RecordingMBeanReceiver();
+                JmxScraper freshScraper = new JmxScraper(
+                        "",
+                        "",
+                        "",
+                        new SslProperties(false),
+                        Collections.singletonList((ObjectName) null),
+                        Collections.emptyList(),
+                        filter,
+                        Collections.emptyList(),
+                        freshReceiver,
+                        cache);
+                freshScraper.doScrape();
+                assertThat(freshReceiver.getRecordedBeans()).noneMatch(b -> "Text".equals(b.attrName));
+            } finally {
+                if (platformServer.isRegistered(beanName)) {
+                    platformServer.unregisterMBean(beanName);
+                }
+            }
         }
     }
 
@@ -594,98 +709,6 @@ public class JmxScraperTest {
         }
     }
 
-    private static JmxScraper.MBeanReceiver createStdoutWriter() {
-        try {
-            Class<?> stdoutWriterClass = Class.forName("io.prometheus.jmx.JmxScraper$StdoutWriter");
-            java.lang.reflect.Constructor<?> constructor = stdoutWriterClass.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            return (JmxScraper.MBeanReceiver) constructor.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    static class RecordingMBeanReceiver implements JmxScraper.MBeanReceiver {
-
-        private final List<RecordedBean> recordedBeans = new ArrayList<>();
-
-        @Override
-        public void recordBean(
-                String domain,
-                LinkedHashMap<String, String> beanProperties,
-                Map<String, String> attributesAsLabelsWithValues,
-                List<String> attrKeys,
-                String attrName,
-                String attrType,
-                String attrDescription,
-                Object value) {
-            recordedBeans.add(new RecordedBean(
-                    domain,
-                    beanProperties,
-                    attributesAsLabelsWithValues,
-                    attrKeys,
-                    attrName,
-                    attrType,
-                    attrDescription,
-                    value));
-        }
-
-        List<RecordedBean> getRecordedBeans() {
-            return recordedBeans;
-        }
-    }
-
-    static class RecordedBean {
-
-        final String domain;
-        final LinkedHashMap<String, String> beanProperties;
-        final Map<String, String> attributesAsLabelsWithValues;
-        final List<String> attrKeys;
-        final String attrName;
-        final String attrType;
-        final String attrDescription;
-        final Object value;
-
-        RecordedBean(
-                String domain,
-                LinkedHashMap<String, String> beanProperties,
-                Map<String, String> attributesAsLabelsWithValues,
-                List<String> attrKeys,
-                String attrName,
-                String attrType,
-                String attrDescription,
-                Object value) {
-            this.domain = domain;
-            this.beanProperties = beanProperties;
-            this.attributesAsLabelsWithValues = attributesAsLabelsWithValues;
-            this.attrKeys = attrKeys;
-            this.attrName = attrName;
-            this.attrType = attrType;
-            this.attrDescription = attrDescription;
-            this.value = value;
-        }
-    }
-
-    @Nested
-    class ScrapeBeanRuntimeAttributeSkipTests {
-
-        @Test
-        void scrapeBeanSkipsSystemPropertiesForRuntimeMBean() throws Exception {
-            ObjectName runtimeName = new ObjectName("java.lang:type=Runtime");
-            MBeanAttributeInfo systemPropsAttr =
-                    new MBeanAttributeInfo("SystemProperties", "java.lang.String", "desc", true, false, false);
-            MBeanInfo mBeanInfo = mock(MBeanInfo.class);
-            when(mBeanInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[] {systemPropsAttr});
-            when(mockConn.getMBeanInfo(runtimeName)).thenReturn(mBeanInfo);
-            when(mockConn.getAttributes(eq(runtimeName), any(String[].class)))
-                    .thenReturn(
-                            new AttributeList(Collections.singletonList(new Attribute("SystemProperties", "value"))));
-
-            invokeScrapeBean(scraper, mockConn, runtimeName);
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
-    }
-
     @Nested
     class SslPropertiesTests {
 
@@ -706,96 +729,6 @@ public class JmxScraperTest {
             JmxCollector.SslProperties sslProperties = new JmxCollector.SslProperties(false);
             assertThat(sslProperties.protocols).isEmpty();
             assertThat(sslProperties.ciphers).isEmpty();
-        }
-    }
-
-    @Nested
-    class SslFactoryCreationTests {
-
-        @Test
-        void createSslFactoryWithSslDisabled() throws Exception {
-            JmxCollector.SslProperties sslProperties = new JmxCollector.SslProperties(false);
-            JmxScraper scraper = new JmxScraper(
-                    "",
-                    "",
-                    "",
-                    sslProperties,
-                    Collections.singletonList(null),
-                    new ArrayList<>(),
-                    filter,
-                    new ArrayList<>(),
-                    receiver,
-                    cache);
-
-            Method createSslFactory = JmxScraper.class.getDeclaredMethod("createSslFactory");
-            createSslFactory.setAccessible(true);
-
-            assertThatCode(() -> createSslFactory.invoke(scraper)).doesNotThrowAnyException();
-        }
-
-        @Test
-        void createSslFactoryWithSslEnabled() throws Exception {
-            JmxCollector.SslProperties sslProperties = new JmxCollector.SslProperties(true);
-            JmxScraper scraper = new JmxScraper(
-                    "",
-                    "",
-                    "",
-                    sslProperties,
-                    Collections.singletonList(null),
-                    new ArrayList<>(),
-                    filter,
-                    new ArrayList<>(),
-                    receiver,
-                    cache);
-
-            Method createSslFactory = JmxScraper.class.getDeclaredMethod("createSslFactory");
-            createSslFactory.setAccessible(true);
-
-            assertThatCode(() -> createSslFactory.invoke(scraper)).doesNotThrowAnyException();
-        }
-    }
-
-    @Nested
-    class ErrorHandlingTests {
-
-        @Test
-        void scrapeBeanHandlesIOExceptionGracefully() throws Exception {
-            MBeanServerConnection mockConn = mock(MBeanServerConnection.class);
-            ObjectName testObjectName = new ObjectName("test.domain:type=ErrorTest");
-
-            when(mockConn.getMBeanInfo(testObjectName)).thenThrow(new IOException("Test IO Exception"));
-
-            JmxScraper scraper = createScraper(receiver);
-
-            Method scrapeBean =
-                    JmxScraper.class.getDeclaredMethod("scrapeBean", MBeanServerConnection.class, ObjectName.class);
-            scrapeBean.setAccessible(true);
-
-            assertThatCode(() -> scrapeBean.invoke(scraper, mockConn, testObjectName))
-                    .doesNotThrowAnyException();
-
-            assertThat(receiver.getRecordedBeans()).isEmpty();
-        }
-
-        @Test
-        void scrapeBeanHandlesRuntimeMBeanExceptionGracefully() throws Exception {
-            MBeanServerConnection mockConn = mock(MBeanServerConnection.class);
-            ObjectName testObjectName = new ObjectName("test.domain:type=RuntimeError");
-
-            MBeanInfo mockInfo = mock(MBeanInfo.class);
-            when(mockInfo.getAttributes()).thenReturn(new MBeanAttributeInfo[0]);
-            when(mockConn.getMBeanInfo(testObjectName)).thenReturn(mockInfo);
-            when(mockConn.getAttributes(testObjectName, new String[] {}))
-                    .thenThrow(new RuntimeMBeanException(new RuntimeException("Test runtime error")));
-
-            JmxScraper scraper = createScraper(receiver);
-
-            Method scrapeBean =
-                    JmxScraper.class.getDeclaredMethod("scrapeBean", MBeanServerConnection.class, ObjectName.class);
-            scrapeBean.setAccessible(true);
-
-            assertThatCode(() -> scrapeBean.invoke(scraper, mockConn, testObjectName))
-                    .doesNotThrowAnyException();
         }
     }
 
