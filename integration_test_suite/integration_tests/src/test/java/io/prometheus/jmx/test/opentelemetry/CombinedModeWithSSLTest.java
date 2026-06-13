@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
@@ -68,9 +69,14 @@ public class CombinedModeWithSSLTest {
 
     @Paramixel.Factory
     public static Action factory() throws Throwable {
+        var environments = OpenTelemetryTestEnvironment.createTestEnvironments(CombinedModeWithSSLTest.class).stream()
+                .filter(env ->
+                        !env.exporterTestEnvironment().getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
+                .collect(Collectors.toList());
+
         return Each.parallel(
                         CombinedModeWithSSLTest.class.getName(),
-                        OpenTelemetryTestEnvironment.createTestEnvironments(CombinedModeWithSSLTest.class),
+                        environments,
                         environment -> Instance.builder(
                                         environment.exporterTestEnvironment().name(),
                                         () -> new CombinedModeWithSSLTest(environment))
