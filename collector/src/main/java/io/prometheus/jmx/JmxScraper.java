@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
@@ -61,6 +63,28 @@ import nl.altindag.ssl.util.ProviderUtils;
 class JmxScraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmxScraper.class);
+
+    private static final List<ObjectName> JVM_EXCLUDE_OBJECT_NAMES;
+
+    static {
+        List<ObjectName> names = new ArrayList<>();
+        try {
+            names.add(new ObjectName("com.sun.management:*"));
+            names.add(new ObjectName("com.sun.management.jmxremote:*"));
+            names.add(new ObjectName("java.lang:*"));
+            names.add(new ObjectName("java.nio:*"));
+            names.add(new ObjectName("java.util.logging:*"));
+            names.add(new ObjectName("javax.management:*"));
+            names.add(new ObjectName("javax.management.remote:*"));
+            names.add(new ObjectName("jdk.internal:*"));
+            names.add(new ObjectName("jdk.management:*"));
+            names.add(new ObjectName("jdk.management.jfr:*"));
+            names.add(new ObjectName("sun.management:*"));
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+        JVM_EXCLUDE_OBJECT_NAMES = Collections.unmodifiableList(names);
+    }
 
     /**
      * Interface to implement MBeanReceiver
@@ -95,6 +119,7 @@ class JmxScraper {
     private final String password;
     private final SslProperties sslProperties;
     private final List<ObjectName> includeObjectNames, excludeObjectNames;
+    private final boolean excludeJvmMetrics;
     private final List<JmxCollector.MetricCustomizer> metricCustomizers;
     private final ObjectNameAttributeFilter objectNameAttributeFilter;
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache;
@@ -108,7 +133,9 @@ class JmxScraper {
      * @param sslProperties sslProperties
      * @param includeObjectNames includeObjectNames
      * @param excludeObjectNames excludeObjectNames
+     * @param excludeJvmMetrics excludeJvmMetrics
      * @param objectNameAttributeFilter objectNameAttributeFilter
+     * @param metricCustomizers metricCustomizers
      * @param receiver receiver
      * @param jmxMBeanPropertyCache jmxMBeanPropertyCache
      */
@@ -119,6 +146,7 @@ class JmxScraper {
             SslProperties sslProperties,
             List<ObjectName> includeObjectNames,
             List<ObjectName> excludeObjectNames,
+            boolean excludeJvmMetrics,
             ObjectNameAttributeFilter objectNameAttributeFilter,
             List<JmxCollector.MetricCustomizer> metricCustomizers,
             MBeanReceiver receiver,
@@ -130,6 +158,7 @@ class JmxScraper {
         this.sslProperties = sslProperties;
         this.includeObjectNames = includeObjectNames;
         this.excludeObjectNames = excludeObjectNames;
+        this.excludeJvmMetrics = excludeJvmMetrics;
         this.metricCustomizers = metricCustomizers;
         this.objectNameAttributeFilter = objectNameAttributeFilter;
         this.jmxMBeanPropertyCache = jmxMBeanPropertyCache;
@@ -170,16 +199,44 @@ class JmxScraper {
         try {
             // Query MBean names, see #89 for reasons queryMBeans() is used instead of queryNames()
             Set<ObjectName> mBeanNames = new HashSet<>();
+            // Track beans from explicit (non-null) include patterns so they can be
+            // re-added after JVM exclusion without additional JMX queries.
+            Set<ObjectName> explicitIncludeBeans = new HashSet<>();
             for (ObjectName name : includeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
-                    mBeanNames.add(instance.getObjectName());
+                    ObjectName objectName = instance.getObjectName();
+                    mBeanNames.add(objectName);
+                    if (name != null) {
+                        explicitIncludeBeans.add(objectName);
+                    }
                 }
             }
 
             for (ObjectName name : excludeObjectNames) {
                 for (ObjectInstance instance : beanConn.queryMBeans(name, null)) {
-                    mBeanNames.remove(instance.getObjectName());
+                    ObjectName objectName = instance.getObjectName();
+                    explicitIncludeBeans.remove(objectName);
+                    mBeanNames.remove(objectName);
                 }
+            }
+
+            if (excludeJvmMetrics) {
+                // Remove JVM beans in-memory (no extra JMX queries).
+                Iterator<ObjectName> iterator = mBeanNames.iterator();
+                while (iterator.hasNext()) {
+                    ObjectName bean = iterator.next();
+                    for (ObjectName jvmPattern : JVM_EXCLUDE_OBJECT_NAMES) {
+                        if (jvmPattern.apply(bean)) {
+                            iterator.remove();
+                            break;
+                        }
+                    }
+                }
+
+                // Re-add beans from explicit include patterns that were removed
+                // by JVM exclusion but not by user-specified excludes (those were
+                // already removed from explicitIncludeBeans above).
+                mBeanNames.addAll(explicitIncludeBeans);
             }
 
             // Now that we have *only* the whitelisted mBeans, remove any old ones from the cache
@@ -654,6 +711,7 @@ class JmxScraper {
                                     : new SslProperties(false),
                             objectNames,
                             new ArrayList<>(),
+                            false,
                             objectNameAttributeFilter,
                             new ArrayList<>(),
                             new StdoutWriter(),
@@ -667,6 +725,7 @@ class JmxScraper {
                             new SslProperties(false),
                             objectNames,
                             new ArrayList<>(),
+                            false,
                             objectNameAttributeFilter,
                             new ArrayList<>(),
                             new StdoutWriter(),
@@ -680,6 +739,7 @@ class JmxScraper {
                             new SslProperties(false),
                             objectNames,
                             new ArrayList<>(),
+                            false,
                             objectNameAttributeFilter,
                             new ArrayList<>(),
                             new StdoutWriter(),
