@@ -21,7 +21,7 @@ jobs:
     if: github.repository == 'prometheus/jmx_exporter'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
