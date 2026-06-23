@@ -40,7 +40,7 @@
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <junit.version>6.1.0</junit.version>
-        <logback.version>1.5.34</logback.version>
+        <logback.version>1.5.35</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
         <paramixel.version>6.2.0</paramixel.version>
         <prometheus.metrics.version>1.8.0</prometheus.metrics.version>
