@@ -39,7 +39,7 @@
         <ayza.version>10.0.5</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <junit.version>6.1.0</junit.version>
+        <junit.version>6.1.1</junit.version>
         <logback.version>1.5.37</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
         <paramixel.version>6.2.0</paramixel.version>
