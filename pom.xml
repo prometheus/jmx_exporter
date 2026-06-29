@@ -42,7 +42,7 @@
         <junit.version>6.1.1</junit.version>
         <logback.version>1.5.37</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
-        <paramixel.version>6.2.0</paramixel.version>
+        <paramixel.version>6.2.1</paramixel.version>
         <prometheus.metrics.version>1.8.0</prometheus.metrics.version>
         <slf4j.version>2.1.0-alpha1</slf4j.version>
         <snakeyaml.version>2.6</snakeyaml.version>
