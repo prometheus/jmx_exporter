@@ -46,7 +46,7 @@
     "lodash": "^4.18.1",
     "qs": "^6.15.2",
     "uuid": "^14.0.0",
-    "webpack-dev-server": "^5.2.5"
+    "webpack-dev-server": "^6.0.0"
   },
   "engines": {
     "node": ">=20.0"
