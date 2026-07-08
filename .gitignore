@@ -19,6 +19,7 @@ regression-test.log
 RELEASE
 __pycache__/
 .opencode/
+.ai/plans/
 
 # documentation site generated files
 website/node_modules/

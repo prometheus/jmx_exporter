@@ -1,0 +1,157 @@
+# metric-assertions-version 1
+# io.prometheus.jmx.test.core.AllLowerCaseWithHttpAuthSSLTest JavaAgent mcr.microsoft.com/openjdk/jdk:11-azurelinux
+
+match UNTYPED io_prometheus_jmx_autoincrementing_value *
+match UNTYPED io_prometheus_jmx_customvalue_value 345.0
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_avail{source="/dev/sda1"} 1.073741824E9
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_avail{source="/dev/sda2"} 6.442450944E9
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_pcent{source="/dev/sda1"} 0.8571428571428571
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_pcent{source="/dev/sda2"} 0.5714285714285714
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_size{source="/dev/sda1"} 7.516192768E9
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_size{source="/dev/sda2"} 1.5032385536E10
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_used{source="/dev/sda1"} 6.442450944E9
+match UNTYPED io_prometheus_jmx_tabulardata_server_1_disk_usage_table_used{source="/dev/sda2"} 8.589934592E9
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_avail{source="/dev/sda1"} 1.1811160064E10
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_avail{source="/dev/sda2"} 2.147483648E10
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_pcent{source="/dev/sda1"} 0.5416666666666666
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_pcent{source="/dev/sda2"} 0.8
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_size{source="/dev/sda1"} 2.5769803776E10
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_size{source="/dev/sda2"} 1.073741824E11
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_used{source="/dev/sda1"} 1.3958643712E10
+match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_used{source="/dev/sda2"} 8.589934592E10
+match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_activesessions 2.0
+match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstraps 4.0
+match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstrapsdeferred 6.0
+match UNTYPED java_lang_classloading_loadedclasscount *
+match UNTYPED java_lang_classloading_totalloadedclasscount *
+match UNTYPED java_lang_classloading_unloadedclasscount *
+match UNTYPED java_lang_classloading_verbose *
+match UNTYPED java_lang_codecachemanager_valid{type="MemoryManager"} *
+match UNTYPED java_lang_compilation_compilationtimemonitoringsupported *
+match UNTYPED java_lang_compilation_totalcompilationtime *
+match UNTYPED java_lang_memory_heapmemoryusage_committed *
+match UNTYPED java_lang_memory_heapmemoryusage_init *
+match UNTYPED java_lang_memory_heapmemoryusage_max *
+match UNTYPED java_lang_memory_heapmemoryusage_used *
+match UNTYPED java_lang_memory_nonheapmemoryusage_committed *
+match UNTYPED java_lang_memory_nonheapmemoryusage_init *
+match UNTYPED java_lang_memory_nonheapmemoryusage_max *
+match UNTYPED java_lang_memory_nonheapmemoryusage_used *
+match UNTYPED java_lang_memory_objectpendingfinalizationcount *
+match UNTYPED java_lang_memory_verbose *
+match UNTYPED java_lang_operatingsystem_availableprocessors *
+match UNTYPED java_lang_operatingsystem_committedvirtualmemorysize *
+match UNTYPED java_lang_operatingsystem_freephysicalmemorysize *
+match UNTYPED java_lang_operatingsystem_freeswapspacesize *
+match UNTYPED java_lang_operatingsystem_maxfiledescriptorcount *
+match UNTYPED java_lang_operatingsystem_openfiledescriptorcount *
+match UNTYPED java_lang_operatingsystem_processcpuload *
+match UNTYPED java_lang_operatingsystem_processcputime *
+match UNTYPED java_lang_operatingsystem_systemcpuload *
+match UNTYPED java_lang_operatingsystem_systemloadaverage *
+match UNTYPED java_lang_operatingsystem_totalphysicalmemorysize *
+match UNTYPED java_lang_operatingsystem_totalswapspacesize *
+match UNTYPED java_lang_runtime_bootclasspathsupported *
+match UNTYPED java_lang_runtime_pid *
+match UNTYPED java_lang_runtime_starttime *
+match UNTYPED java_lang_runtime_uptime *
+match UNTYPED java_lang_threading_currentthreadallocatedbytes *
+match UNTYPED java_lang_threading_currentthreadcputime *
+match UNTYPED java_lang_threading_currentthreadcputimesupported *
+match UNTYPED java_lang_threading_currentthreadusertime *
+match UNTYPED java_lang_threading_daemonthreadcount *
+match UNTYPED java_lang_threading_objectmonitorusagesupported *
+match UNTYPED java_lang_threading_peakthreadcount *
+match UNTYPED java_lang_threading_synchronizerusagesupported *
+match UNTYPED java_lang_threading_threadallocatedmemoryenabled *
+match UNTYPED java_lang_threading_threadallocatedmemorysupported *
+match UNTYPED java_lang_threading_threadcontentionmonitoringenabled *
+match UNTYPED java_lang_threading_threadcontentionmonitoringsupported *
+match UNTYPED java_lang_threading_threadcount *
+match UNTYPED java_lang_threading_threadcputimeenabled *
+match UNTYPED java_lang_threading_threadcputimesupported *
+match UNTYPED java_lang_threading_totalstartedthreadcount *
+match UNTYPED java_lang_threading_totalthreadallocatedbytes *
+match COUNTER jmx_config_reload_failure_total 0.0
+match COUNTER jmx_config_reload_success_total 0.0
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="1.6.0-POST"} 1.0
+match GAUGE jmx_scrape_cached_beans *
+match GAUGE jmx_scrape_duration_seconds *
+match GAUGE jmx_scrape_error 0.0
+match GAUGE jvm_buffer_pool_capacity_bytes{pool="direct"} *
+match GAUGE jvm_buffer_pool_capacity_bytes{pool="mapped"} *
+match GAUGE jvm_buffer_pool_used_buffers{pool="direct"} *
+match GAUGE jvm_buffer_pool_used_buffers{pool="mapped"} *
+match GAUGE jvm_buffer_pool_used_bytes{pool="direct"} *
+match GAUGE jvm_buffer_pool_used_bytes{pool="mapped"} *
+match GAUGE jvm_classes_currently_loaded *
+match COUNTER jvm_classes_loaded_total *
+match COUNTER jvm_classes_unloaded_total *
+match COUNTER jvm_compilation_time_seconds_total *
+match GAUGE jvm_memory_committed_bytes{area="heap"} *
+match GAUGE jvm_memory_committed_bytes{area="nonheap"} *
+match GAUGE jvm_memory_init_bytes{area="heap"} *
+match GAUGE jvm_memory_init_bytes{area="nonheap"} *
+match GAUGE jvm_memory_max_bytes{area="heap"} *
+match GAUGE jvm_memory_max_bytes{area="nonheap"} *
+match GAUGE jvm_memory_objects_pending_finalization *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_used_bytes{area="heap"} *
+match GAUGE jvm_memory_used_bytes{area="nonheap"} *
+match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="Microsoft",version="11.0.31+11-LTS"} *
+match GAUGE jvm_threads_current *
+match GAUGE jvm_threads_daemon *
+match GAUGE jvm_threads_deadlocked *
+match GAUGE jvm_threads_deadlocked_monitor *
+match GAUGE jvm_threads_peak *
+match COUNTER jvm_threads_started_total *
+match GAUGE jvm_threads_state{state="BLOCKED"} *
+match GAUGE jvm_threads_state{state="NEW"} *
+match GAUGE jvm_threads_state{state="RUNNABLE"} *
+match GAUGE jvm_threads_state{state="TERMINATED"} *
+match GAUGE jvm_threads_state{state="TIMED_WAITING"} *
+match GAUGE jvm_threads_state{state="UNKNOWN"} *
+match GAUGE jvm_threads_state{state="WAITING"} *
+match UNTYPED org_exist_management_exist_processreport_runningqueries_elapsedtime{key_id="1",key_path="/db/query1.xq"} 8.1583877779E10
+match UNTYPED org_exist_management_exist_processreport_runningqueries_elapsedtime{key_id="2",key_path="/db/query2.xq"} 8.1583877779E10
+match UNTYPED org_exist_management_exist_processreport_runningqueries_id{key_id="1",key_path="/db/query1.xq"} 1.0
+match UNTYPED org_exist_management_exist_processreport_runningqueries_id{key_id="2",key_path="/db/query2.xq"} 2.0
+match UNTYPED org_exist_management_exist_processreport_runningqueries_startedattime{key_id="1",key_path="/db/query1.xq"} 1.7E12
+match UNTYPED org_exist_management_exist_processreport_runningqueries_startedattime{key_id="2",key_path="/db/query2.xq"} 1.7E12
+match COUNTER process_cpu_seconds_total *
+match GAUGE process_max_fds *
+match GAUGE process_open_fds *
+match GAUGE process_resident_memory_bytes *
+match GAUGE process_start_time_seconds *
+match GAUGE process_virtual_memory_bytes *

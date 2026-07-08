@@ -17,30 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class LowerCaseOutputNameWithMetricCustomizersTest {
 
@@ -58,47 +58,47 @@ public class LowerCaseOutputNameWithMetricCustomizersTest {
                         LowerCaseOutputNameWithMetricCustomizersTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(
                                 LowerCaseOutputNameWithMetricCustomizersTest.class),
-                        environment -> Instance.builder(
+                        environment -> instance(
                                         environment.name(),
                                         () -> new LowerCaseOutputNameWithMetricCustomizersTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                         LowerCaseOutputNameWithMetricCustomizersTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                                 LowerCaseOutputNameWithMetricCustomizersTest
                                                                         ::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                                 LowerCaseOutputNameWithMetricCustomizersTest
                                                                         ::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                                 LowerCaseOutputNameWithMetricCustomizersTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                                 LowerCaseOutputNameWithMetricCustomizersTest
                                                                         ::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 LowerCaseOutputNameWithMetricCustomizersTest.class,
                                                                 LowerCaseOutputNameWithMetricCustomizersTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         LowerCaseOutputNameWithMetricCustomizersTest.class,
@@ -111,7 +111,7 @@ public class LowerCaseOutputNameWithMetricCustomizersTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -149,20 +149,20 @@ public class LowerCaseOutputNameWithMetricCustomizersTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        metrics.stream()
-                .filter(metric -> metric.name().toLowerCase().contains("customvalue"))
-                .forEach(metric -> {
-                    assertThat(metric.name()).isEqualTo(metric.name().toLowerCase());
-                    assertThat(metric.labels()).containsEntry("Text", "value");
-                });
+        assertMetrics(LowerCaseOutputNameWithMetricCustomizersTest.class, javaDockerImage, mode, metrics);
     }
 }

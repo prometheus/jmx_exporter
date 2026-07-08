@@ -17,37 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
-import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class RuleStaticLabelsTest {
 
@@ -60,48 +53,42 @@ public class RuleStaticLabelsTest {
     }
 
     @Paramixel.Factory
-    @Paramixel.Disabled
     public static Action factory() throws Throwable {
         return Each.parallel(
                         RuleStaticLabelsTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(RuleStaticLabelsTest.class),
-                        environment -> Instance.builder(environment.name(), () -> new RuleStaticLabelsTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new RuleStaticLabelsTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(RuleStaticLabelsTest.class, RuleStaticLabelsTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 RuleStaticLabelsTest.class,
                                                                 RuleStaticLabelsTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 RuleStaticLabelsTest.class,
                                                                 RuleStaticLabelsTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 RuleStaticLabelsTest.class,
                                                                 RuleStaticLabelsTest::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 RuleStaticLabelsTest.class,
                                                                 RuleStaticLabelsTest::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 RuleStaticLabelsTest.class,
-                                                                RuleStaticLabelsTest::testPrometheusProtobufMetrics)))
-                                                .child(Step.of(
-                                                        "testRuleStaticLabels()",
-                                                        withInstance(
-                                                                RuleStaticLabelsTest.class,
-                                                                RuleStaticLabelsTest::testRuleStaticLabels))))
-                                        .after(Step.of(
+                                                                RuleStaticLabelsTest::testPrometheusProtobufMetrics))))
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         RuleStaticLabelsTest.class, RuleStaticLabelsTest::tearDown)))))
@@ -113,7 +100,7 @@ public class RuleStaticLabelsTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -150,80 +137,21 @@ public class RuleStaticLabelsTest {
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    public void testRuleStaticLabels() throws IOException {
-        String url = environment.getUrl(JmxExporterPath.METRICS);
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-        assertMetricsContentType(httpResponse, MetricsContentType.DEFAULT);
-
-        Map<String, Collection<Metric>> metrics = parseMetrics(httpResponse);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("custom_value_with_static_labels")
-                .withLabel("env", "production")
-                .withLabel("service", "myapp")
-                .withLabel("region", "us-east-1")
-                .withValue(345d)
-                .isPresent();
-    }
-
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = parseMetrics(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
-
-        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("custom_value_with_static_labels")
-                .withLabel("env", "production")
-                .withLabel("service", "myapp")
-                .withLabel("region", "us-east-1")
-                .withValue(345d)
-                .isPresent();
-    }
-
-    private Map<String, Collection<Metric>> parseMetrics(HttpResponse httpResponse) {
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
-
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        return metrics;
+        assertMetrics(RuleStaticLabelsTest.class, javaDockerImage, mode, metrics);
     }
 }

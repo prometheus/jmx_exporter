@@ -1,0 +1,21 @@
+openTelemetry:
+  preserveNames: true
+  endpoint: http://prometheus:9090/api/v1/otlp
+  protocol: http/protobuf
+  interval: 1
+httpServer:
+  ssl:
+    mutualTLS: false
+    keyStore:
+      filename: keystore.jks
+      type: JKS
+      password: changeit
+    trustStore:
+      filename: keystore.jks
+      type: JKS
+      password: changeit
+    certificate:
+      alias: localhost
+hostPort: application:9999
+rules:
+  - pattern: ".*"

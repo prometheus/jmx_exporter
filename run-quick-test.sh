@@ -38,6 +38,10 @@ while [[ "$#" -gt 0 ]]; do
   case "$1" in
     -D*)
       JAVA_FLAGS+=("$1")
+      # Export env var equivalent for metric assertions update
+      if [[ "$1" == "-Dmetric.assertions.update=true" ]]; then
+        export METRIC_ASSERTIONS_UPDATE=true
+      fi
       ;;
     [1-9]*)
       if [[ "$PARALLELISM_SET" == true ]]; then
@@ -62,7 +66,7 @@ fi
 
 (
   export JAVA_DOCKER_IMAGES="amazoncorretto:24"
-  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.12.0"
+  export PROMETHEUS_DOCKER_IMAGES="prom/prometheus:v3.13.0"
   echo "Pulling Docker image ${JAVA_DOCKER_IMAGES} ..."
   docker pull "${JAVA_DOCKER_IMAGES}" > /dev/null 2>&1 || {
     echo "Failed to pull Docker image ${JAVA_DOCKER_IMAGES}"

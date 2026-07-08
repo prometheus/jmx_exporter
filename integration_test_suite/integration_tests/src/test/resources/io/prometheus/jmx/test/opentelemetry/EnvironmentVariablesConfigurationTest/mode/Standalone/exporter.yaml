@@ -1,0 +1,6 @@
+openTelemetry:
+  preserveNames: true
+# configuration via environment variables
+hostPort: application:9999
+rules:
+  - pattern: ".*"

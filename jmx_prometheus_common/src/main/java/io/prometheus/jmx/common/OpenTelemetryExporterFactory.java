@@ -23,6 +23,7 @@ import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
 import io.prometheus.jmx.common.util.functions.IsURL;
 import io.prometheus.jmx.common.util.functions.StringIsNotBlank;
+import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToMap;
 import io.prometheus.jmx.common.util.functions.ToMapAccessor;
@@ -140,6 +141,13 @@ public class OpenTelemetryExporterFactory {
                                             + " /openTelemetry/timeoutSeconds must"
                                             + " be an integer greater than 0")))
                             .ifPresent(openTelemetryExporterBuilder::timeoutSeconds);
+
+                    openTelemetryMapAccessor
+                            .get("/preserveNames")
+                            .map(ToBoolean.of(ConfigurationException.supplier("Invalid configuration for"
+                                    + " /openTelemetry/preserveNames"
+                                    + " must be a boolean")))
+                            .ifPresent(openTelemetryExporterBuilder::preserveNames);
 
                     openTelemetryMapAccessor
                             .get("/headers")

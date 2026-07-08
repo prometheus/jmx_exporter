@@ -416,15 +416,27 @@ public class JmxCollector implements MultiCollector {
             }
 
             if (configSsl.containsKey("protocols")) {
-                cfg.sslProperties.protocols = Stream.of(((String) configSsl.get("protocols")).split(","))
-                        .map(String::trim)
-                        .collect(Collectors.toList());
+                Object protocolsValue = configSsl.get("protocols");
+                if (protocolsValue instanceof List) {
+                    cfg.sslProperties.protocols = ((List<Object>) protocolsValue)
+                            .stream().map(Object::toString).map(String::trim).collect(Collectors.toList());
+                } else {
+                    cfg.sslProperties.protocols = Stream.of(((String) protocolsValue).split(","))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                }
             }
 
             if (configSsl.containsKey("ciphers")) {
-                cfg.sslProperties.ciphers = Stream.of(((String) configSsl.get("ciphers")).split(","))
-                        .map(String::trim)
-                        .collect(Collectors.toList());
+                Object ciphersValue = configSsl.get("ciphers");
+                if (ciphersValue instanceof List) {
+                    cfg.sslProperties.ciphers = ((List<Object>) ciphersValue)
+                            .stream().map(Object::toString).map(String::trim).collect(Collectors.toList());
+                } else {
+                    cfg.sslProperties.ciphers = Stream.of(((String) ciphersValue).split(","))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                }
             }
         }
 

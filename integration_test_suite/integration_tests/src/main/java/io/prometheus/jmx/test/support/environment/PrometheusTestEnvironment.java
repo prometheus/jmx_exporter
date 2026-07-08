@@ -19,6 +19,7 @@ package io.prometheus.jmx.test.support.environment;
 import static java.lang.String.format;
 
 import io.prometheus.jmx.common.util.ResourceSupport;
+import io.prometheus.jmx.test.support.TestSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
@@ -27,11 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
+import org.altcontainers.api.Container;
+import org.altcontainers.api.ContainerSpec;
+import org.altcontainers.api.GenericContainerSpec;
+import org.altcontainers.api.Network;
+import org.altcontainers.api.OutputFrame;
 import org.paramixel.api.support.Retry;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
  * Test environment for a Prometheus server instance, managing a Docker container
@@ -44,6 +47,10 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class PrometheusTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
+    private static final long MEMORY_BYTES = 1073741824L;
+    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+    private static final long NOFILE_SOFT_LIMIT = 65536L;
+    private static final long NOFILE_HARD_LIMIT = 65536L;
 
     private final String id;
     private final Class<?> testClass;
@@ -51,7 +58,11 @@ public class PrometheusTestEnvironment implements AutoCloseable {
 
     private String baseUrl;
     private Network network;
-    private GenericContainer<?> prometheusContainer;
+    private Container prometheusContainer;
+
+    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
+        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
+    }
 
     /**
      * Creates a Prometheus test environment for the specified test class and Docker image.
@@ -116,7 +127,6 @@ public class PrometheusTestEnvironment implements AutoCloseable {
         this.network = Objects.requireNonNull(network);
 
         prometheusContainer = createPrometheusContainer();
-        prometheusContainer.start();
 
         if (!prometheusContainer.isRunning()) {
             throw new IllegalStateException("Prometheus container is not running");
@@ -143,7 +153,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     }
 
     private String getPrometheusBaseUrl() {
-        return baseUrl + ":" + prometheusContainer.getMappedPort(9090);
+        return baseUrl + ":" + prometheusContainer.hostPort(9090);
     }
 
     /**
@@ -185,7 +195,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
 
         if (!result.isSuccessful()) {
             throw new EnvironmentException(
-                    format("Prometheus [%s] not ready after retry", prometheusContainer.getDockerImageName()));
+                    format("Prometheus [%s] not ready after retry", prometheusContainer.image()));
         }
     }
 
@@ -200,23 +210,18 @@ public class PrometheusTestEnvironment implements AutoCloseable {
 
     @Override
     public void close() {
-        GenericContainer<?> container = prometheusContainer;
-        stopQuietly();
-        ContainerSupport.waitForShutdown(container);
-    }
-
-    private void stopQuietly() {
         if (prometheusContainer != null) {
             try {
-                prometheusContainer.stop();
-            } catch (Exception ignored) {
-            } finally {
+                prometheusContainer.close();
+            } catch (RuntimeException e) {
                 prometheusContainer = null;
+                throw e;
             }
         }
+        prometheusContainer = null;
     }
 
-    private GenericContainer<?> createPrometheusContainer() {
+    private Container createPrometheusContainer() {
         List<String> commands = new ArrayList<>();
 
         commands.add("--config.file=/etc/prometheus/prometheus.yaml");
@@ -230,33 +235,58 @@ public class PrometheusTestEnvironment implements AutoCloseable {
             commands.add("--enable-feature=otlp-write-receiver");
         }
 
-        String webYml = "/" + testClass.getName().replace(".", "/") + "/web.yaml";
+        String prometheusYaml = resolveRequiredResource("prometheus.yaml");
+        String webYaml = resolveOptionalResource("web.yaml");
 
-        boolean hasWebYaml = ResourceSupport.exists(webYml);
-
-        if (hasWebYaml) {
+        if (webYaml != null) {
             commands.add("--web.config.file=/etc/prometheus/web.yaml");
         }
 
-        GenericContainer<?> genericContainer = new GenericContainer<>(prometheusDockerImage)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/prometheus.yaml",
-                        "/etc/prometheus/prometheus.yaml",
-                        BindMode.READ_ONLY)
-                .withWorkingDirectory("/prometheus")
-                .withCommand(commands.toArray(new String[0]))
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withExposedPorts(9090)
-                .withLogConsumer(new ContainerLogConsumer("PROMETHEUS", prometheusDockerImage))
-                .withNetwork(network)
-                .withNetworkAliases("prometheus")
-                .waitingFor(Wait.forLogMessage(".*Server is ready to receive web requests.*", 1))
-                .withStartupTimeout(Duration.ofSeconds(60));
+        GenericContainerSpec.Builder containerSpecBuilder = ContainerSpec.builder(prometheusDockerImage)
+                .bindDirectory(
+                        TestSupport.resolveClasspathDirectory(testClass, prometheusYaml)
+                                .toString(),
+                        "/etc/prometheus/prometheus.yaml")
+                .command(commands.toArray(new String[0]))
+                .exposePorts(9090)
+                .network(network, "prometheus")
+                .waitForLogMessage(".*Server is ready to receive web requests.*")
+                .workingDirectory("/prometheus")
+                .onOutput(prefixedLogConsumer("PROMETHEUS", prometheusDockerImage))
+                .startupAttempts(3)
+                .memory(MEMORY_BYTES)
+                .memorySwap(MEMORY_SWAP_BYTES)
+                .ulimit("nofile", NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT);
 
-        if (hasWebYaml) {
-            genericContainer.withClasspathResourceMapping(webYml, "/etc/prometheus/web.yaml", BindMode.READ_ONLY);
+        if (webYaml != null) {
+            containerSpecBuilder.bindDirectory(
+                    TestSupport.resolveClasspathDirectory(testClass, webYaml).toString(), "/etc/prometheus/web.yaml");
         }
 
-        return genericContainer;
+        ContainerSpec containerSpec = containerSpecBuilder.startupAttempts(3).build();
+
+        return Container.create(containerSpec);
+    }
+
+    private String resolveRequiredResource(String fileName) {
+        String resource = testResourceBasePath() + "/" + fileName;
+        if (ResourceSupport.exists(resource)) {
+            return resource;
+        }
+
+        throw new EnvironmentException(format("Resource [%s] not found", resource));
+    }
+
+    private String resolveOptionalResource(String fileName) {
+        String resource = testResourceBasePath() + "/" + fileName;
+        if (ResourceSupport.exists(resource)) {
+            return resource;
+        }
+
+        return null;
+    }
+
+    private String testResourceBasePath() {
+        return testClass.getName().replace(".", "/");
     }
 }

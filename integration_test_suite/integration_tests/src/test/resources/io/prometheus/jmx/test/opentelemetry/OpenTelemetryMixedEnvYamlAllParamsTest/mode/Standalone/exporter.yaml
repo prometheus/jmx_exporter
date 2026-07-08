@@ -1,0 +1,6 @@
+openTelemetry:
+  preserveNames: true
+  endpoint: http://prometheus:9090/api/v1/otlp
+hostPort: application:9999
+rules:
+  - pattern: ".*"

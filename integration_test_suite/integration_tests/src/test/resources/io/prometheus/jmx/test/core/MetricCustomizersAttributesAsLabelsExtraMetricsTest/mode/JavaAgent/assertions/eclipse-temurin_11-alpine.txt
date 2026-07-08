@@ -1,0 +1,81 @@
+# metric-assertions-version 1
+# io.prometheus.jmx.test.core.MetricCustomizersAttributesAsLabelsExtraMetricsTest JavaAgent eclipse-temurin:11-alpine
+
+match UNTYPED io_prometheus_jmx_stringValue_isActive{Text="value"} 1.0
+match COUNTER jmx_config_reload_failure_total 0.0
+match COUNTER jmx_config_reload_success_total 0.0
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="1.6.0-POST"} 1.0
+match GAUGE jmx_scrape_cached_beans *
+match GAUGE jmx_scrape_duration_seconds *
+match GAUGE jmx_scrape_error 0.0
+match GAUGE jvm_buffer_pool_capacity_bytes{pool="direct"} *
+match GAUGE jvm_buffer_pool_capacity_bytes{pool="mapped"} *
+match GAUGE jvm_buffer_pool_used_buffers{pool="direct"} *
+match GAUGE jvm_buffer_pool_used_buffers{pool="mapped"} *
+match GAUGE jvm_buffer_pool_used_bytes{pool="direct"} *
+match GAUGE jvm_buffer_pool_used_bytes{pool="mapped"} *
+match GAUGE jvm_classes_currently_loaded *
+match COUNTER jvm_classes_loaded_total *
+match COUNTER jvm_classes_unloaded_total *
+match COUNTER jvm_compilation_time_seconds_total *
+match GAUGE jvm_memory_committed_bytes{area="heap"} *
+match GAUGE jvm_memory_committed_bytes{area="nonheap"} *
+match GAUGE jvm_memory_init_bytes{area="heap"} *
+match GAUGE jvm_memory_init_bytes{area="nonheap"} *
+match GAUGE jvm_memory_max_bytes{area="heap"} *
+match GAUGE jvm_memory_max_bytes{area="nonheap"} *
+match GAUGE jvm_memory_objects_pending_finalization *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_committed_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_init_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_max_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'non-nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'non-profiled nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="CodeHeap 'profiled nmethods'"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="Compressed Class Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Eden Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="Metaspace"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Survivor Space"} *
+match GAUGE jvm_memory_pool_used_bytes{pool="*Gen"} *
+match GAUGE jvm_memory_used_bytes{area="heap"} *
+match GAUGE jvm_memory_used_bytes{area="nonheap"} *
+match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="Eclipse Adoptium",version="11.0.31+11"} *
+match GAUGE jvm_threads_current *
+match GAUGE jvm_threads_daemon *
+match GAUGE jvm_threads_deadlocked *
+match GAUGE jvm_threads_deadlocked_monitor *
+match GAUGE jvm_threads_peak *
+match COUNTER jvm_threads_started_total *
+match GAUGE jvm_threads_state{state="BLOCKED"} *
+match GAUGE jvm_threads_state{state="NEW"} *
+match GAUGE jvm_threads_state{state="RUNNABLE"} *
+match GAUGE jvm_threads_state{state="TERMINATED"} *
+match GAUGE jvm_threads_state{state="TIMED_WAITING"} *
+match GAUGE jvm_threads_state{state="UNKNOWN"} *
+match GAUGE jvm_threads_state{state="WAITING"} *
+match COUNTER process_cpu_seconds_total *
+match GAUGE process_max_fds *
+match GAUGE process_open_fds *
+match GAUGE process_resident_memory_bytes *
+match GAUGE process_start_time_seconds *
+match GAUGE process_virtual_memory_bytes *

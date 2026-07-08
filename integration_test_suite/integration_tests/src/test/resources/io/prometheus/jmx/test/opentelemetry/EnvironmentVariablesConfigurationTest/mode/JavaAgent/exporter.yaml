@@ -1,0 +1,5 @@
+openTelemetry:
+  preserveNames: true
+# configuration via environment variables
+rules:
+  - pattern: ".*"

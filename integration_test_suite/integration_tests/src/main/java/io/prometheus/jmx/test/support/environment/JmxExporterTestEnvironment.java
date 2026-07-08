@@ -16,16 +16,20 @@
 
 package io.prometheus.jmx.test.support.environment;
 
+import static java.lang.String.format;
+
+import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import java.time.Duration;
+import io.prometheus.jmx.test.support.TestSupport;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
+import java.util.function.Consumer;
+import org.altcontainers.api.Container;
+import org.altcontainers.api.ContainerSpec;
+import org.altcontainers.api.Network;
+import org.altcontainers.api.OutputFrame;
 
 /**
  * Test environment for the JMX exporter, supporting both Java Agent and Standalone modes.
@@ -38,6 +42,11 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class JmxExporterTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
+    private static final String MODE_DIRECTORY = "mode";
+    private static final long MEMORY_BYTES = 1073741824L;
+    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+    private static final long NOFILE_SOFT_LIMIT = 65536L;
+    private static final long NOFILE_HARD_LIMIT = 65536L;
 
     private final String id;
     private final Class<?> testClass;
@@ -46,9 +55,13 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
 
     private String baseUrl;
     private Network network;
-    private GenericContainer<?> standaloneApplicationContainer;
-    private GenericContainer<?> javaAgentApplicationContainer;
-    private GenericContainer<?> standaloneExporterContainer;
+    private Container standaloneApplicationContainer;
+    private Container javaAgentApplicationContainer;
+    private Container standaloneExporterContainer;
+
+    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
+        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
+    }
 
     /**
      * Creates a JMX exporter test environment for the specified test class, Docker image, and mode.
@@ -126,14 +139,10 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
         switch (jmxExporterMode) {
             case JavaAgent -> {
                 javaAgentApplicationContainer = createJavaAgentApplicationContainer();
-                javaAgentApplicationContainer.start();
             }
             case Standalone -> {
                 standaloneApplicationContainer = createStandaloneApplicationContainer();
-                standaloneApplicationContainer.start();
-
                 standaloneExporterContainer = createStandaloneExporterContainer();
-                standaloneExporterContainer.start();
             }
         }
     }
@@ -166,8 +175,8 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     public String getBaseUrl() {
         int port =
                 switch (jmxExporterMode) {
-                    case JavaAgent -> javaAgentApplicationContainer.getMappedPort(8888);
-                    case Standalone -> standaloneExporterContainer.getMappedPort(8888);
+                    case JavaAgent -> javaAgentApplicationContainer.hostPort(8888);
+                    case Standalone -> standaloneExporterContainer.hostPort(8888);
                 };
 
         return baseUrl + ":" + port;
@@ -175,15 +184,39 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
 
     @Override
     public void close() {
-        GenericContainer<?> javaAgentContainer = javaAgentApplicationContainer;
-        GenericContainer<?> standaloneAppContainer = standaloneApplicationContainer;
-        GenericContainer<?> standaloneExporter = standaloneExporterContainer;
+        RuntimeException firstException = null;
+        firstException = closeContainer(javaAgentApplicationContainer, firstException);
+        javaAgentApplicationContainer = null;
+        firstException = closeContainer(standaloneExporterContainer, firstException);
+        standaloneExporterContainer = null;
+        firstException = closeContainer(standaloneApplicationContainer, firstException);
+        standaloneApplicationContainer = null;
+        if (firstException != null) {
+            throw firstException;
+        }
+    }
 
-        stopQuietly();
-
-        ContainerSupport.waitForShutdown(javaAgentContainer);
-        ContainerSupport.waitForShutdown(standaloneExporter);
-        ContainerSupport.waitForShutdown(standaloneAppContainer);
+    /**
+     * Destroys a container, collecting the first failure for later rethrow so that
+     * remaining containers are still cleaned up.
+     *
+     * @param container the container to destroy, or {@code null}
+     * @param firstException the first exception encountered so far, or {@code null}
+     * @return {@code firstException} if already set, otherwise the first exception from this destroy
+     */
+    private static RuntimeException closeContainer(Container container, RuntimeException firstException) {
+        if (container == null) {
+            return firstException;
+        }
+        try {
+            container.close();
+        } catch (RuntimeException e) {
+            if (firstException == null) {
+                return e;
+            }
+            firstException.addSuppressed(e);
+        }
+        return firstException;
     }
 
     /**
@@ -195,83 +228,102 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
         return network;
     }
 
-    private void stopQuietly() {
-        if (javaAgentApplicationContainer != null) {
-            try {
-                javaAgentApplicationContainer.stop();
-            } catch (Exception ignored) {
-            } finally {
-                javaAgentApplicationContainer = null;
-            }
-        }
+    private Container createJavaAgentApplicationContainer() {
+        ContainerSpec containerSpec = ContainerSpec.builder(javaDockerImage)
+                .bindDirectory(
+                        TestSupport.resolveClasspathDirectory(testClass, "common")
+                                .toString(),
+                        "/common")
+                .bindDirectory(
+                        TestSupport.copyClasspathDirectoryToTemp(
+                                        testClass, resolveModeResourceDirectory(JmxExporterMode.JavaAgent))
+                                .toString(),
+                        "/temp")
+                .command("/bin/sh", "application.sh")
+                .exposePorts(8888)
+                .network(network, "application")
+                .waitForContainerPort(8888)
+                .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
+                .workingDirectory("/temp")
+                .onOutput(prefixedLogConsumer("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
+                .startupAttempts(3)
+                .memory(MEMORY_BYTES)
+                .memorySwap(MEMORY_SWAP_BYTES)
+                .ulimit("nofile", NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT)
+                .build();
 
-        if (standaloneExporterContainer != null) {
-            try {
-                standaloneExporterContainer.stop();
-            } catch (Exception ignored) {
-            } finally {
-                standaloneExporterContainer = null;
-            }
-        }
-
-        if (standaloneApplicationContainer != null) {
-            try {
-                standaloneApplicationContainer.stop();
-            } catch (Exception ignored) {
-            } finally {
-                standaloneApplicationContainer = null;
-            }
-        }
+        return Container.create(containerSpec);
     }
 
-    private GenericContainer<?> createJavaAgentApplicationContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forListeningPort())
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
-                .withStartupTimeout(Duration.ofSeconds(60))
-                .withWorkingDirectory("/temp");
+    private Container createStandaloneApplicationContainer() {
+        ContainerSpec containerSpec = ContainerSpec.builder(javaDockerImage)
+                .bindDirectory(
+                        TestSupport.resolveClasspathDirectory(testClass, "common")
+                                .toString(),
+                        "/common")
+                .bindDirectory(
+                        TestSupport.copyClasspathDirectoryToTemp(
+                                        testClass, resolveModeResourceDirectory(JmxExporterMode.Standalone))
+                                .toString(),
+                        "/temp")
+                .command("/bin/sh", "application.sh")
+                .exposePorts(9999)
+                .network(network, "application")
+                .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
+                .workingDirectory("/temp")
+                .onOutput(prefixedLogConsumer("EXAMPLE_APPLICATION", javaDockerImage))
+                .startupAttempts(3)
+                .memory(MEMORY_BYTES)
+                .memorySwap(MEMORY_SWAP_BYTES)
+                .ulimit("nofile", NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT)
+                .build();
+
+        return Container.create(containerSpec);
     }
 
-    private GenericContainer<?> createStandaloneApplicationContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(9999)
-                .withLogConsumer(new ContainerLogConsumer("EXAMPLE_APPLICATION", javaDockerImage))
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*", 1))
-                .withStartupTimeout(Duration.ofSeconds(60))
-                .withWorkingDirectory("/temp");
+    private Container createStandaloneExporterContainer() {
+        ContainerSpec containerSpec = ContainerSpec.builder(javaDockerImage)
+                .bindDirectory(
+                        TestSupport.resolveClasspathDirectory(testClass, "common")
+                                .toString(),
+                        "/common")
+                .bindDirectory(
+                        TestSupport.copyClasspathDirectoryToTemp(
+                                        testClass, resolveModeResourceDirectory(JmxExporterMode.Standalone))
+                                .toString(),
+                        "/temp")
+                .command("/bin/sh", "exporter.sh")
+                .exposePorts(8888)
+                .network(network, "exporter")
+                .waitForLogMessage(".*Standalone \\| Running.*")
+                .workingDirectory("/temp")
+                .onOutput(prefixedLogConsumer("JMX_EXPORTER_STANDALONE", javaDockerImage))
+                .startupAttempts(3)
+                .memory(MEMORY_BYTES)
+                .memorySwap(MEMORY_SWAP_BYTES)
+                .ulimit("nofile", NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT)
+                .build();
+
+        return Container.create(containerSpec);
     }
 
-    private GenericContainer<?> createStandaloneExporterContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forLogMessage(".*Running.*", 1))
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/Standalone", "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh exporter.sh")
-                .withExposedPorts(8888)
-                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_STANDALONE", javaDockerImage))
-                .withNetwork(network)
-                .withNetworkAliases("exporter")
-                .waitingFor(Wait.forLogMessage(".*Standalone \\| Running.*", 1))
-                .withWorkingDirectory("/temp");
+    private String resolveModeResourceDirectory(JmxExporterMode mode) {
+        String modeResourceDirectory = testResourceBasePath() + "/" + MODE_DIRECTORY + "/" + mode;
+        if (ResourceSupport.exists(modeResourceDirectory + "/application.sh")) {
+            return modeResourceDirectory;
+        }
+
+        String legacyResourceDirectory = testResourceBasePath() + "/" + mode;
+        if (ResourceSupport.exists(legacyResourceDirectory + "/application.sh")) {
+            return legacyResourceDirectory;
+        }
+
+        throw new EnvironmentException(
+                format("Resource directory [%s] or [%s] not found", modeResourceDirectory, legacyResourceDirectory));
+    }
+
+    private String testResourceBasePath() {
+        return testClass.getName().replace(".", "/");
     }
 
     /**

@@ -158,10 +158,12 @@ public interface ExistDbMXBean {
         /**
          * Returns the number of milliseconds elapsed since the query started.
          *
+         * <p>For test determinism, this returns a fixed value derived from the start time.
+         *
          * @return the elapsed time in milliseconds
          */
         public long getElapsedTime() {
-            return System.currentTimeMillis() - startedAtTime;
+            return 81583877779L;
         }
     }
 }

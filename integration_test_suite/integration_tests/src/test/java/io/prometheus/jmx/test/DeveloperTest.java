@@ -17,9 +17,9 @@
 package io.prometheus.jmx.test;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 
 import io.prometheus.jmx.AutoIncrementing;
 import io.prometheus.jmx.BuildInfoMetrics;
@@ -37,7 +37,6 @@ import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -45,12 +44,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class DeveloperTest {
 
@@ -105,36 +100,46 @@ public class DeveloperTest {
     }
 
     public void testHealthy() throws IOException {
+        log("TEST testHealthy()");
         String url = baseUrl + JmxExporterPath.HEALTHY;
         HttpResponse httpResponse = HttpClient.sendRequest(url);
         assertHealthyResponse(httpResponse);
+        log("PASS testHealthy()");
     }
 
     public void testDefaultTextMetrics() throws IOException {
+        log("TEST testDefaultTextMetrics()");
         String url = baseUrl + JmxExporterPath.METRICS;
         HttpResponse httpResponse = HttpClient.sendRequest(url);
         assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+        log("PASS testDefaultTextMetrics()");
     }
 
     public void testOpenMetricsTextMetrics() throws IOException {
+        log("TEST testOpenMetricsTextMetrics()");
         String url = baseUrl + JmxExporterPath.METRICS;
         HttpResponse httpResponse =
                 HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
         assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+        log("PASS testOpenMetricsTextMetrics()");
     }
 
     public void testPrometheusTextMetrics() throws IOException {
+        log("TEST testPrometheusTextMetrics()");
         String url = baseUrl + JmxExporterPath.METRICS;
         HttpResponse httpResponse =
                 HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+        log("PASS testPrometheusTextMetrics()");
     }
 
     public void testPrometheusProtobufMetrics() throws IOException {
+        log("TEST testPrometheusProtobufMetrics()");
         String url = baseUrl + JmxExporterPath.METRICS;
         HttpResponse httpResponse = HttpClient.sendRequest(
                 url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+        log("PASS testPrometheusProtobufMetrics()");
     }
 
     public void tearDown() {
@@ -146,111 +151,14 @@ public class DeveloperTest {
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = "Standalone";
+        String javaDockerImage = "local";
 
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
+        assertMetrics(DeveloperTest.class, javaDockerImage, mode, metrics);
+    }
 
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", "unknown")
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap")
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap")
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
-                .withValue(2.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
-                .withValue(4.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
-                .withValue(6.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "1")
-                .withLabel("key_path", "/db/query1.xq")
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "2")
-                .withLabel("key_path", "/db/query2.xq")
-                .isPresent();
-
-        boolean hasJavaMetrics = false;
-        for (String metricName : metrics.keySet()) {
-            if (metricName.startsWith("java_lang_")) {
-                hasJavaMetrics = true;
-                break;
-            }
-        }
-        assertThat(hasJavaMetrics).as("No java_lang_* metrics found").isTrue();
-
-        boolean hasJvmMetrics = false;
-        for (String metricName : metrics.keySet()) {
-            if (metricName.startsWith("jvm_")) {
-                hasJvmMetrics = true;
-                break;
-            }
-        }
-        assertThat(hasJvmMetrics).as("No jvm_* metrics found").isTrue();
+    private static void log(Object object) {
+        System.out.println(object);
     }
 }

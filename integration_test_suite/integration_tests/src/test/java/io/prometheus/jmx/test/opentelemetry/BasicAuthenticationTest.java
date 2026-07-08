@@ -16,29 +16,36 @@
 
 package io.prometheus.jmx.test.opentelemetry;
 
+import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.loadMetricNames;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
-import io.prometheus.jmx.test.support.environment.JmxExporterMode;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpRequest;
 import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
+import io.prometheus.jmx.test.support.prometheus.PrometheusQueryHelper;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.paramixel.api.support.Retry;
-import org.testcontainers.containers.Network;
 
 public class BasicAuthenticationTest {
 
@@ -46,6 +53,7 @@ public class BasicAuthenticationTest {
     private static final String VALUE_PASSWORD = "secret";
 
     private final OpenTelemetryTestEnvironment environment;
+    private PrometheusQueryHelper prometheusQueryHelper;
     private Network network;
 
     private BasicAuthenticationTest(OpenTelemetryTestEnvironment environment) {
@@ -61,23 +69,51 @@ public class BasicAuthenticationTest {
         return Each.parallel(
                         BasicAuthenticationTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(BasicAuthenticationTest.class),
-                        env -> {
-                            env.withPrometheusReadyBasicAuthentication(VALID_USER, VALUE_PASSWORD);
-                            return Instance.builder(env.name(), () -> new BasicAuthenticationTest(env))
-                                    .body(Scope.builder("scenario")
-                                            .before(Step.of(
+                        environment -> {
+                            environment.withPrometheusReadyBasicAuthentication(VALID_USER, VALUE_PASSWORD);
+                            return instance(environment.name(), () -> new BasicAuthenticationTest(environment))
+                                    .body(scope("scenario")
+                                            .before(step(
                                                     "setUp()",
                                                     withInstance(
                                                             BasicAuthenticationTest.class,
                                                             BasicAuthenticationTest::setUp)))
-                                            .body(Sequence.builder("tests")
-                                                    .child(Step.of(
+                                            .body(sequential("tests")
+                                                    .child(step(
+                                                            "testHealthy()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest::testHealthy)))
+                                                    .child(step(
+                                                            "testDefaultTextMetrics()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest::testDefaultTextMetrics)))
+                                                    .child(step(
+                                                            "testOpenMetricsTextMetrics()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest
+                                                                            ::testOpenMetricsTextMetrics)))
+                                                    .child(step(
+                                                            "testPrometheusTextMetrics()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest
+                                                                            ::testPrometheusTextMetrics)))
+                                                    .child(step(
+                                                            "testPrometheusProtobufMetrics()",
+                                                            withInstance(
+                                                                    BasicAuthenticationTest.class,
+                                                                    BasicAuthenticationTest
+                                                                            ::testPrometheusProtobufMetrics)))
+                                                    .child(step(
                                                             "testPrometheusHasMetrics()",
                                                             withInstance(
                                                                     BasicAuthenticationTest.class,
                                                                     BasicAuthenticationTest
                                                                             ::testPrometheusHasMetrics))))
-                                            .after(Step.of(
+                                            .after(step(
                                                     "tearDown()",
                                                     withInstance(
                                                             BasicAuthenticationTest.class,
@@ -88,23 +124,67 @@ public class BasicAuthenticationTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
+        prometheusQueryHelper = PrometheusQueryHelper.builder(environment.prometheusTestEnvironment())
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build();
+    }
+
+    public void testHealthy() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.HEALTHY);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertHealthyResponse(httpResponse);
+    }
+
+    public void testDefaultTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(HttpRequest.builder()
+                .url(url)
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build());
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+    }
+
+    public void testOpenMetricsTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(HttpRequest.builder()
+                .url(url)
+                .header(HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString())
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build());
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+    }
+
+    public void testPrometheusTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(HttpRequest.builder()
+                .url(url)
+                .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString())
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+    }
+
+    public void testPrometheusProtobufMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(HttpRequest.builder()
+                .url(url)
+                .header(HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString())
+                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
+                .build());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     public void testPrometheusHasMetrics() throws Throwable {
-        boolean isJmxExporterModeJavaStandalone =
-                environment.exporterTestEnvironment().getJmxExporterMode() == JmxExporterMode.Standalone;
+        String mode = environment.exporterTestEnvironment().getJmxExporterMode().name();
+        String javaDockerImage = environment.exporterTestEnvironment().getJavaDockerImage();
 
-        boolean isKonaJdk8 =
-                environment.exporterTestEnvironment().getJavaDockerImage().startsWith("konajdk/konajdk:8");
+        Set<String> metricNames = loadMetricNames(BasicAuthenticationTest.class, mode, javaDockerImage);
+        assertThat(metricNames).isNotEmpty();
 
-        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
-                .filter(name ->
-                        !isJmxExporterModeJavaStandalone || (!name.startsWith("jvm_") && !name.startsWith("process_")))
-                .filter(name -> !isKonaJdk8 || !name.equals("jvm_memory_pool_allocated_bytes_total"))
-                .toList()) {
-            Double value = getPrometheusMetric(metricName);
+        for (String metricName : metricNames) {
+            Double value = prometheusQueryHelper.waitForMetric(metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
             assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
@@ -112,38 +192,20 @@ public class BasicAuthenticationTest {
     }
 
     public void tearDown() throws Throwable {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
-    private Double getPrometheusMetric(String metricName) throws Throwable {
-        Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .retryOn(t -> t instanceof RuntimeException)
-                .run(() -> {
-                    HttpResponse httpResponse = sendPrometheusQuery(metricName);
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
+        assertMetricsContentType(httpResponse, metricsContentType);
 
-                    assertThat(httpResponse.statusCode()).isEqualTo(200);
-                    assertThat(httpResponse.body()).isNotNull();
-                    assertThat(httpResponse.body().string()).isNotNull();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.exporterTestEnvironment().getJmxExporterMode().name();
+        String javaDockerImage = environment.exporterTestEnvironment().getJavaDockerImage();
 
-                    if (httpResponse.body().string().contains(metricName)) {
-                        return;
-                    }
-
-                    throw new RuntimeException("metric not found yet: " + metricName);
-                });
-
-        return result.isSuccessful() ? 1.0 : null;
-    }
-
-    private HttpResponse sendPrometheusQuery(String query) throws IOException {
-        return sendRequest("/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
-    }
-
-    private HttpResponse sendRequest(String path) throws IOException {
-        return HttpClient.sendRequest(HttpRequest.builder()
-                .url(environment.prometheusTestEnvironment().getPrometheusUrl(path))
-                .basicAuthentication(VALID_USER, VALUE_PASSWORD)
-                .build());
+        assertMetrics(BasicAuthenticationTest.class, javaDockerImage, mode, metrics);
     }
 }
