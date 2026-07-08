@@ -28,8 +28,8 @@ import java.security.MessageDigest;
  * <p>Supports SHA-1, SHA-256, and SHA-512 algorithms. Passwords are hashed using the formula:
  * {@code hash(algorithm, salt + ":" + password)}.
  *
- * <p>This authenticator caches both valid and invalid credentials in a single cache to improve
- * authentication performance, using a maximum credential size of 5 KiB and an approximately
+ * <p>This authenticator caches valid credentials to improve authentication performance,
+ * using a maximum credential size of 5 KiB and an approximately
  * 500 KiB maximum cache weight.
  *
  * <p>Thread-safety: This class is thread-safe. Credential cache operations are thread-safe,
@@ -78,7 +78,7 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     private final String salt;
 
     /**
-     * Single cache for valid and invalid credentials.
+     * Cache for valid credentials.
      */
     private final CredentialsCache credentialsCache;
 
@@ -115,12 +115,11 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     }
 
     /**
-     * Validates the presented credentials using a single valid/invalid cache and constant-time
-     * comparison.
+     * Validates the presented credentials using valid-only credential caching and
+     * constant-time comparison.
      *
-     * <p>The cache is checked first. If found, the cached result is returned. If not found, a new
-     * hash is computed and compared using {@link MessageDigest#isEqual(byte[], byte[])} for
-     * constant-time comparison. The result is then stored in the cache.
+     * <p>A hash is computed and compared using {@link MessageDigest#isEqual(byte[], byte[])} for
+     * constant-time comparison. Valid credentials are cached; invalid credentials are never cached.
      *
      * @param username the presented username, may be {@code null}
      * @param password the presented password, may be {@code null}
@@ -133,21 +132,14 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        Credentials credentials = new Credentials(username, password);
-        Boolean cached = credentialsCache.get(credentials);
-        if (cached != null) {
-            return cached;
-        }
-
         byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, password);
         boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8));
         boolean passwordMatches = MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
         boolean isValid = usernameMatches & passwordMatches;
 
+        Credentials credentials = new Credentials(username, password);
         if (isValid) {
             credentialsCache.add(credentials);
-        } else {
-            credentialsCache.addInvalid(credentials);
         }
 
         return isValid;

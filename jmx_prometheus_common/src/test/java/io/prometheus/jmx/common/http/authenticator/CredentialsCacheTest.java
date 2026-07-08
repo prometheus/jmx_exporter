@@ -150,44 +150,21 @@ public class CredentialsCacheTest {
     }
 
     @Test
-    public void getReturnsNullForAbsentCredentials() {
+    public void containsReturnsFalseForAbsentCredentials() {
         CredentialsCache credentialsCache = new CredentialsCache(16, 1);
 
-        assertThat(credentialsCache.get(new Credentials("missing", "entry"))).isNull();
+        assertThat(credentialsCache.contains(new Credentials("missing", "entry")))
+                .isFalse();
     }
 
     @Test
-    public void getReturnsTrueForValidCredentials() {
+    public void containsReturnsTrueForCachedValidCredentials() {
         Credentials credentials = new Credentials("user", "pass");
         CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
 
         credentialsCache.add(credentials);
 
-        assertThat(credentialsCache.get(credentials)).isTrue();
         assertThat(credentialsCache.contains(credentials)).isTrue();
-    }
-
-    @Test
-    public void getReturnsFalseForInvalidCredentials() {
-        Credentials credentials = new Credentials("user", "pass");
-        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
-
-        credentialsCache.addInvalid(credentials);
-
-        assertThat(credentialsCache.get(credentials)).isFalse();
-        assertThat(credentialsCache.contains(credentials)).isTrue();
-    }
-
-    @Test
-    public void addInvalidOverwritesPreviousEntry() {
-        Credentials credentials = new Credentials("user", "pass");
-        CredentialsCache credentialsCache = new CredentialsCache(credentials.byteSize(), 1);
-
-        credentialsCache.add(credentials);
-        assertThat(credentialsCache.get(credentials)).isTrue();
-
-        credentialsCache.addInvalid(credentials);
-        assertThat(credentialsCache.get(credentials)).isFalse();
     }
 
     @Test
@@ -210,25 +187,12 @@ public class CredentialsCacheTest {
 
         credentialsCache.add(credentials);
         assertThat(credentialsCache.contains(credentials)).isTrue();
-        assertThat(credentialsCache.get(credentials)).isTrue();
     }
 
     @Test
     public void getMaxWeightBytesReturnsConfiguredValue() {
         CredentialsCache credentialsCache = new CredentialsCache(16, 100);
         assertThat(credentialsCache.getMaxWeightBytes()).isEqualTo(1600L);
-    }
-
-    @Test
-    public void oversizedCredentialsNotCachedForAddInvalid() {
-        Credentials cachedCredentials = new Credentials("ab", "cd");
-        Credentials oversizedCredentials = new Credentials("oversized-username", "oversized-password");
-
-        CredentialsCache credentialsCache = new CredentialsCache(cachedCredentials.byteSize(), 2);
-        credentialsCache.add(cachedCredentials);
-        credentialsCache.addInvalid(oversizedCredentials);
-
-        assertThat(credentialsCache.get(oversizedCredentials)).isNull();
     }
 
     @Test

@@ -17,36 +17,31 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.IsolatorExporterTestEnvironment;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class BasicIsolatorTest {
 
@@ -57,6 +52,16 @@ public class BasicIsolatorTest {
     private static final int LOWER_CASE_TEST = 1;
 
     private static final int FAILED_AUTHENTICATION_TEST = 2;
+
+    /**
+     * Mode strings used to differentiate metrics assertion files for each exporter instance.
+     * Without this differentiation, the DEFAULT and LOWER_CASE instances would write conflicting
+     * expectations to the same file because they use the same {@code JmxExporterMode.JavaAgent}
+     * but produce different metric names.
+     */
+    private static final String MODE_DEFAULT = "JavaAgent";
+
+    private static final String MODE_LOWERCASE = "JavaAgent_LowerCase";
 
     private final IsolatorExporterTestEnvironment environment;
 
@@ -71,38 +76,38 @@ public class BasicIsolatorTest {
         return Each.parallel(
                         BasicIsolatorTest.class.getName(),
                         IsolatorExporterTestEnvironment.createTestEnvironments(BasicIsolatorTest.class),
-                        environment -> Instance.builder(environment.name(), () -> new BasicIsolatorTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new BasicIsolatorTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(BasicIsolatorTest.class, BasicIsolatorTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 BasicIsolatorTest.class,
                                                                 BasicIsolatorTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 BasicIsolatorTest.class,
                                                                 BasicIsolatorTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 BasicIsolatorTest.class,
                                                                 BasicIsolatorTest::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 BasicIsolatorTest.class,
                                                                 BasicIsolatorTest::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 BasicIsolatorTest.class,
                                                                 BasicIsolatorTest::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(BasicIsolatorTest.class, BasicIsolatorTest::tearDown)))))
                 .build();
@@ -113,21 +118,15 @@ public class BasicIsolatorTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
     public void testHealthy() throws IOException {
-        for (int test = DEFAULT_TEST; test < JAVA_AGENT_COUNT; test++) {
+        for (int test = DEFAULT_TEST; test < FAILED_AUTHENTICATION_TEST; test++) {
             String url = environment.getUrl(test, JmxExporterPath.HEALTHY);
-
-            switch (test) {
-                case LOWER_CASE_TEST:
-                case DEFAULT_TEST: {
-                    HttpResponse httpResponse = HttpClient.sendRequest(url);
-                    assertHealthyResponse(httpResponse);
-                }
-            }
+            HttpResponse httpResponse = HttpClient.sendRequest(url);
+            assertHealthyResponse(httpResponse);
         }
     }
 
@@ -139,11 +138,11 @@ public class BasicIsolatorTest {
 
             switch (test) {
                 case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT, MODE_DEFAULT);
                     break;
                 }
                 case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.DEFAULT);
+                    assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT, MODE_LOWERCASE);
                     break;
                 }
                 case FAILED_AUTHENTICATION_TEST: {
@@ -163,11 +162,11 @@ public class BasicIsolatorTest {
 
             switch (test) {
                 case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS, MODE_DEFAULT);
                     break;
                 }
                 case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS, MODE_LOWERCASE);
                     break;
                 }
                 case FAILED_AUTHENTICATION_TEST: {
@@ -187,11 +186,11 @@ public class BasicIsolatorTest {
 
             switch (test) {
                 case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS, MODE_DEFAULT);
                     break;
                 }
                 case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS, MODE_LOWERCASE);
                     break;
                 }
                 case FAILED_AUTHENTICATION_TEST: {
@@ -211,11 +210,11 @@ public class BasicIsolatorTest {
 
             switch (test) {
                 case DEFAULT_TEST: {
-                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS, MODE_DEFAULT);
                     break;
                 }
                 case LOWER_CASE_TEST: {
-                    assertMetricsResponseLowerCase(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
+                    assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS, MODE_LOWERCASE);
                     break;
                 }
                 case FAILED_AUTHENTICATION_TEST: {
@@ -227,183 +226,19 @@ public class BasicIsolatorTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
-    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType, String mode) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", "jmx_prometheus_javaagent")
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
-                .withValue(2.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
-                .withValue(4.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
-                .withValue(6.0d)
-                .isPresent();
-    }
-
-    private void assertMetricsResponseLowerCase(HttpResponse httpResponse, MetricsContentType metricsContentType) {
-        assertMetricsContentType(httpResponse, metricsContentType);
-
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
-
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", "jmx_prometheus_javaagent")
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap");
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size".toLowerCase())
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent".toLowerCase())
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions"
-                        .toLowerCase())
-                .withValue(2.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps".toLowerCase())
-                .withValue(4.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred"
-                        .toLowerCase())
-                .withValue(6.0d)
-                .isPresent();
+        assertMetrics(BasicIsolatorTest.class, javaDockerImage, mode, metrics);
     }
 }

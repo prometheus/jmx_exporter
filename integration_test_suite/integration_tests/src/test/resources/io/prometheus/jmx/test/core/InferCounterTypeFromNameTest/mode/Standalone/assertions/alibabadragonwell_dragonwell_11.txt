@@ -1,0 +1,9 @@
+# metric-assertions-version 1
+# io.prometheus.jmx.test.core.InferCounterTypeFromNameTest Standalone alibabadragonwell/dragonwell:11
+
+match COUNTER jmx_config_reload_failure_total 0.0
+match COUNTER jmx_config_reload_success_total 0.0
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_standalone",version="1.6.0-POST"} 1.0
+match GAUGE jmx_scrape_cached_beans *
+match GAUGE jmx_scrape_duration_seconds *
+match GAUGE jmx_scrape_error 0.0

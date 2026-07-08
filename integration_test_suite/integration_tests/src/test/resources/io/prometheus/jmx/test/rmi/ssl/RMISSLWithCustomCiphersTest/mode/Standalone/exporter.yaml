@@ -1,0 +1,11 @@
+hostPort: application:9999
+ssl:
+  enabled: true
+  protocols: TLSv1.2
+  ciphers:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+username: Prometheus
+password: secret
+rules:
+  - pattern: ".*"

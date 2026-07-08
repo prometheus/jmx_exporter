@@ -18,19 +18,25 @@ package io.prometheus.jmx.test.support.environment;
 
 import io.prometheus.jmx.test.support.JavaDockerImages;
 import io.prometheus.jmx.test.support.PrometheusDockerImages;
+import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpRequest;
+import io.prometheus.jmx.test.support.http.HttpResponse;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.testcontainers.containers.Network;
+import org.altcontainers.api.Network;
+import org.paramixel.api.support.Retry;
 
 /**
  * Composite test environment combining a {@link PrometheusTestEnvironment} and a
  * {@link JmxExporterTestEnvironment} for OpenTelemetry integration testing.
  *
  * <p>The environment initializes both sub-environments on a shared Docker network passed
- * via {@link #initialize(Network)}. The caller is responsible for network creation and
- * teardown; this class only manages the sub-environment lifecycles.
+ * via {@link #initialize(Network)}. Resource mapping is delegated to the composed
+ * Prometheus and JMX exporter environments. The caller is responsible for network
+ * creation and teardown; this class only manages the sub-environment lifecycles.
  */
 public class OpenTelemetryTestEnvironment implements AutoCloseable {
 
@@ -41,6 +47,8 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
 
     private String prometheusReadyUsername;
     private String prometheusReadyPassword;
+    private String exporterReadyUsername;
+    private String exporterReadyPassword;
     private Network network;
 
     /**
@@ -116,6 +124,20 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
     }
 
     /**
+     * Configures basic authentication credentials to use when waiting for the JMX exporter
+     * to become ready.
+     *
+     * @param username the basic authentication username; must not be {@code null}
+     * @param password the basic authentication password; must not be {@code null}
+     * @return this environment instance for method chaining
+     */
+    public OpenTelemetryTestEnvironment withExporterReadyBasicAuthentication(String username, String password) {
+        this.exporterReadyUsername = username;
+        this.exporterReadyPassword = password;
+        return this;
+    }
+
+    /**
      * Initializes this environment on the specified Docker network, starting the Prometheus
      * and JMX exporter sub-environments, and waiting for Prometheus to become ready.
      *
@@ -134,6 +156,7 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
                 prometheusTestEnvironment.waitForReady();
             }
             jmxExporterTestEnvironment.initialize(network);
+            waitForExporterReady();
         } catch (Throwable t) {
             Throwable failure = t;
 
@@ -154,6 +177,39 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
     }
 
     /**
+     * Waits for the JMX exporter's {@code /healthy} endpoint to return HTTP 200.
+     *
+     * <p>This ensures the exporter is fully ready before tests query Prometheus for metrics.
+     *
+     * @throws EnvironmentException if the exporter does not become ready within the retry policy
+     */
+    private void waitForExporterReady() {
+        String url = jmxExporterTestEnvironment.getUrl(JmxExporterPath.HEALTHY);
+
+        Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(30)))
+                .retryOn(t -> t instanceof Exception)
+                .run(() -> {
+                    HttpRequest.Builder httpRequestBuilder =
+                            HttpRequest.builder().url(url);
+                    if (exporterReadyUsername != null && exporterReadyPassword != null) {
+                        httpRequestBuilder.basicAuthentication(exporterReadyUsername, exporterReadyPassword);
+                    }
+
+                    HttpResponse httpResponse = HttpClient.sendRequest(httpRequestBuilder.build());
+
+                    if (httpResponse.statusCode() == 200) {
+                        return;
+                    }
+
+                    throw new EnvironmentException("Exporter not ready, status: " + httpResponse.statusCode());
+                });
+
+        if (!result.isSuccessful()) {
+            throw new EnvironmentException("Exporter not ready after retry");
+        }
+    }
+
+    /**
      * Returns whether both the Prometheus and JMX exporter environments are currently running.
      *
      * @return {@code true} if both sub-environments are running; {@code false} otherwise
@@ -164,8 +220,24 @@ public class OpenTelemetryTestEnvironment implements AutoCloseable {
 
     @Override
     public void close() {
-        jmxExporterTestEnvironment.close();
-        prometheusTestEnvironment.close();
+        RuntimeException firstException = null;
+        try {
+            jmxExporterTestEnvironment.close();
+        } catch (RuntimeException e) {
+            firstException = e;
+        }
+        try {
+            prometheusTestEnvironment.close();
+        } catch (RuntimeException e) {
+            if (firstException == null) {
+                firstException = e;
+            } else {
+                firstException.addSuppressed(e);
+            }
+        }
+        if (firstException != null) {
+            throw firstException;
+        }
     }
 
     /**

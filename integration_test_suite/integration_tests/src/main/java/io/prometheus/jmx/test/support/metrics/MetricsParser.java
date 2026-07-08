@@ -29,6 +29,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -58,7 +59,8 @@ public class MetricsParser {
      */
     public static Map<String, Collection<Metric>> parseMap(HttpResponse httpResponse) {
         return parseCollection(httpResponse).stream()
-                .collect(Collectors.groupingBy(Metric::name, Collectors.toCollection(ArrayList::new)));
+                .sorted(metricComparator())
+                .collect(Collectors.groupingBy(Metric::name, TreeMap::new, Collectors.toCollection(ArrayList::new)));
     }
 
     /**
@@ -88,6 +90,13 @@ public class MetricsParser {
             throw new MetricsParserException(
                     format("Exception parsing text metrics. No parser for CONTENT-TYPE = [%s]", contentType));
         }
+    }
+
+    private static Comparator<Metric> metricComparator() {
+        return Comparator.comparing(Metric::name)
+                .thenComparing(metric -> metric.type().name())
+                .thenComparing(metric -> metric.labels().toString())
+                .thenComparingDouble(Metric::value);
     }
 
     /**

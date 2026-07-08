@@ -17,30 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class CompositeKeyDataTest {
 
@@ -57,38 +57,38 @@ public class CompositeKeyDataTest {
         return Each.parallel(
                         CompositeKeyDataTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(CompositeKeyDataTest.class),
-                        environment -> Instance.builder(environment.name(), () -> new CompositeKeyDataTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new CompositeKeyDataTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(CompositeKeyDataTest.class, CompositeKeyDataTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 CompositeKeyDataTest.class,
                                                                 CompositeKeyDataTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 CompositeKeyDataTest.class,
                                                                 CompositeKeyDataTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 CompositeKeyDataTest.class,
                                                                 CompositeKeyDataTest::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 CompositeKeyDataTest.class,
                                                                 CompositeKeyDataTest::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 CompositeKeyDataTest.class,
                                                                 CompositeKeyDataTest::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         CompositeKeyDataTest.class, CompositeKeyDataTest::tearDown)))))
@@ -100,7 +100,7 @@ public class CompositeKeyDataTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -138,27 +138,20 @@ public class CompositeKeyDataTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "1")
-                .withLabel("key_path", "/db/query1.xq")
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("org_exist_management_exist_ProcessReport_RunningQueries_id")
-                .withLabel("key_id", "2")
-                .withLabel("key_path", "/db/query2.xq")
-                .isPresent();
+        assertMetrics(CompositeKeyDataTest.class, javaDockerImage, mode, metrics);
     }
 }

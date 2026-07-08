@@ -16,15 +16,19 @@
 
 package io.prometheus.jmx.test.support.environment;
 
+import static java.lang.String.format;
+
+import io.prometheus.jmx.common.util.ResourceSupport;
 import io.prometheus.jmx.test.support.JavaDockerImages;
-import java.time.Duration;
+import io.prometheus.jmx.test.support.TestSupport;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
+import java.util.function.Consumer;
+import org.altcontainers.api.Container;
+import org.altcontainers.api.ContainerSpec;
+import org.altcontainers.api.Network;
+import org.altcontainers.api.OutputFrame;
 
 /**
  * Test environment for the isolator Java agent mode, managing a single Docker container
@@ -38,6 +42,10 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
 
     private static final String BASE_URL = "http://localhost";
     private static final int BASE_PORT = 8888;
+    private static final long MEMORY_BYTES = 1073741824L;
+    private static final long MEMORY_SWAP_BYTES = 2 * MEMORY_BYTES;
+    private static final long NOFILE_SOFT_LIMIT = 65536L;
+    private static final long NOFILE_HARD_LIMIT = 65536L;
 
     private final String id;
     private final Class<?> testClass;
@@ -45,7 +53,11 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
 
     private String baseUrl;
     private Network network;
-    private GenericContainer<?> javaAgentApplicationContainer;
+    private Container javaAgentApplicationContainer;
+
+    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
+        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
+    }
 
     /**
      * Creates an isolator exporter test environment for the specified test class and Java Docker image.
@@ -91,6 +103,15 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
     }
 
     /**
+     * Returns the JMX exporter mode.
+     *
+     * @return the JMX exporter mode
+     */
+    public JmxExporterMode getJmxExporterMode() {
+        return JmxExporterMode.JavaAgent;
+    }
+
+    /**
      * Returns the Java Docker image name used by the application container.
      *
      * @return the Java Docker image name
@@ -110,7 +131,6 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
         this.network = Objects.requireNonNull(network);
 
         javaAgentApplicationContainer = createJavaAgentApplicationContainer();
-        javaAgentApplicationContainer.start();
     }
 
     /**
@@ -140,15 +160,21 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
      * @return the base URL with port, e.g. {@code "http://localhost:32768"}
      */
     public String getBaseUrl(int index) {
-        int port = javaAgentApplicationContainer.getMappedPort(BASE_PORT + index);
+        int port = javaAgentApplicationContainer.hostPort(BASE_PORT + index);
         return baseUrl + ":" + port;
     }
 
     @Override
     public void close() {
-        GenericContainer<?> container = javaAgentApplicationContainer;
-        stopQuietly();
-        ContainerSupport.waitForShutdown(container);
+        if (javaAgentApplicationContainer != null) {
+            try {
+                javaAgentApplicationContainer.close();
+            } catch (RuntimeException e) {
+                javaAgentApplicationContainer = null;
+                throw e;
+            }
+        }
+        javaAgentApplicationContainer = null;
     }
 
     /**
@@ -160,32 +186,47 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
         return network;
     }
 
-    private void stopQuietly() {
-        if (javaAgentApplicationContainer != null) {
-            try {
-                javaAgentApplicationContainer.stop();
-            } catch (Exception ignored) {
-            } finally {
-                javaAgentApplicationContainer = null;
-            }
+    private String resolveModeResourceDirectory() {
+        String basePath = testClass.getName().replace(".", "/");
+
+        String modeResourceDirectory = basePath + "/mode/JavaAgent";
+        if (ResourceSupport.exists(modeResourceDirectory + "/application.sh")) {
+            return modeResourceDirectory;
         }
+
+        String legacyResourceDirectory = basePath + "/JavaAgent";
+        if (ResourceSupport.exists(legacyResourceDirectory + "/application.sh")) {
+            return legacyResourceDirectory;
+        }
+
+        throw new EnvironmentException(
+                format("Resource directory [%s] or [%s] not found", modeResourceDirectory, legacyResourceDirectory));
     }
 
-    private GenericContainer<?> createJavaAgentApplicationContainer() {
-        return new GenericContainer<>(javaDockerImage)
-                .waitingFor(Wait.forListeningPort())
-                .withClasspathResourceMapping("common", "/temp", BindMode.READ_ONLY)
-                .withClasspathResourceMapping(
-                        testClass.getName().replace(".", "/") + "/JavaAgent", "/temp", BindMode.READ_ONLY)
-                .withCreateContainerCmdModifier(ContainerCmdModifier.getInstance())
-                .withCommand("/bin/sh application.sh")
-                .withExposedPorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
-                .withLogConsumer(new ContainerLogConsumer("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
-                .withNetwork(network)
-                .withNetworkAliases("application")
-                .waitingFor(Wait.forLogMessage(".*JmxExampleApplication \\| Running.*\\n", 1))
-                .withStartupTimeout(Duration.ofSeconds(60))
-                .withWorkingDirectory("/temp");
+    private Container createJavaAgentApplicationContainer() {
+        ContainerSpec containerSpec = ContainerSpec.builder(javaDockerImage)
+                .bindDirectory(
+                        TestSupport.resolveClasspathDirectory(testClass, "common")
+                                .toString(),
+                        "/common")
+                .bindDirectory(
+                        TestSupport.copyClasspathDirectoryToTemp(testClass, resolveModeResourceDirectory())
+                                .toString(),
+                        "/temp")
+                .command("/bin/sh", "application.sh")
+                .exposePorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
+                .network(network, "application")
+                .waitForContainerPort(BASE_PORT)
+                .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
+                .workingDirectory("/temp")
+                .onOutput(prefixedLogConsumer("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
+                .startupAttempts(3)
+                .memory(MEMORY_BYTES)
+                .memorySwap(MEMORY_SWAP_BYTES)
+                .ulimit("nofile", NOFILE_SOFT_LIMIT, NOFILE_HARD_LIMIT)
+                .build();
+
+        return Container.create(containerSpec);
     }
 
     /**

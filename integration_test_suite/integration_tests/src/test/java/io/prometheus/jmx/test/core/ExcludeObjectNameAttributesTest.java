@@ -17,32 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.fail;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class ExcludeObjectNameAttributesTest {
 
@@ -59,45 +57,45 @@ public class ExcludeObjectNameAttributesTest {
         return Each.parallel(
                         ExcludeObjectNameAttributesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(ExcludeObjectNameAttributesTest.class),
-                        environment -> Instance.builder(
+                        environment -> instance(
                                         environment.name(), () -> new ExcludeObjectNameAttributesTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         ExcludeObjectNameAttributesTest.class,
                                                         ExcludeObjectNameAttributesTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 ExcludeObjectNameAttributesTest.class,
                                                                 ExcludeObjectNameAttributesTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 ExcludeObjectNameAttributesTest.class,
                                                                 ExcludeObjectNameAttributesTest
                                                                         ::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 ExcludeObjectNameAttributesTest.class,
                                                                 ExcludeObjectNameAttributesTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 ExcludeObjectNameAttributesTest.class,
                                                                 ExcludeObjectNameAttributesTest
                                                                         ::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 ExcludeObjectNameAttributesTest.class,
                                                                 ExcludeObjectNameAttributesTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         ExcludeObjectNameAttributesTest.class,
@@ -110,7 +108,7 @@ public class ExcludeObjectNameAttributesTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -148,39 +146,20 @@ public class ExcludeObjectNameAttributesTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        Set<String> excludeAttributeNameSet = new HashSet<>();
-        excludeAttributeNameSet.add("_ClassPath");
-        excludeAttributeNameSet.add("_SystemProperties");
-
-        Set<String> excludeJavaLangMemoryAttributeSet = new HashSet<>();
-        excludeJavaLangMemoryAttributeSet.add("NonHeapMemoryUsage");
-        excludeJavaLangMemoryAttributeSet.add("Verbose");
-        excludeJavaLangMemoryAttributeSet.add("ObjectPendingFinalizationCount");
-
-        metrics.forEach(metric -> {
-            String name = metric.name();
-            if (name.equals("java_lang_Memory")) {
-                for (String attributeName : excludeJavaLangMemoryAttributeSet) {
-                    if (name.equals(attributeName)) {
-                        fail("metric [" + metric + "] found");
-                    }
-                }
-            } else {
-                for (String attributeName : excludeAttributeNameSet) {
-                    if (name.contains(attributeName)) {
-                        fail("metric [" + metric + "] found");
-                    }
-                }
-            }
-        });
+        assertMetrics(ExcludeObjectNameAttributesTest.class, javaDockerImage, mode, metrics);
     }
 }

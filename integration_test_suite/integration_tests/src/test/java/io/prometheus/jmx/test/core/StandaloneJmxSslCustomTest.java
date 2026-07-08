@@ -17,32 +17,32 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class StandaloneJmxSslCustomTest {
 
@@ -58,53 +58,52 @@ public class StandaloneJmxSslCustomTest {
     }
 
     @Paramixel.Factory
-    @Paramixel.Disabled
     public static Action factory() throws Throwable {
         var environments = JmxExporterTestEnvironment.createTestEnvironments(StandaloneJmxSslCustomTest.class).stream()
-                .filter(e -> e.getJmxExporterMode() == JmxExporterMode.Standalone)
-                .filter(e -> !e.getJavaDockerImage().contains("graalvm/jdk:java8"))
-                .filter(e -> !e.getJavaDockerImage().contains("ibmjava"))
+                .filter(environment -> environment.getJmxExporterMode() == JmxExporterMode.Standalone)
+                .filter(environment -> !environment.getJavaDockerImage().contains("graalvm/jdk:java8"))
+                .filter(environment -> !environment.getJavaDockerImage().contains("ibmjava"))
                 .collect(Collectors.toList());
 
         return Each.parallel(
                         StandaloneJmxSslCustomTest.class.getName(),
                         environments,
-                        env -> Instance.builder(env.name(), () -> new StandaloneJmxSslCustomTest(env))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new StandaloneJmxSslCustomTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         StandaloneJmxSslCustomTest.class,
                                                         StandaloneJmxSslCustomTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 StandaloneJmxSslCustomTest.class,
                                                                 StandaloneJmxSslCustomTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 StandaloneJmxSslCustomTest.class,
                                                                 StandaloneJmxSslCustomTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 StandaloneJmxSslCustomTest.class,
                                                                 StandaloneJmxSslCustomTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 StandaloneJmxSslCustomTest.class,
                                                                 StandaloneJmxSslCustomTest::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 StandaloneJmxSslCustomTest.class,
                                                                 StandaloneJmxSslCustomTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         StandaloneJmxSslCustomTest.class,
@@ -113,7 +112,7 @@ public class StandaloneJmxSslCustomTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -151,62 +150,20 @@ public class StandaloneJmxSslCustomTest {
     }
 
     public void tearDown() throws Throwable {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
-
-        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "nonheap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jvm_memory_used_bytes")
-                .withLabel("area", "heap")
-                .isPresentWhen(isJmxExporterModeJavaAgent);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8d)
-                .isPresent();
+        assertMetrics(StandaloneJmxSslCustomTest.class, javaDockerImage, mode, metrics);
     }
 }

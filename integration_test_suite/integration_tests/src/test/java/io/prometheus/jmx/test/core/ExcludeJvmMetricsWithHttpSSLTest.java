@@ -17,39 +17,33 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class ExcludeJvmMetricsWithHttpSSLTest {
 
@@ -67,54 +61,53 @@ public class ExcludeJvmMetricsWithHttpSSLTest {
     public static Action factory() throws Throwable {
         var environments =
                 JmxExporterTestEnvironment.createTestEnvironments(ExcludeJvmMetricsWithHttpSSLTest.class).stream()
-                        .filter(e -> !e.getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
-                        .filter(exporterTestEnvironment ->
-                                exporterTestEnvironment.getJmxExporterMode() == JmxExporterMode.JavaAgent)
-                        .map(e -> e.setBaseUrl("https://localhost"))
+                        .filter(environment -> !environment.getJavaDockerImage().contains("eclipse-temurin:8-alpine"))
+                        .filter(environment -> environment.getJmxExporterMode() == JmxExporterMode.JavaAgent)
+                        .map(environment -> environment.setBaseUrl("https://localhost"))
                         .collect(Collectors.toList());
 
         return Each.parallel(
                         ExcludeJvmMetricsWithHttpSSLTest.class.getName(),
                         environments,
-                        environment -> Instance.builder(
+                        environment -> instance(
                                         environment.name(), () -> new ExcludeJvmMetricsWithHttpSSLTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         ExcludeJvmMetricsWithHttpSSLTest.class,
                                                         ExcludeJvmMetricsWithHttpSSLTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 ExcludeJvmMetricsWithHttpSSLTest.class,
                                                                 ExcludeJvmMetricsWithHttpSSLTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 ExcludeJvmMetricsWithHttpSSLTest.class,
                                                                 ExcludeJvmMetricsWithHttpSSLTest
                                                                         ::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 ExcludeJvmMetricsWithHttpSSLTest.class,
                                                                 ExcludeJvmMetricsWithHttpSSLTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 ExcludeJvmMetricsWithHttpSSLTest.class,
                                                                 ExcludeJvmMetricsWithHttpSSLTest
                                                                         ::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 ExcludeJvmMetricsWithHttpSSLTest.class,
                                                                 ExcludeJvmMetricsWithHttpSSLTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         ExcludeJvmMetricsWithHttpSSLTest.class,
@@ -127,7 +120,7 @@ public class ExcludeJvmMetricsWithHttpSSLTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -181,91 +174,20 @@ public class ExcludeJvmMetricsWithHttpSSLTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
-    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType)
-            throws Exception {
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent")
-                .withLabel("source", "/dev/sda2")
-                .withValue(0.8d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
-                .withValue(2.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps")
-                .withValue(4.0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred")
-                .withValue(6.0d)
-                .isPresent();
-
-        for (String metricName : metrics.keySet()) {
-            String lowerCaseMetricName = metricName.toLowerCase();
-
-            assertThat(lowerCaseMetricName).doesNotStartWith("com_sun_");
-            assertThat(lowerCaseMetricName).doesNotStartWith("java_lang");
-            assertThat(lowerCaseMetricName).doesNotStartWith("java_nio");
-            assertThat(lowerCaseMetricName).doesNotStartWith("java_util_logging");
-            assertThat(lowerCaseMetricName).doesNotStartWith("javax_management");
-            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_internal");
-            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_management");
-            assertThat(lowerCaseMetricName).doesNotStartWith("jdk_management_flr");
-            assertThat(lowerCaseMetricName).doesNotStartWith("jvm_");
-        }
+        assertMetrics(ExcludeJvmMetricsWithHttpSSLTest.class, javaDockerImage, mode, metrics);
     }
 }

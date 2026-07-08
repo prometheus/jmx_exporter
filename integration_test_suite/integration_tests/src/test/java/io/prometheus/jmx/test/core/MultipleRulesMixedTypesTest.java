@@ -17,37 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
-import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class MultipleRulesMixedTypesTest {
 
@@ -60,49 +53,47 @@ public class MultipleRulesMixedTypesTest {
     }
 
     @Paramixel.Factory
-    @Paramixel.Disabled
     public static Action factory() throws Throwable {
         return Each.parallel(
                         MultipleRulesMixedTypesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(MultipleRulesMixedTypesTest.class),
-                        environment -> Instance.builder(
-                                        environment.name(), () -> new MultipleRulesMixedTypesTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new MultipleRulesMixedTypesTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         MultipleRulesMixedTypesTest.class,
                                                         MultipleRulesMixedTypesTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 MultipleRulesMixedTypesTest.class,
                                                                 MultipleRulesMixedTypesTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 MultipleRulesMixedTypesTest.class,
                                                                 MultipleRulesMixedTypesTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 MultipleRulesMixedTypesTest.class,
                                                                 MultipleRulesMixedTypesTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 MultipleRulesMixedTypesTest.class,
                                                                 MultipleRulesMixedTypesTest
                                                                         ::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 MultipleRulesMixedTypesTest.class,
                                                                 MultipleRulesMixedTypesTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         MultipleRulesMixedTypesTest.class,
@@ -115,7 +106,7 @@ public class MultipleRulesMixedTypesTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -153,72 +144,20 @@ public class MultipleRulesMixedTypesTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
-
-        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("auto_increment_metric")
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("custom_gauge_metric")
-                .withValue(345d)
-                .isPresent();
-
-        // With the catch-all UNTYPED rule, check that a few application metrics are present and
-        // typed UNTYPED
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size")
-                .withLabel("source", "/dev/sda1")
-                .withValue(7.516192768E9d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.UNTYPED)
-                .withName("io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions")
-                .withValue(2.0d)
-                .isPresent();
+        assertMetrics(MultipleRulesMixedTypesTest.class, javaDockerImage, mode, metrics);
     }
 }

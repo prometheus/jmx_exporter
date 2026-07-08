@@ -1,0 +1,6 @@
+hostPort: application:9999
+rules:
+  - pattern: "io\\.prometheus\\.jmx<type=customValue><>value: (\\d+)"
+    name: snake_case_with_custom_name
+    attrNameSnakeCase: true
+    type: GAUGE

@@ -1,0 +1,27 @@
+# metric-assertions-version 1
+# io.prometheus.jmx.test.core.IncludeAndExcludeObjectNamesTest Standalone antublue/konajdk:21
+
+match UNTYPED io_prometheus_jmx_autoIncrementing_Value *
+match UNTYPED io_prometheus_jmx_customValue_Value 345.0
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail{source="/dev/sda1"} 1.073741824E9
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_avail{source="/dev/sda2"} 6.442450944E9
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_pcent{source="/dev/sda1"} 0.8571428571428571
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_pcent{source="/dev/sda2"} 0.5714285714285714
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size{source="/dev/sda1"} 7.516192768E9
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_size{source="/dev/sda2"} 1.5032385536E10
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_used{source="/dev/sda1"} 6.442450944E9
+match UNTYPED io_prometheus_jmx_tabularData_Server_1_Disk_Usage_Table_used{source="/dev/sda2"} 8.589934592E9
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_avail{source="/dev/sda1"} 1.1811160064E10
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_avail{source="/dev/sda2"} 2.147483648E10
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent{source="/dev/sda1"} 0.5416666666666666
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_pcent{source="/dev/sda2"} 0.8
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_size{source="/dev/sda1"} 2.5769803776E10
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_size{source="/dev/sda2"} 1.073741824E11
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_used{source="/dev/sda1"} 1.3958643712E10
+match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_used{source="/dev/sda2"} 8.589934592E10
+match COUNTER jmx_config_reload_failure_total 0.0
+match COUNTER jmx_config_reload_success_total 0.0
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_standalone",version="1.6.0-POST"} 1.0
+match GAUGE jmx_scrape_cached_beans *
+match GAUGE jmx_scrape_duration_seconds *
+match GAUGE jmx_scrape_error 0.0

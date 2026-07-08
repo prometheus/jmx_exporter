@@ -49,7 +49,6 @@ public class CredentialsCache {
     public static final long DEFAULT_MAX_WEIGHT_BYTES = (long) DEFAULT_MAX_VALUE_SIZE_BYTES * DEFAULT_MAX_ENTRIES;
 
     private static final Boolean VALID = Boolean.TRUE;
-    private static final Boolean INVALID = Boolean.FALSE;
 
     /**
      * Maximum cacheable credential size in bytes.
@@ -135,36 +134,6 @@ public class CredentialsCache {
         }
 
         cache.put(credentials, VALID);
-    }
-
-    /**
-     * Adds credentials to the cache as invalid.
-     *
-     * <p>If the credentials size exceeds the maximum value size, they are not cached. If the
-     * credentials are already present, they are refreshed as a recently used entry.
-     *
-     * @param credentials credentials to add as invalid, must not be {@code null}
-     */
-    public void addInvalid(Credentials credentials) {
-        Precondition.notNull(credentials, "credentials is null");
-
-        if (credentials.byteSize() > maxValueSizeBytes) {
-            return;
-        }
-
-        cache.put(credentials, INVALID);
-    }
-
-    /**
-     * Returns the cached status of the specified credentials.
-     *
-     * @param credentials credentials to look up, must not be {@code null}
-     * @return {@code Boolean.TRUE} if valid, {@code Boolean.FALSE} if invalid, or {@code null} if
-     *     not cached
-     */
-    public Boolean get(Credentials credentials) {
-        Precondition.notNull(credentials, "credentials is null");
-        return cache.getIfPresent(credentials);
     }
 
     /**

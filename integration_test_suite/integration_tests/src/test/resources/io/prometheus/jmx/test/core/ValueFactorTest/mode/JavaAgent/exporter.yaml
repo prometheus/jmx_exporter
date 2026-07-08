@@ -1,0 +1,4 @@
+rules:
+  - pattern: "io\\.prometheus\\.jmx<type=customValue><>Value: (\\d+)"
+    name: custom_value
+    valueFactor: 0.001

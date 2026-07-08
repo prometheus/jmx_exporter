@@ -17,30 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class WhitelistAndBlacklistObjectNamesTest {
 
@@ -57,45 +57,45 @@ public class WhitelistAndBlacklistObjectNamesTest {
         return Each.parallel(
                         WhitelistAndBlacklistObjectNamesTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(WhitelistAndBlacklistObjectNamesTest.class),
-                        environment -> Instance.builder(
+                        environment -> instance(
                                         environment.name(), () -> new WhitelistAndBlacklistObjectNamesTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         WhitelistAndBlacklistObjectNamesTest.class,
                                                         WhitelistAndBlacklistObjectNamesTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 WhitelistAndBlacklistObjectNamesTest.class,
                                                                 WhitelistAndBlacklistObjectNamesTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 WhitelistAndBlacklistObjectNamesTest.class,
                                                                 WhitelistAndBlacklistObjectNamesTest
                                                                         ::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 WhitelistAndBlacklistObjectNamesTest.class,
                                                                 WhitelistAndBlacklistObjectNamesTest
                                                                         ::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 WhitelistAndBlacklistObjectNamesTest.class,
                                                                 WhitelistAndBlacklistObjectNamesTest
                                                                         ::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 WhitelistAndBlacklistObjectNamesTest.class,
                                                                 WhitelistAndBlacklistObjectNamesTest
                                                                         ::testPrometheusProtobufMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         WhitelistAndBlacklistObjectNamesTest.class,
@@ -108,7 +108,7 @@ public class WhitelistAndBlacklistObjectNamesTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -146,15 +146,20 @@ public class WhitelistAndBlacklistObjectNamesTest {
     }
 
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Collection<Metric> metrics = MetricsParser.parseCollection(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        metrics.forEach(metric -> assertThat(metric.name().toLowerCase()).doesNotStartWith("java_lang"));
+        assertMetrics(WhitelistAndBlacklistObjectNamesTest.class, javaDockerImage, mode, metrics);
     }
 }

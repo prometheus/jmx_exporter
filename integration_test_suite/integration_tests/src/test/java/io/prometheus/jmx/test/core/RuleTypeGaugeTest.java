@@ -17,37 +17,30 @@
 package io.prometheus.jmx.test.core;
 
 import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetric;
-import static io.prometheus.jmx.test.support.metrics.MetricAssertion.assertMetricsContentType;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
-import io.prometheus.jmx.test.support.environment.JmxExporterMode;
 import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.JmxExporterTestEnvironment;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
 import io.prometheus.jmx.test.support.http.HttpClient;
 import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
 import io.prometheus.jmx.test.support.metrics.Metric;
 import io.prometheus.jmx.test.support.metrics.MetricsContentType;
-import io.prometheus.jmx.test.support.metrics.MetricsParser;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.testcontainers.containers.Network;
 
 public class RuleTypeGaugeTest {
 
@@ -60,48 +53,42 @@ public class RuleTypeGaugeTest {
     }
 
     @Paramixel.Factory
-    @Paramixel.Disabled
     public static Action factory() throws Throwable {
         return Each.parallel(
                         RuleTypeGaugeTest.class.getName(),
                         JmxExporterTestEnvironment.createTestEnvironments(RuleTypeGaugeTest.class),
-                        environment -> Instance.builder(environment.name(), () -> new RuleTypeGaugeTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                        environment -> instance(environment.name(), () -> new RuleTypeGaugeTest(environment))
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(RuleTypeGaugeTest.class, RuleTypeGaugeTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
                                                         "testHealthy()",
                                                         withInstance(
                                                                 RuleTypeGaugeTest.class,
                                                                 RuleTypeGaugeTest::testHealthy)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testDefaultTextMetrics()",
                                                         withInstance(
                                                                 RuleTypeGaugeTest.class,
                                                                 RuleTypeGaugeTest::testDefaultTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testOpenMetricsTextMetrics()",
                                                         withInstance(
                                                                 RuleTypeGaugeTest.class,
                                                                 RuleTypeGaugeTest::testOpenMetricsTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusTextMetrics()",
                                                         withInstance(
                                                                 RuleTypeGaugeTest.class,
                                                                 RuleTypeGaugeTest::testPrometheusTextMetrics)))
-                                                .child(Step.of(
+                                                .child(step(
                                                         "testPrometheusProtobufMetrics()",
                                                         withInstance(
                                                                 RuleTypeGaugeTest.class,
-                                                                RuleTypeGaugeTest::testPrometheusProtobufMetrics)))
-                                                .child(Step.of(
-                                                        "testRuleTypeGauge()",
-                                                        withInstance(
-                                                                RuleTypeGaugeTest.class,
-                                                                RuleTypeGaugeTest::testRuleTypeGauge))))
-                                        .after(Step.of(
+                                                                RuleTypeGaugeTest::testPrometheusProtobufMetrics))))
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(RuleTypeGaugeTest.class, RuleTypeGaugeTest::tearDown)))))
                 .build();
@@ -112,7 +99,7 @@ public class RuleTypeGaugeTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
     }
 
@@ -149,74 +136,21 @@ public class RuleTypeGaugeTest {
         assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
-    public void testRuleTypeGauge() throws IOException {
-        String url = environment.getUrl(JmxExporterPath.METRICS);
-        HttpResponse httpResponse = HttpClient.sendRequest(url);
-
-        assertMetricsContentType(httpResponse, MetricsContentType.DEFAULT);
-
-        Map<String, Collection<Metric>> metrics = parseMetrics(httpResponse);
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("custom_gauge_value")
-                .withValue(345d)
-                .isPresent();
-    }
-
     public void tearDown() {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
     private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
         assertMetricsContentType(httpResponse, metricsContentType);
 
-        Map<String, Collection<Metric>> metrics = parseMetrics(httpResponse);
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.getJmxExporterMode().name();
+        String javaDockerImage = environment.getJavaDockerImage();
 
-        boolean isJmxExporterModeJavaAgent = environment.getJmxExporterMode() == JmxExporterMode.JavaAgent;
-
-        String buildInfoName = environment.getJmxExporterMode().getBuildInfoName();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_exporter_build_info")
-                .withLabel("name", buildInfoName)
-                .withValue(1d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("jmx_scrape_error")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.COUNTER)
-                .withName("jmx_config_reload_success_total")
-                .withValue(0d)
-                .isPresent();
-
-        assertMetric(metrics)
-                .ofType(Metric.Type.GAUGE)
-                .withName("custom_gauge_value")
-                .withValue(345d)
-                .isPresent();
-    }
-
-    private Map<String, Collection<Metric>> parseMetrics(HttpResponse httpResponse) {
-        Map<String, Collection<Metric>> metrics = new LinkedHashMap<>();
-
-        Set<String> compositeNameSet = new HashSet<>();
-        MetricsParser.parseCollection(httpResponse).forEach(metric -> {
-            String name = metric.name();
-            Map<String, String> labels = metric.labels();
-            String compositeName = name + " " + labels;
-            assertThat(compositeNameSet).doesNotContain(compositeName);
-            compositeNameSet.add(compositeName);
-            metrics.computeIfAbsent(name, k -> new ArrayList<>()).add(metric);
-        });
-
-        return metrics;
+        assertMetrics(RuleTypeGaugeTest.class, javaDockerImage, mode, metrics);
     }
 }

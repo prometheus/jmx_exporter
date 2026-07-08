@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -85,6 +86,18 @@ public class HttpClient {
 
     private static final OkHttpClient defaultHttpClient =
             createHttpClient(CONNECT_TIMEOUT, WRITE_TIMEOUT, READ_TIMEOUT, UNSAFE_SSL_FACTORY.getSslContext());
+
+    /**
+     * Cache key for per-configuration OkHttpClient instances.
+     */
+    private record ClientKey(int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {}
+
+    /**
+     * Cached OkHttpClient instances keyed by configuration.
+     * Entries are retained for the lifetime of a test run; the cache is small
+     * (bounded by the number of unique SSL configurations, typically &lt; 10).
+     */
+    private static final Map<ClientKey, OkHttpClient> clientCache = new ConcurrentHashMap<>();
 
     /**
      * Sends a GET request to the specified URL using default timeouts.
@@ -259,18 +272,16 @@ public class HttpClient {
      */
     private static OkHttpClient getHttpClient(
             int connectTimeout, int writeTimeout, int readTimeout, SSLContext sslContext) {
-        if (connectTimeout != CONNECT_TIMEOUT
-                || writeTimeout != WRITE_TIMEOUT
-                || readTimeout != READ_TIMEOUT
-                || sslContext != null) {
-            return createHttpClient(
-                    connectTimeout,
-                    writeTimeout,
-                    readTimeout,
-                    sslContext != null ? sslContext : UNSAFE_SSL_FACTORY.getSslContext());
+        if (connectTimeout == CONNECT_TIMEOUT
+                && writeTimeout == WRITE_TIMEOUT
+                && readTimeout == READ_TIMEOUT
+                && sslContext == null) {
+            return defaultHttpClient;
         }
-
-        return defaultHttpClient;
+        SSLContext effectiveSsl = sslContext != null ? sslContext : UNSAFE_SSL_FACTORY.getSslContext();
+        ClientKey key = new ClientKey(connectTimeout, writeTimeout, readTimeout, effectiveSsl);
+        return clientCache.computeIfAbsent(
+                key, k -> createHttpClient(k.connectTimeout(), k.writeTimeout(), k.readTimeout(), k.sslContext()));
     }
 
     /**

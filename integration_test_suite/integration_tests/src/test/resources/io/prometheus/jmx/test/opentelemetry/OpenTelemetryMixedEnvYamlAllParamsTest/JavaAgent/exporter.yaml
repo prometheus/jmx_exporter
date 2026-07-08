@@ -1,4 +1,0 @@
-openTelemetry:
-  endpoint: http://prometheus:9090/api/v1/otlp
-rules:
-  - pattern: ".*"

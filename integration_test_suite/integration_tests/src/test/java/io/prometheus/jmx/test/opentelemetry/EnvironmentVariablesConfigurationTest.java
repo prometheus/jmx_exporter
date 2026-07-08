@@ -16,32 +16,40 @@
 
 package io.prometheus.jmx.test.opentelemetry;
 
+import static io.prometheus.jmx.test.support.http.HttpResponse.assertHealthyResponse;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetrics;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.assertMetricsContentType;
+import static io.prometheus.jmx.test.support.metrics.MetricsAssertions.loadMetricNames;
+import static io.prometheus.jmx.test.support.metrics.MetricsParser.parseMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.paramixel.api.Context.withInstance;
+import static org.paramixel.api.action.Instance.instance;
+import static org.paramixel.api.action.Scope.scope;
+import static org.paramixel.api.action.Sequential.sequential;
+import static org.paramixel.api.action.Step.step;
 
-import io.prometheus.jmx.test.support.environment.JmxExporterMode;
-import io.prometheus.jmx.test.support.environment.NetworkSupport;
+import io.prometheus.jmx.test.support.environment.JmxExporterPath;
 import io.prometheus.jmx.test.support.environment.OpenTelemetryTestEnvironment;
 import io.prometheus.jmx.test.support.http.HttpClient;
+import io.prometheus.jmx.test.support.http.HttpHeader;
 import io.prometheus.jmx.test.support.http.HttpResponse;
+import io.prometheus.jmx.test.support.metrics.Metric;
+import io.prometheus.jmx.test.support.metrics.MetricsContentType;
+import io.prometheus.jmx.test.support.prometheus.PrometheusQueryHelper;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import org.altcontainers.api.Network;
 import org.paramixel.api.Paramixel;
 import org.paramixel.api.Runner;
 import org.paramixel.api.action.Action;
 import org.paramixel.api.action.Each;
-import org.paramixel.api.action.Instance;
-import org.paramixel.api.action.Scope;
-import org.paramixel.api.action.Sequence;
-import org.paramixel.api.action.Step;
-import org.paramixel.api.support.Retry;
-import org.testcontainers.containers.Network;
 
 public class EnvironmentVariablesConfigurationTest {
 
     private final OpenTelemetryTestEnvironment environment;
+    private PrometheusQueryHelper prometheusQueryHelper;
     private Network network;
 
     private EnvironmentVariablesConfigurationTest(OpenTelemetryTestEnvironment environment) {
@@ -58,23 +66,52 @@ public class EnvironmentVariablesConfigurationTest {
                         EnvironmentVariablesConfigurationTest.class.getName(),
                         OpenTelemetryTestEnvironment.createTestEnvironments(
                                 EnvironmentVariablesConfigurationTest.class),
-                        environment -> Instance.builder(
+                        environment -> instance(
                                         environment.exporterTestEnvironment().name(),
                                         () -> new EnvironmentVariablesConfigurationTest(environment))
-                                .body(Scope.builder("scenario")
-                                        .before(Step.of(
+                                .body(scope("scenario")
+                                        .before(step(
                                                 "setUp()",
                                                 withInstance(
                                                         EnvironmentVariablesConfigurationTest.class,
                                                         EnvironmentVariablesConfigurationTest::setUp)))
-                                        .body(Sequence.builder("tests")
-                                                .child(Step.of(
+                                        .body(sequential("tests")
+                                                .child(step(
+                                                        "testHealthy()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest::testHealthy)))
+                                                .child(step(
+                                                        "testDefaultTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest
+                                                                        ::testDefaultTextMetrics)))
+                                                .child(step(
+                                                        "testOpenMetricsTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest
+                                                                        ::testOpenMetricsTextMetrics)))
+                                                .child(step(
+                                                        "testPrometheusTextMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest
+                                                                        ::testPrometheusTextMetrics)))
+                                                .child(step(
+                                                        "testPrometheusProtobufMetrics()",
+                                                        withInstance(
+                                                                EnvironmentVariablesConfigurationTest.class,
+                                                                EnvironmentVariablesConfigurationTest
+                                                                        ::testPrometheusProtobufMetrics)))
+                                                .child(step(
                                                         "testPrometheusHasMetrics()",
                                                         withInstance(
                                                                 EnvironmentVariablesConfigurationTest.class,
                                                                 EnvironmentVariablesConfigurationTest
                                                                         ::testPrometheusHasMetrics))))
-                                        .after(Step.of(
+                                        .after(step(
                                                 "tearDown()",
                                                 withInstance(
                                                         EnvironmentVariablesConfigurationTest.class,
@@ -83,23 +120,54 @@ public class EnvironmentVariablesConfigurationTest {
     }
 
     public void setUp() throws Throwable {
-        network = NetworkSupport.create();
+        network = Network.create();
         environment.initialize(network);
+        prometheusQueryHelper = PrometheusQueryHelper.builder(environment.prometheusTestEnvironment())
+                .build();
+    }
+
+    public void testHealthy() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.HEALTHY);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertHealthyResponse(httpResponse);
+    }
+
+    public void testDefaultTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(url);
+        assertMetricsResponse(httpResponse, MetricsContentType.DEFAULT);
+    }
+
+    public void testOpenMetricsTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.OPEN_METRICS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.OPEN_METRICS_TEXT_METRICS);
+    }
+
+    public void testPrometheusTextMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse =
+                HttpClient.sendRequest(url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_TEXT_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_TEXT_METRICS);
+    }
+
+    public void testPrometheusProtobufMetrics() throws IOException {
+        String url = environment.exporterTestEnvironment().getUrl(JmxExporterPath.METRICS);
+        HttpResponse httpResponse = HttpClient.sendRequest(
+                url, HttpHeader.ACCEPT, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS.toString());
+        assertMetricsResponse(httpResponse, MetricsContentType.PROMETHEUS_PROTOBUF_METRICS);
     }
 
     public void testPrometheusHasMetrics() throws Throwable {
-        boolean isJmxExporterModeJavaStandalone =
-                environment.exporterTestEnvironment().getJmxExporterMode() == JmxExporterMode.Standalone;
+        String mode = environment.exporterTestEnvironment().getJmxExporterMode().name();
+        String javaDockerImage = environment.exporterTestEnvironment().getJavaDockerImage();
 
-        boolean isKonaJdk8 =
-                environment.exporterTestEnvironment().getJavaDockerImage().startsWith("konajdk/konajdk:8");
+        Set<String> metricNames = loadMetricNames(EnvironmentVariablesConfigurationTest.class, mode, javaDockerImage);
+        assertThat(metricNames).isNotEmpty();
 
-        for (String metricName : ExpectedMetricsNames.getMetricsNames().stream()
-                .filter(name ->
-                        !isJmxExporterModeJavaStandalone || (!name.startsWith("jvm_") && !name.startsWith("process_")))
-                .filter(name -> !isKonaJdk8 || !name.equals("jvm_memory_pool_allocated_bytes_total"))
-                .toList()) {
-            Double value = getPrometheusMetric(metricName);
+        for (String metricName : metricNames) {
+            Double value = prometheusQueryHelper.waitForMetric(metricName);
 
             assertThat(value).as("metricName [%s]", metricName).isNotNull();
             assertThat(value).as("metricName [%s]", metricName).isEqualTo(1);
@@ -107,35 +175,20 @@ public class EnvironmentVariablesConfigurationTest {
     }
 
     public void tearDown() throws Throwable {
-        environment.close();
-        NetworkSupport.close(network);
+        try {
+            environment.close();
+        } finally {
+            Network.close(network);
+        }
     }
 
-    private Double getPrometheusMetric(String metricName) throws Throwable {
-        Retry.Result result = Retry.of(Retry.Policy.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .retryOn(t -> t instanceof RuntimeException)
-                .run(() -> {
-                    HttpResponse httpResponse = sendPrometheusQuery(metricName);
+    private void assertMetricsResponse(HttpResponse httpResponse, MetricsContentType metricsContentType) {
+        assertMetricsContentType(httpResponse, metricsContentType);
 
-                    assertThat(httpResponse.statusCode()).isEqualTo(200);
-                    assertThat(httpResponse.body()).isNotNull();
-                    assertThat(httpResponse.body().string()).isNotNull();
+        Map<String, Collection<Metric>> metrics = parseMap(httpResponse);
+        String mode = environment.exporterTestEnvironment().getJmxExporterMode().name();
+        String javaDockerImage = environment.exporterTestEnvironment().getJavaDockerImage();
 
-                    if (httpResponse.body().string().contains(metricName)) {
-                        return;
-                    }
-
-                    throw new RuntimeException("metric not found yet: " + metricName);
-                });
-
-        return result.isSuccessful() ? 1.0 : null;
-    }
-
-    private HttpResponse sendPrometheusQuery(String query) throws IOException {
-        return sendRequest("/api/v1/query?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
-    }
-
-    private HttpResponse sendRequest(String path) throws IOException {
-        return HttpClient.sendRequest(environment.prometheusTestEnvironment().getPrometheusUrl(path));
+        assertMetrics(EnvironmentVariablesConfigurationTest.class, javaDockerImage, mode, metrics);
     }
 }
