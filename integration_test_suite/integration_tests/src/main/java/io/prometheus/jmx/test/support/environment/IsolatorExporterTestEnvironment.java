@@ -24,11 +24,9 @@ import io.prometheus.jmx.test.support.TestSupport;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.altcontainers.api.Container;
 import org.altcontainers.api.ContainerSpec;
 import org.altcontainers.api.Network;
-import org.altcontainers.api.OutputFrame;
 
 /**
  * Test environment for the isolator Java agent mode, managing a single Docker container
@@ -54,10 +52,6 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
     private String baseUrl;
     private Network network;
     private Container javaAgentApplicationContainer;
-
-    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
-        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
-    }
 
     /**
      * Creates an isolator exporter test environment for the specified test class and Java Docker image.
@@ -219,7 +213,7 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
                 .waitForContainerPort(BASE_PORT)
                 .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
                 .workingDirectory("/temp")
-                .onOutput(prefixedLogConsumer("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
+                .onOutput(PrefixConsumer.of("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)

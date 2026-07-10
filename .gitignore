@@ -18,8 +18,8 @@ smoke-test.log
 regression-test.log
 RELEASE
 __pycache__/
-.opencode/
-.ai/plans/
+.pi/plans/
+.pi/specs/
 
 # documentation site generated files
 website/node_modules/
