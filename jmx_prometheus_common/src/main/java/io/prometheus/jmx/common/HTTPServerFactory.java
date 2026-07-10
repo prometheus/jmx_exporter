@@ -27,7 +27,6 @@ import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
-import io.prometheus.jmx.common.util.BlockingRejectedExecutionHandler;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
@@ -37,6 +36,7 @@ import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToString;
 import io.prometheus.jmx.variable.VariableResolver;
 import io.prometheus.metrics.config.PrometheusProperties;
+import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.exporter.httpserver.DefaultHandler;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.exporter.httpserver.HealthyHandler;
@@ -62,6 +62,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -147,6 +148,11 @@ public class HTTPServerFactory {
      * Default maximum thread pool size.
      */
     private static final int DEFAULT_MAXIMUM_THREADS = 10;
+
+    /**
+     * Maximum allowed thread pool size.
+     */
+    private static final int MAXIMUM_ALLOWED_THREADS = 256;
 
     /**
      * Default thread keep-alive time in seconds.
@@ -261,6 +267,11 @@ public class HTTPServerFactory {
      * Configuration key for worker thread keep-alive time.
      */
     private static final String HTTP_SERVER_THREADS_KEEP_ALIVE_TIME = HTTP_SERVER_THREADS + "/keepAliveTime";
+
+    /**
+     * Configuration key for maximum request seconds.
+     */
+    private static final String HTTP_SERVER_MAXIMUM_REQUEST_SECONDS = HTTP_SERVER + "/maximumRequestSeconds";
 
     /**
      * Base configuration key for authentication settings.
@@ -455,6 +466,16 @@ public class HTTPServerFactory {
     private static final String PATH_KEEP_ALIVE_TIME = "/keepAliveTime";
 
     /**
+     * Path suffix for maximumRequestSeconds settings.
+     */
+    private static final String PATH_MAXIMUM_REQUEST_SECONDS = "/maximumRequestSeconds";
+
+    /**
+     * Metric name for rejected HTTP requests.
+     */
+    private static final String JMX_HTTP_REQUESTS_REJECTED_TOTAL = "jmx_http_requests_rejected_total";
+
+    /**
      * Path suffix for endpoint path settings.
      */
     private static final String PATH_PATH = "/path";
@@ -543,6 +564,7 @@ public class HTTPServerFactory {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
         AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
         boolean sslEnabled = rootMapAccessor.containsPath(HTTP_SERVER_SSL);
+        Integer maximumRequestSeconds = getMaximumRequestSeconds(rootMapAccessor);
 
         HTTPServer.Builder httpServerBuilder =
                 HTTPServer.builder().inetAddress(inetAddress).port(port).registry(prometheusRegistry);
@@ -552,8 +574,19 @@ public class HTTPServerFactory {
         configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
 
+        Counter rejectedCounter = Counter.builder()
+                .name(JMX_HTTP_REQUESTS_REJECTED_TOTAL)
+                .help("Total number of HTTP requests rejected due to pool saturation.")
+                .register(prometheusRegistry);
+
         HTTPServer httpServer = httpServerBuilder.buildAndStart();
-        configureSecurityHeaders(httpServer, prometheusRegistry, authenticationConfiguration, sslEnabled);
+        configureSecurityHeaders(
+                httpServer,
+                prometheusRegistry,
+                authenticationConfiguration,
+                sslEnabled,
+                rejectedCounter,
+                maximumRequestSeconds);
         return httpServer;
     }
 
@@ -575,6 +608,7 @@ public class HTTPServerFactory {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
         AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
         boolean sslEnabled = rootMapAccessor.containsPath(HTTP_SERVER_SSL);
+        Integer maximumRequestSeconds = getMaximumRequestSeconds(rootMapAccessor);
 
         HTTPServer.Builder httpServerBuilder = HTTPServer.builder().registry(prometheusRegistry);
 
@@ -583,8 +617,19 @@ public class HTTPServerFactory {
         configureAuthentication(authenticationConfiguration, httpServerBuilder);
         configureSSL(rootMapAccessor, httpServerBuilder);
 
+        Counter rejectedCounter = Counter.builder()
+                .name(JMX_HTTP_REQUESTS_REJECTED_TOTAL)
+                .help("Total number of HTTP requests rejected due to pool saturation.")
+                .register(prometheusRegistry);
+
         HTTPServer httpServer = httpServerBuilder.buildAndStart();
-        configureSecurityHeaders(httpServer, prometheusRegistry, authenticationConfiguration, sslEnabled);
+        configureSecurityHeaders(
+                httpServer,
+                prometheusRegistry,
+                authenticationConfiguration,
+                sslEnabled,
+                rejectedCounter,
+                maximumRequestSeconds);
         return httpServer;
     }
 
@@ -659,10 +704,14 @@ public class HTTPServerFactory {
                             "Invalid configuration for" + " /httpServer/threads/maximum must be an" + " integer")))
                     .map(IntegerInRange.of(
                             minimum,
-                            Integer.MAX_VALUE,
+                            MAXIMUM_ALLOWED_THREADS,
                             ConfigurationException.supplier("Invalid configuration for"
-                                    + " /httpServer/threads/maxPoolSize must be"
-                                    + " between greater than 0")))
+                                    + " /httpServer/threads/maximum must be between"
+                                    + " "
+                                    + minimum
+                                    + " and"
+                                    + " "
+                                    + MAXIMUM_ALLOWED_THREADS)))
                     .orElseThrow(
                             ConfigurationException.supplier(HTTP_SERVER_THREADS_MAXIMUM + " is a required integer"));
 
@@ -681,14 +730,14 @@ public class HTTPServerFactory {
                             HTTP_SERVER_THREADS_KEEP_ALIVE_TIME + " is a required integer"));
         }
 
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+        ThreadPoolExecutor threadPoolExecutor = new MarkedThreadPoolExecutor(
                 minimum,
                 maximum,
                 keepAliveTime,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(true),
                 NamedDaemonThreadFactory.defaultThreadFactory(true),
-                new BlockingRejectedExecutionHandler());
+                new ThreadPoolExecutor.CallerRunsPolicy());
 
         httpServerBuilder.executorService(threadPoolExecutor);
     }
@@ -720,6 +769,26 @@ public class HTTPServerFactory {
         if (subjectAttributeName != null) {
             httpServerBuilder.authenticatedSubjectAttributeName(subjectAttributeName);
         }
+    }
+
+    /**
+     * Reads the maximum request seconds from configuration.
+     *
+     * @param rootMapAccessor the root configuration map accessor
+     * @return the configured maximum request seconds, or {@code null} if not configured
+     * @throws ConfigurationException if the value is not a positive integer
+     */
+    private static Integer getMaximumRequestSeconds(MapAccessor rootMapAccessor) {
+        return rootMapAccessor
+                .getPath(HTTP_SERVER_MAXIMUM_REQUEST_SECONDS)
+                .map(ToInteger.of(ConfigurationException.supplier(
+                        "Invalid configuration for /httpServer/maximumRequestSeconds must be an integer")))
+                .map(IntegerInRange.of(
+                        1,
+                        Integer.MAX_VALUE,
+                        ConfigurationException.supplier(
+                                "Invalid configuration for /httpServer/maximumRequestSeconds must be at least 1")))
+                .orElse(null);
     }
 
     /**
@@ -901,12 +970,16 @@ public class HTTPServerFactory {
      * @param authenticationConfiguration the authentication configuration containing the
      *     authenticator and subject attribute name, must not be {@code null}
      * @param sslEnabled whether SSL is enabled, used to determine if HSTS headers should be added
+     * @param rejectedCounter the counter for rejected requests
+     * @param maximumRequestSeconds the maximum request duration in seconds, or {@code null}
      */
     private static void configureSecurityHeaders(
             HTTPServer httpServer,
             PrometheusRegistry prometheusRegistry,
             AuthenticationConfiguration authenticationConfiguration,
-            boolean sslEnabled) {
+            boolean sslEnabled,
+            Counter rejectedCounter,
+            Integer maximumRequestSeconds) {
         com.sun.net.httpserver.HttpServer delegate = getDelegateHttpServer(httpServer);
         Authenticator securityHeadersAuthenticator =
                 wrapAuthenticator(authenticationConfiguration.getAuthenticator(), sslEnabled);
@@ -915,7 +988,12 @@ public class HTTPServerFactory {
         replaceContext(
                 delegate,
                 "/",
-                wrapHandler(new DefaultHandler(METRICS_PATH), sslEnabled, subjectAttributeName),
+                wrapHandler(
+                        new DefaultHandler(METRICS_PATH),
+                        sslEnabled,
+                        subjectAttributeName,
+                        rejectedCounter,
+                        maximumRequestSeconds),
                 securityHeadersAuthenticator);
         replaceContext(
                 delegate,
@@ -923,12 +1001,15 @@ public class HTTPServerFactory {
                 wrapHandler(
                         new MetricsHandler(PrometheusProperties.get(), prometheusRegistry),
                         sslEnabled,
-                        subjectAttributeName),
+                        subjectAttributeName,
+                        rejectedCounter,
+                        maximumRequestSeconds),
                 securityHeadersAuthenticator);
         replaceContext(
                 delegate,
                 HEALTH_PATH,
-                wrapHandler(new HealthyHandler(), sslEnabled, subjectAttributeName),
+                wrapHandler(
+                        new HealthyHandler(), sslEnabled, subjectAttributeName, rejectedCounter, maximumRequestSeconds),
                 securityHeadersAuthenticator);
     }
 
@@ -983,10 +1064,18 @@ public class HTTPServerFactory {
      * @param sslEnabled whether SSL is enabled
      * @param subjectAttributeName the request attribute name for the authenticated Subject, or
      *     {@code null} if Subject delegation is not needed
+     * @param rejectedCounter the counter for rejected requests
+     * @param maximumRequestSeconds the maximum request duration in seconds, or {@code null}
      * @return the wrapping handler
      */
-    private static HttpHandler wrapHandler(HttpHandler handler, boolean sslEnabled, String subjectAttributeName) {
-        return new SecurityHeadersHandler(handler, sslEnabled, subjectAttributeName);
+    private static HttpHandler wrapHandler(
+            HttpHandler handler,
+            boolean sslEnabled,
+            String subjectAttributeName,
+            Counter rejectedCounter,
+            Integer maximumRequestSeconds) {
+        return new SecurityHeadersHandler(
+                handler, sslEnabled, subjectAttributeName, rejectedCounter, maximumRequestSeconds);
     }
 
     /**
@@ -1768,6 +1857,9 @@ public class HTTPServerFactory {
      * <p>When a subject attribute name is configured and the authenticated Subject is available,
      * the delegate handler is invoked within a {@link javax.security.auth.Subject#doAs} call.
      * If the Subject is not available, the request is rejected with a 403 response.
+     *
+     * <p>When the handler is invoked on a non-pool thread (due to CallerRunsPolicy), it returns
+     * HTTP 429 immediately to signal pool saturation.
      */
     private static final class SecurityHeadersHandler implements HttpHandler {
 
@@ -1788,22 +1880,42 @@ public class HTTPServerFactory {
         private final String subjectAttributeName;
 
         /**
+         * Counter for rejected HTTP requests (429 responses).
+         */
+        private final Counter rejectedCounter;
+
+        /**
+         * Maximum request duration in seconds, or {@code null} for no limit.
+         */
+        private final Integer maximumRequestSeconds;
+
+        /**
          * Constructs a security headers handler.
          *
          * @param delegate the delegate handler, must not be {@code null}
          * @param sslEnabled whether SSL is enabled
          * @param subjectAttributeName the request attribute name for Subject lookup, may be
          *     {@code null}
+         * @param rejectedCounter the counter for rejected requests
+         * @param maximumRequestSeconds the maximum request duration in seconds, or {@code null}
          */
-        private SecurityHeadersHandler(HttpHandler delegate, boolean sslEnabled, String subjectAttributeName) {
+        private SecurityHeadersHandler(
+                HttpHandler delegate,
+                boolean sslEnabled,
+                String subjectAttributeName,
+                Counter rejectedCounter,
+                Integer maximumRequestSeconds) {
             this.delegate = delegate;
             this.sslEnabled = sslEnabled;
             this.subjectAttributeName = subjectAttributeName;
+            this.rejectedCounter = rejectedCounter;
+            this.maximumRequestSeconds = maximumRequestSeconds;
         }
 
         /**
          * Injects security headers, then delegates to the wrapped handler with optional
-         * Subject.doAs invocation.
+         * Subject.doAs invocation. If running on a non-pool thread (CallerRunsPolicy), returns
+         * HTTP 429 immediately.
          *
          * @param exchange the HTTP exchange to handle
          * @throws IOException if the delegate handler or Subject.doAs fails
@@ -1812,30 +1924,57 @@ public class HTTPServerFactory {
         public void handle(HttpExchange exchange) throws IOException {
             addSecurityHeaders(exchange.getResponseHeaders(), sslEnabled);
 
-            if (subjectAttributeName == null) {
-                delegate.handle(exchange);
+            // Check if we are on a pool thread; if not, the pool is saturated
+            if (!MarkedThreadPoolExecutor.IS_POOL_THREAD.get()) {
+                rejectedCounter.inc();
+                exchange.sendResponseHeaders(429, -1);
                 return;
             }
 
-            Object authSubject = exchange.getAttribute(subjectAttributeName);
-            if (authSubject instanceof javax.security.auth.Subject) {
-                try {
-                    javax.security.auth.Subject.doAs(
-                            (javax.security.auth.Subject) authSubject,
-                            (java.security.PrivilegedExceptionAction<Void>) () -> {
-                                delegate.handle(exchange);
-                                return null;
-                            });
-                } catch (java.security.PrivilegedActionException e) {
-                    if (e.getException() != null) {
-                        throw new IOException(e.getException());
-                    } else {
-                        throw new IOException(e);
-                    }
+            ScheduledFuture<?> deadlineFuture = null;
+            try {
+                if (maximumRequestSeconds != null) {
+                    deadlineFuture = EXECUTOR_SERVICE.schedule(
+                            () -> {
+                                try {
+                                    exchange.close();
+                                } catch (Exception e) {
+                                    // Best-effort close
+                                }
+                            },
+                            maximumRequestSeconds,
+                            TimeUnit.SECONDS);
                 }
-            } else {
-                drainInputAndClose(exchange);
-                exchange.sendResponseHeaders(403, -1);
+
+                if (subjectAttributeName == null) {
+                    delegate.handle(exchange);
+                    return;
+                }
+
+                Object authSubject = exchange.getAttribute(subjectAttributeName);
+                if (authSubject instanceof javax.security.auth.Subject) {
+                    try {
+                        javax.security.auth.Subject.doAs(
+                                (javax.security.auth.Subject) authSubject,
+                                (java.security.PrivilegedExceptionAction<Void>) () -> {
+                                    delegate.handle(exchange);
+                                    return null;
+                                });
+                    } catch (java.security.PrivilegedActionException e) {
+                        if (e.getException() != null) {
+                            throw new IOException(e.getException());
+                        } else {
+                            throw new IOException(e);
+                        }
+                    }
+                } else {
+                    drainInputAndClose(exchange);
+                    exchange.sendResponseHeaders(403, -1);
+                }
+            } finally {
+                if (deadlineFuture != null) {
+                    deadlineFuture.cancel(false);
+                }
             }
         }
     }

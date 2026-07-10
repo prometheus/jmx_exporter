@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -40,6 +41,13 @@ public class HTTPServerFactoryTest {
     File temporaryFolder;
 
     HTTPServer httpServer;
+
+    PrometheusRegistry prometheusRegistry;
+
+    @BeforeEach
+    public void setUp() {
+        prometheusRegistry = new PrometheusRegistry();
+    }
 
     @AfterEach
     public void stopServer() {
@@ -178,7 +186,7 @@ public class HTTPServerFactoryTest {
         writer.println("    keepAliveTime: 60");
         writer.close();
 
-        httpServer = HTTPServerFactory.createAndStartHTTPServer(PrometheusRegistry.defaultRegistry, config);
+        httpServer = HTTPServerFactory.createAndStartHTTPServer(prometheusRegistry, config);
         assertThat(httpServer).isNotNull();
         assertThat(httpServer.getPort()).isGreaterThan(0);
     }
@@ -393,8 +401,166 @@ public class HTTPServerFactoryTest {
         assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
     }
 
+    @Test
+    public void maximumThreadsExceeds256Rejected() throws Exception {
+        File config = new File(temporaryFolder, "max_threads_257");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 257");
+        writer.println("    keepAliveTime: 120");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void maximumThreads256Accepted() throws Exception {
+        File config = new File(temporaryFolder, "max_threads_256");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 256");
+        writer.println("    keepAliveTime: 120");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void serverReturns429WhenPoolSaturated() throws Exception {
+        File config = new File(temporaryFolder, "max_threads_1");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 1");
+        writer.println("    keepAliveTime: 120");
+        writer.close();
+
+        httpServer = startServer(config);
+
+        // Send a slow request to occupy the pool thread
+        try (Socket slowSocket = new Socket()) {
+            slowSocket.setSoTimeout(5000);
+            slowSocket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
+            // Send a partial request to keep the pool thread busy reading headers
+            slowSocket.getOutputStream().write("GET /metrics HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
+            slowSocket.getOutputStream().flush();
+
+            // Give the pool thread time to pick up the task
+            Thread.sleep(200);
+
+            // Send a second request which should get 429
+            try (Socket fastSocket = new Socket()) {
+                fastSocket.setSoTimeout(5000);
+                fastSocket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
+                fastSocket.getOutputStream().write("GET /-/healthy HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
+                fastSocket.getOutputStream().write("HOST: localhost\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+                fastSocket.getOutputStream().flush();
+
+                byte[] resp = new byte[500];
+                int read = fastSocket.getInputStream().read(resp, 0, resp.length);
+                String response = "";
+                if (read > 0) {
+                    response = new String(resp, 0, read);
+                }
+                assertThat(response).contains("HTTP/1.1 429");
+            }
+        }
+    }
+
+    @Test
+    public void no429WhenPoolHasCapacity() throws Exception {
+        File config = new File(temporaryFolder, "max_threads_10");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  threads:");
+        writer.println("    minimum: 1");
+        writer.println("    maximum: 10");
+        writer.println("    keepAliveTime: 120");
+        writer.close();
+
+        httpServer = startServer(config);
+
+        try (Socket socket = new Socket()) {
+            socket.setSoTimeout(5000);
+            socket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
+            socket.getOutputStream().write("GET /-/healthy HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().write("HOST: localhost\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+
+            byte[] resp = new byte[500];
+            int read = socket.getInputStream().read(resp, 0, resp.length);
+            String response = "";
+            if (read > 0) {
+                response = new String(resp, 0, read);
+            }
+            assertThat(response).doesNotContain("HTTP/1.1 429");
+        }
+    }
+
+    @Test
+    public void maximumRequestSecondsNegativeRejected() throws Exception {
+        File config = new File(temporaryFolder, "max_req_seconds_neg");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  maximumRequestSeconds: -1");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void maximumRequestSecondsZeroRejected() throws Exception {
+        File config = new File(temporaryFolder, "max_req_seconds_zero");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  maximumRequestSeconds: 0");
+        writer.close();
+
+        assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> httpServer = startServer(config));
+    }
+
+    @Test
+    public void maximumRequestSecondsAbsentIsFine() throws Exception {
+        File config = new File(temporaryFolder, "no_max_req_seconds");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void maximumRequestSecondsValidAccepted() throws Exception {
+        File config = new File(temporaryFolder, "max_req_seconds_60");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  maximumRequestSeconds: 60");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void defaultConfigUnchangedWithoutThreadsSection() throws Exception {
+        File config = new File(temporaryFolder, "no_threads_section");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.close();
+
+        httpServer = startServer(config);
+        assertThat(httpServer).isNotNull();
+    }
+
     private HTTPServer startServer(File config) throws IOException {
         return HTTPServerFactory.createAndStartHTTPServer(
-                PrometheusRegistry.defaultRegistry, InetAddress.getByName("0.0.0.0"), 0, config);
+                prometheusRegistry, InetAddress.getByName("0.0.0.0"), 0, config);
     }
 }
