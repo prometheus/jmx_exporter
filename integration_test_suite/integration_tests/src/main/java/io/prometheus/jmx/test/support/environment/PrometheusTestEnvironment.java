@@ -28,12 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.altcontainers.api.Container;
 import org.altcontainers.api.ContainerSpec;
 import org.altcontainers.api.GenericContainerSpec;
 import org.altcontainers.api.Network;
-import org.altcontainers.api.OutputFrame;
 import org.paramixel.api.support.Retry;
 
 /**
@@ -59,10 +57,6 @@ public class PrometheusTestEnvironment implements AutoCloseable {
     private String baseUrl;
     private Network network;
     private Container prometheusContainer;
-
-    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
-        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
-    }
 
     /**
      * Creates a Prometheus test environment for the specified test class and Docker image.
@@ -252,7 +246,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
                 .network(network, "prometheus")
                 .waitForLogMessage(".*Server is ready to receive web requests.*")
                 .workingDirectory("/prometheus")
-                .onOutput(prefixedLogConsumer("PROMETHEUS", prometheusDockerImage))
+                .onOutput(PrefixConsumer.of("PROMETHEUS", prometheusDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)

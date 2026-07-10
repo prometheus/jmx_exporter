@@ -25,11 +25,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.altcontainers.api.Container;
 import org.altcontainers.api.ContainerSpec;
 import org.altcontainers.api.Network;
-import org.altcontainers.api.OutputFrame;
 
 /**
  * Test environment for the JMX exporter, supporting both Java Agent and Standalone modes.
@@ -58,10 +56,6 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
     private Container standaloneApplicationContainer;
     private Container javaAgentApplicationContainer;
     private Container standaloneExporterContainer;
-
-    private static Consumer<OutputFrame> prefixedLogConsumer(String prefix, String image) {
-        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
-    }
 
     /**
      * Creates a JMX exporter test environment for the specified test class, Docker image, and mode.
@@ -245,7 +239,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .waitForContainerPort(8888)
                 .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
                 .workingDirectory("/temp")
-                .onOutput(prefixedLogConsumer("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
+                .onOutput(PrefixConsumer.of("JMX_EXPORTER_JAVAAGENT", javaDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)
@@ -271,7 +265,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .network(network, "application")
                 .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
                 .workingDirectory("/temp")
-                .onOutput(prefixedLogConsumer("EXAMPLE_APPLICATION", javaDockerImage))
+                .onOutput(PrefixConsumer.of("EXAMPLE_APPLICATION", javaDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)
@@ -297,7 +291,7 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .network(network, "exporter")
                 .waitForLogMessage(".*Standalone \\| Running.*")
                 .workingDirectory("/temp")
-                .onOutput(prefixedLogConsumer("JMX_EXPORTER_STANDALONE", javaDockerImage))
+                .onOutput(PrefixConsumer.of("JMX_EXPORTER_STANDALONE", javaDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)
