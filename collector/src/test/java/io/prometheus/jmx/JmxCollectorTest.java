@@ -788,6 +788,41 @@ public class JmxCollectorTest {
         return prometheusRegistryUtils.getSampleValue(name, labelNames, labelValues);
     }
 
+    @Test
+    public void scrapeTimeoutSecondsNegativeRejected() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---\nscrapeTimeoutSeconds: 0"));
+    }
+
+    @Test
+    public void scrapeTimeoutSecondsOneAccepted() throws Exception {
+        new JmxCollector("---\nscrapeTimeoutSeconds: 1").register(prometheusRegistry);
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
+    @Test
+    public void scrapeTimeoutSecondsAbsentUsesNoTimeout() throws Exception {
+        new JmxCollector("---").register(prometheusRegistry);
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
+    @Test
+    public void scrapeTimeoutCounterRegistered() throws Exception {
+        new JmxCollector("---\nscrapeTimeoutSeconds: 60").register(prometheusRegistry);
+        Double timeoutCount =
+                prometheusRegistryUtils.getSampleValue("jmx_scrape_timeout", new String[] {}, new String[] {});
+        assertThat(timeoutCount).isNotNull();
+        assertThat(timeoutCount).isCloseTo(0.0, within(0.001));
+    }
+
+    @Test
+    public void collectDoesNotThrowOnNormalScrape() throws Exception {
+        new JmxCollector("---\nscrapeTimeoutSeconds: 60").register(prometheusRegistry);
+        assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
+                .isNotNull();
+    }
+
     private String getSampleType(String name, String[] labelNames, String[] labelValues) {
         return prometheusRegistryUtils.getSampleType(name, labelNames, labelValues);
     }

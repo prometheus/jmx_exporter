@@ -496,11 +496,19 @@ public class HTTPServerFactorySSLTest {
     void securityHeadersHandlerWithNullSubjectDelegates() throws Exception {
         Class<?> handlerClass = Class.forName("io.prometheus.jmx.common.HTTPServerFactory$SecurityHeadersHandler");
         Constructor<?> constructor = handlerClass.getDeclaredConstructor(
-                com.sun.net.httpserver.HttpHandler.class, boolean.class, String.class);
+                com.sun.net.httpserver.HttpHandler.class,
+                boolean.class,
+                String.class,
+                io.prometheus.metrics.core.metrics.Counter.class,
+                Integer.class);
         constructor.setAccessible(true);
 
+        io.prometheus.metrics.core.metrics.Counter rejectedCounter =
+                io.prometheus.metrics.core.metrics.Counter.builder()
+                        .name("test_rejected")
+                        .register();
         com.sun.net.httpserver.HttpHandler delegate = exchange -> exchange.sendResponseHeaders(200, -1);
-        Object handler = constructor.newInstance(delegate, false, null);
+        Object handler = constructor.newInstance(delegate, false, null, rejectedCounter, null);
         assertThat(handler).isNotNull();
     }
 
@@ -508,11 +516,19 @@ public class HTTPServerFactorySSLTest {
     void securityHeadersHandlerWithSubjectAttribute() throws Exception {
         Class<?> handlerClass = Class.forName("io.prometheus.jmx.common.HTTPServerFactory$SecurityHeadersHandler");
         Constructor<?> constructor = handlerClass.getDeclaredConstructor(
-                com.sun.net.httpserver.HttpHandler.class, boolean.class, String.class);
+                com.sun.net.httpserver.HttpHandler.class,
+                boolean.class,
+                String.class,
+                io.prometheus.metrics.core.metrics.Counter.class,
+                Integer.class);
         constructor.setAccessible(true);
 
+        io.prometheus.metrics.core.metrics.Counter rejectedCounter =
+                io.prometheus.metrics.core.metrics.Counter.builder()
+                        .name("test_rejected_2")
+                        .register();
         com.sun.net.httpserver.HttpHandler delegate = exchange -> exchange.sendResponseHeaders(200, -1);
-        Object handler = constructor.newInstance(delegate, true, "custom.subject");
+        Object handler = constructor.newInstance(delegate, true, "custom.subject", rejectedCounter, null);
         assertThat(handler).isNotNull();
     }
 
