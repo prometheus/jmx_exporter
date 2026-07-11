@@ -161,11 +161,9 @@ validate_sidebar_file() {
 validate_sidebar_ids() {
     log "Validating sidebar document references..."
 
-    local latest_version latest_docs_root
-    latest_version=$(get_latest_version)
-    latest_docs_root="${VERSIONED_DOCS_DIR}/version-${latest_version}"
+    local current_docs_root="${WEBSITE_DIR}/docs"
 
-    validate_sidebar_file "${SIDEBARS_FILE}" "${latest_docs_root}" "Latest version (${latest_version})"
+    validate_sidebar_file "${SIDEBARS_FILE}" "${current_docs_root}" "Current (Next)"
 
     local sidebar_file version_dir docs_root version_name
     while IFS= read -r -d '' sidebar_file; do
@@ -182,7 +180,19 @@ validate_frontmatter() {
     log "Validating frontmatter..."
 
     local file relative_path issues=0
+    local current_docs_root="${WEBSITE_DIR}/docs"
 
+    # Validate current (Next) docs
+    while IFS= read -r -d '' file; do
+        relative_path="${file#${WEBSITE_DIR}/}"
+
+        if ! awk 'BEGIN{fm=0} /^---$/{fm=(fm?0:1);next} fm && /^title:/ {t=1} END {exit (t ? 0 : 1)}' "$file" 2>/dev/null; then
+            warn "${relative_path}: missing 'title' in frontmatter"
+            ((issues++)) || true
+        fi
+    done < <(find "${current_docs_root}" -type f \( -name "*.md" -o -name "*.mdx" \) -print0)
+
+    # Validate versioned docs
     while IFS= read -r -d '' file; do
         relative_path="${file#${WEBSITE_DIR}/}"
 
