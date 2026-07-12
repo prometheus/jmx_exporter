@@ -39,11 +39,11 @@
         <ayza.version>10.0.5</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <junit.version>6.1.1</junit.version>
+        <junit.version>6.1.2</junit.version>
         <logback.version>1.5.38</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
-        <altcontainers.version>0.1.0</altcontainers.version>
-        <paramixel.version>6.2.2</paramixel.version>
+        <altcontainers.version>0.2.0</altcontainers.version>
+        <paramixel.version>6.2.3</paramixel.version>
         <prometheus.metrics.version>1.8.0</prometheus.metrics.version>
         <slf4j.version>2.1.0-alpha1</slf4j.version>
         <snakeyaml.version>2.6</snakeyaml.version>
