@@ -34,6 +34,8 @@ import io.prometheus.jmx.common.util.functions.StringIsNotBlank;
 import io.prometheus.jmx.common.util.functions.ToBoolean;
 import io.prometheus.jmx.common.util.functions.ToInteger;
 import io.prometheus.jmx.common.util.functions.ToString;
+import io.prometheus.jmx.logger.Logger;
+import io.prometheus.jmx.logger.LoggerFactory;
 import io.prometheus.jmx.variable.VariableResolver;
 import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.core.metrics.Counter;
@@ -68,8 +70,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.exception.GenericException;
 import nl.altindag.ssl.util.SSLFactoryUtils;
@@ -97,7 +97,7 @@ public class HTTPServerFactory {
     /**
      * Logger for configuration warnings.
      */
-    private static final Logger LOGGER = Logger.getLogger(HTTPServerFactory.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(HTTPServerFactory.class);
 
     /**
      * System property for keystore path.
@@ -1238,23 +1238,19 @@ public class HTTPServerFactory {
             String algorithm, String passwordHash, int iterations, int keyLength) {
         int recommendedIterations = PBKDF2_ALGORITHM_ITERATIONS.get(algorithm);
         if (iterations < recommendedIterations) {
-            LOGGER.log(
-                    Level.WARNING,
-                    "Configured /httpServer/authentication/basic/iterations [{0}] for algorithm [{1}] "
-                            + "is lower than the recommended value [{2}]",
-                    new Object[] {iterations, algorithm, recommendedIterations});
+            LOGGER.warn(
+                    "Configured /httpServer/authentication/basic/iterations [%d] for algorithm [%s] "
+                            + "is lower than the recommended value [%d]",
+                    iterations, algorithm, recommendedIterations);
         }
 
         int effectiveKeyLengthBits = getEffectivePBKDF2KeyLengthBits(passwordHash, keyLength);
         if (effectiveKeyLengthBits < MINIMUM_RECOMMENDED_PBKDF2_KEY_LENGTH_BITS) {
-            LOGGER.log(
-                    Level.WARNING,
-                    "Configured /httpServer/authentication/basic/keyLength [{0}] for algorithm [{1}] "
-                            + "results in an effective key length [{2}] bits, which is lower than "
-                            + "the recommended value [{3}] bits",
-                    new Object[] {
-                        keyLength, algorithm, effectiveKeyLengthBits, MINIMUM_RECOMMENDED_PBKDF2_KEY_LENGTH_BITS
-                    });
+            LOGGER.warn(
+                    "Configured /httpServer/authentication/basic/keyLength [%d] for algorithm [%s] "
+                            + "results in an effective key length [%d] bits, which is lower than "
+                            + "the recommended value [%d] bits",
+                    keyLength, algorithm, effectiveKeyLengthBits, MINIMUM_RECOMMENDED_PBKDF2_KEY_LENGTH_BITS);
         }
     }
 
