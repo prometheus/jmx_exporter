@@ -315,28 +315,28 @@ public class LoggerTest {
 
         @Test
         void traceMapsToFinest() {
-            assertThat(Level.TRACE.julLevel()).isEqualTo(java.util.logging.Level.FINEST);
+            assertThat(JulLoggerBackend.toJulLevel(Level.TRACE)).isEqualTo(java.util.logging.Level.FINEST);
         }
 
         @Test
         void infoMapsToInfo() {
-            assertThat(Level.INFO.julLevel()).isEqualTo(java.util.logging.Level.INFO);
+            assertThat(JulLoggerBackend.toJulLevel(Level.INFO)).isEqualTo(java.util.logging.Level.INFO);
         }
 
         @Test
         void warnMapsToWarning() {
-            assertThat(Level.WARN.julLevel()).isEqualTo(java.util.logging.Level.WARNING);
+            assertThat(JulLoggerBackend.toJulLevel(Level.WARN)).isEqualTo(java.util.logging.Level.WARNING);
         }
 
         @Test
         void errorMapsToSevere() {
-            assertThat(Level.ERROR.julLevel()).isEqualTo(java.util.logging.Level.SEVERE);
+            assertThat(JulLoggerBackend.toJulLevel(Level.ERROR)).isEqualTo(java.util.logging.Level.SEVERE);
         }
 
         @Test
         void julLevelReturnsNonNullForAllLevelValues() {
             for (Level level : Level.values()) {
-                assertThat(level.julLevel()).isNotNull();
+                assertThat(JulLoggerBackend.toJulLevel(level)).isNotNull();
             }
         }
     }

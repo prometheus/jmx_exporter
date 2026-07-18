@@ -61,6 +61,10 @@ import java.net.InetAddress;
  */
 public class JavaAgent {
 
+    static {
+        LoggerFactory.setDefaultBackend(LoggerFactory.Backend.NATIVE);
+    }
+
     /**
      * Logger instance for this class.
      */
