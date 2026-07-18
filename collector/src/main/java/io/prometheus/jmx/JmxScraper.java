@@ -415,6 +415,10 @@ class JmxScraper {
                 }
 
                 MBeanAttributeInfo mBeanAttributeInfo = name2MBeanAttributeInfo.get(attributeName);
+                if (mBeanAttributeInfo == null) {
+                    LOGGER.trace("%s returned attribute '%s' that is not present in its MBeanInfo. Skipping.", mBeanName, attributeName);
+                    continue;
+                }
                 LOGGER.trace("%s_%s process", mBeanName, mBeanAttributeInfo.getName());
                 processBeanValue(
                         mBeanName,
