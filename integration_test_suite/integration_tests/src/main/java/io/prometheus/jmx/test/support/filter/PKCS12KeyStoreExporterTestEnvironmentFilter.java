@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  */
 public class PKCS12KeyStoreExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
-    private final Set<String> filteredDockerImages = Set.of(
+    private static final Set<String> filteredDockerImages = Set.of(
             "eclipse-temurin:8-alpine",
             "ghcr.io/graalvm/jdk:java8",
             "ibmjava:8",

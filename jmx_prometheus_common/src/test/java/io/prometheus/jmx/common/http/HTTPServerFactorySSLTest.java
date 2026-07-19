@@ -631,6 +631,109 @@ public class HTTPServerFactorySSLTest {
     }
 
     @Test
+    void rejectsExplicitPemAndKeyStore() throws Exception {
+        File config = new File(temporaryFolder, "pem_and_keystore.yaml");
+        try (PrintWriter writer = new PrintWriter(config)) {
+            writer.println("httpServer:");
+            writer.println("  ssl:");
+            writer.println("    pem:");
+            writer.println("      certificate:");
+            writer.println("        filename: cert.pem");
+            writer.println("      privateKey:");
+            writer.println("        filename: key.pem");
+            writer.println("    keyStore:");
+            writer.println("      type: PKCS12");
+            writer.println("      filename: keystore.pkcs12");
+            writer.println("      password: changeit");
+            writer.println("    certificate:");
+            writer.println("      alias: localhost");
+            writer.println("hostPort: application:9999");
+            writer.println("rules:");
+            writer.println("  - pattern: \".*\"");
+        }
+
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config))
+                .withMessageContaining("mutually exclusive")
+                .withMessageContaining("/httpServer/ssl/pem")
+                .withMessageContaining("/httpServer/ssl/keyStore");
+    }
+
+    @Test
+    void rejectsCertificateAliasInPemConfig() throws Exception {
+        File config = new File(temporaryFolder, "pem_with_alias.yaml");
+        try (PrintWriter writer = new PrintWriter(config)) {
+            writer.println("httpServer:");
+            writer.println("  ssl:");
+            writer.println("    pem:");
+            writer.println("      certificate:");
+            writer.println("        filename: cert.pem");
+            writer.println("      privateKey:");
+            writer.println("        filename: key.pem");
+            writer.println("    certificate:");
+            writer.println("      alias: localhost");
+            writer.println("hostPort: application:9999");
+            writer.println("rules:");
+            writer.println("  - pattern: \".*\"");
+        }
+
+        assertThatExceptionOfType(ConfigurationException.class)
+                .isThrownBy(() -> httpServer = startServer(config))
+                .withMessageContaining("not allowed with /httpServer/ssl/pem")
+                .withMessageContaining("/httpServer/ssl/certificate/alias");
+    }
+
+    @Test
+    void ignoresKeyStoreSystemPropsInPemMode() throws Exception {
+        // PEM mode should proceed even if javax.net.ssl.keyStore is set as ambient property
+        // The error should be about the PEM files not existing, not about keystore config
+        File certFile = new File(temporaryFolder, "cert.pem");
+        File keyFile = new File(temporaryFolder, "key.pem");
+
+        // Write invalid PEM content so we get a predictable error about PEM parsing
+        try (PrintWriter writer = new PrintWriter(certFile)) {
+            writer.println("-----BEGIN CERTIFICATE-----");
+            writer.println("INVALID");
+            writer.println("-----END CERTIFICATE-----");
+        }
+        try (PrintWriter writer = new PrintWriter(keyFile)) {
+            writer.println("-----BEGIN PRIVATE KEY-----");
+            writer.println("INVALID");
+            writer.println("-----END PRIVATE KEY-----");
+        }
+
+        File config = new File(temporaryFolder, "pem_with_sysprop.yaml");
+        try (PrintWriter writer = new PrintWriter(config)) {
+            writer.println("httpServer:");
+            writer.println("  ssl:");
+            writer.println("    pem:");
+            writer.println("      certificate:");
+            writer.println("        filename: " + certFile.getAbsolutePath());
+            writer.println("      privateKey:");
+            writer.println("        filename: " + keyFile.getAbsolutePath());
+            writer.println("hostPort: application:9999");
+            writer.println("rules:");
+            writer.println("  - pattern: \".*\"");
+        }
+
+        String previousValue = System.getProperty("javax.net.ssl.keyStore");
+        try {
+            System.setProperty("javax.net.ssl.keyStore", "/some/keystore");
+            // Should throw about PEM certificate parsing, not about keystore configuration.
+            // This proves the ambient javax.net.ssl.keyStore system property is ignored.
+            assertThatExceptionOfType(ConfigurationException.class)
+                    .isThrownBy(() -> httpServer = startServer(config))
+                    .withMessageContaining("cert.pem");
+        } finally {
+            if (previousValue == null) {
+                System.clearProperty("javax.net.ssl.keyStore");
+            } else {
+                System.setProperty("javax.net.ssl.keyStore", previousValue);
+            }
+        }
+    }
+
+    @Test
     void blockingRejectedExecutionHandlerOnNonShutdownExecutor() throws Exception {
         Class<?> clazz = Class.forName("io.prometheus.jmx.common.util.BlockingRejectedExecutionHandler");
         Constructor<?> constructor = clazz.getDeclaredConstructor();

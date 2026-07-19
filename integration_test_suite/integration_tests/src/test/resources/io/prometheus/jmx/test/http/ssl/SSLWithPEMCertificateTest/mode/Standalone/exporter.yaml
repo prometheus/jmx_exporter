@@ -1,0 +1,10 @@
+httpServer:
+  ssl:
+    pem:
+      certificate:
+        filename: certificate.pem
+      privateKey:
+        filename: key.pem
+hostPort: application:9999
+rules:
+  - pattern: ".*"

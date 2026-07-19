@@ -35,14 +35,15 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.reporting.sourceEncoding>UTF-8</project.reporting.sourceEncoding>
         <!-- Dependency versions -->
+        <altcontainers.version>0.3.0</altcontainers.version>
         <assertj.version>3.27.7</assertj.version>
         <ayza.version>10.0.5</ayza.version>
+        <bouncycastle.version>1.79</bouncycastle.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <junit.version>6.1.2</junit.version>
         <logback.version>1.5.38</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
-        <altcontainers.version>0.3.0</altcontainers.version>
         <paramixel.version>6.2.3</paramixel.version>
         <prometheus.metrics.version>1.8.0</prometheus.metrics.version>
         <slf4j.version>2.1.0-alpha1</slf4j.version>
@@ -152,6 +153,21 @@
                 <groupId>io.github.hakky54</groupId>
                 <artifactId>ayza</artifactId>
                 <version>${ayza.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
