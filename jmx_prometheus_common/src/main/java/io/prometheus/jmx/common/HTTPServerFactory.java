@@ -27,6 +27,8 @@ import com.sun.net.httpserver.HttpsConfigurator;
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
 import io.prometheus.jmx.common.authenticator.PBKDF2Authenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
+import io.prometheus.jmx.common.http.ssl.IdentityMaterial;
+import io.prometheus.jmx.common.http.ssl.PemIdentityLoader;
 import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.jmx.common.util.functions.IntegerInRange;
@@ -405,6 +407,27 @@ public class HTTPServerFactory {
      */
     private static final String HTTP_SERVER_SSL_PROPERTY_PREFIX = HTTP_SERVER_SSL + "/";
 
+    /** Configuration key for PEM identity block. */
+    private static final String HTTP_SERVER_SSL_PEM = HTTP_SERVER_SSL + "/pem";
+
+    /** Configuration key for PEM certificate filename. */
+    private static final String HTTP_SERVER_SSL_PEM_CERTIFICATE = HTTP_SERVER_SSL_PEM + "/certificate";
+
+    /** Configuration key for PEM certificate filename. */
+    private static final String HTTP_SERVER_SSL_PEM_CERTIFICATE_FILENAME =
+            HTTP_SERVER_SSL_PEM_CERTIFICATE + "/filename";
+
+    /** Configuration key for PEM private key block. */
+    private static final String HTTP_SERVER_SSL_PEM_PRIVATE_KEY = HTTP_SERVER_SSL_PEM + "/privateKey";
+
+    /** Configuration key for PEM private key filename. */
+    private static final String HTTP_SERVER_SSL_PEM_PRIVATE_KEY_FILENAME =
+            HTTP_SERVER_SSL_PEM_PRIVATE_KEY + "/filename";
+
+    /** Configuration key for PEM private key password. */
+    private static final String HTTP_SERVER_SSL_PEM_PRIVATE_KEY_PASSWORD =
+            HTTP_SERVER_SSL_PEM_PRIVATE_KEY + "/password";
+
     /**
      * Path suffix for plugin/authentication class name.
      */
@@ -484,16 +507,6 @@ public class HTTPServerFactory {
      * Comma separator for parsing SSL configuration values.
      */
     private static final String COMMA_SEPARATOR = ",";
-
-    /**
-     * Current keystore properties, updated when certificates are reloaded.
-     */
-    private static KeyStoreProperties keyStoreProperties;
-
-    /**
-     * Current truststore properties, updated when certificates are reloaded.
-     */
-    private static KeyStoreProperties trustStoreProperties;
 
     static {
         // Get the keystore type system property
@@ -1301,13 +1314,13 @@ public class HTTPServerFactory {
     public static void configureSSL(MapAccessor rootMapAccessor, HTTPServer.Builder httpServerBuilder) {
         if (rootMapAccessor.containsPath(HTTP_SERVER_SSL)) {
             try {
-                SSLFactory sslFactory = createSslFactory(rootMapAccessor);
-                Runnable sslUpdater = () -> reloadSsl(sslFactory, rootMapAccessor);
+                ConfiguredSslFactory configured = createSslFactory(rootMapAccessor);
+                Runnable sslUpdater = () -> reloadSsl(configured);
                 // check every hour for file changes and if it has been modified update the ssl
                 // configuration
                 EXECUTOR_SERVICE.scheduleAtFixedRate(sslUpdater, 1, 1, TimeUnit.HOURS);
 
-                httpServerBuilder.httpsConfigurator(new HttpsConfigurator(sslFactory.getSslContext()));
+                httpServerBuilder.httpsConfigurator(new HttpsConfigurator(configured.sslFactory.getSslContext()));
             } catch (GenericException e) {
                 String message = e.getMessage();
                 if (message != null && !message.trim().isEmpty()) {
@@ -1325,25 +1338,36 @@ public class HTTPServerFactory {
      * Creates an SSLFactory from the configuration.
      *
      * @param rootMapAccessor the root configuration map accessor
-     * @return the configured SSLFactory
+     * @return the configured SSL factory with reload state
      * @throws ConfigurationException if SSL configuration is invalid
      */
-    private static SSLFactory createSslFactory(MapAccessor rootMapAccessor) {
-        keyStoreProperties = getKeyStoreProperties(rootMapAccessor);
-        char[] keyStorePassword = keyStoreProperties.getPassword();
+    private static ConfiguredSslFactory createSslFactory(MapAccessor rootMapAccessor) {
+        IdentityMaterial identityMaterial;
+
+        if (rootMapAccessor.containsPath(HTTP_SERVER_SSL_PEM, Map.class)) {
+            // PEM mode: validate mutual exclusion
+            if (rootMapAccessor.containsPath(HTTP_SERVER_SSL_KEY_STORE, Map.class)) {
+                throw new ConfigurationException(
+                        "/httpServer/ssl/pem and /httpServer/ssl/keyStore are mutually exclusive");
+            }
+            if (rootMapAccessor.containsPath(HTTP_SERVER_SSL_CERTIFICATE_ALIAS)) {
+                throw new ConfigurationException(
+                        "/httpServer/ssl/certificate/alias is not allowed with /httpServer/ssl/pem");
+            }
+            identityMaterial = PemIdentityLoader.load(rootMapAccessor);
+        } else {
+            // Existing keystore mode
+            KeyStoreProperties keyStoreProps = getKeyStoreProperties(rootMapAccessor);
+            identityMaterial = new KeyStoreIdentityMaterial(keyStoreProps);
+        }
+
         Optional<KeyStoreProperties> trustProps = getTrustStoreProperties(rootMapAccessor);
 
-        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder()
-                .withSwappableIdentityMaterial()
-                .withIdentityMaterial(
-                        keyStoreProperties.getFilename(),
-                        keyStorePassword,
-                        keyStorePassword,
-                        keyStoreProperties.getType());
+        SSLFactory.Builder sslFactoryBuilder = SSLFactory.builder();
+        identityMaterial.applyTo(sslFactoryBuilder);
 
         if (trustProps.isPresent()) {
             KeyStoreProperties trustStoreProps = trustProps.get();
-            trustStoreProperties = trustStoreProps;
             sslFactoryBuilder
                     .withSwappableTrustMaterial()
                     .withTrustMaterial(
@@ -1354,81 +1378,93 @@ public class HTTPServerFactory {
         getProtocolsProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withProtocols);
         getCiphersProperties(rootMapAccessor).ifPresent(sslFactoryBuilder::withCiphers);
 
-        return sslFactoryBuilder.build();
+        SSLFactory sslFactory = sslFactoryBuilder.build();
+        SslReloadState reloadState = new SslReloadState(identityMaterial, trustProps);
+        return new ConfiguredSslFactory(sslFactory, reloadState, rootMapAccessor);
     }
 
     /**
-     * Reloads SSL certificates if the keystore or truststore file contents have changed.
+     * Reloads SSL certificates if the keystore/truststore or PEM file contents have changed.
      *
      * <p>This method is called periodically by the scheduled executor to check for certificate
-     * updates. If either keystore or truststore content has changed since last load, the SSL
-     * context is updated.
+     * updates. If identity or truststore content has changed since last load, the SSL context is
+     * updated.
      *
-     * @param sslFactory the SSLFactory to reload
-     * @param rootMapAccessor the root configuration map accessor
+     * @param configured the configured SSL factory with reload state
      */
-    private static void reloadSsl(SSLFactory sslFactory, MapAccessor rootMapAccessor) {
-        Optional<String> currentKeyStoreContentHash = getContentHash(keyStoreProperties.getFilename());
-        if (!currentKeyStoreContentHash.isPresent()) {
-            return;
-        }
+    private static void reloadSsl(ConfiguredSslFactory configured) {
+        SslReloadState state = configured.reloadState;
+        MapAccessor rootMapAccessor = configured.rootMapAccessor;
 
-        Optional<KeyStoreProperties> currentTrustProps = getTrustStoreProperties();
-        boolean hasCurrentTrustProps = currentTrustProps.isPresent();
-        Optional<String> currentTrustStoreContentHash = Optional.empty();
-        if (hasCurrentTrustProps) {
-            KeyStoreProperties currentTrustStoreProps = currentTrustProps.get();
-            currentTrustStoreContentHash = getContentHash(currentTrustStoreProps.getFilename());
-            if (!currentTrustStoreContentHash.isPresent()) {
+        synchronized (state.lock) {
+            // 1. Check identity change
+            boolean identityChanged = state.identityMaterial.hasChanged();
+
+            // 2. Check truststore change
+            Optional<KeyStoreProperties> currentTrustProps = state.trustStoreProperties;
+            boolean hasCurrentTrustProps = currentTrustProps.isPresent();
+            boolean trustStoreChanged = false;
+
+            if (hasCurrentTrustProps) {
+                KeyStoreProperties currentTrustStoreProps = currentTrustProps.get();
+                Optional<String> currentTrustStoreContentHash = getContentHash(currentTrustStoreProps.getFilename());
+                if (!currentTrustStoreContentHash.isPresent()) {
+                    return;
+                }
+                trustStoreChanged = !currentTrustStoreProps.getContentHash().equals(currentTrustStoreContentHash.get());
+            }
+
+            // 3. Skip if nothing changed
+            if (!identityChanged && !trustStoreChanged) {
                 return;
             }
-        }
 
-        boolean keyStoreChanged = !keyStoreProperties.getContentHash().equals(currentKeyStoreContentHash.get());
-        boolean trustStoreChanged = hasCurrentTrustProps
-                && !currentTrustProps
-                        .get()
-                        .getContentHash()
-                        .equals(currentTrustStoreContentHash.orElseThrow(IllegalStateException::new));
-
-        if (!keyStoreChanged && !trustStoreChanged) {
-            return;
-        }
-
-        final KeyStoreProperties keyProps;
-        final Optional<KeyStoreProperties> trustProps;
-        try {
-            keyProps = keyStoreChanged ? getKeyStoreProperties(rootMapAccessor) : keyStoreProperties;
-            trustProps = trustStoreChanged ? getTrustStoreProperties(rootMapAccessor) : currentTrustProps;
-        } catch (ConfigurationException e) {
-            return;
-        }
-
-        boolean sslUpdated = false;
-        SSLFactory.Builder updatedSslFactory = SSLFactory.builder();
-        if (keyStoreChanged) {
-            char[] keyPassword = keyProps.getPassword();
-            updatedSslFactory.withIdentityMaterial(
-                    keyProps.getFilename(), keyPassword, keyPassword, keyProps.getType());
-            sslUpdated = true;
-        }
-
-        boolean hasTrustProps = trustProps.isPresent();
-        if (trustStoreChanged && hasTrustProps) {
-            KeyStoreProperties trustStoreProps = trustProps.get();
-            updatedSslFactory.withTrustMaterial(
-                    trustStoreProps.getFilename(), trustStoreProps.getPassword(), trustStoreProps.getType());
-            sslUpdated = true;
-        }
-
-        if (sslUpdated) {
-            try {
-                SSLFactoryUtils.reload(sslFactory, updatedSslFactory.build());
-                if (keyStoreChanged) {
-                    keyStoreProperties = keyProps;
+            // 4. Reload identity if changed
+            IdentityMaterial newIdentity = state.identityMaterial;
+            if (identityChanged) {
+                try {
+                    newIdentity = state.identityMaterial.reload(rootMapAccessor);
+                } catch (ConfigurationException e) {
+                    return;
                 }
-                if (trustStoreChanged && hasTrustProps) {
-                    trustStoreProperties = trustProps.get();
+                if (newIdentity == state.identityMaterial) {
+                    return;
+                }
+            }
+
+            // 5. Reload truststore if changed
+            Optional<KeyStoreProperties> newTrustProps = currentTrustProps;
+            if (trustStoreChanged) {
+                try {
+                    newTrustProps = getTrustStoreProperties(rootMapAccessor);
+                } catch (ConfigurationException e) {
+                    return;
+                }
+            }
+
+            // 6. Build candidate SSLFactory
+            SSLFactory.Builder candidateBuilder = SSLFactory.builder();
+            newIdentity.applyTo(candidateBuilder);
+
+            if (newTrustProps.isPresent()) {
+                KeyStoreProperties trustStoreProps = newTrustProps.get();
+                candidateBuilder
+                        .withSwappableTrustMaterial()
+                        .withTrustMaterial(
+                                trustStoreProps.getFilename(),
+                                trustStoreProps.getPassword(),
+                                trustStoreProps.getType());
+            }
+
+            // 7. Atomic swap
+            try {
+                SSLFactoryUtils.reload(configured.sslFactory, candidateBuilder.build());
+                // 8. On success, update state
+                if (identityChanged) {
+                    state.identityMaterial = newIdentity;
+                }
+                if (trustStoreChanged && newTrustProps.isPresent()) {
+                    state.trustStoreProperties = newTrustProps;
                 }
             } catch (RuntimeException e) {
                 // Keep using the last successfully loaded SSL material.
@@ -1681,12 +1717,76 @@ public class HTTPServerFactory {
     }
 
     /**
-     * Gets the current truststore properties.
-     *
-     * @return an Optional containing truststore properties, or empty if not configured
+     * Holds the configured SSL factory and its associated reload state.
      */
-    private static Optional<KeyStoreProperties> getTrustStoreProperties() {
-        return Optional.ofNullable(trustStoreProperties);
+    private static final class ConfiguredSslFactory {
+
+        final SSLFactory sslFactory;
+        final SslReloadState reloadState;
+        final MapAccessor rootMapAccessor;
+
+        ConfiguredSslFactory(SSLFactory sslFactory, SslReloadState reloadState, MapAccessor rootMapAccessor) {
+            this.sslFactory = sslFactory;
+            this.reloadState = reloadState;
+            this.rootMapAccessor = rootMapAccessor;
+        }
+    }
+
+    /**
+     * Holds mutable reload state for a configured SSL factory.
+     */
+    private static final class SslReloadState {
+
+        IdentityMaterial identityMaterial;
+        Optional<KeyStoreProperties> trustStoreProperties;
+        final Object lock = new Object();
+
+        SslReloadState(IdentityMaterial identityMaterial, Optional<KeyStoreProperties> trustStoreProperties) {
+            this.identityMaterial = identityMaterial;
+            this.trustStoreProperties = trustStoreProperties;
+        }
+    }
+
+    /**
+     * Identity material backed by a Java keystore (JKS or PKCS12).
+     */
+    private static final class KeyStoreIdentityMaterial implements IdentityMaterial {
+
+        private final KeyStoreProperties keyStoreProperties;
+
+        KeyStoreIdentityMaterial(KeyStoreProperties keyStoreProperties) {
+            this.keyStoreProperties = keyStoreProperties;
+        }
+
+        @Override
+        public void applyTo(SSLFactory.Builder builder) {
+            char[] keyStorePassword = keyStoreProperties.getPassword();
+            builder.withSwappableIdentityMaterial()
+                    .withIdentityMaterial(
+                            keyStoreProperties.getFilename(),
+                            keyStorePassword,
+                            keyStorePassword,
+                            keyStoreProperties.getType());
+        }
+
+        @Override
+        public boolean hasChanged() {
+            Optional<String> currentHash = getContentHash(keyStoreProperties.getFilename());
+            if (!currentHash.isPresent()) {
+                return false;
+            }
+            return !keyStoreProperties.getContentHash().equals(currentHash.get());
+        }
+
+        @Override
+        public IdentityMaterial reload(MapAccessor rootMapAccessor) {
+            try {
+                KeyStoreProperties newProps = getKeyStoreProperties(rootMapAccessor);
+                return new KeyStoreIdentityMaterial(newProps);
+            } catch (ConfigurationException e) {
+                return this;
+            }
+        }
     }
 
     /**
