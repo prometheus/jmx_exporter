@@ -39,9 +39,9 @@ public class LevelTest {
 
     @Test
     public void testJulLevelMapping() {
-        assertThat(Level.TRACE.julLevel()).isEqualTo(java.util.logging.Level.FINEST);
-        assertThat(Level.INFO.julLevel()).isEqualTo(java.util.logging.Level.INFO);
-        assertThat(Level.WARN.julLevel()).isEqualTo(java.util.logging.Level.WARNING);
-        assertThat(Level.ERROR.julLevel()).isEqualTo(java.util.logging.Level.SEVERE);
+        assertThat(JulLoggerBackend.toJulLevel(Level.TRACE)).isEqualTo(java.util.logging.Level.FINEST);
+        assertThat(JulLoggerBackend.toJulLevel(Level.INFO)).isEqualTo(java.util.logging.Level.INFO);
+        assertThat(JulLoggerBackend.toJulLevel(Level.WARN)).isEqualTo(java.util.logging.Level.WARNING);
+        assertThat(JulLoggerBackend.toJulLevel(Level.ERROR)).isEqualTo(java.util.logging.Level.SEVERE);
     }
 }
