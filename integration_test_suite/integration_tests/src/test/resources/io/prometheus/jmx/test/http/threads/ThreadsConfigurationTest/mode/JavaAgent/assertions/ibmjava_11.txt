@@ -156,7 +156,7 @@ match GAUGE jvm_memory_pool_used_bytes{pool="tenured-LOA"} *
 match GAUGE jvm_memory_pool_used_bytes{pool="tenured-SOA"} *
 match GAUGE jvm_memory_used_bytes{area="heap"} *
 match GAUGE jvm_memory_used_bytes{area="nonheap"} *
-match GAUGE jvm_runtime_info{runtime="Java(TM) SE Runtime Environment",vendor="Eclipse OpenJ9",version="11.0.11+9"} *
+match GAUGE jvm_runtime_info{runtime="Java(TM) SE Runtime Environment",vendor="Eclipse OpenJ9",version="*"} *
 match GAUGE jvm_threads_current *
 match GAUGE jvm_threads_daemon *
 match GAUGE jvm_threads_deadlocked *
