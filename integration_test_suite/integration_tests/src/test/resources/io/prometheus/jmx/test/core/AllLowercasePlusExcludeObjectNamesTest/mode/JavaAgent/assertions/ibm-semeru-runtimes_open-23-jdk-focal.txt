@@ -81,7 +81,7 @@ match GAUGE jvm_memory_pool_used_bytes{pool="tenured-LOA"} *
 match GAUGE jvm_memory_pool_used_bytes{pool="tenured-SOA"} *
 match GAUGE jvm_memory_used_bytes{area="heap"} *
 match GAUGE jvm_memory_used_bytes{area="nonheap"} *
-match GAUGE jvm_runtime_info{runtime="IBM Semeru Runtime Open Edition",vendor="Eclipse OpenJ9",version="23.0.2+7"} *
+match GAUGE jvm_runtime_info{runtime="IBM Semeru Runtime Open Edition",vendor="Eclipse OpenJ9",version="*"} *
 match GAUGE jvm_threads_current *
 match GAUGE jvm_threads_daemon *
 match GAUGE jvm_threads_deadlocked *

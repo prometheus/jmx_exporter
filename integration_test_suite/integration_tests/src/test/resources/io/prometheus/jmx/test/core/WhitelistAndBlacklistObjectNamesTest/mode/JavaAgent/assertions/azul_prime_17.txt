@@ -49,7 +49,7 @@ match GAUGE jvm_memory_pool_used_bytes{pool="GenPauseless Perm Gen"} *
 match GAUGE jvm_memory_pool_used_bytes{pool="Native Heap"} *
 match GAUGE jvm_memory_used_bytes{area="heap"} *
 match GAUGE jvm_memory_used_bytes{area="nonheap"} *
-match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="Azul Systems, Inc.",version="17.0.17.0.101+1-LTS"} *
+match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="Azul Systems, Inc.",version="*"} *
 match GAUGE jvm_threads_current *
 match GAUGE jvm_threads_daemon *
 match GAUGE jvm_threads_deadlocked *

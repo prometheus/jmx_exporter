@@ -787,6 +787,87 @@ public class MetricsAssertions {
         }
     }
 
+    /**
+     * Tests whether an actual value matches a glob pattern containing zero or more
+     * {@code *} wildcards. Each {@code *} matches zero or more characters. All other
+     * characters are matched literally.
+     *
+     * <p>Examples:
+     * <ul>
+     *   <li>{@code "*"} matches any value
+     *   <li>{@code "prefix*"} matches values starting with {@code "prefix"}
+     *   <li>{@code "*suffix"} matches values ending with {@code "suffix"}
+     *   <li>{@code "*middle*"} matches values containing {@code "middle"}
+     *   <li>{@code "*a*b*c*"} matches values containing {@code "a"}, then {@code "b"}, then {@code "c"} in order
+     * </ul>
+     *
+     * @param pattern the glob pattern
+     * @param value   the actual label value to test
+     * @return {@code true} if the value matches the pattern
+     */
+    /**
+     * Cache of compiled glob patterns to avoid recompilation.
+     */
+    private static final Map<String, java.util.regex.Pattern> GLOB_CACHE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Tests whether an actual value matches a glob pattern containing zero or more
+     * {@code *} wildcards. Each {@code *} matches zero or more characters. All other
+     * characters are matched literally.
+     *
+     * <p>The glob pattern is converted to a regex internally. Patterns are cached
+     * for reuse.
+     *
+     * <p>Examples:
+     * <ul>
+     *   <li>{@code "*"} matches any value
+     *   <li>{@code "prefix*"} matches values starting with {@code "prefix"}
+     *   <li>{@code "*suffix"} matches values ending with {@code "suffix"}
+     *   <li>{@code "*middle*"} matches values containing {@code "middle"}
+     *   <li>{@code "*a*b*c*"} matches values containing {@code "a"}, then {@code "b"}, then {@code "c"} in order
+     * </ul>
+     *
+     * @param pattern the glob pattern
+     * @param value   the actual label value to test
+     * @return {@code true} if the value matches the pattern
+     */
+    static boolean matchesGlob(String pattern, String value) {
+        return GLOB_CACHE
+                .computeIfAbsent(pattern, MetricsAssertions::toRegex)
+                .matcher(value)
+                .matches();
+    }
+
+    /**
+     * Converts a glob pattern to a compiled regex. The glob syntax supports:
+     * <ul>
+     *   <li>{@code *} — matches zero or more characters
+     *   <li>All other characters are matched literally
+     * </ul>
+     *
+     * @param glob the glob pattern
+     * @return the compiled regex
+     */
+    private static java.util.regex.Pattern toRegex(String glob) {
+        StringBuilder regex = new StringBuilder(glob.length() + 16);
+        regex.append('^');
+        for (int i = 0; i < glob.length(); i++) {
+            char c = glob.charAt(i);
+            if (c == '*') {
+                regex.append(".*");
+            } else {
+                // Escape regex metacharacters
+                if ("\\[{()+?.$^|".indexOf(c) >= 0) {
+                    regex.append('\\');
+                }
+                regex.append(c);
+            }
+        }
+        regex.append('$');
+        return java.util.regex.Pattern.compile(regex.toString());
+    }
+
     private static boolean updateMetricsFile() {
         if (Boolean.getBoolean(METRIC_ASSERTIONS_UPDATE)) {
             return true;
@@ -911,19 +992,8 @@ public class MetricsAssertions {
                 if (actualValue == null) {
                     return false;
                 }
-                if (expectedValue.equals("*")) {
-                    // "*" alone means any non-null value — skip check.
-                    continue;
-                }
-                if (expectedValue.startsWith("*")) {
-                    String suffix = expectedValue.substring(1);
-                    if (!actualValue.endsWith(suffix)) {
-                        return false;
-                    }
-                } else {
-                    if (!actualValue.equals(expectedValue)) {
-                        return false;
-                    }
+                if (!matchesGlob(expectedValue, actualValue)) {
+                    return false;
                 }
             }
             return true;

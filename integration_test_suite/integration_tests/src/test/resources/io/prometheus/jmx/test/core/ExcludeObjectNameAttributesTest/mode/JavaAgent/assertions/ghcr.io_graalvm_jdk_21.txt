@@ -128,7 +128,7 @@ match GAUGE jvm_memory_pool_used_bytes{pool="*Survivor Space"} *
 match GAUGE jvm_memory_pool_used_bytes{pool="*Gen"} *
 match GAUGE jvm_memory_used_bytes{area="heap"} *
 match GAUGE jvm_memory_used_bytes{area="nonheap"} *
-match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="GraalVM Community",version="17.0.4+8-jvmci-21.3-b20"} *
+match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="GraalVM Community",version="*"} *
 match GAUGE jvm_threads_current *
 match GAUGE jvm_threads_daemon *
 match GAUGE jvm_threads_deadlocked *

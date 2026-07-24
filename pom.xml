@@ -35,6 +35,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.reporting.sourceEncoding>UTF-8</project.reporting.sourceEncoding>
         <!-- Dependency versions -->
+        <altcontainers.version>0.3.0</altcontainers.version>
         <assertj.version>3.27.7</assertj.version>
         <ayza.version>10.0.5</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
