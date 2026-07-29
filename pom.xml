@@ -37,7 +37,7 @@
         <!-- Dependency versions -->
         <altcontainers.version>0.3.0</altcontainers.version>
         <assertj.version>3.27.7</assertj.version>
-        <ayza.version>10.0.5</ayza.version>
+        <ayza.version>10.0.6</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <junit.version>6.1.2</junit.version>
