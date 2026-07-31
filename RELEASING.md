@@ -43,7 +43,7 @@
    - Signs each jar with GPG
    - Generates SHA256 checksums
 9. Commits release on release branch
-10. Creates annotated tag: `v{VERSION}`
+10. Creates annotated tag: `{VERSION}`
 11. Pushes release branch and tag to remote
 12. Switches back to main branch
 13. Sets post-release version: `{VERSION}-POST`
