@@ -35,6 +35,7 @@ import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
+import java.util.function.IntConsumer;
 
 /**
  * Java agent for the Prometheus JMX exporter.
@@ -128,8 +129,15 @@ public class JavaAgent {
      *     invalid
      */
     public static void premain(String agentArgument, Instrumentation instrumentation) {
+        Arguments arguments;
         try {
-            Arguments arguments = Arguments.parse(agentArgument);
+            arguments = Arguments.parse(agentArgument);
+        } catch (Throwable t) {
+            handleError(t, null, null, false);
+            return;
+        }
+
+        try {
             File file = new File(arguments.getFilename());
             MapAccessor mapAccessor = MapAccessor.of(YamlSupport.loadYaml(file));
 
@@ -149,7 +157,7 @@ public class JavaAgent {
                 start(arguments, file, mapAccessor);
             }
         } catch (Throwable t) {
-            handleError(t, null, null);
+            handleError(t, null, null, arguments.isGracefulErrorHandling());
         }
     }
 
@@ -174,6 +182,7 @@ public class JavaAgent {
      *     {@code null}
      */
     private static void startAsync(int startDelaySeconds, Arguments arguments, File file, MapAccessor mapAccessor) {
+        boolean gracefulErrorHandling = arguments.isGracefulErrorHandling();
         Thread thread = new Thread(
                 () -> {
                     try {
@@ -183,7 +192,7 @@ public class JavaAgent {
                         Thread.currentThread().interrupt();
                         LOGGER.warn("Startup delay of %d seconds interrupted", startDelaySeconds);
                     } catch (Throwable t) {
-                        handleError(t, null, null);
+                        handleError(t, null, null, gracefulErrorHandling);
                     }
                 },
                 THREAD_NAME);
@@ -249,7 +258,7 @@ public class JavaAgent {
 
             LOGGER.info("Running ...");
         } catch (Throwable t) {
-            handleError(t, openTelemetryExporter, httpServer);
+            handleError(t, openTelemetryExporter, httpServer, arguments.isGracefulErrorHandling());
         }
     }
 
@@ -306,36 +315,64 @@ public class JavaAgent {
     }
 
     /**
-     * Handles a startup failure by logging the error and cleaning up resources.
+     * Handles a startup failure by logging the error, cleaning up resources, and optionally exiting
+     * the JVM.
      *
-     * <p>This method:
-     *
-     * <ul>
-     *   <li>Prints the error stack trace to stderr (synchronized to prevent interleaving)
-     *   <li>Closes any started resources (OpenTelemetry exporter, HTTP server)
-     *   <li>Exits the JVM with status code 1
-     * </ul>
-     *
-     * <p>This method never returns; it always calls {@code System.exit(1)}.
+     * <p>When {@code gracefulErrorHandling} is {@code false}, this method prints the error, closes
+     * resources, and calls {@code System.exit(1)}. When {@code gracefulErrorHandling} is {@code
+     * true}, it prints the error and closes resources but does not exit the JVM.
      *
      * @param t the throwable that caused the failure, may be {@code null}
      * @param openTelemetryExporter the OpenTelemetry exporter to close, may be {@code null}
      * @param httpServer the HTTP server to close, may be {@code null}
+     * @param gracefulErrorHandling whether to skip the JVM exit
      */
-    private static void handleError(Throwable t, OpenTelemetryExporter openTelemetryExporter, HTTPServer httpServer) {
+    private static void handleError(
+            Throwable t,
+            OpenTelemetryExporter openTelemetryExporter,
+            HTTPServer httpServer,
+            boolean gracefulErrorHandling) {
+        handleError(t, openTelemetryExporter, httpServer, gracefulErrorHandling, System::exit);
+    }
+
+    /**
+     * Handles a startup failure by logging the error, cleaning up resources, and optionally exiting
+     * the JVM.
+     *
+     * <p>This overload allows tests to inject an exit action instead of calling {@link
+     * System#exit(int)}.
+     *
+     * @param t the throwable that caused the failure, may be {@code null}
+     * @param openTelemetryExporter the OpenTelemetry exporter to close, may be {@code null}
+     * @param httpServer the HTTP server to close, may be {@code null}
+     * @param gracefulErrorHandling if {@code true}, log and clean up without exiting the JVM
+     * @param exit the exit action to invoke when not in graceful mode
+     */
+    static void handleError(
+            Throwable t,
+            OpenTelemetryExporter openTelemetryExporter,
+            HTTPServer httpServer,
+            boolean gracefulErrorHandling,
+            IntConsumer exit) {
         synchronized (System.err) {
             System.err.println("Failed to start Prometheus JMX Exporter ...");
             System.err.println();
             t.printStackTrace(System.err);
             System.err.println();
-            System.err.println("Prometheus JMX Exporter exiting");
+            if (gracefulErrorHandling) {
+                System.err.println("Prometheus JMX Exporter continuing in graceful error handling mode");
+            } else {
+                System.err.println("Prometheus JMX Exporter exiting");
+            }
             System.err.flush();
         }
 
         close(openTelemetryExporter);
         close(httpServer);
 
-        System.exit(1);
+        if (!gracefulErrorHandling) {
+            exit.accept(1);
+        }
     }
 
     /**

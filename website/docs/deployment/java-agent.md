@@ -17,6 +17,9 @@ The Java agent parses one agent argument string:
 | `<PORT>:<EXPORTER_YAML>` | Enable HTTP on `0.0.0.0:<PORT>`. |
 | `<HOST>:<PORT>:<EXPORTER_YAML>` | Enable HTTP on the specified host and port. |
 | `<EXPORTER_YAML>` | Do not start HTTP; useful for OpenTelemetry-only configuration. |
+| `graceful:<PORT>:<EXPORTER_YAML>` | Enable HTTP on `0.0.0.0:<PORT>`. On startup error, log and clean up without exiting the JVM. |
+| `graceful:<HOST>:<PORT>:<EXPORTER_YAML>` | Enable HTTP on the specified host and port. On startup error, log and clean up without exiting the JVM. |
+| `graceful:<EXPORTER_YAML>` | Do not start HTTP. On startup error, log and clean up without exiting the JVM. |
 
 Ports must be from `1` through `65535`. IPv6 hosts must be enclosed in brackets, for example `[::1]:9404:exporter.yaml`.
 
@@ -62,3 +65,13 @@ rules:
 ## Lifecycle and errors
 
 The agent starts through `premain` at JVM startup or `agentmain` when attached. Startup registers the JMX collector and starts the enabled exporters. Malformed arguments, invalid ports, unreadable YAML, or invalid configuration fail startup.
+
+## Graceful error handling
+
+By default, the Java agent calls `System.exit(1)` when it fails to start, which terminates the JVM. Prefix the agent argument with `graceful:` to disable this behavior for startup errors: the error is still logged and any started resources are closed, but the JVM keeps running.
+
+```bash
+java -javaagent:jmx_prometheus_javaagent-1.6.0.jar=graceful:9404:exporter.yaml -jar your-application.jar
+```
+
+This option only affects startup errors in the Java agent. Scrape and collection errors are unaffected and continue to be reported via the `jmx_scrape_error` metric without terminating the JVM.
