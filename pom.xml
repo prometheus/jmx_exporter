@@ -40,7 +40,7 @@
         <ayza.version>10.0.6</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <junit.version>6.1.2</junit.version>
+        <junit.version>6.1.3</junit.version>
         <logback.version>1.6.1</logback.version>
         <okhttp.version>5.4.0</okhttp.version>
         <altcontainers.version>0.3.0</altcontainers.version>
