@@ -56,6 +56,11 @@ public class Arguments {
     private static final String DEFAULT_HOST = "0.0.0.0";
 
     /**
+     * Prefix that enables graceful error handling for startup errors.
+     */
+    private static final String GRACEFUL_PREFIX = "graceful:";
+
+    /**
      * Regular expression pattern for parsing agent arguments.
      *
      * <p>Captures groups:
@@ -103,6 +108,15 @@ public class Arguments {
     private final String filename;
 
     /**
+     * Flag indicating whether graceful error handling is enabled.
+     *
+     * <p>When {@code true}, startup errors are logged and resources are cleaned up without calling
+     * {@code System.exit(1)}. When {@code false}, the agent fails fast and exits the JVM on startup
+     * errors.
+     */
+    private final boolean gracefulErrorHandling;
+
+    /**
      * Constructs an Arguments instance with the specified configuration.
      *
      * @param httpEnabled whether the HTTP server is enabled
@@ -110,13 +124,15 @@ public class Arguments {
      *     disabled
      * @param port the port number for HTTP server, may be {@code null} when HTTP is disabled
      * @param filename the path to the configuration file, must not be {@code null}
+     * @param gracefulErrorHandling whether graceful error handling is enabled
      * @throws NullPointerException if {@code filename} is {@code null}
      */
-    private Arguments(boolean httpEnabled, String host, Integer port, String filename) {
+    private Arguments(boolean httpEnabled, String host, Integer port, String filename, boolean gracefulErrorHandling) {
         this.httpEnabled = httpEnabled;
         this.host = host;
         this.port = port;
         this.filename = Objects.requireNonNull(filename, "filename cannot be null");
+        this.gracefulErrorHandling = gracefulErrorHandling;
     }
 
     /**
@@ -170,6 +186,18 @@ public class Arguments {
     }
 
     /**
+     * Returns whether graceful error handling is enabled.
+     *
+     * <p>When {@code true}, startup errors are logged and resources are cleaned up without calling
+     * {@code System.exit(1)}.
+     *
+     * @return {@code true} if graceful error handling is enabled, {@code false} otherwise
+     */
+    public boolean isGracefulErrorHandling() {
+        return gracefulErrorHandling;
+    }
+
+    /**
      * Parses the Java agent argument string into an Arguments instance.
      *
      * <p>Supports the following argument formats:
@@ -178,6 +206,9 @@ public class Arguments {
      *   <li>{@code port:configFile} - Enables HTTP on default host (0.0.0.0) and specified port
      *   <li>{@code host:port:configFile} - Enables HTTP on specified host and port
      *   <li>{@code configFile} - Disables HTTP (only OpenTelemetry export possible via config)
+     *   <li>{@code graceful:port:configFile} - Enables HTTP and graceful error handling
+     *   <li>{@code graceful:host:port:configFile} - Enables HTTP on specified host/port and graceful error handling
+     *   <li>{@code graceful:configFile} - Disables HTTP and enables graceful error handling
      * </ul>
      *
      * <p>Host can be a hostname, IPv4 address, or IPv6 address enclosed in square brackets.
@@ -191,13 +222,63 @@ public class Arguments {
             throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
         }
 
-        Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
-        Matcher matcher = pattern.matcher(agentArgument);
+        boolean gracefulErrorHandling = parseGracefulPrefix(agentArgument);
+        String remainingArgument = stripGracefulPrefix(agentArgument);
 
+        ParsedHttpArguments parsedHttpArguments = parseHttpArguments(remainingArgument);
+
+        return new Arguments(
+                parsedHttpArguments.httpEnabled,
+                parsedHttpArguments.host,
+                parsedHttpArguments.port,
+                parsedHttpArguments.filename,
+                gracefulErrorHandling);
+    }
+
+    /**
+     * Determines whether the agent argument starts with the graceful error handling prefix.
+     *
+     * @param agentArgument the agent argument string to check, must not be {@code null}
+     * @return {@code true} if the argument starts with {@code graceful:}, {@code false} otherwise
+     */
+    private static boolean parseGracefulPrefix(String agentArgument) {
+        return agentArgument.startsWith(GRACEFUL_PREFIX);
+    }
+
+    /**
+     * Strips the optional graceful error handling prefix from the agent argument.
+     *
+     * @param agentArgument the agent argument string, must not be {@code null}
+     * @return the argument string with the graceful prefix removed, if present
+     * @throws ConfigurationException if only the graceful prefix was provided
+     */
+    private static String stripGracefulPrefix(String agentArgument) {
+        if (agentArgument.startsWith(GRACEFUL_PREFIX)) {
+            String remaining = agentArgument.substring(GRACEFUL_PREFIX.length());
+            if (remaining.isEmpty()) {
+                throw new ConfigurationException(format("Malformed arguments [%s]", remaining));
+            }
+            return remaining;
+        }
+        return agentArgument;
+    }
+
+    /**
+     * Parses the host, port, and filename from the agent argument after any graceful prefix has been
+     * removed.
+     *
+     * @param agentArgument the agent argument string with graceful prefix already stripped
+     * @return a {@link ParsedHttpArguments} containing the parsed values
+     * @throws ConfigurationException if the argument is malformed
+     */
+    private static ParsedHttpArguments parseHttpArguments(String agentArgument) {
         boolean httpEnabled = false;
         String host = null;
         Integer port = null;
         String filename;
+
+        Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
+        Matcher matcher = pattern.matcher(agentArgument);
 
         if (matcher.matches()) {
             httpEnabled = true;
@@ -225,6 +306,24 @@ public class Arguments {
             filename = agentArgument;
         }
 
-        return new Arguments(httpEnabled, host, port, filename);
+        return new ParsedHttpArguments(httpEnabled, host, port, filename);
+    }
+
+    /**
+     * Simple holder for HTTP-related parsed arguments.
+     */
+    private static class ParsedHttpArguments {
+
+        final boolean httpEnabled;
+        final String host;
+        final Integer port;
+        final String filename;
+
+        ParsedHttpArguments(boolean httpEnabled, String host, Integer port, String filename) {
+            this.httpEnabled = httpEnabled;
+            this.host = host;
+            this.port = port;
+            this.filename = filename;
+        }
     }
 }
