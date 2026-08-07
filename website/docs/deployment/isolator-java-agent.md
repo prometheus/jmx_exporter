@@ -28,3 +28,12 @@ java -javaagent:jmx_prometheus_isolator_javaagent-1.6.0.jar=jmx_prometheus_javaa
 ## Lifecycle and errors
 
 The isolator agent starts each exporter through an isolated classloader on a daemon startup thread. Startup waits for the implementation timeout and logs a warning if the thread is still alive. A missing, empty, or malformed isolator argument fails startup.
+
+## Logging backend
+
+The isolator and nested JMX Exporter agents use JUL-independent native logging by default. Native
+logging writes `INFO`, `WARN`, and `ERROR` messages to standard error. Set
+`-Djmx.prometheus.exporter.logging.backend=jul` or
+`JMX_PROMETHEUS_EXPORTER_LOGGING_BACKEND=jul` to use Java Util Logging instead. The system property
+takes precedence, and the selected backend is fixed when each logger is first created. JUL is
+process-wide and may initialize the application's configured `LogManager` during agent startup.

@@ -16,56 +16,52 @@
 
 package io.prometheus.jmx.logger;
 
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.SimpleFormatter;
 
 /**
  * Factory for creating Logger instances.
  *
- * <p>Creates and caches Logger instances for classes. The factory overrides the default
- * {@link SimpleFormatter} with {@link LoggerFormatter} for consistent log message formatting.
+ * <p>Creates and caches Logger instances for classes. The selected backend is fixed when a logger
+ * is first created. Backend selection itself does not initialize Java Util Logging (JUL).
  *
  * <p>This class is not instantiable and all methods are static.
  *
- * <p>Thread-safety: This class is thread-safe. Logger instances are cached in a
- * {@link ConcurrentHashMap}.
+ * <p>Thread-safety: This class is thread-safe. Logger instances are cached in a {@link
+ * ConcurrentHashMap}.
  */
-public class LoggerFactory {
+public final class LoggerFactory {
 
-    /**
-     * The root logger name.
-     *
-     * <p>Empty string refers to the root logger in java.util.logging.
-     */
-    private static final String ROOT_LOGGER = "";
+    /** Supported logging backends. */
+    public enum Backend {
+        NATIVE,
+        JUL
+    }
 
-    /**
-     * Cache for Logger instances.
-     *
-     * <p>Maps class objects to their corresponding Logger instances.
-     */
+    /** System property used to select the logging backend. */
+    public static final String BACKEND_PROPERTY = "jmx.prometheus.exporter.logging.backend";
+
+    /** Environment variable used to select the logging backend. */
+    public static final String BACKEND_ENVIRONMENT_VARIABLE = "JMX_PROMETHEUS_EXPORTER_LOGGING_BACKEND";
+
+    /** Maps class objects to their corresponding Logger instances. */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
-    static {
-        // Override the default formatter for the root logger if it is SimpleFormatter
-        for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
-            Formatter formatter = handler.getFormatter();
-            if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
-                handler.setFormatter(new LoggerFormatter());
-            }
-        }
+    /** Backend used when neither the system property nor environment variable is configured. */
+    private static volatile Backend defaultBackend = Backend.JUL;
+
+    /** Private constructor to prevent instantiation. */
+    private LoggerFactory() {
+        // Intentionally empty
     }
 
     /**
-     * Private constructor to prevent instantiation.
-     *
-     * <p>This is a utility class with only static methods.
+     * Sets the artifact default without overriding explicit user configuration. Must be called
+     * before the first logger is requested.
      */
-    private LoggerFactory() {
-        // Intentionally empty
+    public static void setDefaultBackend(Backend backend) {
+        defaultBackend = backend;
     }
 
     /**
@@ -78,5 +74,45 @@ public class LoggerFactory {
      */
     public static Logger getLogger(Class<?> clazz) {
         return CACHE.computeIfAbsent(clazz, Logger::new);
+    }
+
+    /**
+     * Creates the configured backend for a logger name.
+     *
+     * @param loggerName logger name
+     * @return configured logging backend
+     */
+    static LoggerBackend createBackend(String loggerName) {
+        Backend backend = configuredBackend();
+        if (backend == Backend.NATIVE) {
+            return new NativeLoggerBackend(loggerName);
+        }
+        return JulBackendHolder.create(loggerName);
+    }
+
+    private static Backend configuredBackend() {
+        String value = System.getProperty(BACKEND_PROPERTY);
+        if (value == null || value.trim().isEmpty()) {
+            value = System.getenv(BACKEND_ENVIRONMENT_VARIABLE);
+        }
+        if (value == null || value.trim().isEmpty()) {
+            return defaultBackend;
+        }
+        try {
+            return Backend.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Invalid logging backend [" + value + "], expected [native] or [jul]", e);
+        }
+    }
+
+    /**
+     * This holder is the only non-JUL class that mentions the JUL implementation, keeping its
+     * initialization lazy when native logging is selected.
+     */
+    private static final class JulBackendHolder {
+        private static LoggerBackend create(String loggerName) {
+            return new JulLoggerBackend(loggerName);
+        }
     }
 }

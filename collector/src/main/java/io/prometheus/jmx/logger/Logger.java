@@ -20,19 +20,17 @@ import static java.lang.String.format;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.SimpleFormatter;
 
 /**
  * Logger wrapper providing simple logging with TRACE, INFO, WARN, and ERROR levels.
  *
- * <p>This class wraps {@link java.util.logging.Logger} and provides:
+ * <p>This class delegates to the configured logging backend and provides:
  *
  * <ul>
  *   <li>Simple logging interface with format strings
+ *   <li>Native logging that does not initialize Java Util Logging (JUL)
+ *   <li>Optional JUL integration
  *   <li>Developer debug mode for additional console output
- *   <li>Custom formatter for consistent log message format
  * </ul>
  *
  * <p>Developer debug mode can be enabled via:
@@ -42,15 +40,15 @@ import java.util.logging.SimpleFormatter;
  *   <li>System property: {@code -Djmx.prometheus.exporter.developer.debug=true}
  * </ul>
  *
- * <p>Thread-safety: This class is thread-safe. The underlying logger is thread-safe, and
- * date formatting uses a thread-safe {@link DateTimeFormatter}.
+ * <p>Thread-safety: This class is thread-safe. Logging backends are responsible for serializing
+ * writes where required, and date formatting uses a thread-safe {@link DateTimeFormatter}.
  */
 public class Logger {
 
     /**
-     * The underlying Java util logger.
+     * The configured logging backend.
      */
-    private final java.util.logging.Logger LOGGER;
+    private final LoggerBackend backend;
 
     /**
      * Cached logger name for developer debug output.
@@ -60,15 +58,15 @@ public class Logger {
     /**
      * Flag indicating if developer debug mode is enabled.
      *
-     * <p>When enabled, logs are also written to stdout in addition to the normal logging
-     * destination. Evaluated once at class load time.
+     * <p>When enabled, logs are also written to stdout in addition to the configured logging
+     * backend. Evaluated once at class load time.
      */
     private static volatile boolean DEVELOPER_DEBUG =
             "true".equals(System.getenv("JMX_PROMETHEUS_EXPORTER_DEVELOPER_DEBUG"))
                     || "true".equals(System.getProperty("jmx.prometheus.exporter.developer.debug"));
 
     /**
-     * Thread-safe date formatter for log timestamps.
+     * Thread-safe date formatter for developer debug timestamps.
      */
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
@@ -78,16 +76,8 @@ public class Logger {
      * @param clazz the class for which to create a logger, must not be {@code null}
      */
     Logger(Class<?> clazz) {
-        LOGGER = java.util.logging.Logger.getLogger(clazz.getName());
-        loggerName = LOGGER.getName();
-
-        // Override the default formatter for the logger if it is SimpleFormatter
-        for (Handler handler : LOGGER.getHandlers()) {
-            Formatter formatter = handler.getFormatter();
-            if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
-                handler.setFormatter(new LoggerFormatter());
-            }
-        }
+        loggerName = clazz.getName();
+        backend = LoggerFactory.createBackend(loggerName);
     }
 
     /**
@@ -96,7 +86,7 @@ public class Logger {
      * @return {@code true} if TRACE logging is enabled, {@code false} otherwise
      */
     public boolean isTraceEnabled() {
-        return LOGGER.isLoggable(Level.TRACE.julLevel());
+        return backend.isEnabled(Level.TRACE);
     }
 
     /**
@@ -105,7 +95,7 @@ public class Logger {
      * @return {@code true} if INFO logging is enabled, {@code false} otherwise
      */
     public boolean isInfoEnabled() {
-        return LOGGER.isLoggable(Level.INFO.julLevel());
+        return backend.isEnabled(Level.INFO);
     }
 
     /**
@@ -114,7 +104,7 @@ public class Logger {
      * @return {@code true} if WARN logging is enabled, {@code false} otherwise
      */
     public boolean isWarnEnabled() {
-        return LOGGER.isLoggable(Level.WARN.julLevel());
+        return backend.isEnabled(Level.WARN);
     }
 
     /**
@@ -123,7 +113,7 @@ public class Logger {
      * @return {@code true} if ERROR logging is enabled, {@code false} otherwise
      */
     public boolean isErrorEnabled() {
-        return LOGGER.isLoggable(Level.ERROR.julLevel());
+        return backend.isEnabled(Level.ERROR);
     }
 
     /**
@@ -237,15 +227,14 @@ public class Logger {
      *
      * <p>Skips {@link String#format} since the message is already a plain string.
      *
-     * @param level   the level
+     * @param level the level
      * @param message the pre-formatted message
      */
     private void log(Level level, String message) {
-        java.util.logging.Level julLevel = level.julLevel();
-        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean loggable = backend.isEnabled(level);
         boolean debug = DEVELOPER_DEBUG;
         if (loggable) {
-            LOGGER.log(julLevel, message);
+            backend.log(level, message);
         }
         if (debug) {
             developerDebug(level, message);
@@ -255,18 +244,17 @@ public class Logger {
     /**
      * Logs a formatted message at the given level.
      *
-     * @param level   the level
-     * @param format  the format string
+     * @param level the level
+     * @param format the format string
      * @param objects the objects to format
      */
     private void log(Level level, String format, Object... objects) {
-        java.util.logging.Level julLevel = level.julLevel();
-        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean loggable = backend.isEnabled(level);
         boolean debug = DEVELOPER_DEBUG;
         if (loggable || debug) {
             String message = format(format, objects);
             if (loggable) {
-                LOGGER.log(julLevel, message);
+                backend.log(level, message);
             }
             if (debug) {
                 developerDebug(level, message);
@@ -275,7 +263,7 @@ public class Logger {
     }
 
     /**
-     * Writes a log message to stdout with timestamp, thread, level, and logger name.
+     * Writes a developer debug message to stdout with timestamp, thread, level, and logger name.
      */
     private void developerDebug(Level level, String message) {
         String timestamp = DATE_TIME_FORMATTER.format(LocalDateTime.now());

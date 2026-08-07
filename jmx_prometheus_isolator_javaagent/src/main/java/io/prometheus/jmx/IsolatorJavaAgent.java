@@ -48,6 +48,10 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"PMD.EmptyCatchBlock", "PMD.UselessPureMethodCall"})
 public class IsolatorJavaAgent {
 
+    static {
+        LoggerFactory.setDefaultBackend(LoggerFactory.Backend.NATIVE);
+    }
+
     /**
      * Logger instance for this class.
      */

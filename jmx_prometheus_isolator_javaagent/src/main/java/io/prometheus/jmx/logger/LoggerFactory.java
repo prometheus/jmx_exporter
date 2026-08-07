@@ -18,9 +18,6 @@ package io.prometheus.jmx.logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.SimpleFormatter;
 
 /**
  * Factory for creating Logger instances.
@@ -35,12 +32,13 @@ import java.util.logging.SimpleFormatter;
  */
 public class LoggerFactory {
 
-    /**
-     * The root logger name.
-     *
-     * <p>Empty string refers to the root logger in java.util.logging.
-     */
-    private static final String ROOT_LOGGER = "";
+    public enum Backend {
+        NATIVE,
+        JUL
+    }
+
+    public static final String BACKEND_PROPERTY = "jmx.prometheus.exporter.logging.backend";
+    public static final String BACKEND_ENVIRONMENT_VARIABLE = "JMX_PROMETHEUS_EXPORTER_LOGGING_BACKEND";
 
     /**
      * Cache for Logger instances.
@@ -49,15 +47,7 @@ public class LoggerFactory {
      */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
-    static {
-        // Override the default formatter for the root logger if it is SimpleFormatter
-        for (Handler handler : java.util.logging.Logger.getLogger(ROOT_LOGGER).getHandlers()) {
-            Formatter formatter = handler.getFormatter();
-            if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
-                handler.setFormatter(new LoggerFormatter());
-            }
-        }
-    }
+    private static volatile Backend defaultBackend = Backend.JUL;
 
     /**
      * Private constructor to prevent instantiation.
@@ -66,6 +56,27 @@ public class LoggerFactory {
      */
     private LoggerFactory() {
         // Intentionally empty
+    }
+
+    public static void setDefaultBackend(Backend backend) {
+        defaultBackend = backend;
+    }
+
+    static boolean useJul() {
+        String value = System.getProperty(BACKEND_PROPERTY);
+        if (value == null || value.trim().isEmpty()) {
+            value = System.getenv(BACKEND_ENVIRONMENT_VARIABLE);
+        }
+        if (value == null || value.trim().isEmpty()) {
+            return defaultBackend == Backend.JUL;
+        }
+        if ("jul".equalsIgnoreCase(value.trim())) {
+            return true;
+        }
+        if ("native".equalsIgnoreCase(value.trim())) {
+            return false;
+        }
+        throw new IllegalArgumentException("Invalid logging backend [" + value + "], expected [native] or [jul]");
     }
 
     /**
