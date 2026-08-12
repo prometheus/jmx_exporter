@@ -60,6 +60,18 @@
                                     <exclude>org.vafer:jdependency</exclude>
                                 </excludes>
                             </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <shadedPattern>e1723a08afd7bca35570fd31a7656f59.</shadedPattern>
+                                    <includes>
+                                        <include>io.prometheus.jmx.**</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>io.prometheus.jmx.IsolatorJavaAgent</exclude>
+                                        <exclude>io.prometheus.jmx.JavaAgent</exclude>
+                                    </excludes>
+                                </relocation>
+                            </relocations>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
