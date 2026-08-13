@@ -20,7 +20,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -51,11 +53,11 @@ import java.util.jar.Manifest;
  *   <li>Fall back to the standard parent-first chain ({@code super.loadClass()})
  * </ol>
  *
- * <p>Each exporter JAR is fully shaded under the
- * {@code e1723a08afd7bca35570fd31a7656f59.} prefix, so all dependency classes are
- * namespace-scoped to that JAR. The self-first strategy ensures the exact version packaged
- * inside each JAR is used, preventing {@link ClassCastException} and other version conflicts
- * when multiple exporter instances run in the same JVM.
+ * <p>Each exporter JAR is fully shaded under a unique build-time prefix, so all
+ * dependency classes are namespace-scoped to that JAR. The self-first strategy
+ * ensures the exact version packaged inside each JAR is used, preventing
+ * {@link ClassCastException} and other version conflicts when multiple exporter
+ * instances run in the same JVM.
  *
  * <p>Thread-safety: This class is thread-safe. Class loading operations are synchronized by
  * the parent ClassLoader.
@@ -86,6 +88,11 @@ public class JarClassLoader extends ClassLoader {
      * Cache of class names to their bytecode, populated lazily on first load.
      */
     private final Map<String, byte[]> classBytes = new HashMap<>();
+
+    /**
+     * Package names already defined by this classloader.
+     */
+    private final Set<String> definedPackages = new HashSet<>();
 
     /**
      * Constructs a classloader that loads classes from the specified JAR file.
@@ -222,8 +229,11 @@ public class JarClassLoader extends ClassLoader {
     /**
      * Ensures that the package for a class is defined before loading.
      *
-     * <p>For classes with the shading prefix, the package is defined with implementation
-     * title and version from the JAR manifest.
+     * <p>Packages are defined with the implementation title and version from the JAR
+     * manifest. Only packages defined by this classloader are considered, so packages
+     * defined by a parent classloader (including packages of the same name defined for
+     * classes loaded from the system classpath) do not prevent the package metadata from
+     * being attached here.
      *
      * @param className the fully qualified class name
      */
@@ -231,16 +241,16 @@ public class JarClassLoader extends ClassLoader {
         int index = className.lastIndexOf('.');
         if (index != -1) {
             String packageName = className.substring(0, index);
-            if (getPackage(packageName) == null) {
-                String title = null;
-                String version = null;
-
-                if (className.startsWith("e1723a08afd7bca35570fd31a7656f59")) {
-                    title = manifestMap.get(IMPLEMENTATION_TITLE);
-                    version = manifestMap.get(IMPLEMENTATION_VERSION);
-                }
-
-                definePackage(packageName, null, null, null, title, version, null, null);
+            if (definedPackages.add(packageName)) {
+                definePackage(
+                        packageName,
+                        null,
+                        null,
+                        null,
+                        manifestMap.get(IMPLEMENTATION_TITLE),
+                        manifestMap.get(IMPLEMENTATION_VERSION),
+                        null,
+                        null);
             }
         }
     }

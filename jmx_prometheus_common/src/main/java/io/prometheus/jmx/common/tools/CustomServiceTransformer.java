@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -37,22 +38,32 @@ import org.apache.maven.plugins.shade.resource.ResourceTransformer;
  * and entries. This is used during shading to prevent conflicts between the shaded and unshaded
  * versions of the same library.
  *
- * <p>The prefix {@code e1723a08afd7bca35570fd31a7656f59.} is added to:
+ * <p>A unique shading prefix is added to:
  *
  * <ul>
  *   <li>Service file names (e.g., META-INF/services/MyService becomes
- *       META-INF/services/e1723a08afd7bca35570fd31a7656f59.MyService)
+ *       META-INF/services/{@code <prefix>}MyService)
  *   <li>Service implementation class names within the files
  * </ul>
+ *
+ * <p>The prefix is configured by the Maven Shade plugin via the {@code <prefix>}
+ * element; it is generated at build time so that each build uses a fresh
+ * namespace. The default prefix is retained for backwards compatibility when
+ * no prefix is configured.
  *
  * <p>This class is used during the Maven build process and is not used at runtime.
  */
 public class CustomServiceTransformer implements ResourceTransformer {
 
     /**
+     * Default prefix to add to service names and entries when none is configured.
+     */
+    private static final String DEFAULT_PREFIX = "e1723a08afd7bca35570fd31a7656f59.";
+
+    /**
      * Prefix to add to service names and entries.
      */
-    private static final String PREFIX = "e1723a08afd7bca35570fd31a7656f59.";
+    private String prefix = DEFAULT_PREFIX;
 
     /**
      * META-INF services directory path.
@@ -71,6 +82,15 @@ public class CustomServiceTransformer implements ResourceTransformer {
      */
     public CustomServiceTransformer() {
         // Intentionally empty
+    }
+
+    /**
+     * Sets the prefix to add to service names and entries.
+     *
+     * @param prefix the prefix to add, must not be {@code null}
+     */
+    public void setPrefix(String prefix) {
+        this.prefix = Objects.requireNonNull(prefix);
     }
 
     /**
@@ -105,7 +125,7 @@ public class CustomServiceTransformer implements ResourceTransformer {
                     .filter(line -> !line.isEmpty())
                     .map(line -> {
                         // Avoid double prefixing
-                        return line.startsWith(PREFIX) ? line : PREFIX + line;
+                        return line.startsWith(prefix) ? line : prefix + line;
                     })
                     .forEach(line -> {
                         if (!entries.contains(line)) {
@@ -129,7 +149,7 @@ public class CustomServiceTransformer implements ResourceTransformer {
      * Writes the collected service entries to the JAR with prefixed filenames and entries.
      *
      * <p>Each service file is written to a new path where the service name is prefixed with
-     * {@value #PREFIX}, and all implementation class entries within the file are also prefixed.
+     * {@link #prefix}, and all implementation class entries within the file are also prefixed.
      *
      * @param jos the JAR output stream to write to
      * @throws IOException if writing to the JAR fails
@@ -140,7 +160,7 @@ public class CustomServiceTransformer implements ResourceTransformer {
             String originalPath = entry.getKey();
             List<String> lines = entry.getValue();
 
-            String newPath = SERVICES_DIR + PREFIX + originalPath.substring(SERVICES_DIR.length());
+            String newPath = SERVICES_DIR + prefix + originalPath.substring(SERVICES_DIR.length());
 
             jos.putNextEntry(new JarEntry(newPath));
             for (String line : lines) {
