@@ -502,6 +502,37 @@ public class JmxScraperTest {
                 System.setOut(originalOut);
             }
         }
+
+        @Test
+        void stdoutWriterEscapesControlCharactersInOutput() {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PrintStream originalOut = System.out;
+            System.setOut(new PrintStream(baos, true));
+            try {
+                JmxScraper.MBeanReceiver stdoutWriter = createStdoutWriter();
+
+                LinkedHashMap<String, String> beanProperties = new LinkedHashMap<>();
+                beanProperties.put("type", "Colliding\u0001Name");
+                List<String> attrKeys = new ArrayList<>();
+                attrKeys.add("key1");
+
+                stdoutWriter.recordBean(
+                        "test.domain",
+                        beanProperties,
+                        Collections.emptyMap(),
+                        attrKeys,
+                        "AttrName",
+                        "java.lang.String",
+                        "desc",
+                        "hello");
+
+                String output = baos.toString();
+                assertThat(output).contains("Colliding\\x01Name");
+                assertThat(output).doesNotContain("Colliding\u0001Name");
+            } finally {
+                System.setOut(originalOut);
+            }
+        }
     }
 
     @Nested
