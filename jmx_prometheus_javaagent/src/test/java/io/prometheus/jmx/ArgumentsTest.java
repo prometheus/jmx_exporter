@@ -62,6 +62,16 @@ public class ArgumentsTest {
     private static final boolean INVALID_CONFIGURATION = false;
 
     /**
+     * Constant for graceful error handling enabled state in test definitions.
+     */
+    private static final boolean GRACEFUL_ENABLED = true;
+
+    /**
+     * Constant for graceful error handling disabled state in test definitions.
+     */
+    private static final boolean GRACEFUL_DISABLED = false;
+
+    /**
      * Test data array containing various valid and invalid argument configurations.
      */
     private static final ArgumentsTestDefinition[] ARGUMENTS_TEST_DEFINITIONS = {
@@ -71,35 +81,40 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/jmx-exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
-                "/opt/prometheus/jmx-exporter/config-file.yaml"),
+                "/opt/prometheus/jmx-exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "12345:/opt/prometheus/jmx_exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "0.0.0.0",
                 12345,
-                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+                "/opt/prometheus/jmx_exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         // Regression: port:file format was previously handled by a dead
         // switch (matcher.groupCount()) case 2 branch that never executed
         // because groupCount() always returns 3, matching only by accident
@@ -110,268 +125,368 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 "0.0.0.0",
                 65535,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
-                "/opt/prometheus/jmx-exporter/config-file.yaml"),
+                "/opt/prometheus/jmx-exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhost.domain.com:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "myhost.domain.com",
                 12345,
-                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+                "/opt/prometheus/jmx_exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "myhostname.sub-domain.prometheus.org:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "myhostname.sub-domain.prometheus.org",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "127.0.0.1:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "127.0.0.1",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "127.0.0.1:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "127.0.0.1",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "127.0.0.1:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "127.0.0.1",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "::",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "::",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "::",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::1]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "::1",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::1]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "::1",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::1]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "::1",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::ffff:192.168.1.1]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "::ffff:192.168.1.1",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::ffff:192.168.1.1]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "::ffff:192.168.1.1",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[::ffff:192.168.1.1]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "::ffff:192.168.1.1",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[fe80::1]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "fe80::1",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[fe80::1]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "fe80::1",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[fe80::1]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "fe80::1",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:db8::1]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "2001:db8::1",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:db8::1]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "2001:db8::1",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:db8::1]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "2001:db8::1",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "2001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "2001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[2001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "2001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config_file.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config_file.yaml"),
+                "/opt/prometheus/config_file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/config-file.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/config-file.yaml"),
+                "/opt/prometheus/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx-exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/jmx-exporter/config-file.yaml"),
+                "/opt/prometheus/jmx-exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+                "/opt/prometheus/jmx_exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "[001:0db8:0a0b:12f0:0000:0000:0000:0001]:12345:/opt/prometheus/jmx_exporter/config-file.yaml",
                 HTTP_ENABLED,
                 "001:0db8:0a0b:12f0:0000:0000:0000:0001",
                 12345,
-                "/opt/prometheus/jmx_exporter/config-file.yaml"),
+                "/opt/prometheus/jmx_exporter/config-file.yaml",
+                GRACEFUL_DISABLED),
         new ArgumentsTestDefinition(
                 VALID_CONFIGURATION,
                 "/opt/prometheus/config.yaml",
                 HTTP_DISABLED,
                 null,
                 null,
-                "/opt/prometheus/config.yaml"),
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_DISABLED),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "graceful:12345:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                "0.0.0.0",
+                12345,
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_ENABLED),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "graceful:myhost.domain.com:12345:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                "myhost.domain.com",
+                12345,
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_ENABLED),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "graceful:[::1]:12345:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                "::1",
+                12345,
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_ENABLED),
+        new ArgumentsTestDefinition(
+                VALID_CONFIGURATION,
+                "graceful:/opt/prometheus/config.yaml",
+                HTTP_DISABLED,
+                null,
+                null,
+                "/opt/prometheus/config.yaml",
+                GRACEFUL_ENABLED),
+        // Invalid graceful-only string
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION, "graceful:", HTTP_DISABLED, null, null, null, GRACEFUL_ENABLED),
+        // Invalid graceful with invalid port
+        new ArgumentsTestDefinition(
+                INVALID_CONFIGURATION,
+                "graceful:0:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                null,
+                null,
+                null,
+                GRACEFUL_ENABLED),
+
         // Invalid port - port 0
         new ArgumentsTestDefinition(
-                INVALID_CONFIGURATION, "0:/opt/prometheus/config.yaml", HTTP_ENABLED, null, null, null),
+                INVALID_CONFIGURATION,
+                "0:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                null,
+                null,
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - port 65536
         new ArgumentsTestDefinition(
-                INVALID_CONFIGURATION, "65536:/opt/prometheus/config.yaml", HTTP_ENABLED, null, null, null),
+                INVALID_CONFIGURATION,
+                "65536:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                null,
+                null,
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - port 99999
         new ArgumentsTestDefinition(
-                INVALID_CONFIGURATION, "99999:/opt/prometheus/config.yaml", HTTP_ENABLED, null, null, null),
+                INVALID_CONFIGURATION,
+                "99999:/opt/prometheus/config.yaml",
+                HTTP_ENABLED,
+                null,
+                null,
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - host with port 0
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -379,7 +494,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - host with port 65536
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -387,7 +503,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - host with port 99999
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -395,7 +512,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - IPv6 with port 0
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -403,7 +521,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - IPv6 with port 65536
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -411,7 +530,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
         // Invalid port - IPv6 with port 99999
         new ArgumentsTestDefinition(
                 INVALID_CONFIGURATION,
@@ -419,7 +539,8 @@ public class ArgumentsTest {
                 HTTP_ENABLED,
                 null,
                 null,
-                null),
+                null,
+                GRACEFUL_DISABLED),
     };
 
     /**
@@ -481,6 +602,11 @@ public class ArgumentsTest {
         private final String filename;
 
         /**
+         * Expected graceful error handling state.
+         */
+        private final boolean gracefulErrorHandling;
+
+        /**
          * Constructs a test definition with expected parsing results.
          *
          * @param validConfiguration whether the argument is valid
@@ -496,13 +622,15 @@ public class ArgumentsTest {
                 boolean httpEnabled,
                 String host,
                 Integer port,
-                String filename) {
+                String filename,
+                boolean gracefulErrorHandling) {
             this.argument = argument;
             this.validConfiguration = validConfiguration;
             this.httpEnabled = httpEnabled;
             this.host = host;
             this.port = port;
             this.filename = filename;
+            this.gracefulErrorHandling = gracefulErrorHandling;
         }
 
         /**
@@ -519,6 +647,7 @@ public class ArgumentsTest {
                 assertThat(arguments.getHost()).isEqualTo(host);
                 assertThat(arguments.getPort()).isEqualTo(port);
                 assertThat(arguments.getFilename()).isEqualTo(filename);
+                assertThat(arguments.isGracefulErrorHandling()).isEqualTo(gracefulErrorHandling);
             } else {
                 assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> Arguments.parse(argument));
             }
