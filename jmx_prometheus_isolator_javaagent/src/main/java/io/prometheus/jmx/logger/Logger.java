@@ -52,6 +52,8 @@ public class Logger {
      */
     private final java.util.logging.Logger LOGGER;
 
+    private final boolean useJul;
+
     /**
      * Cached logger name for developer debug output.
      */
@@ -78,11 +80,19 @@ public class Logger {
      * @param clazz the class for which to create a logger, must not be {@code null}
      */
     Logger(Class<?> clazz) {
-        LOGGER = java.util.logging.Logger.getLogger(clazz.getName());
-        loggerName = LOGGER.getName();
+        loggerName = clazz.getName();
+        useJul = LoggerFactory.useJul();
+        LOGGER = useJul ? java.util.logging.Logger.getLogger(loggerName) : null;
 
         // Override the default formatter for the logger if it is SimpleFormatter
-        for (Handler handler : LOGGER.getHandlers()) {
+        if (useJul) {
+            configureSimpleFormatters(java.util.logging.Logger.getLogger(""));
+            configureSimpleFormatters(LOGGER);
+        }
+    }
+
+    private static void configureSimpleFormatters(java.util.logging.Logger logger) {
+        for (Handler handler : logger.getHandlers()) {
             Formatter formatter = handler.getFormatter();
             if (null != formatter && formatter.getClass().getName().endsWith(SimpleFormatter.class.getName())) {
                 handler.setFormatter(new LoggerFormatter());
@@ -96,7 +106,7 @@ public class Logger {
      * @return {@code true} if TRACE logging is enabled, {@code false} otherwise
      */
     public boolean isTraceEnabled() {
-        return LOGGER.isLoggable(Level.TRACE.julLevel());
+        return useJul && LOGGER.isLoggable(Level.TRACE.julLevel());
     }
 
     /**
@@ -105,7 +115,7 @@ public class Logger {
      * @return {@code true} if INFO logging is enabled, {@code false} otherwise
      */
     public boolean isInfoEnabled() {
-        return LOGGER.isLoggable(Level.INFO.julLevel());
+        return !useJul || LOGGER.isLoggable(Level.INFO.julLevel());
     }
 
     /**
@@ -114,7 +124,7 @@ public class Logger {
      * @return {@code true} if WARN logging is enabled, {@code false} otherwise
      */
     public boolean isWarnEnabled() {
-        return LOGGER.isLoggable(Level.WARN.julLevel());
+        return !useJul || LOGGER.isLoggable(Level.WARN.julLevel());
     }
 
     /**
@@ -123,7 +133,7 @@ public class Logger {
      * @return {@code true} if ERROR logging is enabled, {@code false} otherwise
      */
     public boolean isErrorEnabled() {
-        return LOGGER.isLoggable(Level.ERROR.julLevel());
+        return !useJul || LOGGER.isLoggable(Level.ERROR.julLevel());
     }
 
     /**
@@ -242,10 +252,14 @@ public class Logger {
      */
     private void log(Level level, String message) {
         java.util.logging.Level julLevel = level.julLevel();
-        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean loggable = !useJul || LOGGER.isLoggable(julLevel);
         boolean debug = DEVELOPER_DEBUG;
         if (loggable) {
-            LOGGER.log(julLevel, message);
+            if (useJul) {
+                LOGGER.log(julLevel, message);
+            } else {
+                nativeLog(level, message);
+            }
         }
         if (debug) {
             developerDebug(level, message);
@@ -261,12 +275,16 @@ public class Logger {
      */
     private void log(Level level, String format, Object... objects) {
         java.util.logging.Level julLevel = level.julLevel();
-        boolean loggable = LOGGER.isLoggable(julLevel);
+        boolean loggable = !useJul || LOGGER.isLoggable(julLevel);
         boolean debug = DEVELOPER_DEBUG;
         if (loggable || debug) {
             String message = format(format, objects);
             if (loggable) {
-                LOGGER.log(julLevel, message);
+                if (useJul) {
+                    LOGGER.log(julLevel, message);
+                } else {
+                    nativeLog(level, message);
+                }
             }
             if (debug) {
                 developerDebug(level, message);
@@ -281,5 +299,13 @@ public class Logger {
         String timestamp = DATE_TIME_FORMATTER.format(LocalDateTime.now());
         String threadName = Thread.currentThread().getName();
         System.out.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
+    }
+
+    private void nativeLog(Level level, String message) {
+        String timestamp = DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        String threadName = Thread.currentThread().getName();
+        synchronized (System.err) {
+            System.err.printf("%s | %s | %s | %s | %s%n", timestamp, threadName, level, loggerName, message);
+        }
     }
 }

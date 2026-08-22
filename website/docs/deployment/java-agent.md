@@ -62,3 +62,22 @@ rules:
 ## Lifecycle and errors
 
 The agent starts through `premain` at JVM startup or `agentmain` when attached. Startup registers the JMX collector and starts the enabled exporters. Malformed arguments, invalid ports, unreadable YAML, or invalid configuration fail startup.
+
+## Logging backend
+
+The Java agent uses Java Util Logging (JUL) by default to preserve existing logging behavior. To
+avoid initializing or configuring the application's JUL system during startup, use the
+JUL-independent native logging backend. Native logging writes `INFO`, `WARN`, and `ERROR` messages
+to standard error.
+
+To use native logging, set either:
+
+```bash
+-Djmx.prometheus.exporter.logging.backend=native
+```
+
+or `JMX_PROMETHEUS_EXPORTER_LOGGING_BACKEND=native`.
+
+Supported values are `native` and `jul`. The system property takes precedence over the environment
+variable. The selected backend is fixed when each logger is first created. JUL is process-wide, so
+selecting it may initialize the application's configured `LogManager` during Java agent startup.
