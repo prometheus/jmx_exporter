@@ -155,6 +155,11 @@
                 <version>${ayza.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.github.hakky54</groupId>
+                <artifactId>ayza-for-pem</artifactId>
+                <version>${ayza.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk18on</artifactId>
                 <version>${bouncycastle.version}</version>

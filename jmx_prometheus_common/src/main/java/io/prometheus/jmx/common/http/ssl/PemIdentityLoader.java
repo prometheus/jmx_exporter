@@ -23,7 +23,6 @@ import io.prometheus.jmx.common.util.functions.ToString;
 import io.prometheus.jmx.variable.VariableResolver;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,19 +33,10 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import nl.altindag.ssl.pem.util.PemUtils;
 import nl.altindag.ssl.util.CertificateUtils;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
-import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 
 /**
  * Package-private static loader for PEM-based server identity.
@@ -152,80 +142,19 @@ public class PemIdentityLoader {
         }
 
         String keyContent = new String(keyBytes);
-
-        try (PEMParser pemParser = new PEMParser(new StringReader(keyContent))) {
-            List<Object> pemObjects = new ArrayList<>();
-            Object obj;
-            while ((obj = pemParser.readObject()) != null) {
-                pemObjects.add(obj);
-            }
-
-            PrivateKey privateKey = null;
-            boolean hasEncryptedKey = false;
-
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            BouncyCastleProvider bcProvider = new BouncyCastleProvider();
-
-            for (Object pemObj : pemObjects) {
-                if (pemObj instanceof PrivateKeyInfo) {
-                    if (privateKey != null) {
-                        throw new ConfigurationException("Multiple private keys found in: " + keyPath);
-                    }
-                    privateKey = converter.getPrivateKey((PrivateKeyInfo) pemObj);
-                } else if (pemObj instanceof PEMKeyPair) {
-                    if (privateKey != null) {
-                        throw new ConfigurationException("Multiple private keys found in: " + keyPath);
-                    }
-                    privateKey = converter.getKeyPair((PEMKeyPair) pemObj).getPrivate();
-                } else if (pemObj instanceof PKCS8EncryptedPrivateKeyInfo) {
-                    if (privateKey != null) {
-                        throw new ConfigurationException("Multiple private keys found in: " + keyPath);
-                    }
-                    hasEncryptedKey = true;
-                    if (password.length == 0) {
-                        throw new ConfigurationException(
-                                "Private key is encrypted but no password was configured for: " + keyPath);
-                    }
-                    try {
-                        PKCS8EncryptedPrivateKeyInfo encryptedInfo = (PKCS8EncryptedPrivateKeyInfo) pemObj;
-                        PrivateKeyInfo keyInfo =
-                                encryptedInfo.decryptPrivateKeyInfo(new JcePKCSPBEInputDecryptorProviderBuilder()
-                                        .setProvider(bcProvider)
-                                        .build(password));
-                        privateKey = converter.getPrivateKey(keyInfo);
-                    } catch (Exception e) {
-                        throw new ConfigurationException("Unable to decrypt PEM private key from: " + keyPath);
-                    }
-                } else if (pemObj instanceof PEMEncryptedKeyPair) {
-                    if (privateKey != null) {
-                        throw new ConfigurationException("Multiple private keys found in: " + keyPath);
-                    }
-                    hasEncryptedKey = true;
-                    if (password.length == 0) {
-                        throw new ConfigurationException(
-                                "Private key is encrypted but no password was configured for: " + keyPath);
-                    }
-                    try {
-                        PEMEncryptedKeyPair encryptedKeyPair = (PEMEncryptedKeyPair) pemObj;
-                        PEMKeyPair keyPair = encryptedKeyPair.decryptKeyPair(new JcePEMDecryptorProviderBuilder()
-                                .setProvider(bcProvider)
-                                .build(password));
-                        privateKey = converter.getKeyPair(keyPair).getPrivate();
-                    } catch (Exception e) {
-                        throw new ConfigurationException("Unable to decrypt PEM private key from: " + keyPath);
-                    }
-                }
-            }
-
-            if (privateKey == null) {
+        try {
+            return PemUtils.parsePrivateKey(keyContent, password);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            if (msg.contains("Received an unsupported private key type")) {
                 throw new ConfigurationException("No private key found in: " + keyPath);
             }
-
-            return privateKey;
-        } catch (ConfigurationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ConfigurationException("Unable to parse PEM private key from: " + keyPath, e);
+            if ((msg.contains("Could not generate secret key") || msg.contains("unable to read encrypted data"))
+                    && password.length == 0) {
+                throw new ConfigurationException(
+                        "Private key is encrypted but no password was configured for: " + keyPath);
+            }
+            throw new ConfigurationException("Unable to decrypt PEM private key from: " + keyPath);
         }
     }
 
@@ -237,7 +166,7 @@ public class PemIdentityLoader {
             String sigAlg;
             if ("RSA".equals(keyAlgorithm)) {
                 sigAlg = "SHA256withRSA";
-            } else if ("EC".equals(keyAlgorithm)) {
+            } else if ("EC".equals(keyAlgorithm) || "ECDSA".equals(keyAlgorithm)) {
                 sigAlg = "SHA256withECDSA";
             } else if ("DSA".equals(keyAlgorithm)) {
                 sigAlg = "SHA256withDSA";

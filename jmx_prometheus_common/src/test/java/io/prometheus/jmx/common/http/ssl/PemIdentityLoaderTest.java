@@ -66,7 +66,7 @@ class PemIdentityLoaderTest {
         PemIdentityMaterial material = PemIdentityLoader.load(config);
 
         assertThat(material.getPrivateKey()).isNotNull();
-        assertThat(material.getPrivateKey().getAlgorithm()).isEqualTo("EC");
+        assertThat(material.getPrivateKey().getAlgorithm()).isIn("EC", "ECDSA");
         assertThat(material.getCertificateChain()).hasSize(1);
     }
 
