@@ -28,38 +28,23 @@ public enum Level {
      * Trace level logging. This is the most verbose level and is used for detailed debugging
      * information.
      */
-    TRACE(java.util.logging.Level.FINEST),
+    TRACE,
 
     /**
      * Info level logging. This level is used for informational messages that highlight the progress
      * of the application.
      */
-    INFO(java.util.logging.Level.INFO),
+    INFO,
 
     /**
      * Warn level logging. This level is used for potentially harmful situations that should be
      * looked at.
      */
-    WARN(java.util.logging.Level.WARNING),
+    WARN,
 
     /**
      * Error level logging. This level is used for error events that might still allow the
      * application to continue running.
      */
-    ERROR(java.util.logging.Level.SEVERE);
-
-    private final java.util.logging.Level julLevel;
-
-    Level(java.util.logging.Level julLevel) {
-        this.julLevel = julLevel;
-    }
-
-    /**
-     * Returns the corresponding {@link java.util.logging.Level} for this level.
-     *
-     * @return the java.util.logging.Level
-     */
-    public java.util.logging.Level julLevel() {
-        return julLevel;
-    }
+    ERROR
 }
