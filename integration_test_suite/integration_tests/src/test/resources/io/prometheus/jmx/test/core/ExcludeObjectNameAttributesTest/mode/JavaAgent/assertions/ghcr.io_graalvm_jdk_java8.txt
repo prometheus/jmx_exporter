@@ -65,7 +65,7 @@ match UNTYPED java_lang_Threading_ThreadCpuTimeSupported *
 match UNTYPED java_lang_Threading_TotalStartedThreadCount *
 match COUNTER jmx_config_reload_failure_total 0.0
 match COUNTER jmx_config_reload_success_total 0.0
-match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="1.6.0-POST"} 1.0
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="*"} 1.0
 match GAUGE jmx_scrape_cached_beans *
 match GAUGE jmx_scrape_duration_seconds *
 match GAUGE jmx_scrape_error 0.0
@@ -112,7 +112,7 @@ match GAUGE jvm_memory_pool_used_bytes{pool="*Gen"} *
 match GAUGE jvm_memory_pool_used_bytes{pool="*Survivor Space"} *
 match GAUGE jvm_memory_used_bytes{area="heap"} *
 match GAUGE jvm_memory_used_bytes{area="nonheap"} *
-match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="GraalVM Community",version="1.8.0_302-b07"} *
+match GAUGE jvm_runtime_info{runtime="OpenJDK Runtime Environment",vendor="GraalVM Community",version="*"} *
 match GAUGE jvm_threads_current *
 match GAUGE jvm_threads_daemon *
 match GAUGE jvm_threads_deadlocked *

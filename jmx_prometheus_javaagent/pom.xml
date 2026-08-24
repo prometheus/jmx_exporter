@@ -110,7 +110,7 @@
                             </filters>
                             <relocations>
                                 <relocation>
-                                    <shadedPattern>e1723a08afd7bca35570fd31a7656f59.</shadedPattern>
+                                    <shadedPattern>${exporter.shade.prefix}.</shadedPattern>
                                     <includes>
                                         <include>com.**</include>
                                         <include>google.**</include>
@@ -129,7 +129,7 @@
                                 </relocation>
                                 <relocation>
                                     <pattern>io.prometheus.metrics.shaded</pattern>
-                                    <shadedPattern>e1723a08afd7bca35570fd31a7656f59.io.prometheus.metrics.shaded</shadedPattern>
+                                    <shadedPattern>${exporter.shade.prefix}.io.prometheus.metrics.shaded</shadedPattern>
                                 </relocation>
                             </relocations>
                             <transformers>
@@ -141,7 +141,9 @@
                                         <Implementation-Title>${project.artifactId}</Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
-                                <transformer implementation="io.prometheus.jmx.common.tools.CustomServiceTransformer"/>
+                                <transformer implementation="io.prometheus.jmx.common.tools.CustomServiceTransformer">
+                                    <prefix>${exporter.shade.prefix}.</prefix>
+                                </transformer>
                             </transformers>
                         </configuration>
                     </execution>

@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -163,6 +166,31 @@ public class CustomServiceTransformerTest {
             }
 
             assertThat(baos.toByteArray().length).isGreaterThan(0);
+        }
+
+        @Test
+        void modifyOutputStreamUsesConfiguredPrefix() throws IOException {
+            CustomServiceTransformer transformer = new CustomServiceTransformer();
+            transformer.setPrefix("ab12cd34.");
+            byte[] content = "com.example.Impl1\n".getBytes(StandardCharsets.UTF_8);
+            transformer.processResource(
+                    "META-INF/services/com.example.MyService",
+                    new ByteArrayInputStream(content),
+                    Collections.emptyList());
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (JarOutputStream jos = new JarOutputStream(baos)) {
+                transformer.modifyOutputStream(jos);
+            }
+
+            try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+                List<String> names = new ArrayList<>();
+                JarEntry jarEntry;
+                while ((jarEntry = jis.getNextJarEntry()) != null) {
+                    names.add(jarEntry.getName());
+                }
+                assertThat(names).containsExactly("META-INF/services/ab12cd34.com.example.MyService");
+            }
         }
 
         @Test

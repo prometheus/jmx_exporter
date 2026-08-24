@@ -51,7 +51,16 @@ public final class PrefixConsumer {
         if (!ENABLED) {
             return NOOP;
         }
-        return frame -> System.out.println("[" + prefix + "] " + image + " | " + frame.utf8StringWithoutLineEnding());
+        String label = "[" + prefix + "] " + image + " | ";
+        return frame -> {
+            String[] lines = frame.utf8String().split("\r\n|\n", -1);
+            for (String line : lines) {
+                String trimmed = line.stripTrailing();
+                if (!trimmed.isEmpty()) {
+                    System.out.println(label + trimmed);
+                }
+            }
+        };
     }
 
     private static boolean resolveEnabled() {

@@ -689,15 +689,37 @@ class JmxScraper {
                 String attrType,
                 String attrDescription,
                 Object value) {
-            System.out.println(new StringBuilder(256)
+            System.out.println(escapeControlCharacters(new StringBuilder(256)
                     .append(domain)
                     .append(beanProperties)
                     .append(attrKeys)
                     .append(attrName)
                     .append(": ")
                     .append(value)
-                    .toString());
+                    .toString()));
         }
+    }
+
+    /**
+     * Escapes every C0 control character (U+0000-U+001F) and DEL (U+007F) in
+     * {@code value} as a two-digit lowercase hexadecimal escape (for example
+     * {@code \x01}), so the resulting string is plain text. All other
+     * characters are returned unchanged.
+     *
+     * @param value the string to escape
+     * @return the escaped string
+     */
+    private static String escapeControlCharacters(String value) {
+        StringBuilder escaped = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c < 0x20 || c == 0x7f) {
+                escaped.append('\\').append('x').append(String.format("%02x", (int) c));
+            } else {
+                escaped.append(c);
+            }
+        }
+        return escaped.toString();
     }
 
     /**

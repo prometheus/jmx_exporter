@@ -181,7 +181,7 @@ check_git_state() {
 check_no_existing_release() {
     local ver="$1"
     local release_branch="release-${ver}"
-    local tag_name="v${ver}"
+    local tag_name="${ver}"
     
     log_info "Checking for existing release"
     
@@ -306,7 +306,7 @@ commit_release() {
 
 tag_release() {
     local ver="$1"
-    local tag_name="v${ver}"
+    local tag_name="${ver}"
     
     log_info "Creating git tag"
     
@@ -318,7 +318,7 @@ tag_release() {
 push_release() {
     local ver="$1"
     local release_branch="release-${ver}"
-    local tag_name="v${ver}"
+    local tag_name="${ver}"
     
     log_info "Pushing release to remote"
     
@@ -408,7 +408,7 @@ main() {
     log_info "This will:"
     log_info "  - Create branch: release-${version}"
     log_info "  - Build and deploy to Maven Central"
-    log_info "  - Create git tag: v${version}"
+    log_info "  - Create git tag: ${version}"
     log_info "  - Push to remote: ${git_remote}"
     log_info "  - Sign artifacts with GPG key: ${gpg_key_id:-default}"
     echo ""
