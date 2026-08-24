@@ -88,6 +88,10 @@
                                         <exclude>META-INF/proguard/**</exclude>
                                         <exclude>META-INF/sisu/**</exclude>
                                         <exclude>META-INF/versions/**</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.EC</exclude>
                                         <exclude>commonMain/**</exclude>
                                         <exclude>**/*.kt</exclude>
                                         <exclude>**/*kotlin_module</exclude>

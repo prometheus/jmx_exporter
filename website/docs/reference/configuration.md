@@ -88,12 +88,30 @@ This reference lists source-backed 1.6.0 exporter YAML keys. Guide pages explain
 
 ## HTTP SSL/TLS keys
 
+### Keystore identity
+
 | Key | Description |
 | --- | --- |
 | `httpServer.ssl.keyStore.filename` | Key store file or `javax.net.ssl.keyStore` fallback. |
 | `httpServer.ssl.keyStore.type` | Key store type or `javax.net.ssl.keyStoreType` fallback/platform default. |
 | `httpServer.ssl.keyStore.password` | Key store password or `javax.net.ssl.keyStorePassword` fallback. |
-| `httpServer.ssl.certificate.alias` | Optional certificate alias. |
+| `httpServer.ssl.certificate.alias` | Certificate alias. Required for keystore mode. |
+
+### PEM identity
+
+| Key | Description |
+| --- | --- |
+| `httpServer.ssl.pem.certificate.filename` | PEM certificate chain file (leaf first). Required. |
+| `httpServer.ssl.pem.privateKey.filename` | PEM private key file. Required. |
+| `httpServer.ssl.pem.privateKey.password` | Optional password for encrypted private keys. Supports variable resolution. |
+
+`httpServer.ssl.pem` and `httpServer.ssl.keyStore` are mutually exclusive.
+`httpServer.ssl.certificate.alias` is not allowed with PEM mode.
+
+### Shared TLS keys
+
+| Key | Description |
+| --- | --- |
 | `httpServer.ssl.trustStore.filename` | Trust store file or `javax.net.ssl.trustStore` fallback. |
 | `httpServer.ssl.trustStore.type` | Trust store type or `javax.net.ssl.trustStoreType` fallback/platform default. |
 | `httpServer.ssl.trustStore.password` | Trust store password or `javax.net.ssl.trustStorePassword` fallback. |

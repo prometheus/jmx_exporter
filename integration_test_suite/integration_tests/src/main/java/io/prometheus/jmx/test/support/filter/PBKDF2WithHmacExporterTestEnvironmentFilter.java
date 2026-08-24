@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  */
 public class PBKDF2WithHmacExporterTestEnvironmentFilter implements Predicate<JmxExporterTestEnvironment> {
 
-    private final Set<String> filteredDockerImages =
+    private static final Set<String> filteredDockerImages =
             Set.of("ibmjava:8", "ibmjava:8-jre", "ibmjava:8-sdk", "ibmjava:8-sfj");
 
     /**

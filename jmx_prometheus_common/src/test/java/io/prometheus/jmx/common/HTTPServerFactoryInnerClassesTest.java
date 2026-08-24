@@ -18,13 +18,19 @@ package io.prometheus.jmx.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.prometheus.jmx.common.http.ssl.IdentityMaterial;
+import io.prometheus.jmx.common.util.MapAccessor;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import nl.altindag.ssl.SSLFactory;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -108,6 +114,99 @@ public class HTTPServerFactoryInnerClassesTest {
             constructor.setAccessible(true);
             Object instance = constructor.newInstance();
             assertThat(instance).isNotNull();
+        }
+    }
+
+    @Nested
+    class KeyStoreIdentityMaterialTests {
+
+        @Test
+        void constructorAcceptsKeyStoreProperties() throws Exception {
+            Class<?> keyStorePropertiesClass =
+                    Class.forName("io.prometheus.jmx.common.HTTPServerFactory$KeyStoreProperties");
+            Constructor<?> keyStoreConstructor = keyStorePropertiesClass.getDeclaredConstructor(
+                    String.class, String.class, char[].class, String.class, String.class);
+            keyStoreConstructor.setAccessible(true);
+            Object keyStoreProps =
+                    keyStoreConstructor.newInstance("/path/to/keystore", "hash", "pass".toCharArray(), "JKS", "alias");
+
+            Class<?> identityMaterialClass =
+                    Class.forName("io.prometheus.jmx.common.HTTPServerFactory$KeyStoreIdentityMaterial");
+            Constructor<?> identityMaterialConstructor =
+                    identityMaterialClass.getDeclaredConstructor(keyStorePropertiesClass);
+            identityMaterialConstructor.setAccessible(true);
+            Object identityMaterial = identityMaterialConstructor.newInstance(keyStoreProps);
+
+            assertThat(identityMaterial).isNotNull();
+            assertThat(identityMaterial).isInstanceOf(IdentityMaterial.class);
+        }
+    }
+
+    @Nested
+    class SslReloadStateTests {
+
+        @Test
+        void constructorAcceptsIdentityMaterialAndTrustStoreProperties() throws Exception {
+            Class<?> sslReloadStateClass = Class.forName("io.prometheus.jmx.common.HTTPServerFactory$SslReloadState");
+            Constructor<?> constructor =
+                    sslReloadStateClass.getDeclaredConstructor(IdentityMaterial.class, Optional.class);
+            constructor.setAccessible(true);
+
+            Object reloadState = constructor.newInstance(null, Optional.empty());
+
+            Field identityMaterialField = sslReloadStateClass.getDeclaredField("identityMaterial");
+            identityMaterialField.setAccessible(true);
+            assertThat(identityMaterialField.get(reloadState)).isNull();
+
+            Field trustStorePropertiesField = sslReloadStateClass.getDeclaredField("trustStoreProperties");
+            trustStorePropertiesField.setAccessible(true);
+            assertThat((Optional<?>) trustStorePropertiesField.get(reloadState)).isEmpty();
+        }
+
+        @Test
+        void lockFieldIsPresent() throws Exception {
+            Class<?> sslReloadStateClass = Class.forName("io.prometheus.jmx.common.HTTPServerFactory$SslReloadState");
+            Field lockField = sslReloadStateClass.getDeclaredField("lock");
+            lockField.setAccessible(true);
+
+            assertThat(lockField.getType()).isEqualTo(Object.class);
+        }
+    }
+
+    @Nested
+    class ConfiguredSslFactoryTests {
+
+        @Test
+        void constructorAcceptsAllFields() throws Exception {
+            Class<?> sslReloadStateClass = Class.forName("io.prometheus.jmx.common.HTTPServerFactory$SslReloadState");
+            Constructor<?> reloadStateConstructor =
+                    sslReloadStateClass.getDeclaredConstructor(IdentityMaterial.class, Optional.class);
+            reloadStateConstructor.setAccessible(true);
+            Object reloadState = reloadStateConstructor.newInstance(null, Optional.empty());
+
+            Map<Object, Object> config = new HashMap<>();
+            config.put("httpServer", new HashMap<>());
+            MapAccessor rootMapAccessor = MapAccessor.of(config);
+
+            Class<?> configuredSslFactoryClass =
+                    Class.forName("io.prometheus.jmx.common.HTTPServerFactory$ConfiguredSslFactory");
+            Constructor<?> configuredConstructor = configuredSslFactoryClass.getDeclaredConstructor(
+                    SSLFactory.class, sslReloadStateClass, MapAccessor.class);
+            configuredConstructor.setAccessible(true);
+
+            Object configured = configuredConstructor.newInstance(null, reloadState, rootMapAccessor);
+
+            Field sslFactoryField = configuredSslFactoryClass.getDeclaredField("sslFactory");
+            sslFactoryField.setAccessible(true);
+            assertThat(sslFactoryField.get(configured)).isNull();
+
+            Field reloadStateField = configuredSslFactoryClass.getDeclaredField("reloadState");
+            reloadStateField.setAccessible(true);
+            assertThat(reloadStateField.get(configured)).isSameAs(reloadState);
+
+            Field rootMapAccessorField = configuredSslFactoryClass.getDeclaredField("rootMapAccessor");
+            rootMapAccessorField.setAccessible(true);
+            assertThat(rootMapAccessorField.get(configured)).isSameAs(rootMapAccessor);
         }
     }
 }
