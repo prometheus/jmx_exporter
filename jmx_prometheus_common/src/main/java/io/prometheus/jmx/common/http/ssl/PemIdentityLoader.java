@@ -46,6 +46,13 @@ import nl.altindag.ssl.util.CertificateUtils;
  */
 public class PemIdentityLoader {
 
+    /**
+     *  Private constructor to prevent instantiation.
+     */
+    private PemIdentityLoader() {
+        // Intentionally empty
+    }
+
     private static final String PEM_CERTIFICATE_FILENAME = "/httpServer/ssl/pem/certificate/filename";
     private static final String PEM_PRIVATE_KEY_FILENAME = "/httpServer/ssl/pem/privateKey/filename";
     private static final String PEM_PRIVATE_KEY_PASSWORD = "/httpServer/ssl/pem/privateKey/password";
