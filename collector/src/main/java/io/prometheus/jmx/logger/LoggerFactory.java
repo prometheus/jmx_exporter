@@ -33,22 +33,40 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class LoggerFactory {
 
-    /** Supported logging backends. */
+    /**
+     * Supported logging backends.
+     */
     public enum Backend {
+
+        /**
+         * Native logging backend.
+         */
         NATIVE,
+
+        /**
+         * Java Util Logging backend.
+         */
         JUL
     }
 
-    /** System property used to select the logging backend. */
+    /**
+     *  System property used to select the logging backend.
+     */
     public static final String BACKEND_PROPERTY = "jmx.prometheus.exporter.logging.backend";
 
-    /** Environment variable used to select the logging backend. */
+    /**
+     * Environment variable used to select the logging backend.
+     */
     public static final String BACKEND_ENVIRONMENT_VARIABLE = "JMX_PROMETHEUS_EXPORTER_LOGGING_BACKEND";
 
-    /** Maps class objects to their corresponding Logger instances. */
+    /**
+     * Maps class objects to their corresponding Logger instances.
+     */
     private static final ConcurrentMap<Class<?>, Logger> CACHE = new ConcurrentHashMap<>();
 
-    /** Private constructor to prevent instantiation. */
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private LoggerFactory() {
         // Intentionally empty
     }
@@ -79,6 +97,9 @@ public final class LoggerFactory {
         return JulBackendHolder.create(loggerName);
     }
 
+    /**
+     * Gets the configured Backend.
+     */
     private static Backend configuredBackend() {
         String value = System.getProperty(BACKEND_PROPERTY);
         if (value == null || value.trim().isEmpty()) {
