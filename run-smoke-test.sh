@@ -26,7 +26,7 @@ set -o pipefail
 usage() {
   echo "Usage: $0 [parallelism] [-D<name>[=<value>] ...]"
   echo "Quote -D values containing shell metacharacters, for example:"
-  echo "  $0 [parallelism] '-Dparamixel.match.class=^(?!.*PBKDF).*'"
+  echo "  $0 [parallelism] '-Dparamixel.match.class.regex=^(?!.*PBKDF).*'"
 }
 
 CPU_COUNT="$(nproc)"
