@@ -213,7 +213,7 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
                 .waitForContainerPort(BASE_PORT)
                 .waitForLogMessage(".*JmxExampleApplication \\| Running.*")
                 .workingDirectory("/temp")
-                .onOutput(PrefixConsumer.of("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
+                .outputListener(PrefixConsumer.of("JMX_EXPORTER_ISOLATOR_JAVAAGENT", javaDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)

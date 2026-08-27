@@ -246,7 +246,7 @@ public class PrometheusTestEnvironment implements AutoCloseable {
                 .network(network, "prometheus")
                 .waitForLogMessage(".*Server is ready to receive web requests.*")
                 .workingDirectory("/prometheus")
-                .onOutput(PrefixConsumer.of("PROMETHEUS", prometheusDockerImage))
+                .outputListener(PrefixConsumer.of("PROMETHEUS", prometheusDockerImage))
                 .startupAttempts(3)
                 .memory(MEMORY_BYTES)
                 .memorySwap(MEMORY_SWAP_BYTES)
