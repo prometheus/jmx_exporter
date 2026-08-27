@@ -22,8 +22,6 @@ match UNTYPED io_prometheus_jmx_tabulardata_server_2_disk_usage_table_used{sourc
 match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_activesessions 2.0
 match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstraps 4.0
 match UNTYPED io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstrapsdeferred 6.0
-match UNTYPED jdk_management_aotcache_recording 0.0
-match UNTYPED jdk_management_aotcache_recordingduration 0.0
 match COUNTER jmx_config_reload_failure_total 0.0
 match COUNTER jmx_config_reload_success_total 0.0
 match GAUGE jmx_exporter_build_info{name="jmx_prometheus_standalone",version="*"} 1.0

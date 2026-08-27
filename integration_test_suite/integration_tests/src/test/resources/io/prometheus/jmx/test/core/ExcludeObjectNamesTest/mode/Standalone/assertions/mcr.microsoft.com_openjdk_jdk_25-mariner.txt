@@ -22,8 +22,6 @@ match UNTYPED io_prometheus_jmx_tabularData_Server_2_Disk_Usage_Table_used{sourc
 match UNTYPED io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_ActiveSessions 2.0
 match UNTYPED io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_Bootstraps 4.0
 match UNTYPED io_prometheus_jmx_test_PerformanceMetricsMBean_PerformanceMetrics_BootstrapsDeferred 6.0
-match UNTYPED jdk_management_AOTCache_Recording 0.0
-match UNTYPED jdk_management_AOTCache_RecordingDuration 0.0
 match COUNTER jmx_config_reload_failure_total 0.0
 match COUNTER jmx_config_reload_success_total 0.0
 match GAUGE jmx_exporter_build_info{name="jmx_prometheus_standalone",version="*"} 1.0
