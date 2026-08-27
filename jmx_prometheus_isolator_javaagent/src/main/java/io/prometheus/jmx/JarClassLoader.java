@@ -242,15 +242,26 @@ public class JarClassLoader extends ClassLoader {
         if (index != -1) {
             String packageName = className.substring(0, index);
             if (definedPackages.add(packageName)) {
-                definePackage(
-                        packageName,
-                        null,
-                        null,
-                        null,
-                        manifestMap.get(IMPLEMENTATION_TITLE),
-                        manifestMap.get(IMPLEMENTATION_VERSION),
-                        null,
-                        null);
+                // JDK 8 throws IllegalArgumentException from definePackage() when the package
+                // is already defined by an ancestor classloader, whereas JDK 9+ only considers
+                // packages defined by this classloader. For example, the io.prometheus.jmx
+                // package is already defined by the system classloader (it loaded the
+                // IsolatorJavaAgent class), so on JDK 8 definePackage() fails. Ignore the
+                // exception and reuse the existing package; defineClass() resolves it
+                // transparently.
+                try {
+                    definePackage(
+                            packageName,
+                            null,
+                            null,
+                            null,
+                            manifestMap.get(IMPLEMENTATION_TITLE),
+                            manifestMap.get(IMPLEMENTATION_VERSION),
+                            null,
+                            null);
+                } catch (IllegalArgumentException e) {
+                    // Package already defined by an ancestor classloader (JDK 8); reuse it.
+                }
             }
         }
     }
