@@ -87,6 +87,8 @@ public class MetricsAssertions {
             "jvm_runtime_info_",
 
             // JDK-version / module-specific
+            "jdk_management_aotcache_",
+            "jdk_management_crac_",
             "jdk_management_jfr_",
             "jdk_management_virtualthreadscheduler_",
 
