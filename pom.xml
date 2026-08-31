@@ -47,7 +47,7 @@
         <paramixel.version>6.2.4</paramixel.version>
         <prometheus.metrics.version>1.8.0</prometheus.metrics.version>
         <slf4j.version>2.1.0-alpha1</slf4j.version>
-        <snakeyaml.version>2.6</snakeyaml.version>
+        <snakeyaml.version>2.7</snakeyaml.version>
         <!-- Plugin versions -->
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
