@@ -52,6 +52,7 @@
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
         <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
         <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
@@ -414,6 +415,18 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
                     <version>${flatten-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-maven-plugin.version}</version>
+                    <configuration>
+                        <!-- The parent sets maven.deploy.skip=true; without this the
+                             goal skips every module. We want a BOM regardless of deploy. -->
+                        <skipNotDeployed>false</skipNotDeployed>
+                        <outputFormat>json</outputFormat>
+                        <includeLicenseText>false</includeLicenseText>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

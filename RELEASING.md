@@ -40,7 +40,8 @@
 7. Deploys `collector` module to Maven Central
 8. Assembles release artifacts in `RELEASE/` directory:
    - Copies javaagent, isolator_javaagent, and standalone jars
-   - Signs each jar with GPG
+   - Copies the CycloneDX SBOM for each published artifact (collector, javaagent, isolator_javaagent, standalone)
+   - Signs each jar and SBOM with GPG
    - Generates SHA256 checksums
 9. Commits release on release branch
 10. Creates annotated tag: `{VERSION}`
@@ -67,5 +68,20 @@ Release artifacts will be located in the `RELEASE` directory:
 - `jmx_prometheus_standalone-<VERSION>.jar`
 - `jmx_prometheus_standalone-<VERSION>.jar.asc`
 - `jmx_prometheus_standalone-<VERSION>.jar.sha256`
+
+CycloneDX SBOMs (one per published artifact):
+
+- `collector-<VERSION>.cdx.json`
+- `collector-<VERSION>.cdx.json.asc`
+- `collector-<VERSION>.cdx.json.sha256`
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json`
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json.sha256`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json.sha256`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json.sha256`
 
 Attach all files to the GitHub release.

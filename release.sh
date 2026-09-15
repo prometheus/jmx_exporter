@@ -31,6 +31,15 @@ ARTIFACTS=(
     "jmx_prometheus_standalone/target/jmx_prometheus_standalone-{version}.jar"
 )
 
+# CycloneDX SBOMs shipped alongside the release, one per published artifact.
+# Each entry is "<source path>|<release file name template>".
+SBOMS=(
+    "collector/target/bom.json|collector-{version}.cdx.json"
+    "jmx_prometheus_javaagent/target/bom.json|jmx_prometheus_javaagent-{version}.cdx.json"
+    "jmx_prometheus_isolator_javaagent/target/bom.json|jmx_prometheus_isolator_javaagent-{version}.cdx.json"
+    "jmx_prometheus_standalone/target/bom.json|jmx_prometheus_standalone-{version}.cdx.json"
+)
+
 gpg_key_id=""
 git_remote=""
 version=""
@@ -256,7 +265,22 @@ assemble_artifacts() {
     done
     
     log_info "Artifacts copied to ${RELEASE_DIR}/"
-    
+
+    local sbom_entry sbom_src sbom_dst
+    for sbom_entry in "${SBOMS[@]}"; do
+        sbom_src="${sbom_entry%%|*}"
+        sbom_dst="${sbom_entry##*|}"
+        sbom_dst="${sbom_dst//\{version\}/${ver}}"
+        if [[ ! -f "${sbom_src}" ]]; then
+            log_error "SBOM not found: ${sbom_src}"
+            exit 1
+        fi
+        cp "${sbom_src}" "${RELEASE_DIR}/${sbom_dst}"
+        log_info "Copied SBOM: ${sbom_dst}"
+    done
+
+    log_info "SBOMs copied to ${RELEASE_DIR}/"
+
     pushd "${RELEASE_DIR}" >/dev/null
     
     local gpg_opts=("gpg")
@@ -265,7 +289,7 @@ assemble_artifacts() {
     fi
     
     local filename
-    for filename in *.jar; do
+    for filename in *.jar *.cdx.json; do
         if [[ -f "${filename}" ]]; then
             "${gpg_opts[@]}" --armor --detach-sign "${filename}"
             log_info "Signed: ${filename}.asc"
