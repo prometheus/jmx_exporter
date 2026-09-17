@@ -3,6 +3,7 @@
          xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0 https://www.mojohaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
     <ignoreVersions>
         <ignoreVersion type="regex">.*[-_\.](alpha|Alpha|ALPHA|b|beta|Dev|Beta|BETA|rc|RC|M|EA|SNAPSHOT)[-_\.]?[0-9]*</ignoreVersion>
+        <ignoreVersion type="regex">.*-POST</ignoreVersion>
     </ignoreVersions>
     <rules>
         <rule groupId="com.github.ben-manes.caffeine" artifactId="caffeine">
