@@ -43,6 +43,10 @@ import java.util.stream.Collectors;
  */
 final class DockerImagesSupport {
 
+    private static final String QUICK = "QUICK";
+
+    private static final String SMOKE = "SMOKE";
+
     private static final String ALL = "ALL";
 
     private static final ConcurrentMap<String, List<String>> RESOURCE_CACHE = new ConcurrentHashMap<>();
@@ -58,19 +62,23 @@ final class DockerImagesSupport {
      *   <li>Environment variable derived from {@code configurationKey} (dots replaced with
      *       underscores, uppercased)</li>
      *   <li>System property {@code configurationKey}</li>
-     *   <li>{@code defaultImages} if neither is set</li>
+     *   <li>{@code quickImages} if neither is set</li>
      * </ol>
      *
-     * <p>If the resolved value equals {@code "ALL"} (case-insensitive), returns
-     * {@code allImages}.
+     * <p>Named-set sentinels are matched case-insensitively: {@code "QUICK"} returns
+     * {@code quickImages}, {@code "SMOKE"} returns {@code smokeImages}, and {@code "ALL"}
+     * returns {@code allImages}. Any other value is treated as a whitespace-separated explicit
+     * image list.
      *
      * @param configurationKey the dot-separated configuration key (e.g. {@code "java.docker.images"})
-     * @param defaultImages the default image list returned when no override is set
+     * @param quickImages the default image list returned when no override is set, and the list
+     *     returned when the value is {@code "QUICK"}
+     * @param smokeImages the image list returned when the value is {@code "SMOKE"}
      * @param allImages the complete image list returned when the value is {@code "ALL"}
      * @return an unmodifiable collection of Docker image names
      */
     static Collection<String> resolveNames(
-            String configurationKey, List<String> defaultImages, List<String> allImages) {
+            String configurationKey, List<String> quickImages, List<String> smokeImages, List<String> allImages) {
         String configurationValue =
                 System.getenv(configurationKey.toUpperCase(Locale.ENGLISH).replace('.', '_'));
 
@@ -79,11 +87,21 @@ final class DockerImagesSupport {
         }
 
         if (isBlank(configurationValue)) {
-            return defaultImages;
+            return quickImages;
         }
 
-        if (configurationValue.strip().equalsIgnoreCase(ALL)) {
+        String sentinel = configurationValue.strip();
+
+        if (sentinel.equalsIgnoreCase(ALL)) {
             return allImages;
+        }
+
+        if (sentinel.equalsIgnoreCase(SMOKE)) {
+            return smokeImages;
+        }
+
+        if (sentinel.equalsIgnoreCase(QUICK)) {
+            return quickImages;
         }
 
         return toList(configurationValue);

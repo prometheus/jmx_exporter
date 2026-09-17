@@ -239,7 +239,7 @@ set_version() {
 build_and_verify() {
     log_info "Building and verifying"
     
-    ./mvnw -B clean verify
+    JAVA_DOCKER_IMAGES=SMOKE PROMETHEUS_DOCKER_IMAGES=SMOKE ./mvnw -B clean verify
     
     log_info "Build and verification completed"
 }
