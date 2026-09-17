@@ -827,6 +827,32 @@ public class JmxCollector implements MultiCollector {
                     .toString();
         }
 
+        // Appends the contents of a map in the same format as AbstractMap.toString() minus the
+        // surrounding braces ("k=v, k2=v2"), without materializing the intermediate string.
+        static void appendMapContents(StringBuilder builder, LinkedHashMap<String, String> map) {
+            boolean first = true;
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                if (!first) {
+                    builder.append(", ");
+                }
+                first = false;
+                builder.append(entry.getKey()).append('=').append(entry.getValue());
+            }
+        }
+
+        // Appends the contents of a list in the same format as AbstractCollection.toString() minus
+        // the surrounding brackets ("a, b"), without materializing the intermediate string.
+        static void appendListContents(StringBuilder builder, List<String> list) {
+            boolean first = true;
+            for (String element : list) {
+                if (!first) {
+                    builder.append(", ");
+                }
+                first = false;
+                builder.append(element);
+            }
+        }
+
         // Add the matched rule to the cached rules and tag it as not stale. The lookup key only
         // references the caller's bean metadata, so a defensive copy is stored.
         private void addToCache(final CacheKey cacheKey, final MatchedRule matchedRule) {
@@ -921,17 +947,17 @@ public class JmxCollector implements MultiCollector {
 
             if (matchedRule.isUnmatched()) {
                 // Only the rule-matching path needs the string forms of the bean metadata. The
-                // steady-state cached path skips these allocations entirely.
-                String beanPropertiesStr = beanProperties.toString();
-                String attrKeysStr = attrKeys.toString();
-                String beanPropertiesBrackets = angleBrackets(beanPropertiesStr);
-                String attrKeysBrackets = angleBrackets(attrKeysStr);
-                String beanName = new StringBuilder(
-                                domain.length() + beanPropertiesBrackets.length() + attrKeysBrackets.length())
-                        .append(domain)
-                        .append(beanPropertiesBrackets)
-                        .append(attrKeysBrackets)
-                        .toString();
+                // steady-state cached path skips these allocations entirely. Build the bracketed
+                // name directly instead of materializing beanProperties.toString()/attrKeys.toString()
+                // and then rewriting them through angleBrackets().
+                StringBuilder beanNameBuilder =
+                        new StringBuilder(domain.length() + beanProperties.size() * 16 + attrKeys.size() * 16 + 8);
+                beanNameBuilder.append(domain).append('<');
+                appendMapContents(beanNameBuilder, beanProperties);
+                beanNameBuilder.append("><");
+                appendListContents(beanNameBuilder, attrKeys);
+                beanNameBuilder.append('>');
+                String beanName = beanNameBuilder.toString();
 
                 // Build the HELP string from the bean metadata.
                 String beanNameProp = beanProperties.get("name");
