@@ -408,5 +408,49 @@ public class MatchedRulesCacheTest {
 
             assertThat(cache.get(key)).isSameAs(rule2);
         }
+
+        @Test
+        void lookupKeyMatchesStoredKeyAndExposesCanonicalKey() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey stored = new MatchedRulesCache.CacheKey("domain", props, keys, "attr");
+            MatchedRule rule = createMatchedRule("test_name");
+
+            MatchedRulesCache cache = new MatchedRulesCache();
+            cache.put(stored, rule);
+
+            MatchedRulesCache.CacheKey lookup = MatchedRulesCache.CacheKey.lookup(
+                    "domain", new LinkedHashMap<>(props), new ArrayList<>(keys), "attr");
+            MatchedRulesCache.Entry entry = cache.getEntry(lookup);
+
+            assertThat(entry).isNotNull();
+            assertThat(entry.key).isSameAs(stored);
+            assertThat(entry.rule).isSameAs(rule);
+            assertThat(cache.getEntry(createCacheKey("other"))).isNull();
+        }
+
+        @Test
+        void storedCopyIsImmuneToMutationOfLookupCollections() {
+            LinkedHashMap<String, String> props = new LinkedHashMap<>();
+            props.put("type", "test");
+            ArrayList<String> keys = new ArrayList<>();
+            keys.add("key1");
+
+            MatchedRulesCache.CacheKey lookup = MatchedRulesCache.CacheKey.lookup("domain", props, keys, "attr");
+            MatchedRule rule = createMatchedRule("test_name");
+
+            MatchedRulesCache cache = new MatchedRulesCache();
+            cache.put(lookup.storedCopy(), rule);
+
+            // The lookup key references the caller's collections; mutating them must not affect the
+            // defensively copied key that was stored.
+            props.put("extra", "value");
+            keys.add("key2");
+
+            assertThat(cache.get(createCacheKey("domain"))).isSameAs(rule);
+        }
     }
 }

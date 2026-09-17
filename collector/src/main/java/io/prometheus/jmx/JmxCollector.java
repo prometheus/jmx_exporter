@@ -827,11 +827,13 @@ public class JmxCollector implements MultiCollector {
                     .toString();
         }
 
-        // Add the matched rule to the cached rules and tag it as not stale
+        // Add the matched rule to the cached rules and tag it as not stale. The lookup key only
+        // references the caller's bean metadata, so a defensive copy is stored.
         private void addToCache(final CacheKey cacheKey, final MatchedRule matchedRule) {
             if (config.rulesCache != null && cacheKey != null) {
-                config.rulesCache.put(cacheKey, matchedRule);
-                stalenessTracker.markAsFresh(cacheKey);
+                CacheKey storedKey = cacheKey.storedCopy();
+                config.rulesCache.put(storedKey, matchedRule);
+                stalenessTracker.markAsFresh(storedKey);
             }
         }
 
@@ -906,10 +908,13 @@ public class JmxCollector implements MultiCollector {
             MatchedRule cachedRule = null;
 
             if (config.rulesCache != null) {
-                cacheKey = new CacheKey(domain, beanProperties, attrKeys, attrName);
-                cachedRule = config.rulesCache.get(cacheKey);
-                if (cachedRule != null) {
-                    stalenessTracker.markAsFresh(cacheKey);
+                // Probe with a non-copying lookup key. On a hit, mark the canonical stored key
+                // fresh, so the steady-state cached path avoids constructing a new key entirely.
+                cacheKey = CacheKey.lookup(domain, beanProperties, attrKeys, attrName);
+                MatchedRulesCache.Entry cachedEntry = config.rulesCache.getEntry(cacheKey);
+                if (cachedEntry != null) {
+                    cachedRule = cachedEntry.rule;
+                    stalenessTracker.markAsFresh(cachedEntry.key);
                     matchedRule = cachedRule;
                 }
             }
