@@ -426,9 +426,6 @@
                         <skipNotDeployed>false</skipNotDeployed>
                         <outputFormat>json</outputFormat>
                         <includeLicenseText>false</includeLicenseText>
-                        <!-- Add the project artifact's sha256 to metadata.component
-                             so a consumer can tie each SBOM back to the jar it describes. -->
-                        <projectHashes>sha256</projectHashes>
                     </configuration>
                 </plugin>
             </plugins>
