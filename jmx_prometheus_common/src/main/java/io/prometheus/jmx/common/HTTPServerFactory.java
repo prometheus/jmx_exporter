@@ -575,6 +575,30 @@ public class HTTPServerFactory {
             PrometheusRegistry prometheusRegistry, InetAddress inetAddress, int port, File exporterYamlFile)
             throws IOException {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+        return createAndStartHTTPServer(prometheusRegistry, inetAddress, port, rootMapAccessor);
+    }
+
+    /**
+     * Creates and starts an HTTP server with the specified configuration that has already been
+     * parsed.
+     *
+     * <p>Callers that have already parsed the YAML file can avoid a second parse and share the same
+     * {@link MapAccessor} (for example, the java agent at startup). SSL certificate reloading still
+     * uses the parsed configuration and the keystore/truststore file content hashes, exactly as the
+     * file-based overload does.
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param inetAddress the network address to bind to, must not be {@code null}
+     * @param port the port number to listen on, must be a valid port (0-65535)
+     * @param rootMapAccessor the already-parsed root configuration, must not be {@code null}
+     * @return the started HTTP server instance
+     * @throws IOException if the server fails to start
+     * @throws ConfigurationException if the configuration is invalid
+     */
+    public static HTTPServer createAndStartHTTPServer(
+            PrometheusRegistry prometheusRegistry, InetAddress inetAddress, int port, MapAccessor rootMapAccessor)
+            throws IOException {
         AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
         boolean sslEnabled = rootMapAccessor.containsPath(HTTP_SERVER_SSL);
         Integer maximumRequestSeconds = getMaximumRequestSeconds(rootMapAccessor);
@@ -619,6 +643,22 @@ public class HTTPServerFactory {
     public static HTTPServer createAndStartHTTPServer(PrometheusRegistry prometheusRegistry, File exporterYamlFile)
             throws IOException {
         MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(exporterYamlFile));
+        return createAndStartHTTPServer(prometheusRegistry, rootMapAccessor);
+    }
+
+    /**
+     * Creates and starts an HTTP server with the specified already-parsed configuration (testing
+     * variant).
+     *
+     * @param prometheusRegistry the Prometheus registry for metric collection, must not be
+     *     {@code null}
+     * @param rootMapAccessor the already-parsed root configuration, must not be {@code null}
+     * @return the started HTTP server instance
+     * @throws IOException if the server fails to start
+     * @throws ConfigurationException if the configuration is invalid
+     */
+    public static HTTPServer createAndStartHTTPServer(
+            PrometheusRegistry prometheusRegistry, MapAccessor rootMapAccessor) throws IOException {
         AuthenticationConfiguration authenticationConfiguration = getAuthenticationConfiguration(rootMapAccessor);
         boolean sslEnabled = rootMapAccessor.containsPath(HTTP_SERVER_SSL);
         Integer maximumRequestSeconds = getMaximumRequestSeconds(rootMapAccessor);

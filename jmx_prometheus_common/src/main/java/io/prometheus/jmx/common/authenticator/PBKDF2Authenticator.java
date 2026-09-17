@@ -160,8 +160,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
             return false;
         }
 
-        Credentials credentials = new Credentials(username, password);
-        if (validCredentialsCache.contains(credentials)) {
+        if (validCredentialsCache.contains(username, password)) {
             return true;
         }
 
@@ -172,7 +171,7 @@ public class PBKDF2Authenticator extends BasicAuthenticator {
         boolean isValid = usernameMatches & passwordMatches;
 
         if (isValid) {
-            validCredentialsCache.add(credentials);
+            validCredentialsCache.add(username, password);
         }
 
         return isValid;
