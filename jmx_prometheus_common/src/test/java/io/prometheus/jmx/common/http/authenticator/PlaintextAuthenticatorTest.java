@@ -20,6 +20,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.sun.net.httpserver.BasicAuthenticator;
 import io.prometheus.jmx.common.authenticator.PlaintextAuthenticator;
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
 
 public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
@@ -50,5 +51,38 @@ public class PlaintextAuthenticatorTest extends BaseAuthenticatorTest {
         assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
 
         assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
+    }
+
+    @Test
+    public void testCacheShortCircuitsVerification() throws Exception {
+        BasicAuthenticator plainTextAuthenticator = new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
+
+        assertThat(verificationCount(plainTextAuthenticator)).isZero();
+
+        assertThat(plainTextAuthenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+        assertThat(plainTextAuthenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+
+        // The second identical valid login is served from the cache, so verification is not re-run.
+        assertThat(verificationCount(plainTextAuthenticator)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInvalidCredentialsAreNotServedFromCache() throws Exception {
+        BasicAuthenticator plainTextAuthenticator = new PlaintextAuthenticator("/", VALID_USERNAME, VALID_PASSWORD);
+
+        assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
+        assertThat(plainTextAuthenticator.checkCredentials("bad", "bad")).isFalse();
+        assertThat(plainTextAuthenticator.checkCredentials("bad", "worse")).isFalse();
+
+        // Each distinct wrong credential is a cache miss and must be verified.
+        assertThat(verificationCount(plainTextAuthenticator)).isEqualTo(3);
+    }
+
+    private static int verificationCount(Object authenticator) throws Exception {
+        Field field = authenticator.getClass().getDeclaredField("verificationCount");
+        field.setAccessible(true);
+        return (int) field.get(authenticator);
     }
 }
