@@ -4,6 +4,7 @@
 
 - `gpg` (for artifact signing)
 - `sha256sum` (for checksums)
+- `jq` and `openssl` (for SBOM artifact hashes)
 - `~/.m2/settings.xml` with credentials for Maven Central
 - Clean git working directory on `main`/`master` branch
 
@@ -31,7 +32,7 @@
 
 ## What the Release Script Does
 
-1. Validates prerequisites (mvnw, maven settings, gpg, git, sha256sum)
+1. Validates prerequisites (mvnw, maven settings, gpg, git, sha256sum, jq, openssl)
 2. Validates git state (clean worktree, on main/master branch)
 3. Checks no existing release branch or tag exists
 4. Creates release branch: `release-{VERSION}`
@@ -40,7 +41,9 @@
 7. Deploys `collector` module to Maven Central
 8. Assembles release artifacts in `RELEASE/` directory:
    - Copies javaagent, isolator_javaagent, and standalone jars
-   - Signs each jar with GPG
+   - Copies the CycloneDX SBOM for javaagent, isolator_javaagent, and standalone
+   - Adds each release artifact's hashes to its SBOM `metadata.component.hashes` entry
+   - Signs each jar and SBOM with GPG
    - Generates SHA256 checksums
 9. Commits release on release branch
 10. Creates annotated tag: `{VERSION}`
@@ -67,5 +70,17 @@ Release artifacts will be located in the `RELEASE` directory:
 - `jmx_prometheus_standalone-<VERSION>.jar`
 - `jmx_prometheus_standalone-<VERSION>.jar.asc`
 - `jmx_prometheus_standalone-<VERSION>.jar.sha256`
+
+CycloneDX SBOMs (one per release artifact):
+
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json`
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_javaagent-<VERSION>.cdx.json.sha256`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_isolator_javaagent-<VERSION>.cdx.json.sha256`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json.asc`
+- `jmx_prometheus_standalone-<VERSION>.cdx.json.sha256`
 
 Attach all files to the GitHub release.
