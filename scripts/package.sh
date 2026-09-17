@@ -36,19 +36,8 @@ cd "${ROOT_DIR}"
 
 readonly RELEASE_DIR='RELEASE'
 
-# CycloneDX hash algorithms recorded in each release JAR's SBOM
-# metadata.component.hashes entry. Each entry is "<CycloneDX alg>:<openssl digest>".
-# These mirror the algorithms CycloneDX records for the dependency components.
-HASH_ALGORITHMS=(
-    "MD5:md5"
-    "SHA-1:sha1"
-    "SHA-256:sha256"
-    "SHA-384:sha384"
-    "SHA-512:sha512"
-    "SHA3-256:sha3-256"
-    "SHA3-384:sha3-384"
-    "SHA3-512:sha3-512"
-)
+# shellcheck source=scripts/lib/sbom-hashes.sh
+source "${ROOT_DIR}/scripts/lib/sbom-hashes.sh"
 
 log_info() {
     echo "> $*"
@@ -61,12 +50,14 @@ log_error() {
 require_commands() {
     local command
 
-    for command in gpg openssl sha256sum jq; do
+    for command in gpg sha256sum; do
         if ! command -v "${command}" >/dev/null 2>&1; then
             log_error "Required command not found: ${command}"
             exit 1
         fi
     done
+
+    require_sbom_hash_commands
 }
 
 # Release jars assembled into RELEASE/.
@@ -76,9 +67,8 @@ JARS=(
     "jmx_prometheus_standalone/target/jmx_prometheus_standalone-{version}.jar"
 )
 
-# CycloneDX SBOMs, one per published artifact. Each entry is "<source path>|<release file name>".
+# CycloneDX SBOMs, one per release artifact. Each entry is "<source path>|<release file name>".
 SBOMS=(
-    "collector/target/bom.json|collector-{version}.cdx.json"
     "jmx_prometheus_javaagent/target/bom.json|jmx_prometheus_javaagent-{version}.cdx.json"
     "jmx_prometheus_isolator_javaagent/target/bom.json|jmx_prometheus_isolator_javaagent-{version}.cdx.json"
     "jmx_prometheus_standalone/target/bom.json|jmx_prometheus_standalone-{version}.cdx.json"
@@ -100,52 +90,6 @@ resolve_version() {
         exit 1
     fi
     printf '%s' "${ver}"
-}
-
-# Add all supported CycloneDX hashes of the final release JAR to the top-level
-# metadata.component.hashes entry so the SBOM can be tied to the exact artifact.
-add_artifact_hash_to_sbom() {
-    local jar="$1"
-    local sbom="$2"
-
-    if [[ ! -f "${jar}" ]]; then
-        log_error "Artifact not found: ${jar}"
-        exit 1
-    fi
-
-    if [[ ! -f "${sbom}" ]]; then
-        log_error "SBOM not found: ${sbom}"
-        exit 1
-    fi
-
-    local hashes='[]'
-    local entry alg openssl_alg digest
-
-    for entry in "${HASH_ALGORITHMS[@]}"; do
-        alg="${entry%%:*}"
-        openssl_alg="${entry#*:}"
-        if ! digest="$(openssl dgst -r "-${openssl_alg}" "${jar}" | awk '{print $1}')"; then
-            log_error "Failed to compute ${alg} for ${jar}"
-            exit 1
-        fi
-        hashes="$(jq -c --arg alg "${alg}" --arg content "${digest}" '. + [{alg: $alg, content: $content}]' <<<"${hashes}")"
-    done
-
-    local tmp
-    tmp="$(mktemp)"
-
-    if ! jq \
-        --argjson hashes "${hashes}" \
-        '.metadata.component.hashes = $hashes' \
-        "${sbom}" > "${tmp}"; then
-        rm -f "${tmp}"
-        log_error "Failed to update SBOM: ${sbom}"
-        exit 1
-    fi
-
-    mv "${tmp}" "${sbom}"
-
-    log_info "Added ${#HASH_ALGORITHMS[@]} artifact hashes to SBOM: $(basename "${sbom}")"
 }
 
 assemble() {
@@ -179,7 +123,7 @@ assemble() {
         log_info "Copied SBOM: ${dst}"
     done
 
-    # Bind each release SBOM to the exact final JAR it describes.
+    # Bind each released SBOM to the exact artifact it describes.
     add_artifact_hash_to_sbom \
         "${RELEASE_DIR}/jmx_prometheus_javaagent-${ver}.jar" \
         "${RELEASE_DIR}/jmx_prometheus_javaagent-${ver}.cdx.json"

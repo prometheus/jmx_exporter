@@ -31,14 +31,19 @@ ARTIFACTS=(
     "jmx_prometheus_standalone/target/jmx_prometheus_standalone-{version}.jar"
 )
 
-# CycloneDX SBOMs shipped alongside the release, one per published artifact.
+# CycloneDX SBOMs shipped alongside the release, one per release artifact.
 # Each entry is "<source path>|<release file name template>".
 SBOMS=(
-    "collector/target/bom.json|collector-{version}.cdx.json"
     "jmx_prometheus_javaagent/target/bom.json|jmx_prometheus_javaagent-{version}.cdx.json"
     "jmx_prometheus_isolator_javaagent/target/bom.json|jmx_prometheus_isolator_javaagent-{version}.cdx.json"
     "jmx_prometheus_standalone/target/bom.json|jmx_prometheus_standalone-{version}.cdx.json"
 )
+
+# Repository root (this script lives at the repository root).
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=scripts/lib/sbom-hashes.sh
+source "${ROOT_DIR}/scripts/lib/sbom-hashes.sh"
 
 gpg_key_id=""
 git_remote=""
@@ -149,7 +154,9 @@ check_prerequisites() {
         log_error "column not found"
         exit 1
     fi
-    
+
+    require_sbom_hash_commands
+
     log_info "All prerequisites satisfied"
 }
 
@@ -280,6 +287,21 @@ assemble_artifacts() {
     done
 
     log_info "SBOMs copied to ${RELEASE_DIR}/"
+
+    # Bind each release SBOM to the exact final artifact it describes. This must
+    # run before signing/checksumming so the .asc and .sha256 cover the updated
+    # SBOM.
+    add_artifact_hash_to_sbom \
+        "${RELEASE_DIR}/jmx_prometheus_javaagent-${ver}.jar" \
+        "${RELEASE_DIR}/jmx_prometheus_javaagent-${ver}.cdx.json"
+
+    add_artifact_hash_to_sbom \
+        "${RELEASE_DIR}/jmx_prometheus_isolator_javaagent-${ver}.jar" \
+        "${RELEASE_DIR}/jmx_prometheus_isolator_javaagent-${ver}.cdx.json"
+
+    add_artifact_hash_to_sbom \
+        "${RELEASE_DIR}/jmx_prometheus_standalone-${ver}.jar" \
+        "${RELEASE_DIR}/jmx_prometheus_standalone-${ver}.cdx.json"
 
     pushd "${RELEASE_DIR}" >/dev/null
     
