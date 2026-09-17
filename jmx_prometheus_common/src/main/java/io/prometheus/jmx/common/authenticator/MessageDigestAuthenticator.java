@@ -30,7 +30,8 @@ import java.security.MessageDigest;
  *
  * <p>This authenticator caches valid credentials to improve authentication performance,
  * using a maximum credential size of 5 KiB and an approximately
- * 500 KiB maximum cache weight.
+ * 500 KiB maximum cache weight. Valid credentials are looked up in the cache before the
+ * (potentially expensive) password hash is computed; invalid credentials are never cached.
  *
  * <p>Thread-safety: This class is thread-safe. Credential cache operations are thread-safe,
  * backed by Caffeine. Password hash comparison is constant-time.
@@ -83,6 +84,12 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
     private final CredentialsCache credentialsCache;
 
     /**
+     * Package-private counter of verification passes actually performed (i.e., cache misses).
+     * Package-private for testing the credential cache read path; not used in production logic.
+     */
+    private int verificationCount;
+
+    /**
      * Constructs a message digest authenticator with the specified parameters.
      *
      * @param realm the HTTP authentication realm, must not be {@code null} or blank
@@ -132,12 +139,17 @@ public class MessageDigestAuthenticator extends BasicAuthenticator {
             return false;
         }
 
+        Credentials credentials = new Credentials(username, password);
+        if (credentialsCache.contains(credentials)) {
+            return true;
+        }
+        verificationCount++;
+
         byte[] candidateHashBytes = generatePasswordHashBytes(algorithm, salt, password);
         boolean usernameMatches = MessageDigest.isEqual(this.usernameBytes, username.getBytes(StandardCharsets.UTF_8));
         boolean passwordMatches = MessageDigest.isEqual(this.passwordHashBytes, candidateHashBytes);
         boolean isValid = usernameMatches & passwordMatches;
 
-        Credentials credentials = new Credentials(username, password);
         if (isValid) {
             credentialsCache.add(credentials);
         }

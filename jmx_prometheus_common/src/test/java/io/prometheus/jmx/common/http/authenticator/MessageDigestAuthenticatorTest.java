@@ -20,6 +20,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import io.prometheus.jmx.common.authenticator.MessageDigestAuthenticator;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -158,6 +159,45 @@ public class MessageDigestAuthenticatorTest extends BaseAuthenticatorTest {
         assertThat(authenticator.checkCredentials(VALID_USERNAME, "wrong")).isFalse();
         assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
                 .isTrue();
+    }
+
+    @Test
+    public void testCacheShortCircuitsVerification() throws Exception {
+        String algorithm = "SHA-256";
+        String hash = hash(algorithm, VALID_PASSWORD, SALT).toLowerCase();
+        MessageDigestAuthenticator authenticator =
+                new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);
+
+        assertThat(verificationCount(authenticator)).isZero();
+
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, VALID_PASSWORD))
+                .isTrue();
+
+        // The second identical valid login is served from the cache, so verification is not re-run.
+        assertThat(verificationCount(authenticator)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInvalidCredentialsAreNotServedFromCache() throws Exception {
+        String algorithm = "SHA-256";
+        String hash = hash(algorithm, VALID_PASSWORD, SALT).toLowerCase();
+        MessageDigestAuthenticator authenticator =
+                new MessageDigestAuthenticator("/", VALID_USERNAME, hash, algorithm, SALT);
+
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, "wrong1")).isFalse();
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, "wrong1")).isFalse();
+        assertThat(authenticator.checkCredentials(VALID_USERNAME, "wrong2")).isFalse();
+
+        // Each distinct wrong credential is a cache miss and must be verified.
+        assertThat(verificationCount(authenticator)).isEqualTo(3);
+    }
+
+    private static int verificationCount(Object authenticator) throws Exception {
+        Field field = authenticator.getClass().getDeclaredField("verificationCount");
+        field.setAccessible(true);
+        return (int) field.get(authenticator);
     }
 
     private static String hash(String algorithm, String value, String salt) throws NoSuchAlgorithmException {
