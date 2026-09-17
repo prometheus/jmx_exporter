@@ -22,9 +22,16 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.LogManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -821,6 +828,57 @@ public class JmxCollectorTest {
         new JmxCollector("---\nscrapeTimeoutSeconds: 60").register(prometheusRegistry);
         assertThat(getSampleValue("java_lang_OperatingSystem_ProcessCpuTime", new String[] {}, new String[] {}))
                 .isNotNull();
+    }
+
+    @Test
+    public void poolSizeMustBePositive() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---", 0));
+        assertThatIllegalArgumentException().isThrownBy(() -> new JmxCollector("---", -1));
+    }
+
+    @Test
+    public void parallelCollectionAcrossCollectors() throws Exception {
+        int collectorCount = 4;
+        List<JmxCollector> collectors = new ArrayList<>(collectorCount);
+        for (int i = 0; i < collectorCount; i++) {
+            collectors.add(new JmxCollector("---", 2).register(new PrometheusRegistry()));
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(collectorCount);
+        try {
+            List<Future<MetricSnapshots>> futures = new ArrayList<>(collectorCount);
+            for (JmxCollector collector : collectors) {
+                futures.add(executor.submit(() -> {
+                    return collector.collect();
+                }));
+            }
+            for (Future<MetricSnapshots> future : futures) {
+                assertThat(future.get(60, TimeUnit.SECONDS)).isNotNull();
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    public void parallelCollectionOnSingleCollector() throws Exception {
+        int poolSize = 4;
+        JmxCollector collector = new JmxCollector("---", poolSize).register(new PrometheusRegistry());
+
+        ExecutorService executor = Executors.newFixedThreadPool(poolSize);
+        try {
+            List<Future<MetricSnapshots>> futures = new ArrayList<>(poolSize);
+            for (int i = 0; i < poolSize; i++) {
+                futures.add(executor.submit(() -> {
+                    return collector.collect();
+                }));
+            }
+            for (Future<MetricSnapshots> future : futures) {
+                assertThat(future.get(60, TimeUnit.SECONDS)).isNotNull();
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private String getSampleType(String name, String[] labelNames, String[] labelValues) {
