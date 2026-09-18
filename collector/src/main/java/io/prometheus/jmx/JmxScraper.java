@@ -244,10 +244,13 @@ class JmxScraper {
             jmxMBeanPropertyCache.onlyKeepMBeans(mBeanNames);
             objectNameAttributeFilter.onlyKeepMBeans(mBeanNames);
 
+            boolean traceEnabled = LOGGER.isTraceEnabled();
             for (ObjectName objectName : mBeanNames) {
                 long start = System.nanoTime();
                 scrapeBean(beanConn, objectName);
-                LOGGER.trace("TIME: %d ns for %s", System.nanoTime() - start, objectName);
+                if (traceEnabled) {
+                    LOGGER.trace("TIME: %d ns for %s", System.nanoTime() - start, objectName);
+                }
             }
         } finally {
             if (jmxc != null) {
@@ -375,6 +378,7 @@ class JmxScraper {
 
         final String mBeanNameString = mBeanName.toString();
         final String mBeanDomain = mBeanName.getDomain();
+        final LinkedHashMap<String, String> beanProperties = jmxMBeanPropertyCache.getKeyPropertyList(mBeanName);
         JmxCollector.MetricCustomizer metricCustomizer = getMetricCustomizer(mBeanName);
         Map<String, String> attributesAsLabelsWithValues = Collections.emptyMap();
         if (metricCustomizer != null) {
@@ -385,9 +389,9 @@ class JmxScraper {
                 processBeanValue(
                         mBeanName,
                         mBeanDomain,
-                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        beanProperties,
                         attributesAsLabelsWithValues,
-                        new ArrayList<>(),
+                        Collections.emptyList(),
                         extraMetric.name,
                         "UNKNOWN",
                         extraMetric.description,
@@ -425,9 +429,9 @@ class JmxScraper {
                 processBeanValue(
                         mBeanName,
                         mBeanDomain,
-                        jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                        beanProperties,
                         attributesAsLabelsWithValues,
-                        new ArrayList<>(),
+                        Collections.emptyList(),
                         attributeName,
                         mBeanAttributeInfo.getType(),
                         mBeanAttributeInfo.getDescription(),
@@ -483,6 +487,8 @@ class JmxScraper {
     private void processAttributesOneByOne(
             MBeanServerConnection beanConn, ObjectName mbeanName, Map<String, MBeanAttributeInfo> name2AttrInfo) {
         Object value;
+        String domain = mbeanName.getDomain();
+        LinkedHashMap<String, String> beanProperties = jmxMBeanPropertyCache.getKeyPropertyList(mbeanName);
         for (MBeanAttributeInfo attr : name2AttrInfo.values()) {
             String attributeName = attr.getName();
             try {
@@ -495,10 +501,10 @@ class JmxScraper {
             LOGGER.trace("%s_%s process", mbeanName, attributeName);
             processBeanValue(
                     mbeanName,
-                    mbeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mbeanName),
-                    new HashMap<>(),
-                    new ArrayList<>(),
+                    domain,
+                    beanProperties,
+                    Collections.emptyMap(),
+                    Collections.emptyList(),
                     attributeName,
                     attr.getType(),
                     attr.getDescription(),

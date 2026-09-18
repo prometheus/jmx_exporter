@@ -731,6 +731,13 @@ public class JmxCollector implements MultiCollector {
             return name;
         }
 
+        // Fast path: if every character already has no lowercase mapping, the snake-case
+        // conversion would return the input unchanged, so avoid the StringBuilder allocation.
+        // This also covers title-case characters whose lowercase mapping differs from themselves.
+        if (isLowerCaseInvariant(name)) {
+            return name;
+        }
+
         char firstChar = name.charAt(0);
 
         boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
@@ -753,6 +760,25 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
+     * Returns whether every character in {@code name} is unchanged by
+     * {@link Character#toLowerCase(char)}. When true, {@link #toSnakeAndLowerCase(String)} returns
+     * the input unchanged because no underscore would be inserted and no character would be
+     * lowercased.
+     *
+     * @param name the name to check, must not be {@code null}
+     * @return {@code true} if {@code toSnakeAndLowerCase(name)} would return {@code name} unchanged
+     */
+    private static boolean isLowerCaseInvariant(String name) {
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (Character.toLowerCase(c) != c) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Convert the name to a "safe" name by changing invalid chars to underscore, and merging
      * consecutive underscores.
      *
@@ -762,6 +788,13 @@ public class JmxCollector implements MultiCollector {
     static String toSafeName(String name) {
         if (name == null) {
             return null;
+        }
+
+        // Fast path: an already-safe name is returned unchanged. This avoids allocating a
+        // StringBuilder and a new String for the common case of names that are already valid.
+        // The content is identical to the general path below.
+        if (isSafeName(name)) {
+            return name;
         }
 
         boolean prevCharIsUnderscore = false;
@@ -787,6 +820,40 @@ public class JmxCollector implements MultiCollector {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Returns whether {@link #toSafeName(String)} would return the input unchanged.
+     *
+     * <p>A name is already safe when it does not start with a digit, every character is a legal
+     * character, and it does not contain consecutive underscores (which the general path would
+     * collapse).
+     *
+     * @param name the name to check, must not be {@code null}
+     * @return {@code true} if {@code toSafeName(name)} would return {@code name} unchanged
+     */
+    private static boolean isSafeName(String name) {
+        if (name.isEmpty()) {
+            return true;
+        }
+
+        if (Character.isDigit(name.charAt(0))) {
+            return false;
+        }
+
+        char previous = 0;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!isLegalCharacter(c)) {
+                return false;
+            }
+            if (c == '_' && previous == '_') {
+                return false;
+            }
+            previous = c;
+        }
+
+        return true;
     }
 
     private static boolean isLegalCharacter(char input) {
@@ -1007,12 +1074,19 @@ public class JmxCollector implements MultiCollector {
                         attributeName = attrName;
                     }
 
-                    String matchName = new StringBuilder(beanName.length() + attributeName.length() + 2 + 16)
+                    StringBuilder matchNameBuilder = new StringBuilder(
+                                    beanName.length() + attributeName.length() + 2 + 16)
                             .append(beanName)
                             .append(attributeName)
-                            .append(": ")
-                            .append(matchBeanValue)
-                            .toString();
+                            .append(": ");
+                    if (rule.pattern != null) {
+                        // Only a pattern can read the value from matchName. For the pattern-less
+                        // default rule, matchName is used solely to derive _objectname when labels
+                        // collide, and default-export labels cannot collide, so the value is not
+                        // appended. This avoids converting every bean value to a String.
+                        matchNameBuilder.append(matchBeanValue);
+                    }
+                    String matchName = matchNameBuilder.toString();
 
                     Matcher matcher = null;
                     if (rule.pattern != null) {
@@ -1139,7 +1213,9 @@ public class JmxCollector implements MultiCollector {
             }
 
             // Add to samples.
-            LOGGER.trace("add metric sample: %s %s %s", matchedRule.name, matchedRule.labels, value.doubleValue());
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("add metric sample: %s %s %s", matchedRule.name, matchedRule.labels, value.doubleValue());
+            }
 
             matchedRules.add(matchedRule.withValue(value.doubleValue()));
         }
@@ -1228,7 +1304,8 @@ public class JmxCollector implements MultiCollector {
      * @return the collected metric snapshots
      */
     private MetricSnapshots doCollect(Config config) {
-        MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
+        MatchedRulesCache.StalenessTracker stalenessTracker =
+                config.rulesCache != null ? new MatchedRulesCache.StalenessTracker() : null;
 
         Receiver receiver = new Receiver(config, stalenessTracker);
 
@@ -1275,7 +1352,7 @@ public class JmxCollector implements MultiCollector {
 
         jmxScrapeDurationSeconds.set((System.currentTimeMillis() - start) / 1000.0);
         jmxScrapeError.set(error);
-        jmxScrapeCachedBeans.set(stalenessTracker.freshCount());
+        jmxScrapeCachedBeans.set(stalenessTracker != null ? stalenessTracker.freshCount() : 0);
 
         return MatchedRuleToMetricSnapshotsConverter.convert(receiver.matchedRules);
     }

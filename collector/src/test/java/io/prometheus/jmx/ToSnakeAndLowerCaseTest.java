@@ -18,7 +18,9 @@ package io.prometheus.jmx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Random;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,5 +52,78 @@ public class ToSnakeAndLowerCaseTest {
         String actual = JmxCollector.toSnakeAndLowerCase(input);
 
         assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Pins the fast path to the general implementation for edge cases and randomized inputs,
+     * including title-case characters whose lowercase mapping differs from themselves.
+     */
+    @Test
+    public void testToSnakeAndLowerCaseMatchesReferenceImplementation() {
+        Random random = new Random(20240917L);
+        char[] alphabet = ("abzAZ09_ :." + '\u01c5' + '\u00e5' + '\u00c5').toCharArray();
+
+        for (int i = 0; i < 100_000; i++) {
+            String input = randomString(random, alphabet);
+            assertThat(JmxCollector.toSnakeAndLowerCase(input))
+                    .as("input=[%s]", input)
+                    .isEqualTo(referenceToSnakeAndLowerCase(input));
+        }
+
+        String[] edges = {
+            null,
+            "",
+            " ",
+            "a",
+            "A",
+            "AA",
+            "aA",
+            "Aa",
+            "a_A",
+            "_A_",
+            "\u01c5",
+            "a\u01c5b",
+            "testTest",
+            "test_test",
+            "testTCPTest",
+            "StartTime_$1_$2"
+        };
+        for (String edge : edges) {
+            assertThat(JmxCollector.toSnakeAndLowerCase(edge))
+                    .as("input=[%s]", edge)
+                    .isEqualTo(referenceToSnakeAndLowerCase(edge));
+        }
+    }
+
+    private static String randomString(Random random, char[] alphabet) {
+        int length = random.nextInt(24);
+        StringBuilder builder = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            builder.append(alphabet[random.nextInt(alphabet.length)]);
+        }
+        return builder.toString();
+    }
+
+    // Reference implementation: the original toSnakeAndLowerCase without the fast path.
+    private static String referenceToSnakeAndLowerCase(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
+
+        char firstChar = name.charAt(0);
+        boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
+        StringBuilder stringBuilder = new StringBuilder(name.length()).append(Character.toLowerCase(firstChar));
+
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            boolean charIsUpperCase = Character.isUpperCase(c);
+            if (!prevCharIsUpperCaseOrUnderscore && charIsUpperCase) {
+                stringBuilder.append("_");
+            }
+            stringBuilder.append(Character.toLowerCase(c));
+            prevCharIsUpperCaseOrUnderscore = charIsUpperCase || c == '_';
+        }
+
+        return stringBuilder.toString();
     }
 }

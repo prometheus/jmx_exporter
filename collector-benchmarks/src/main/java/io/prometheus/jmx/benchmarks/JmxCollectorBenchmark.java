@@ -61,6 +61,7 @@ public class JmxCollectorBenchmark {
     private JmxCollector defaultExportCollector;
     private JmxCollector regexNoCacheCollector;
     private JmxCollector regexCacheCollector;
+    private JmxCollector regexSnakeCaseCollector;
 
     /**
      * Registers the benchmark MBeans and builds the collectors under test.
@@ -75,6 +76,8 @@ public class JmxCollectorBenchmark {
         regexNoCacheCollector = createCollector(BenchmarkMBeans.INCLUDE_OBJECT_NAMES + "rules:\n- pattern: \".*\"\n");
         regexCacheCollector =
                 createCollector(BenchmarkMBeans.INCLUDE_OBJECT_NAMES + "rules:\n- pattern: \".*\"\n  cache: true\n");
+        regexSnakeCaseCollector = createCollector(
+                BenchmarkMBeans.INCLUDE_OBJECT_NAMES + "rules:\n- pattern: \".*\"\n  attrNameSnakeCase: true\n");
     }
 
     /**
@@ -113,6 +116,16 @@ public class JmxCollectorBenchmark {
     @Benchmark
     public void regexMatchWithCache(Blackhole blackhole) {
         blackhole.consume(regexCacheCollector.collect());
+    }
+
+    /**
+     * Benchmarks a matching rule that requests snake-cased attribute names.
+     *
+     * @param blackhole JMH blackhole
+     */
+    @Benchmark
+    public void regexMatchSnakeCase(Blackhole blackhole) {
+        blackhole.consume(regexSnakeCaseCollector.collect());
     }
 
     private static JmxCollector createCollector(String yamlConfig) throws Exception {
