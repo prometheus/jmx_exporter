@@ -26,8 +26,12 @@ integration_test_suite/
 │   │   │   └── mode/
 │   │   │       ├── JavaAgent/            # application.sh, exporter.yaml
 │   │   │       └── Standalone/           # application.sh, exporter.sh, exporter.yaml
-│   │   ├── java-docker-images.txt        # Docker images to test against
-│   │   └── smoke-test-java-docker-images.txt
+│   │   ├── java-docker-images.txt        # Full Docker image set
+│   │   ├── quick-test-java-docker-images.txt  # Quick subset (default)
+│   │   ├── smoke-test-java-docker-images.txt  # Smoke subset
+│   │   ├── prometheus-docker-images.txt       # Full Prometheus image set
+│   │   ├── quick-test-prometheus-docker-images.txt  # Quick Prometheus subset
+│   │   └── smoke-test-prometheus-docker-images.txt  # Smoke Prometheus subset
 │   └── src/test/metrics/                 # Metric assertion files (auto-generated, file I/O)
 │       └── <test-class-package-path>/
 │           ├── JavaAgent/
@@ -55,10 +59,15 @@ The test environment wraps Testcontainers to spin up Docker containers per test:
 
 Docker images are sourced from:
 
-- `java-docker-images.txt` (full set)
-- `smoke-test-java-docker-images.txt` (quick subset)
+- `quick-test-java-docker-images.txt` / `quick-test-prometheus-docker-images.txt` (quick subset,
+  the default) — a single Java image plus one Prometheus image for fast feedback.
+- `smoke-test-java-docker-images.txt` / `smoke-test-prometheus-docker-images.txt` (smoke subset).
+- `java-docker-images.txt` / `prometheus-docker-images.txt` (full set).
 
-The `JAVA_DOCKER_IMAGES` environment variable overrides (e.g., `azul/zulu-openjdk:17` or `ALL`).
+The `JAVA_DOCKER_IMAGES` and `PROMETHEUS_DOCKER_IMAGES` environment variables override the
+selection (e.g., `azul/zulu-openjdk:17` for a single image). The case-insensitive sentinels
+`QUICK`, `SMOKE`, and `ALL` select the quick, smoke, and full lists respectively; a plain
+Maven invocation with no override uses the quick list.
 
 Each test runs once per combination of Docker image x exporter mode.
 
@@ -175,12 +184,14 @@ variable `METRIC_ASSERTIONS_UPDATE=true`.
 ### Maven commands
 
 ```bash
-# Full suite (smoke test Docker images — minutes)
+# Quick suite (quick test Docker images, the default — minutes)
 ./mvnw clean verify
 
+# Smoke suite (smoke test Docker images)
+JAVA_DOCKER_IMAGES=SMOKE PROMETHEUS_DOCKER_IMAGES=SMOKE ./mvnw clean verify
+
 # Full suite (all Docker images — hours)
-export JAVA_DOCKER_IMAGES=ALL
-./mvnw clean verify
+JAVA_DOCKER_IMAGES=ALL PROMETHEUS_DOCKER_IMAGES=ALL ./mvnw clean verify
 
 # Single Docker image
 JAVA_DOCKER_IMAGES="azul/zulu-openjdk:17" ./mvnw clean verify
@@ -207,7 +218,10 @@ prefix/suffix for contains-style matching.
 Pre-pulling avoids request timeouts during test runs:
 
 ```bash
-# Smoke test images (faster)
+# Quick test images (fastest, matches the Maven default)
+./integration_test_suite/pull-quick-test-docker-images.sh
+
+# Smoke test images
 ./integration_test_suite/pull-smoke-test-docker-images.sh
 
 # All images

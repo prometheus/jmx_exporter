@@ -47,8 +47,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -222,16 +224,9 @@ public class JmxCollector implements MultiCollector {
     private Gauge jmxScrapeCachedBeans;
     private Counter scrapeTimeoutCounter;
 
-    private static final ExecutorService SCRAPE_EXECUTOR;
+    private static final int DEFAULT_POOL_SIZE = Runtime.getRuntime().availableProcessors();
 
-    static {
-        SCRAPE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "jmx-scrape");
-            t.setDaemon(true);
-            return t;
-        });
-        Runtime.getRuntime().addShutdownHook(new Thread(SCRAPE_EXECUTOR::shutdownNow));
-    }
+    private final ExecutorService scrapeExecutor;
 
     private final AtomicReference<Future<MetricSnapshots>> inFlightScrape = new AtomicReference<>(null);
     private volatile MetricSnapshots lastGoodSnapshots = MetricSnapshots.of();
@@ -258,9 +253,23 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
+        this(in, mode, DEFAULT_POOL_SIZE);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param in the configuration file, must not be null
+     * @param mode the collector mode, may be null
+     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
+     * @throws IOException if an I/O error occurs
+     * @throws MalformedObjectNameException if the ObjectName is invalid
+     */
+    public JmxCollector(File in, Mode mode, int poolSize) throws IOException, MalformedObjectNameException {
         Objects.requireNonNull(in, "configuration file must not be null");
         configFile = in;
         this.mode = mode;
+        scrapeExecutor = createScrapeExecutor(poolSize);
         try (FileReader fr = new FileReader(in)) {
             config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(fr));
         }
@@ -275,7 +284,19 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
+        this(yamlConfig, DEFAULT_POOL_SIZE);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param yamlConfig the YAML configuration string, must not be null
+     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
+     * @throws MalformedObjectNameException if the ObjectName is invalid
+     */
+    public JmxCollector(String yamlConfig, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(yamlConfig, "YAML configuration must not be null");
+        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(yamlConfig));
         mode = null;
     }
@@ -287,9 +308,35 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
+        this(inputStream, DEFAULT_POOL_SIZE);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param inputStream the input stream containing YAML configuration, must not be null
+     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
+     * @throws MalformedObjectNameException if the ObjectName is invalid
+     */
+    public JmxCollector(InputStream inputStream, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(inputStream, "input stream must not be null");
+        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(inputStream));
         mode = null;
+    }
+
+    private static ExecutorService createScrapeExecutor(int poolSize) {
+        if (poolSize < 1) {
+            throw new IllegalArgumentException("poolSize must be at least 1");
+        }
+        ThreadPoolExecutor executor =
+                new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
+                    Thread thread = new Thread(r, "jmx-scrape");
+                    thread.setDaemon(true);
+                    return thread;
+                });
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
     }
 
     /**
@@ -684,6 +731,13 @@ public class JmxCollector implements MultiCollector {
             return name;
         }
 
+        // Fast path: if every character already has no lowercase mapping, the snake-case
+        // conversion would return the input unchanged, so avoid the StringBuilder allocation.
+        // This also covers title-case characters whose lowercase mapping differs from themselves.
+        if (isLowerCaseInvariant(name)) {
+            return name;
+        }
+
         char firstChar = name.charAt(0);
 
         boolean prevCharIsUpperCaseOrUnderscore = Character.isUpperCase(firstChar) || firstChar == '_';
@@ -706,6 +760,25 @@ public class JmxCollector implements MultiCollector {
     }
 
     /**
+     * Returns whether every character in {@code name} is unchanged by
+     * {@link Character#toLowerCase(char)}. When true, {@link #toSnakeAndLowerCase(String)} returns
+     * the input unchanged because no underscore would be inserted and no character would be
+     * lowercased.
+     *
+     * @param name the name to check, must not be {@code null}
+     * @return {@code true} if {@code toSnakeAndLowerCase(name)} would return {@code name} unchanged
+     */
+    private static boolean isLowerCaseInvariant(String name) {
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (Character.toLowerCase(c) != c) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Convert the name to a "safe" name by changing invalid chars to underscore, and merging
      * consecutive underscores.
      *
@@ -715,6 +788,13 @@ public class JmxCollector implements MultiCollector {
     static String toSafeName(String name) {
         if (name == null) {
             return null;
+        }
+
+        // Fast path: an already-safe name is returned unchanged. This avoids allocating a
+        // StringBuilder and a new String for the common case of names that are already valid.
+        // The content is identical to the general path below.
+        if (isSafeName(name)) {
+            return name;
         }
 
         boolean prevCharIsUnderscore = false;
@@ -740,6 +820,40 @@ public class JmxCollector implements MultiCollector {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Returns whether {@link #toSafeName(String)} would return the input unchanged.
+     *
+     * <p>A name is already safe when it does not start with a digit, every character is a legal
+     * character, and it does not contain consecutive underscores (which the general path would
+     * collapse).
+     *
+     * @param name the name to check, must not be {@code null}
+     * @return {@code true} if {@code toSafeName(name)} would return {@code name} unchanged
+     */
+    private static boolean isSafeName(String name) {
+        if (name.isEmpty()) {
+            return true;
+        }
+
+        if (Character.isDigit(name.charAt(0))) {
+            return false;
+        }
+
+        char previous = 0;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!isLegalCharacter(c)) {
+                return false;
+            }
+            if (c == '_' && previous == '_') {
+                return false;
+            }
+            previous = c;
+        }
+
+        return true;
     }
 
     private static boolean isLegalCharacter(char input) {
@@ -780,11 +894,39 @@ public class JmxCollector implements MultiCollector {
                     .toString();
         }
 
-        // Add the matched rule to the cached rules and tag it as not stale
+        // Appends the contents of a map in the same format as AbstractMap.toString() minus the
+        // surrounding braces ("k=v, k2=v2"), without materializing the intermediate string.
+        static void appendMapContents(StringBuilder builder, LinkedHashMap<String, String> map) {
+            boolean first = true;
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                if (!first) {
+                    builder.append(", ");
+                }
+                first = false;
+                builder.append(entry.getKey()).append('=').append(entry.getValue());
+            }
+        }
+
+        // Appends the contents of a list in the same format as AbstractCollection.toString() minus
+        // the surrounding brackets ("a, b"), without materializing the intermediate string.
+        static void appendListContents(StringBuilder builder, List<String> list) {
+            boolean first = true;
+            for (String element : list) {
+                if (!first) {
+                    builder.append(", ");
+                }
+                first = false;
+                builder.append(element);
+            }
+        }
+
+        // Add the matched rule to the cached rules and tag it as not stale. The lookup key only
+        // references the caller's bean metadata, so a defensive copy is stored.
         private void addToCache(final CacheKey cacheKey, final MatchedRule matchedRule) {
             if (config.rulesCache != null && cacheKey != null) {
-                config.rulesCache.put(cacheKey, matchedRule);
-                stalenessTracker.markAsFresh(cacheKey);
+                CacheKey storedKey = cacheKey.storedCopy();
+                config.rulesCache.put(storedKey, matchedRule);
+                stalenessTracker.markAsFresh(storedKey);
             }
         }
 
@@ -859,26 +1001,30 @@ public class JmxCollector implements MultiCollector {
             MatchedRule cachedRule = null;
 
             if (config.rulesCache != null) {
-                cacheKey = new CacheKey(domain, beanProperties, attrKeys, attrName);
-                cachedRule = config.rulesCache.get(cacheKey);
-                if (cachedRule != null) {
-                    stalenessTracker.markAsFresh(cacheKey);
+                // Probe with a non-copying lookup key. On a hit, mark the canonical stored key
+                // fresh, so the steady-state cached path avoids constructing a new key entirely.
+                cacheKey = CacheKey.lookup(domain, beanProperties, attrKeys, attrName);
+                MatchedRulesCache.Entry cachedEntry = config.rulesCache.getEntry(cacheKey);
+                if (cachedEntry != null) {
+                    cachedRule = cachedEntry.rule;
+                    stalenessTracker.markAsFresh(cachedEntry.key);
                     matchedRule = cachedRule;
                 }
             }
 
-            String beanPropertiesStr = beanProperties.toString();
-            String attrKeysStr = attrKeys.toString();
-
             if (matchedRule.isUnmatched()) {
-                String beanPropertiesBrackets = angleBrackets(beanPropertiesStr);
-                String attrKeysBrackets = angleBrackets(attrKeysStr);
-                String beanName = new StringBuilder(
-                                domain.length() + beanPropertiesBrackets.length() + attrKeysBrackets.length())
-                        .append(domain)
-                        .append(beanPropertiesBrackets)
-                        .append(attrKeysBrackets)
-                        .toString();
+                // Only the rule-matching path needs the string forms of the bean metadata. The
+                // steady-state cached path skips these allocations entirely. Build the bracketed
+                // name directly instead of materializing beanProperties.toString()/attrKeys.toString()
+                // and then rewriting them through angleBrackets().
+                StringBuilder beanNameBuilder =
+                        new StringBuilder(domain.length() + beanProperties.size() * 16 + attrKeys.size() * 16 + 8);
+                beanNameBuilder.append(domain).append('<');
+                appendMapContents(beanNameBuilder, beanProperties);
+                beanNameBuilder.append("><");
+                appendListContents(beanNameBuilder, attrKeys);
+                beanNameBuilder.append('>');
+                String beanName = beanNameBuilder.toString();
 
                 // Build the HELP string from the bean metadata.
                 String beanNameProp = beanProperties.get("name");
@@ -928,12 +1074,19 @@ public class JmxCollector implements MultiCollector {
                         attributeName = attrName;
                     }
 
-                    String matchName = new StringBuilder(beanName.length() + attributeName.length() + 2 + 16)
+                    StringBuilder matchNameBuilder = new StringBuilder(
+                                    beanName.length() + attributeName.length() + 2 + 16)
                             .append(beanName)
                             .append(attributeName)
-                            .append(": ")
-                            .append(matchBeanValue)
-                            .toString();
+                            .append(": ");
+                    if (rule.pattern != null) {
+                        // Only a pattern can read the value from matchName. For the pattern-less
+                        // default rule, matchName is used solely to derive _objectname when labels
+                        // collide, and default-export labels cannot collide, so the value is not
+                        // appended. This avoids converting every bean value to a String.
+                        matchNameBuilder.append(matchBeanValue);
+                    }
+                    String matchName = matchNameBuilder.toString();
 
                     Matcher matcher = null;
                     if (rule.pattern != null) {
@@ -1047,14 +1200,22 @@ public class JmxCollector implements MultiCollector {
             } else if (beanValue instanceof Boolean) {
                 value = (Boolean) beanValue ? 1 : 0;
             } else {
-                LOGGER.trace(
-                        "Ignoring unsupported bean: %s%s%s%s: %s ",
-                        domain, angleBrackets(beanPropertiesStr), angleBrackets(attrKeysStr), attrName, beanValue);
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(
+                            "Ignoring unsupported bean: %s%s%s%s: %s ",
+                            domain,
+                            angleBrackets(beanProperties.toString()),
+                            angleBrackets(attrKeys.toString()),
+                            attrName,
+                            beanValue);
+                }
                 return;
             }
 
             // Add to samples.
-            LOGGER.trace("add metric sample: %s %s %s", matchedRule.name, matchedRule.labels, value.doubleValue());
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("add metric sample: %s %s %s", matchedRule.name, matchedRule.labels, value.doubleValue());
+            }
 
             matchedRules.add(matchedRule.withValue(value.doubleValue()));
         }
@@ -1082,39 +1243,29 @@ public class JmxCollector implements MultiCollector {
         Config config = getLatestConfig();
         Integer timeout = config.scrapeTimeoutSeconds;
 
-        // Single-flight: check for in-flight scrape
-        if (timeout != null) {
-            Future<MetricSnapshots> existing = inFlightScrape.get();
-            if (existing != null) {
-                try {
-                    return existing.get(timeout, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    scrapeTimeoutCounter.inc();
-                    return lastGoodSnapshots;
-                } catch (Exception e) {
-                    jmxScrapeError.set(1);
-                    return lastGoodSnapshots;
-                }
-            }
-        }
-
-        // No in-flight scrape — run one
-        Future<MetricSnapshots> future = SCRAPE_EXECUTOR.submit(() -> doCollect(config));
+        Future<MetricSnapshots> future;
+        boolean ownsScrape = false;
 
         if (timeout != null) {
-            if (!inFlightScrape.compareAndSet(null, future)) {
-                future.cancel(true);
+            // Single-flight: join an in-flight scrape, or start a new one.
+            while (true) {
                 Future<MetricSnapshots> existing = inFlightScrape.get();
-                try {
-                    return existing.get(timeout, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    scrapeTimeoutCounter.inc();
-                    return lastGoodSnapshots;
-                } catch (Exception e) {
-                    jmxScrapeError.set(1);
-                    return lastGoodSnapshots;
+                if (existing != null) {
+                    future = existing;
+                    break;
+                }
+                FutureTask<MetricSnapshots> task = new FutureTask<>(() -> doCollect(config));
+                if (inFlightScrape.compareAndSet(null, task)) {
+                    scrapeExecutor.execute(task);
+                    future = task;
+                    ownsScrape = true;
+                    break;
                 }
             }
+        } else {
+            // No timeout is configured, so run each scrape independently. Combined with this
+            // collector's thread pool this allows concurrent collection.
+            future = scrapeExecutor.submit(() -> doCollect(config));
         }
 
         try {
@@ -1140,7 +1291,9 @@ public class JmxCollector implements MultiCollector {
             jmxScrapeError.set(1);
             return lastGoodSnapshots;
         } finally {
-            inFlightScrape.compareAndSet(future, null);
+            if (ownsScrape) {
+                inFlightScrape.compareAndSet(future, null);
+            }
         }
     }
 
@@ -1151,7 +1304,8 @@ public class JmxCollector implements MultiCollector {
      * @return the collected metric snapshots
      */
     private MetricSnapshots doCollect(Config config) {
-        MatchedRulesCache.StalenessTracker stalenessTracker = new MatchedRulesCache.StalenessTracker();
+        MatchedRulesCache.StalenessTracker stalenessTracker =
+                config.rulesCache != null ? new MatchedRulesCache.StalenessTracker() : null;
 
         Receiver receiver = new Receiver(config, stalenessTracker);
 
@@ -1198,7 +1352,7 @@ public class JmxCollector implements MultiCollector {
 
         jmxScrapeDurationSeconds.set((System.currentTimeMillis() - start) / 1000.0);
         jmxScrapeError.set(error);
-        jmxScrapeCachedBeans.set(stalenessTracker.freshCount());
+        jmxScrapeCachedBeans.set(stalenessTracker != null ? stalenessTracker.freshCount() : 0);
 
         return MatchedRuleToMetricSnapshotsConverter.convert(receiver.matchedRules);
     }

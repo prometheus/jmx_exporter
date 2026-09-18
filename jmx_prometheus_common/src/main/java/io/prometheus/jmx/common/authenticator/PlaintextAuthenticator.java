@@ -112,8 +112,7 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
             return false;
         }
 
-        Credentials credentials = new Credentials(username, password);
-        if (credentialsCache.contains(credentials)) {
+        if (credentialsCache.contains(username, password)) {
             return true;
         }
         verificationCount++;
@@ -123,7 +122,7 @@ public class PlaintextAuthenticator extends BasicAuthenticator {
         boolean isValid = usernameMatches & passwordMatches;
 
         if (isValid) {
-            credentialsCache.add(credentials);
+            credentialsCache.add(username, password);
         }
 
         return isValid;

@@ -24,22 +24,30 @@ Full Maven validation requires Docker for integration tests:
 
 ## Integration tests
 
-Pull smoke-test images and run the quick smoke test:
+The default `./mvnw clean verify` runs the quick Docker container set. `./run-quick-test.sh` wraps
+the same quick container set with a pre-pull and parallel test execution:
 
 ```bash
-cd integration_test_suite && ./pull-smoke-test-docker-images.sh
+cd integration_test_suite && ./pull-quick-test-docker-images.sh
 cd ..
 ./run-quick-test.sh
 ```
 
-Run all integration tests when Docker is available:
+Run the smoke container set (multiple Java images):
+
+```bash
+./run-smoke-test.sh
+```
+
+Run the integration tests against the full Docker image set when Docker is available:
 
 ```bash
 ./mvnw spotless:apply
-./mvnw test -pl integration_test_suite/integration_tests
+JAVA_DOCKER_IMAGES=ALL PROMETHEUS_DOCKER_IMAGES=ALL ./mvnw test -pl integration_test_suite/integration_tests
 ```
 
 ## Test scripts
 
-- `./run-quick-test.sh` runs a small integration smoke test set.
+- `./run-quick-test.sh` runs the quick integration test container set.
+- `./run-smoke-test.sh` runs the smoke integration test container set.
 - `./run-stress-test.sh <iterations>` repeats tests to check for flakes.
