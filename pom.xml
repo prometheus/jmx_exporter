@@ -38,7 +38,7 @@
         <!-- Dependency versions -->
         <altcontainers.version>0.4.1</altcontainers.version>
         <assertj.version>3.27.7</assertj.version>
-        <ayza.version>10.0.7</ayza.version>
+        <ayza.version>10.1.0</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <jmh.version>1.37</jmh.version>
@@ -58,7 +58,7 @@
         <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
-        <maven-bundle-plugin.version>6.1.2</maven-bundle-plugin.version>
+        <maven-bundle-plugin.version>6.2.0</maven-bundle-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
