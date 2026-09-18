@@ -5,7 +5,7 @@ permissions:
 
 jobs:
   Build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK
@@ -23,7 +23,7 @@ jobs:
 
   documentation:
     name: Build Documentation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
