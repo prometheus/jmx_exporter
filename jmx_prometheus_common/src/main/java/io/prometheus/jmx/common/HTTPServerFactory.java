@@ -228,7 +228,8 @@ public class HTTPServerFactory {
      *
      * <p>Checks for updated certificates every hour.
      */
-    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService EXECUTOR_SERVICE =
+            Executors.newSingleThreadScheduledExecutor(NamedDaemonThreadFactory.defaultThreadFactory(true));
 
     /**
      * Root path segment used when building configuration keys.
