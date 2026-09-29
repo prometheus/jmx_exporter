@@ -18,8 +18,10 @@ package io.prometheus.jmx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -61,5 +63,96 @@ public class ToSafeNameTest {
         if (input != null && !input.isEmpty()) {
             assertThat(VALID_NAME.matcher(actual)).matches();
         }
+    }
+
+    /**
+     * Pins the fast path to the general implementation for edge cases and randomized inputs.
+     */
+    @Test
+    public void testToSafeNameMatchesReferenceImplementation() {
+        Random random = new Random(20240917L);
+        char[] alphabet = ("abzAZ09_:-.@$" + '\u00e5' + '\u00f6' + '\u4e2d').toCharArray();
+
+        for (int i = 0; i < 100_000; i++) {
+            String input = randomString(random, alphabet);
+            assertThat(JmxCollector.toSafeName(input)).as("input=[%s]", input).isEqualTo(referenceToSafeName(input));
+        }
+
+        String[] edges = {
+            null,
+            "",
+            "a",
+            "_",
+            "__",
+            "___",
+            ":",
+            "::",
+            "a:",
+            ":a",
+            "0",
+            "00",
+            "0a",
+            "a0",
+            "__001",
+            "_0",
+            "1abc",
+            "abc_",
+            "abc__def",
+            "a-b",
+            "a_b",
+            "A_B",
+            "test:test",
+            "\u4e2d\u6587"
+        };
+        for (String edge : edges) {
+            assertThat(JmxCollector.toSafeName(edge)).as("input=[%s]", edge).isEqualTo(referenceToSafeName(edge));
+        }
+    }
+
+    private static String randomString(Random random, char[] alphabet) {
+        int length = random.nextInt(24);
+        StringBuilder builder = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            builder.append(alphabet[random.nextInt(alphabet.length)]);
+        }
+        return builder.toString();
+    }
+
+    // Reference implementation: the original toSafeName without the fast path.
+    private static String referenceToSafeName(String name) {
+        if (name == null) {
+            return null;
+        }
+
+        boolean prevCharIsUnderscore = false;
+        StringBuilder stringBuilder = new StringBuilder(name.length());
+
+        if (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
+            stringBuilder.append("_");
+        }
+
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            boolean isUnsafeChar = !isLegalCharacter(c);
+            if ((isUnsafeChar || c == '_')) {
+                if (!prevCharIsUnderscore) {
+                    stringBuilder.append("_");
+                    prevCharIsUnderscore = true;
+                }
+            } else {
+                stringBuilder.append(c);
+                prevCharIsUnderscore = false;
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private static boolean isLegalCharacter(char input) {
+        return ((input == ':')
+                || (input == '_')
+                || (input >= 'a' && input <= 'z')
+                || (input >= 'A' && input <= 'Z')
+                || (input >= '0' && input <= '9'));
     }
 }

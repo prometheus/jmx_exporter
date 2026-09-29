@@ -1,0 +1,7 @@
+httpServer:
+  metrics:
+    path: /metrics
+  threads:
+    minimum: 1
+    maximum: 10
+    keepAliveTime: 120

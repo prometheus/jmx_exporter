@@ -73,6 +73,14 @@ public class Arguments {
             + "(.+)"; // config file
 
     /**
+     * Compiled {@link #CONFIGURATION_REGEX} pattern.
+     *
+     * <p>Compiled once instead of on every {@link #parse(String)} call; the accepted forms and
+     * error messages are unchanged.
+     */
+    private static final Pattern CONFIGURATION_PATTERN = Pattern.compile(CONFIGURATION_REGEX);
+
+    /**
      * Flag indicating whether the HTTP server is enabled.
      *
      * <p>When {@code true}, the agent exposes metrics via HTTP. When {@code false}, only the
@@ -191,8 +199,7 @@ public class Arguments {
             throw new ConfigurationException(format("Malformed arguments [%s]", agentArgument));
         }
 
-        Pattern pattern = Pattern.compile(CONFIGURATION_REGEX);
-        Matcher matcher = pattern.matcher(agentArgument);
+        Matcher matcher = CONFIGURATION_PATTERN.matcher(agentArgument);
 
         boolean httpEnabled = false;
         String host = null;

@@ -61,8 +61,8 @@ if ! [[ "$PARALLELISM" =~ ^[1-9][0-9]*$ ]]; then
 fi
 
 (
-  unset JAVA_DOCKER_IMAGES
-  unset PROMETHEUS_DOCKER_IMAGES
+  export JAVA_DOCKER_IMAGES=SMOKE
+  export PROMETHEUS_DOCKER_IMAGES=SMOKE
   ./integration_test_suite/pull-smoke-test-docker-images.sh
   ./mvnw clean install "-Dparamixel.parallelism=${PARALLELISM}" "${JAVA_FLAGS[@]}"
 ) 2>&1 | tee smoke-test.log

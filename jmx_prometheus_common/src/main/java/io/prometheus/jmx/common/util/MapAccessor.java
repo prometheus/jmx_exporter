@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Immutable accessor for nested map structures using path-based syntax.
@@ -48,16 +50,43 @@ import java.util.function.Function;
  * boolean hasHost = accessor.containsPath("/server/host");  // Returns true
  * }</pre>
  *
- * <p>This class is immutable and thread-safe. All operations return new instances or
- * immutable views.
+ * <p>The underlying map is deep-copied into unmodifiable form at construction time, so instances
+ * are effectively immutable. Resolved path lookups are cached per instance in a bounded,
+ * thread-safe cache, making this class safe for concurrent use.
  */
 @SuppressWarnings("unchecked")
 public class MapAccessor {
 
     /**
+     * Sentinel returned by {@link #resolve(String)} when a path does not exist.
+     */
+    private static final Object ABSENT = new Object();
+
+    /**
+     * Sentinel returned by {@link #resolve(String)} when a path exists but maps to {@code null}.
+     */
+    private static final Object NULL = new Object();
+
+    /**
+     * Maximum number of resolved paths retained per instance.
+     */
+    private static final int MAX_CACHE_SIZE = 1024;
+
+    /**
+     * Pattern matching a path segment that consists only of whitespace.
+     */
+    private static final Pattern WHITESPACE_SEGMENT = Pattern.compile(".*/(\\s*)/.*");
+
+    /**
      * The underlying map, stored as an unmodifiable map.
      */
     private final Map<Object, Object> map;
+
+    /**
+     * Cache of resolved path results, keyed by validated path. Because the underlying map cannot
+     * change, cached results never become stale.
+     */
+    private final Map<String, Object> resolvedPaths = new ConcurrentHashMap<>();
 
     /**
      * Constructs a MapAccessor wrapping the given map.
@@ -91,28 +120,7 @@ public class MapAccessor {
         }
 
         path = validatePath(path);
-        if ("/".equals(path)) {
-            return true;
-        }
-
-        String[] tokens = path.split("/");
-        Object current = map;
-
-        for (int i = 1; i < tokens.length; i++) {
-            if (!(current instanceof Map)) {
-                return false;
-            }
-
-            Map<?, ?> currentMap = (Map<?, ?>) current;
-
-            if (!currentMap.containsKey(tokens[i])) {
-                return false;
-            }
-
-            current = currentMap.get(tokens[i]);
-        }
-
-        return true;
+        return resolveCached(path) != ABSENT;
     }
 
     /**
@@ -131,29 +139,14 @@ public class MapAccessor {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
-        if (!containsPath(path)) {
+        path = validatePath(path);
+        Object resolved = resolveCached(path);
+
+        if (resolved == ABSENT || resolved == NULL) {
             return Optional.empty();
         }
 
-        path = validatePath(path);
-        if ("/".equals(path)) {
-            return Optional.of(map);
-        }
-
-        String[] tokens = path.split("/");
-        Object current = map;
-
-        for (int i = 1; i < tokens.length; i++) {
-            Map<?, ?> currentMap = (Map<?, ?>) current;
-
-            if (!currentMap.containsKey(tokens[i])) {
-                return Optional.empty();
-            }
-
-            current = currentMap.get(tokens[i]);
-        }
-
-        return Optional.ofNullable(current);
+        return Optional.of(resolved);
     }
 
     /**
@@ -314,11 +307,70 @@ public class MapAccessor {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
-        if (path.matches(".*/(\\s*)/.*")) {
+        if (WHITESPACE_SEGMENT.matcher(path).matches()) {
             throw new IllegalArgumentException(format("path [%s] is invalid", path));
         }
 
         return path;
+    }
+
+    /**
+     * Resolves a validated path to its value without producing an {@link Optional}.
+     *
+     * <p>Returns {@link #ABSENT} when the path does not exist, {@link #NULL} when the path exists
+     * but maps to {@code null}, or the resolved value otherwise.
+     *
+     * @param path the validated path
+     * @return the resolved value, or an internal sentinel
+     */
+    private Object resolve(String path) {
+        if ("/".equals(path)) {
+            return map;
+        }
+
+        String[] tokens = path.split("/");
+        Object current = map;
+
+        for (int i = 1; i < tokens.length; i++) {
+            if (!(current instanceof Map)) {
+                return ABSENT;
+            }
+
+            Map<?, ?> currentMap = (Map<?, ?>) current;
+
+            if (!currentMap.containsKey(tokens[i])) {
+                return ABSENT;
+            }
+
+            current = currentMap.get(tokens[i]);
+        }
+
+        return current == null ? NULL : current;
+    }
+
+    /**
+     * Resolves a validated path, caching the result.
+     *
+     * <p>The cache is bounded to {@link #MAX_CACHE_SIZE} entries; once full, additional paths are
+     * resolved without being cached.
+     *
+     * @param path the validated path
+     * @return the resolved value, or an internal sentinel
+     */
+    private Object resolveCached(String path) {
+        Object resolved = resolvedPaths.get(path);
+
+        if (resolved != null) {
+            return resolved;
+        }
+
+        resolved = resolve(path);
+
+        if (resolvedPaths.size() < MAX_CACHE_SIZE) {
+            resolvedPaths.put(path, resolved);
+        }
+
+        return resolved;
     }
 
     /**

@@ -236,7 +236,7 @@ public class JavaAgent {
             new JmxCollector(file, JmxCollector.Mode.AGENT).register(DEFAULT_REGISTRY);
 
             if (httpEnabled) {
-                httpServer = startHttpServer(arguments, file);
+                httpServer = startHttpServer(arguments, mapAccessor);
             }
 
             LOGGER.info("HTTP enabled [%b]", httpEnabled);
@@ -244,7 +244,7 @@ public class JavaAgent {
             LOGGER.info("OpenTelemetry enabled [%b]", openTelemetryEnabled);
 
             if (openTelemetryEnabled) {
-                openTelemetryExporter = startOpenTelemetryExporter(file);
+                openTelemetryExporter = startOpenTelemetryExporter(mapAccessor);
             }
 
             LOGGER.info("Running ...");
@@ -260,19 +260,19 @@ public class JavaAgent {
      * hook is registered to ensure the server is closed cleanly on JVM shutdown.
      *
      * @param arguments the parsed agent arguments containing host and port, must not be {@code null}
-     * @param file the configuration file, must not be {@code null}
+     * @param mapAccessor the already-parsed configuration, must not be {@code null}
      * @return the started HTTP server instance
      * @throws Exception if the HTTP server fails to start
      */
-    private static HTTPServer startHttpServer(Arguments arguments, File file) throws Exception {
+    private static HTTPServer startHttpServer(Arguments arguments, MapAccessor mapAccessor) throws Exception {
         String host = arguments.getHost();
         int port = arguments.getPort();
 
         LOGGER.info("HTTP host:port [%s:%d]", host, port);
         LOGGER.info("Starting HTTPServer ...");
 
-        HTTPServer httpServer =
-                HTTPServerFactory.createAndStartHTTPServer(DEFAULT_REGISTRY, InetAddress.getByName(host), port, file);
+        HTTPServer httpServer = HTTPServerFactory.createAndStartHTTPServer(
+                DEFAULT_REGISTRY, InetAddress.getByName(host), port, mapAccessor);
 
         LOGGER.info("HTTPServer started");
 
@@ -287,16 +287,16 @@ public class JavaAgent {
      * <p>The exporter configuration is read from the configuration file. A shutdown hook is
      * registered to ensure the exporter is closed cleanly on JVM shutdown.
      *
-     * @param file the configuration file containing OpenTelemetry settings, must not be
-     *     {@code null}
+     * @param mapAccessor the already-parsed configuration containing OpenTelemetry settings, must
+     *     not be {@code null}
      * @return the started OpenTelemetry exporter instance
      * @throws Exception if the exporter fails to start
      */
-    private static OpenTelemetryExporter startOpenTelemetryExporter(File file) throws Exception {
+    private static OpenTelemetryExporter startOpenTelemetryExporter(MapAccessor mapAccessor) throws Exception {
         LOGGER.info("Starting OpenTelemetry ...");
 
         OpenTelemetryExporter openTelemetryExporter =
-                OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(DEFAULT_REGISTRY, file);
+                OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(DEFAULT_REGISTRY, mapAccessor);
 
         LOGGER.info("OpenTelemetry started");
 

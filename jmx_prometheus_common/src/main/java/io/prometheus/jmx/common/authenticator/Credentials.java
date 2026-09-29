@@ -77,6 +77,25 @@ public class Credentials {
     }
 
     /**
+     * Returns the username. Package-private for internal cache key construction; the cache uses a
+     * lightweight probe key so it does not need to allocate a full {@code Credentials}.
+     *
+     * @return the username
+     */
+    String username() {
+        return username;
+    }
+
+    /**
+     * Returns the password. Package-private for internal cache key construction.
+     *
+     * @return the password
+     */
+    String password() {
+        return password;
+    }
+
+    /**
      * Returns the UTF-8 byte size of the concatenated username and password.
      *
      * @return the total size in bytes

@@ -137,10 +137,13 @@ public class MatchedRuleToMetricSnapshotsConverter {
      * If all rules have the same type, that type is returned. Otherwise, "UNKNOWN" is returned.
      */
     private static String getType(List<MatchedRule> rulesWithSameName) {
-        if (rulesWithSameName.stream().map(rule -> rule.type).distinct().count() == 1) {
-            return rulesWithSameName.get(0).type;
+        String type = rulesWithSameName.get(0).type;
+        for (int i = 1; i < rulesWithSameName.size(); i++) {
+            if (!java.util.Objects.equals(type, rulesWithSameName.get(i).type)) {
+                return "UNKNOWN";
+            }
         }
-        return "UNKNOWN";
+        return type;
     }
 
     private static boolean isLabelsUnique(List<MatchedRule> rulesWithSameName) {

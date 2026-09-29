@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MatchedRulesCache {
 
-    private final Map<CacheKey, MatchedRule> cache;
+    private final Map<CacheKey, Entry> cache;
 
     /**
      * Constructs an empty cache
@@ -42,7 +42,7 @@ public class MatchedRulesCache {
      * @param matchedRule the matched rule
      */
     public void put(final CacheKey key, final MatchedRule matchedRule) {
-        cache.put(key, matchedRule);
+        cache.put(key, new Entry(key, matchedRule));
     }
 
     /**
@@ -52,6 +52,19 @@ public class MatchedRulesCache {
      * @return a MatchedRule from cache or null
      */
     public MatchedRule get(final CacheKey key) {
+        Entry entry = cache.get(key);
+        return entry == null ? null : entry.rule;
+    }
+
+    /**
+     * Retrieves the cache entry for a lookup key. The returned entry exposes the canonical stored
+     * key, allowing a cache hit to be marked fresh without allocating a defensive copy of the
+     * caller's bean metadata.
+     *
+     * @param key the lookup key
+     * @return the cache entry or null
+     */
+    Entry getEntry(final CacheKey key) {
         return cache.get(key);
     }
 
@@ -113,6 +126,20 @@ public class MatchedRulesCache {
     }
 
     /**
+     * A cache entry. It keeps the canonical stored key together with the cached rule so a cache hit
+     * can be marked fresh using the already-stored key instead of a freshly allocated copy.
+     */
+    static final class Entry {
+        final CacheKey key;
+        final MatchedRule rule;
+
+        Entry(final CacheKey key, final MatchedRule rule) {
+            this.key = key;
+            this.rule = rule;
+        }
+    }
+
+    /**
      * CacheKey is a key for the cache. It contains the domain, bean properties, attribute keys and
      * attribute name.
      */
@@ -133,11 +160,48 @@ public class MatchedRulesCache {
          */
         public CacheKey(
                 String domain, LinkedHashMap<String, String> beanProperties, List<String> attrKeys, String attrName) {
+            this(domain, beanProperties, attrKeys, attrName, true);
+        }
+
+        private CacheKey(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                List<String> attrKeys,
+                String attrName,
+                boolean defensiveCopy) {
             this.domain = domain;
-            this.beanProperties = new LinkedHashMap<>(beanProperties);
-            this.attrKeys = new ArrayList<>(attrKeys);
+            this.beanProperties = defensiveCopy ? new LinkedHashMap<>(beanProperties) : beanProperties;
+            this.attrKeys = defensiveCopy ? new ArrayList<>(attrKeys) : attrKeys;
             this.attrName = attrName;
             this.cachedHashCode = Objects.hash(domain, this.beanProperties, this.attrKeys, attrName);
+        }
+
+        /**
+         * Creates a non-copying lookup key. It references the caller's bean metadata and must only
+         * be used transiently (for example, as a cache probe). It must never be stored in the cache
+         * or the staleness tracker, because the referenced collections may be mutated by the caller
+         * after the lookup.
+         *
+         * @param domain the domain
+         * @param beanProperties the bean properties
+         * @param attrKeys the attribute keys
+         * @param attrName the attribute name
+         * @return a lookup key
+         */
+        static CacheKey lookup(
+                String domain, LinkedHashMap<String, String> beanProperties, List<String> attrKeys, String attrName) {
+            return new CacheKey(domain, beanProperties, attrKeys, attrName, false);
+        }
+
+        /**
+         * Creates a defensive copy of this key suitable for storing in the cache. When this key is
+         * already a stored key this is a no-op copy, so mutation of caller-owned collections cannot
+         * affect the cache.
+         *
+         * @return a key with defensively copied bean metadata
+         */
+        CacheKey storedCopy() {
+            return new CacheKey(domain, beanProperties, attrKeys, attrName, true);
         }
 
         @Override

@@ -27,18 +27,24 @@ import java.util.List;
  * <ol>
  *   <li>Environment variable {@code JAVA_DOCKER_IMAGES}</li>
  *   <li>System property {@code java.docker.images}</li>
- *   <li>Smoke test image list (default)</li>
+ *   <li>Quick test image list (default)</li>
  * </ol>
  *
- * <p>Setting the value to {@code ALL} selects the full image list.
+ * <p>Setting the value to {@code QUICK}, {@code SMOKE}, or {@code ALL} (case-insensitive)
+ * selects the quick, smoke, or full image list respectively.
  */
 public final class JavaDockerImages {
 
     private static final String DOCKER_IMAGES_CONFIGURATION = "java.docker.images";
 
+    private static final String QUICK_TEST_DOCKER_IMAGES_RESOURCE = "/quick-test-java-docker-images.txt";
+
     private static final String SMOKE_TEST_DOCKER_IMAGES_RESOURCE = "/smoke-test-java-docker-images.txt";
 
     private static final String ALL_DOCKER_IMAGES_RESOURCE = "/java-docker-images.txt";
+
+    private static final List<String> QUICK_TEST_DOCKER_IMAGES =
+            DockerImagesSupport.load(QUICK_TEST_DOCKER_IMAGES_RESOURCE, JavaDockerImages.class);
 
     private static final List<String> SMOKE_TEST_DOCKER_IMAGES =
             DockerImagesSupport.load(SMOKE_TEST_DOCKER_IMAGES_RESOURCE, JavaDockerImages.class);
@@ -52,13 +58,17 @@ public final class JavaDockerImages {
      * Returns the configured Java Docker image names for integration tests.
      *
      * <p>Checks the environment variable {@code JAVA_DOCKER_IMAGES} first, then the system
-     * property {@code java.docker.images}. If neither is set, returns the smoke test image list.
-     * If the value is {@code ALL}, returns the complete image list.
+     * property {@code java.docker.images}. If neither is set, returns the quick test image list.
+     * If the value is {@code QUICK}, {@code SMOKE}, or {@code ALL} (case-insensitive), returns the
+     * quick, smoke, or complete image list respectively.
      *
      * @return an unmodifiable collection of Docker image names
      */
     public static Collection<String> names() {
         return DockerImagesSupport.resolveNames(
-                DOCKER_IMAGES_CONFIGURATION, SMOKE_TEST_DOCKER_IMAGES, ALL_DOCKER_IMAGE_NAMES);
+                DOCKER_IMAGES_CONFIGURATION,
+                QUICK_TEST_DOCKER_IMAGES,
+                SMOKE_TEST_DOCKER_IMAGES,
+                ALL_DOCKER_IMAGE_NAMES);
     }
 }

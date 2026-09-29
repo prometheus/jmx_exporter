@@ -19,6 +19,7 @@ package io.prometheus.jmx.common;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import io.prometheus.jmx.common.util.MapAccessor;
 import io.prometheus.metrics.exporter.opentelemetry.OpenTelemetryExporter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -46,7 +48,23 @@ public class OpenTelemetryExporterFactoryTest {
     public void testNullExporterYamlFile() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
-                        new PrometheusRegistry(), null));
+                        new PrometheusRegistry(), (File) null));
+    }
+
+    @Test
+    public void testNullRootMapAccessor() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
+                        new PrometheusRegistry(), (MapAccessor) null));
+    }
+
+    @Test
+    public void mapAccessorWithoutOpenTelemetrySectionReturnsNull() {
+        MapAccessor rootMapAccessor = MapAccessor.of(new LinkedHashMap<>());
+
+        assertThat(OpenTelemetryExporterFactory.createAndStartOpenTelemetryExporter(
+                        new PrometheusRegistry(), rootMapAccessor))
+                .isNull();
     }
 
     @Test

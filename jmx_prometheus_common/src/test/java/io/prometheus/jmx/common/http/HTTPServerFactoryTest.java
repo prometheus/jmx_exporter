@@ -21,6 +21,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 
 import io.prometheus.jmx.common.ConfigurationException;
 import io.prometheus.jmx.common.HTTPServerFactory;
+import io.prometheus.jmx.common.util.MapAccessor;
+import io.prometheus.jmx.common.util.YamlSupport;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.File;
@@ -557,6 +559,34 @@ public class HTTPServerFactoryTest {
 
         httpServer = startServer(config);
         assertThat(httpServer).isNotNull();
+    }
+
+    @Test
+    public void createAndStartHTTPServerFromMapAccessorHonorsMetricsPath() throws Exception {
+        File config = new File(temporaryFolder, "map_accessor_metrics_path");
+        PrintWriter writer = new PrintWriter(config);
+        writer.println("httpServer:");
+        writer.println("  metrics:");
+        writer.println("    path: /custom");
+        writer.close();
+
+        MapAccessor rootMapAccessor = MapAccessor.of(YamlSupport.loadYaml(config));
+
+        httpServer = HTTPServerFactory.createAndStartHTTPServer(
+                prometheusRegistry, InetAddress.getByName("0.0.0.0"), 0, rootMapAccessor);
+
+        try (Socket socket = new Socket()) {
+            socket.setSoTimeout(1000);
+            socket.connect(new InetSocketAddress("localhost", httpServer.getPort()));
+            socket.getOutputStream().write("GET /custom HTTP/1.1 \r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().write("HOST: localhost \r\n\r\n".getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+
+            byte[] response = new byte[500];
+            int read = socket.getInputStream().read(response, 0, response.length);
+            String actualResponse = read > 0 ? new String(response, 0, read, StandardCharsets.UTF_8) : "";
+            assertThat(actualResponse).contains("HTTP/1.1 200");
+        }
     }
 
     private HTTPServer startServer(File config) throws IOException {
