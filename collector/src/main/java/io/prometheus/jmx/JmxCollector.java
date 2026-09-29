@@ -46,12 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -208,7 +202,6 @@ public class JmxCollector implements MultiCollector {
         long lastUpdate = 0L;
         List<MetricCustomizer> metricCustomizers = new ArrayList<>();
         MatchedRulesCache rulesCache;
-        Integer scrapeTimeoutSeconds = null;
     }
 
     private Config config;
@@ -220,20 +213,7 @@ public class JmxCollector implements MultiCollector {
     private Gauge jmxScrapeDurationSeconds;
     private Gauge jmxScrapeError;
     private Gauge jmxScrapeCachedBeans;
-    private Counter scrapeTimeoutCounter;
 
-    private static final ExecutorService SCRAPE_EXECUTOR;
-
-    static {
-        SCRAPE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "jmx-scrape");
-            t.setDaemon(true);
-            return t;
-        });
-        Runtime.getRuntime().addShutdownHook(new Thread(SCRAPE_EXECUTOR::shutdownNow));
-    }
-
-    private final AtomicReference<Future<MetricSnapshots>> inFlightScrape = new AtomicReference<>(null);
     private volatile MetricSnapshots lastGoodSnapshots = MetricSnapshots.of();
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
@@ -335,11 +315,6 @@ public class JmxCollector implements MultiCollector {
                 .help("Number of beans with their matching rule cached")
                 .register(prometheusRegistry);
 
-        scrapeTimeoutCounter = Counter.builder()
-                .name("jmx_scrape_timeout_total")
-                .help("Total number of scrape timeouts.")
-                .register(prometheusRegistry);
-
         prometheusRegistry.register(this);
 
         return this;
@@ -400,17 +375,6 @@ public class JmxCollector implements MultiCollector {
                 }
             } catch (ClassCastException e) {
                 throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
-            }
-        }
-
-        if (yamlConfig.containsKey("scrapeTimeoutSeconds")) {
-            try {
-                cfg.scrapeTimeoutSeconds = (Integer) yamlConfig.get("scrapeTimeoutSeconds");
-                if (cfg.scrapeTimeoutSeconds <= 0) {
-                    throw new IllegalArgumentException("scrapeTimeoutSeconds must be at least 1");
-                }
-            } catch (ClassCastException e) {
-                throw new IllegalArgumentException("Invalid number provided for scrapeTimeoutSeconds", e);
             }
         }
 
@@ -1080,67 +1044,15 @@ public class JmxCollector implements MultiCollector {
         // Take a reference to the current config and collect with this one
         // (to avoid race conditions in case another thread reloads the config in the meantime)
         Config config = getLatestConfig();
-        Integer timeout = config.scrapeTimeoutSeconds;
-
-        // Single-flight: check for in-flight scrape
-        if (timeout != null) {
-            Future<MetricSnapshots> existing = inFlightScrape.get();
-            if (existing != null) {
-                try {
-                    return existing.get(timeout, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    scrapeTimeoutCounter.inc();
-                    return lastGoodSnapshots;
-                } catch (Exception e) {
-                    jmxScrapeError.set(1);
-                    return lastGoodSnapshots;
-                }
-            }
-        }
-
-        // No in-flight scrape — run one
-        Future<MetricSnapshots> future = SCRAPE_EXECUTOR.submit(() -> doCollect(config));
-
-        if (timeout != null) {
-            if (!inFlightScrape.compareAndSet(null, future)) {
-                future.cancel(true);
-                Future<MetricSnapshots> existing = inFlightScrape.get();
-                try {
-                    return existing.get(timeout, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    scrapeTimeoutCounter.inc();
-                    return lastGoodSnapshots;
-                } catch (Exception e) {
-                    jmxScrapeError.set(1);
-                    return lastGoodSnapshots;
-                }
-            }
-        }
-
         try {
-            MetricSnapshots result;
-            if (timeout != null) {
-                result = future.get(timeout, TimeUnit.SECONDS);
-            } else {
-                result = future.get();
-            }
+            MetricSnapshots result = doCollect(config);
             lastGoodSnapshots = result;
             return result;
-        } catch (TimeoutException e) {
-            scrapeTimeoutCounter.inc();
-            return lastGoodSnapshots;
-        } catch (java.util.concurrent.ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            jmxScrapeError.set(1);
-            return lastGoodSnapshots;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             jmxScrapeError.set(1);
             return lastGoodSnapshots;
-        } finally {
-            inFlightScrape.compareAndSet(future, null);
         }
     }
 

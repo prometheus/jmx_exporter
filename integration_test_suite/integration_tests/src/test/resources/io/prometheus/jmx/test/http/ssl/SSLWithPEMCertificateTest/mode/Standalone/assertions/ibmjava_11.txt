@@ -106,7 +106,6 @@ match COUNTER jmx_http_requests_rejected_total 0.0
 match GAUGE jmx_scrape_cached_beans *
 match GAUGE jmx_scrape_duration_seconds *
 match GAUGE jmx_scrape_error 0.0
-match COUNTER jmx_scrape_timeout_total 0.0
 match UNTYPED org_exist_management_exist_ProcessReport_RunningQueries_elapsedTime{key_id="1",key_path="/db/query1.xq"} 8.1583877779E10
 match UNTYPED org_exist_management_exist_ProcessReport_RunningQueries_elapsedTime{key_id="2",key_path="/db/query2.xq"} 8.1583877779E10
 match UNTYPED org_exist_management_exist_ProcessReport_RunningQueries_id{key_id="1",key_path="/db/query1.xq"} 1.0

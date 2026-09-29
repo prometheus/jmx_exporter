@@ -106,7 +106,6 @@ match COUNTER jmx_http_requests_rejected_total 0.0
 match GAUGE jmx_scrape_cached_beans *
 match GAUGE jmx_scrape_duration_seconds *
 match GAUGE jmx_scrape_error 0.0
-match COUNTER jmx_scrape_timeout_total 0.0
 match GAUGE jvm_buffer_pool_capacity_bytes{pool="direct"} *
 match GAUGE jvm_buffer_pool_capacity_bytes{pool="mapped"} *
 match GAUGE jvm_buffer_pool_used_buffers{pool="direct"} *
