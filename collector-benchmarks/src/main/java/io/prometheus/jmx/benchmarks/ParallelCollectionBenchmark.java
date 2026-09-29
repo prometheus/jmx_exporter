@@ -45,10 +45,11 @@ import org.openjdk.jmh.infra.Blackhole;
 /**
  * Benchmarks parallel collection on a single {@link JmxCollector}.
  *
- * <p>The collector is created with a scrape thread pool sized to {@link #poolSize}. The {@code
- * parallelCollect} benchmark starts {@code poolSize} concurrent scrapes (one per pool thread) and
- * waits for all of them, while {@code sequentialCollect} performs the same number of scrapes one
- * after another. Comparing the two shows whether collection is actually running in parallel.
+ * <p>The collector performs its work directly on the calling thread, so parallelism comes from the
+ * caller. The {@code parallelCollect} benchmark starts {@code poolSize} concurrent scrapes (one per
+ * caller thread) and waits for all of them, while {@code sequentialCollect} performs the same number
+ * of scrapes one after another. Comparing the two shows whether concurrent {@code collect()} calls
+ * actually run in parallel.
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -62,7 +63,7 @@ public class ParallelCollectionBenchmark {
     private static final int ATTRIBUTE_COUNT = 10;
 
     /**
-     * Scrape thread pool size, which is also the number of concurrent scrapes.
+     * Number of concurrent scrapes issued by the benchmark (also used as the caller thread pool size).
      */
     @Param({"1", "2", "4", "8"})
     public int poolSize;
@@ -80,7 +81,7 @@ public class ParallelCollectionBenchmark {
     public void setUp() throws Exception {
         registeredBeans = BenchmarkMBeans.register(BEAN_COUNT, ATTRIBUTE_COUNT);
 
-        collector = new JmxCollector(BenchmarkMBeans.INCLUDE_OBJECT_NAMES, poolSize);
+        collector = new JmxCollector(BenchmarkMBeans.INCLUDE_OBJECT_NAMES);
         collector.register(new PrometheusRegistry());
 
         callerExecutor = Executors.newFixedThreadPool(poolSize);

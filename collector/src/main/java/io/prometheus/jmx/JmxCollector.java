@@ -238,23 +238,9 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
-        this(in, mode, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param in the configuration file, must not be null
-     * @param mode the collector mode, may be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws IOException if an I/O error occurs
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(File in, Mode mode, int poolSize) throws IOException, MalformedObjectNameException {
         Objects.requireNonNull(in, "configuration file must not be null");
         configFile = in;
         this.mode = mode;
-        scrapeExecutor = createScrapeExecutor(poolSize);
         try (FileReader fr = new FileReader(in)) {
             config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(fr));
         }
@@ -269,19 +255,7 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        this(yamlConfig, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param yamlConfig the YAML configuration string, must not be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(String yamlConfig, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(yamlConfig, "YAML configuration must not be null");
-        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(yamlConfig));
         mode = null;
     }
@@ -293,35 +267,9 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        this(inputStream, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param inputStream the input stream containing YAML configuration, must not be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(InputStream inputStream, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(inputStream, "input stream must not be null");
-        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(inputStream));
         mode = null;
-    }
-
-    private static ExecutorService createScrapeExecutor(int poolSize) {
-        if (poolSize < 1) {
-            throw new IllegalArgumentException("poolSize must be at least 1");
-        }
-        ThreadPoolExecutor executor =
-                new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
-                    Thread thread = new Thread(r, "jmx-scrape");
-                    thread.setDaemon(true);
-                    return thread;
-                });
-        executor.allowCoreThreadTimeOut(true);
-        return executor;
     }
 
     /**
