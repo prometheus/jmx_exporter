@@ -69,10 +69,13 @@ class JmxMBeanPropertyCache {
     }
 
     public LinkedHashMap<String, String> getKeyPropertyList(ObjectName mbeanName) {
-        LinkedHashMap<String, String> keyProperties = keyPropertiesPerBean.get(mbeanName);
-        if (keyProperties == null) {
-            keyProperties = new LinkedHashMap<>();
-            String properties = mbeanName.getKeyPropertyListString();
+        // Use computeIfAbsent so that, when several scrapes race on a cache miss for the same
+        // key, only one thread performs the (regex) parsing and builds the mapping. The mapping
+        // function only builds and returns a local map; it never mutates keyPropertiesPerBean,
+        // which is what computeIfAbsent requires.
+        return keyPropertiesPerBean.computeIfAbsent(mbeanName, key -> {
+            LinkedHashMap<String, String> keyProperties = new LinkedHashMap<>();
+            String properties = key.getKeyPropertyListString();
             Matcher match = PROPERTY_PATTERN.matcher(properties);
             while (match.lookingAt()) {
                 keyProperties.put(match.group(1), match.group(2));
@@ -82,9 +85,8 @@ class JmxMBeanPropertyCache {
                 }
                 match.reset(properties);
             }
-            keyPropertiesPerBean.put(mbeanName, keyProperties);
-        }
-        return keyProperties;
+            return keyProperties;
+        });
     }
 
     public void onlyKeepMBeans(Set<ObjectName> latestBeans) {
