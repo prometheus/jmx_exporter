@@ -1829,24 +1829,14 @@ public class HTTPServerFactory {
     /**
      * Thread factory for creating named daemon threads for the HTTP server thread pool.
      *
-     * <p>Threads are named with the pattern {@code prometheus-http-{pool}-{thread}}.
+     * <p>Threads are named with the pattern {@code prometheus-http-{thread}}.
      *
      * <p>Copied from {@code prometheus/client_java} HTTPServer due to scoping issues.
      */
     private static class NamedDaemonThreadFactory implements ThreadFactory {
 
         /**
-         * Counter for generating unique pool numbers.
-         */
-        private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);
-
-        /**
-         * The pool number for this factory instance.
-         */
-        private final int poolNumber = POOL_NUMBER.getAndIncrement();
-
-        /**
-         * Counter for generating unique thread numbers within the pool.
+         * Counter for generating unique thread numbers.
          */
         private final AtomicInteger threadNumber = new AtomicInteger(1);
 
@@ -1880,7 +1870,7 @@ public class HTTPServerFactory {
         @Override
         public Thread newThread(Runnable r) {
             Thread t = delegate.newThread(r);
-            t.setName(format("prometheus-http-%d-%d", poolNumber, threadNumber.getAndIncrement()));
+            t.setName(format("prometheus-http-%d", threadNumber.getAndIncrement()));
             t.setDaemon(daemon);
             return t;
         }
