@@ -46,14 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -210,7 +202,6 @@ public class JmxCollector implements MultiCollector {
         long lastUpdate = 0L;
         List<MetricCustomizer> metricCustomizers = new ArrayList<>();
         MatchedRulesCache rulesCache;
-        Integer scrapeTimeoutSeconds = null;
     }
 
     private Config config;
@@ -222,13 +213,7 @@ public class JmxCollector implements MultiCollector {
     private Gauge jmxScrapeDurationSeconds;
     private Gauge jmxScrapeError;
     private Gauge jmxScrapeCachedBeans;
-    private Counter scrapeTimeoutCounter;
 
-    private static final int DEFAULT_POOL_SIZE = Runtime.getRuntime().availableProcessors();
-
-    private final ExecutorService scrapeExecutor;
-
-    private final AtomicReference<Future<MetricSnapshots>> inFlightScrape = new AtomicReference<>(null);
     private volatile MetricSnapshots lastGoodSnapshots = MetricSnapshots.of();
 
     private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
@@ -253,23 +238,9 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(File in, Mode mode) throws IOException, MalformedObjectNameException {
-        this(in, mode, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param in the configuration file, must not be null
-     * @param mode the collector mode, may be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws IOException if an I/O error occurs
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(File in, Mode mode, int poolSize) throws IOException, MalformedObjectNameException {
         Objects.requireNonNull(in, "configuration file must not be null");
         configFile = in;
         this.mode = mode;
-        scrapeExecutor = createScrapeExecutor(poolSize);
         try (FileReader fr = new FileReader(in)) {
             config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(fr));
         }
@@ -284,19 +255,7 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(String yamlConfig) throws MalformedObjectNameException {
-        this(yamlConfig, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param yamlConfig the YAML configuration string, must not be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(String yamlConfig, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(yamlConfig, "YAML configuration must not be null");
-        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(yamlConfig));
         mode = null;
     }
@@ -308,35 +267,9 @@ public class JmxCollector implements MultiCollector {
      * @throws MalformedObjectNameException if the ObjectName is invalid
      */
     public JmxCollector(InputStream inputStream) throws MalformedObjectNameException {
-        this(inputStream, DEFAULT_POOL_SIZE);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param inputStream the input stream containing YAML configuration, must not be null
-     * @param poolSize the maximum number of concurrent scrapes, must be at least 1
-     * @throws MalformedObjectNameException if the ObjectName is invalid
-     */
-    public JmxCollector(InputStream inputStream, int poolSize) throws MalformedObjectNameException {
         Objects.requireNonNull(inputStream, "input stream must not be null");
-        scrapeExecutor = createScrapeExecutor(poolSize);
         config = loadConfig(new Yaml(new SafeConstructor(new LoaderOptions())).load(inputStream));
         mode = null;
-    }
-
-    private static ExecutorService createScrapeExecutor(int poolSize) {
-        if (poolSize < 1) {
-            throw new IllegalArgumentException("poolSize must be at least 1");
-        }
-        ThreadPoolExecutor executor =
-                new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
-                    Thread thread = new Thread(r, "jmx-scrape");
-                    thread.setDaemon(true);
-                    return thread;
-                });
-        executor.allowCoreThreadTimeOut(true);
-        return executor;
     }
 
     /**
@@ -380,11 +313,6 @@ public class JmxCollector implements MultiCollector {
         jmxScrapeCachedBeans = Gauge.builder()
                 .name("jmx_scrape_cached_beans")
                 .help("Number of beans with their matching rule cached")
-                .register(prometheusRegistry);
-
-        scrapeTimeoutCounter = Counter.builder()
-                .name("jmx_scrape_timeout_total")
-                .help("Total number of scrape timeouts.")
                 .register(prometheusRegistry);
 
         prometheusRegistry.register(this);
@@ -447,17 +375,6 @@ public class JmxCollector implements MultiCollector {
                 }
             } catch (ClassCastException e) {
                 throw new IllegalArgumentException("Invalid number provided for startDelaySeconds", e);
-            }
-        }
-
-        if (yamlConfig.containsKey("scrapeTimeoutSeconds")) {
-            try {
-                cfg.scrapeTimeoutSeconds = (Integer) yamlConfig.get("scrapeTimeoutSeconds");
-                if (cfg.scrapeTimeoutSeconds <= 0) {
-                    throw new IllegalArgumentException("scrapeTimeoutSeconds must be at least 1");
-                }
-            } catch (ClassCastException e) {
-                throw new IllegalArgumentException("Invalid number provided for scrapeTimeoutSeconds", e);
             }
         }
 
@@ -1241,59 +1158,15 @@ public class JmxCollector implements MultiCollector {
         // Take a reference to the current config and collect with this one
         // (to avoid race conditions in case another thread reloads the config in the meantime)
         Config config = getLatestConfig();
-        Integer timeout = config.scrapeTimeoutSeconds;
-
-        Future<MetricSnapshots> future;
-        boolean ownsScrape = false;
-
-        if (timeout != null) {
-            // Single-flight: join an in-flight scrape, or start a new one.
-            while (true) {
-                Future<MetricSnapshots> existing = inFlightScrape.get();
-                if (existing != null) {
-                    future = existing;
-                    break;
-                }
-                FutureTask<MetricSnapshots> task = new FutureTask<>(() -> doCollect(config));
-                if (inFlightScrape.compareAndSet(null, task)) {
-                    scrapeExecutor.execute(task);
-                    future = task;
-                    ownsScrape = true;
-                    break;
-                }
-            }
-        } else {
-            // No timeout is configured, so run each scrape independently. Combined with this
-            // collector's thread pool this allows concurrent collection.
-            future = scrapeExecutor.submit(() -> doCollect(config));
-        }
-
         try {
-            MetricSnapshots result;
-            if (timeout != null) {
-                result = future.get(timeout, TimeUnit.SECONDS);
-            } else {
-                result = future.get();
-            }
+            MetricSnapshots result = doCollect(config);
             lastGoodSnapshots = result;
             return result;
-        } catch (TimeoutException e) {
-            scrapeTimeoutCounter.inc();
-            return lastGoodSnapshots;
-        } catch (java.util.concurrent.ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            jmxScrapeError.set(1);
-            return lastGoodSnapshots;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             jmxScrapeError.set(1);
             return lastGoodSnapshots;
-        } finally {
-            if (ownsScrape) {
-                inFlightScrape.compareAndSet(future, null);
-            }
         }
     }
 
