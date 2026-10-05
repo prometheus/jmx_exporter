@@ -166,13 +166,25 @@ public class MetricsAssertions {
             "process_",
 
             // JMX Exporter metrics.
-            "jmx_build_info",
             "jmx_scrape_duration_",
             "jmx_scrape_cached_beans",
 
             // Test/demo metrics that intentionally change.
             "io_prometheus_jmx_autoIncrementing_",
             "auto_increment_counter"));
+
+    /**
+     * Label values that are build- or release-specific and must be written as
+     * {@code *} (any value acceptable) in generated assertion files.
+     *
+     * <p>Key: metric name prefix. Value: label keys to wildcard. Wildcarding these
+     * labels prevents freshly generated assertion files from pinning a specific
+     * exporter build or release version, which changes with every release. For
+     * example, {@code jmx_exporter_build_info{name="jmx_prometheus_standalone",
+     * version="1.2.3"}} is written as {@code ...version="*"}.
+     */
+    private static final Map<String, Set<String>> RUNTIME_SPECIFIC_LABEL_KEYS =
+            Map.of("jmx_exporter_build_info", Set.of("version"));
 
     private static final double VALUE_TOLERANCE = 1e-10;
     private static final String WRITE_DIRECTORY_PROPERTY = "metricAssertions.write.dir";
@@ -742,6 +754,15 @@ public class MetricsAssertions {
         return false;
     }
 
+    private static boolean isRuntimeSpecificLabel(String name, String labelKey) {
+        for (Map.Entry<String, Set<String>> entry : RUNTIME_SPECIFIC_LABEL_KEYS.entrySet()) {
+            if (name.startsWith(entry.getKey()) && entry.getValue().contains(labelKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean isRuntimeNameExcluded(String name) {
         String lowerName = name.toLowerCase();
         for (String prefix : EXCLUDE_METRIC_NAME_PREFIXES) {
@@ -753,9 +774,11 @@ public class MetricsAssertions {
     }
 
     /**
-     * Canonicalizes a label value by matching it against known canonical
-     * suffixes. If the value ends with a canonical suffix, returns that
-     * suffix prefixed with {@code *}. Otherwise returns the original value.
+     * Canonicalizes a label value. If the label is build- or release-specific (see
+     * {@link #RUNTIME_SPECIFIC_LABEL_KEYS}) the value is replaced with {@code *} so the
+     * generated assertion does not pin a specific version. Otherwise, if the value ends
+     * with a known canonical suffix, returns that suffix prefixed with {@code *}. If no
+     * rule matches, returns the original value.
      *
      * @param metricName the metric name to look up in the canonicalization table
      * @param labelKey the label key to look up in the canonicalization table
@@ -763,6 +786,9 @@ public class MetricsAssertions {
      * @return the canonicalized label value, or the original value if no match
      */
     static String canonicalizeLabelValue(String metricName, String labelKey, String labelValue) {
+        if (isRuntimeSpecificLabel(metricName, labelKey)) {
+            return "*";
+        }
         for (Map.Entry<String, Map<String, Set<String>>> familyEntry : LABEL_SUFFIX_CANONICALIZATION.entrySet()) {
             if (!metricName.startsWith(familyEntry.getKey())) {
                 continue;
