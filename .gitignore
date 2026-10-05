@@ -21,6 +21,9 @@ __pycache__/
 .pi/plans/
 .pi/specs/
 
+# local implementation plans
+/plans/
+
 # documentation site generated files
 website/node_modules/
 website/.docusaurus/
