@@ -92,10 +92,13 @@ build_documentation() {
 
 serve_documentation() {
     log "Serving documentation..."
+    # Run npm from inside the website directory instead of using --prefix, which
+    # makes npm resolve the project root by walking up the given path and can
+    # pick up an unrelated node_modules directory in a parent directory.
     if [[ -n "${PORT}" ]]; then
-        npm run serve --prefix "${WEBSITE_DIR}" -- --port "${PORT}"
+        (cd "${WEBSITE_DIR}" && npm run serve -- --port "${PORT}")
     else
-        npm run serve --prefix "${WEBSITE_DIR}"
+        (cd "${WEBSITE_DIR}" && npm run serve)
     fi
 }
 

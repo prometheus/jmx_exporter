@@ -213,19 +213,28 @@ validate_internal_links() {
     log "Internal links are validated by Docusaurus during npm run build."
 }
 
+# Runs npm from inside the website directory instead of using --prefix.
+# `npm --prefix <dir>` makes npm resolve the project root by walking up the
+# given path, so an unrelated node_modules directory in a parent directory
+# (for example ${HOME}/node_modules) is mistaken for the project root and the
+# command can fail or resolve modules from the wrong location.
+run_in_website() {
+    (cd "${WEBSITE_DIR}" && "$@")
+}
+
 install_dependencies() {
     log "Installing dependencies in ${WEBSITE_DIR}/..."
 
     if [[ -f "${WEBSITE_DIR}/package-lock.json" ]]; then
-        npm ci --prefix "${WEBSITE_DIR}"
+        run_in_website npm ci
     else
-        npm install --prefix "${WEBSITE_DIR}"
+        run_in_website npm install
     fi
 }
 
 build_documentation() {
     log "Building documentation..."
-    npm run build --prefix "${WEBSITE_DIR}"
+    run_in_website npm run build
 }
 
 main() {
