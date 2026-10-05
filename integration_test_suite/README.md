@@ -21,32 +21,31 @@ integration_test_suite/
 │   │   ├── http/metrics/path/            # Custom metrics path tests
 │   │   ├── opentelemetry/                # OpenTelemetry integration tests
 │   │   └── rmi/ssl/                      # RMI SSL connection tests
-│   ├── src/test/resources/               # Classpath resources
-│   │   ├── <TestClass>/
-│   │   │   └── mode/
-│   │   │       ├── JavaAgent/            # application.sh, exporter.yaml
-│   │   │       └── Standalone/           # application.sh, exporter.sh, exporter.yaml
-│   │   ├── java-docker-images.txt        # Full Docker image set
-│   │   ├── quick-test-java-docker-images.txt  # Quick subset (default)
-│   │   ├── smoke-test-java-docker-images.txt  # Smoke subset
-│   │   ├── prometheus-docker-images.txt       # Full Prometheus image set
-│   │   ├── quick-test-prometheus-docker-images.txt  # Quick Prometheus subset
-│   │   └── smoke-test-prometheus-docker-images.txt  # Smoke Prometheus subset
-│   └── src/test/metrics/                 # Metric assertion files (auto-generated, file I/O)
-│       └── <test-class-package-path>/
-│           ├── JavaAgent/
-│           │   └── <sanitized-docker-image>.txt
-│           └── Standalone/
-│               └── <sanitized-docker-image>.txt
+│   └── src/test/resources/               # Classpath resources and metric assertion files
+│       ├── <test-class-package-path>/    # e.g. io/prometheus/jmx/test/core/BasicTest
+│       │   └── mode/
+│       │       ├── JavaAgent/            # application.sh, exporter.yaml
+│       │       │   └── assertions/       # Auto-generated metric assertion files
+│       │       │       └── <sanitized-docker-image>.txt
+│       │       └── Standalone/           # application.sh, exporter.sh, exporter.yaml
+│       │           └── assertions/
+│       │               └── <sanitized-docker-image>.txt
+│       ├── java-docker-images.txt        # Full Docker image set
+│       ├── quick-test-java-docker-images.txt  # Quick subset (default)
+│       ├── smoke-test-java-docker-images.txt  # Smoke subset
+│       ├── prometheus-docker-images.txt       # Full Prometheus image set
+│       ├── quick-test-prometheus-docker-images.txt  # Quick Prometheus subset
+│       └── smoke-test-prometheus-docker-images.txt  # Smoke Prometheus subset
 └── README.md
 ```
 
-Two resource directories exist for different purposes:
+`src/test/resources/` holds both classpath resources and the metric assertion files:
 
-- **`src/test/resources/`** — classpath resources loaded via `Class.getResourceAsStream()` (exporter
-  YAML, shell scripts, keystores, Docker image lists).
-- **`src/test/metrics/`** — metric assertion `.txt` files accessed via `Files.readString` /
-  `Files.writeString`. Grouped per test class, exporter mode, and sanitized Docker image name.
+- **Classpath resources** — exporter YAML, shell scripts, keystores, and Docker image lists, loaded
+  via `Class.getResourceAsStream()`.
+- **Metric assertion files** — accessed via `Files.readString` / `Files.writeString` despite living
+  under `resources/`, at `<test-class-package-path>/mode/<Mode>/assertions/<sanitized-docker-image>.txt`.
+  Grouped per test class, exporter mode, and sanitized Docker image name.
 
 ### Test environment (`JmxExporterTestEnvironment`)
 
@@ -108,12 +107,13 @@ Key properties:
 # metric-assertions-version 1
 # io.prometheus.jmx.test.core.BasicTest JavaAgent amazoncorretto:17
 
-match GAUGE jmx_exporter_build_info{name="jmx_javaagent"} 1.0
-match COUNTER jmx_scrape_error 0.0
-match UNTYPED java_lang_runtime_uptime *
-present jmx_
-absent com_sun_
+match UNTYPED io_prometheus_jmx_autoIncrementing_Value *
+match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="*"} 1.0
+match GAUGE jmx_scrape_error 0.0
 ```
+
+The `present` and `absent` prefix directives are supported by the parser but are not currently
+used by any committed assertion file.
 
 | Directive | Meaning |
 |---|---|
@@ -130,8 +130,7 @@ written as UTF-8.
 
 ### Runtime-specific metric handling
 
-Two configurable prefix sets in `MetricsAssertions` control how runtime-varying metrics are
-handled:
+`MetricsAssertions` uses four rules to keep generated assertion files stable across runtimes:
 
 **Excluded metrics** (`EXCLUDE_METRIC_NAME_PREFIXES`) — omitted from assertion files entirely
 because they are vendor-specific, GC-specific, or JDK-version-specific. Examples: `com_ibm_*`,
@@ -139,15 +138,23 @@ because they are vendor-specific, GC-specific, or JDK-version-specific. Examples
 
 **Runtime-specific values** (`RUNTIME_SPECIFIC_VALUE_PREFIXES`) — included in assertion files but
 with `*` (wildcard) instead of a numeric value because the value depends on the runtime
-environment. Examples: `java_lang_*`, `jvm_*`, `process_*`, `jmx_build_info`,
-`jmx_scrape_duration_*`.
+environment. Examples: `java_lang_*`, `java_util_logging_*`, `jvm_*`, `process_*`,
+`jmx_scrape_duration_*`, `jmx_scrape_cached_beans`.
+
+**Canonical label suffixes** (`LABEL_SUFFIX_CANONICALIZATION`) — label values that vary by runtime
+are replaced with a canonical suffix prefixed by `*`. Example: the `pool` label of
+`jvm_memory_pool_*` metrics (`G1 Eden Space` -> `*Eden Space`).
+
+**Runtime-specific labels** (`RUNTIME_SPECIFIC_LABEL_KEYS`) — labels whose values change with every
+exporter release are replaced with `*`. Example: the `version` label of `jmx_exporter_build_info`
+(`1.6.0-POST` -> `*`).
 
 ### How generation and verification work
 
 When `MetricsAssertions.assertMetrics(testClass, mode, javaDockerImage, metrics)` is called:
 
-1. **Compute path**: `<test-class-package>/<mode>/<sanitized-docker-image>.txt` under
-   `src/test/metrics/`.
+1. **Compute path**:
+   `src/test/resources/<test-class-package-path>/mode/<mode>/assertions/<sanitized-docker-image>.txt`.
 2. **File missing** -> write it from the scraped metrics (sorted, with excluded metrics filtered
    out and runtime values wildcarded), then verify.
 3. **File present** -> read and verify. Verification checks that every `match` directive
@@ -158,12 +165,12 @@ When `MetricsAssertions.assertMetrics(testClass, mode, javaDockerImage, metrics)
 **Force-regeneration**: set system property `metric.assertions.update=true` or environment
 variable `METRIC_ASSERTIONS_UPDATE=true`.
 
-**Write directory resolution**:
+**Write directory resolution** (base directory for assertion files):
 
 1. `metricAssertions.write.dir` system property (custom path).
-2. `integration_test_suite/integration_tests/src/test/metrics` (default, when running from repo
+2. `integration_test_suite/integration_tests/src/test/resources` (default, when running from repo
    root).
-3. `src/test/metrics` (fallback when running from the `integration_tests/` module directory).
+3. `src/test/resources` (fallback when running from the `integration_tests/` module directory).
 
 ### `MetricsAssertions` API reference
 
@@ -206,8 +213,8 @@ JAVA_DOCKER_IMAGES="azul/zulu-openjdk:17" ./mvnw clean verify
 # Quick development feedback loop
 ./run-quick-test.sh
 
-# Stress test for flaky test detection
-./run-stress-test.sh <number-of-iterations>
+# Stress test for flaky test detection (optional parallelism argument)
+./run-stress-test.sh [parallelism]
 ```
 
 Paramixel regex filters use `Matcher.matches()` semantics (full-string match). Use `.*`
@@ -237,9 +244,12 @@ Each test package contains a `__ParamixelRunner__` class with a `main()` method.
 
 #### Running local (non-Docker) tests
 
-`LocalTest.java` is a non-Docker test that starts a JMX Exporter locally and verifies
-functionality with multiple simultaneous HTTP clients. It can be run via `LocalTest.main()` from
-an IDE.
+`DeveloperTest.java` and `DeveloperStressTest.java` are non-Docker tests that start a JMX Exporter
+locally (Standalone mode, image `local`). `DeveloperTest.main()` sends one request per content type
+against the local exporter; `DeveloperStressTest.main()` drives it with 50 concurrent clients for
+an hour and reports failures. Both create
+`<test-class-package-path>/mode/Standalone/assertions/local.txt` on first run and can be launched
+from an IDE.
 
 ### Docker network configuration
 
@@ -267,12 +277,12 @@ On Linux, edit `/etc/docker/daemon.json`:
 
 1. **Create the test class** in the appropriate package under
    `integration_tests/src/test/java/io/prometheus/jmx/test/`. Follow the Paramixel pattern:
-   `@Paramixel.Factory` static method returning an `Action`, `main()` deleg to
+   `@Paramixel.Factory` static method returning an `Action`, `main()` that delegates to
    `Runner.defaultRunner().runAndExit(factory())`, and instance methods for `setUp()`, test
    methods, and `tearDown()`. Copy the structure from an existing test such as
    `core/BasicTest.java` or `core/LowerCaseOutputLabelNamesTest.java`.
 
-2. **Create test resources** under `src/test/resources/<test-class-package>/mode/`:
+2. **Create test resources** under `src/test/resources/<test-class-package-path>/mode/`:
    - `mode/JavaAgent/exporter.yaml` — exporter configuration for JavaAgent mode.
    - `mode/Standalone/exporter.yaml` — exporter configuration for Standalone mode.
    - Optionally, `mode/<Mode>/application.sh` and `mode/<Mode>/exporter.sh` if custom container
@@ -285,11 +295,12 @@ On Linux, edit `/etc/docker/daemon.json`:
    - Call `MetricsAssertions.assertMetrics(TestClass.class, javaDockerImage, mode, metrics)`.
 
 4. **Generate assertion files** by running the test once. Files are auto-created under
-   `src/test/metrics/<test-class-package>/<mode>/`.
+   `src/test/resources/<test-class-package-path>/mode/<mode>/assertions/`.
 
 5. **Review and commit** the generated `.txt` files. Verify that:
    - All expected application metrics appear in the file.
    - Runtime-varying JVM metrics have `*` as their value (not a fixed number).
+   - Release-specific labels (e.g. the `version` label of `jmx_exporter_build_info`) are `*`.
    - GC-specific and vendor-specific metrics are absent (excluded).
    - No unintended metrics are present.
 
@@ -299,7 +310,7 @@ When exporter behavior changes and assertion files are stale:
 
 ```bash
 # Option A: Delete and regenerate
-find integration_test_suite/integration_tests/src/test/metrics -name '*.txt' -delete
+find integration_test_suite/integration_tests/src/test/resources -path '*/assertions/*.txt' -delete
 ./mvnw clean verify
 
 # Option B: Force-update in-place
