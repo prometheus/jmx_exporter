@@ -48,8 +48,9 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           includeCurrentVersion: true,
-          lastVersion: '1.6.0',
+          lastVersion: '1.7.0',
           versions: {
+            '1.7.0': { label: '1.7.0', banner: 'none', badge: true },
             '1.6.0': { label: '1.6.0', banner: 'none', badge: true },
             '1.5.0': { label: '1.5.0', banner: 'none', badge: true },
             '1.4.0': { label: '1.4.0', banner: 'none', badge: true },
