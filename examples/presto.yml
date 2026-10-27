@@ -16,4 +16,4 @@ rules:
     name: java_lang_Threading_ThreadCount
     value: '$2'
     help: 'ThreadCount (java.lang<type=Threading><>ThreadCount)'
-    type: UNTYPED
+    type: GAUGE

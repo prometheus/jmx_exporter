@@ -1,4 +1,5 @@
 lowercaseOutputName: true
+inferCounterTypeFromName: true
 rules:
   #kafka.connect:type=app-info,client-id="{clientid}"
   #kafka.consumer:type=app-info,client-id="{clientid}"
@@ -42,13 +43,20 @@ rules:
 
   #kafka.connect:type=connect-node-metrics,client-id="{clientid}",node-id="{nodeid}"
   #kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id="{nodeid}"
-  - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>(.+-total|.+-avg)
+  - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>(.+-total)
     name: kafka_$2_$5
     labels:
       clientId: "$3"
       nodeId: "$4"
     help: "Kafka $1 JMX metric type $2"
-    type: UNTYPED
+    type: COUNTER
+  - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>(.+-avg)
+    name: kafka_$2_$5
+    labels:
+      clientId: "$3"
+      nodeId: "$4"
+    help: "Kafka $1 JMX metric type $2"
+    type: GAUGE
 
   #kafka.connect:type=kafka-metrics-count,client-id="{clientid}"
   #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}"

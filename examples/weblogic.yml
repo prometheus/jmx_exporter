@@ -27,6 +27,7 @@ rules:
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), (.+)Runtime=(.*), Type=(.+)Runtime><>(.+):"
     name: weblogic_$3_$5_$6
     attrNameSnakeCase: true
+    type: GAUGE
     labels:
       runtime: $1
       name: $2
@@ -36,6 +37,7 @@ rules:
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><>(.+):"
     name: weblogic_$3_$4
     attrNameSnakeCase: true
+    type: GAUGE
     labels:
       runtime: $1
       name: $2
@@ -44,6 +46,7 @@ rules:
   - pattern: "^com.bea<ServerRuntime=(.+), Name=(.+), Type=(.+)Runtime><(.+)>(.+):"
     name: weblogic_$3_$4_$5
     attrNameSnakeCase: true
+    type: GAUGE
     labels:
       runtime: $1
       name: $2
@@ -52,5 +55,6 @@ rules:
 #  - pattern: "^com.bea<Name=(.*), Type=Domain><>(id): (.+)"
 #    name: weblogic_id
 #    attrNameSnakeCase: true
+#    type: GAUGE
 #    labels:
 #      domain: $1

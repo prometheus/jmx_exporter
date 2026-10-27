@@ -5,4 +5,5 @@ password:
 
 rules:
 - pattern: ".*"
+  type: GAUGE
 
