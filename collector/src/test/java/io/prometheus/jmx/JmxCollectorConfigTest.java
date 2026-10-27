@@ -21,11 +21,23 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import java.io.File;
+import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.LogManager;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 @SuppressWarnings("unchecked")
 public class JmxCollectorConfigTest {
@@ -569,6 +581,49 @@ public class JmxCollectorConfigTest {
                     new String[] {"client_id", "node_id"},
                     new String[] {"my-app-consumer", "node-1"});
             assertThat(type).isEqualTo("COUNTER");
+        }
+    }
+
+    @Nested
+    class ExampleConfigsValidationTests {
+
+        @Test
+        public void testAllExampleConfigsLoadAndSpecifyExplicitGaugeOrCounterType() throws Exception {
+            Path examplesDir = Paths.get("../examples");
+            List<Path> yamlFiles;
+            try (Stream<Path> paths = Files.list(examplesDir)) {
+                yamlFiles = paths.filter(path -> {
+                            String fileName = path.getFileName().toString();
+                            return fileName.endsWith(".yml") || fileName.endsWith(".yaml");
+                        })
+                        .sorted()
+                        .collect(Collectors.toList());
+            }
+
+            assertThat(yamlFiles).isNotEmpty();
+
+            for (Path yamlPath : yamlFiles) {
+                File file = yamlPath.toFile();
+                new JmxCollector(file);
+
+                try (FileReader reader = new FileReader(file)) {
+                    Map<String, Object> yamlConfig = new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
+                    assertThat(yamlConfig)
+                            .as("Example config %s should contain rules", yamlPath.getFileName())
+                            .containsKey("rules");
+
+                    List<Map<String, Object>> rules = (List<Map<String, Object>>) yamlConfig.get("rules");
+                    assertThat(rules)
+                            .as("Example config %s rules should not be empty", yamlPath.getFileName())
+                            .isNotEmpty();
+
+                    for (Map<String, Object> rule : rules) {
+                        assertThat(rule.get("type"))
+                                .as("Rule %s in %s must specify GAUGE or COUNTER type", rule, yamlPath.getFileName())
+                                .isIn("GAUGE", "COUNTER");
+                    }
+                }
+            }
         }
     }
 

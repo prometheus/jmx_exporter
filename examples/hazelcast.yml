@@ -9,6 +9,7 @@ rules:
   - pattern: "^com.hazelcast<type=Metrics, instance=(.*), prefix=(.*), tag([0-9]+)=(.*)><>(.+):"
     name: hazelcast_$5
     attrNameSnakeCase: true
+    type: GAUGE
     labels:
       instance: $1
       prefix: $2
@@ -17,6 +18,7 @@ rules:
   - pattern: "^com.hazelcast<type=Metrics, instance=(.*), prefix=(.*)><>(.+):"
     name: hazelcast_$3
     attrNameSnakeCase: true
+    type: GAUGE
     labels:
       instance: $1
       prefix: $2

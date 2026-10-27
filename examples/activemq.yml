@@ -9,15 +9,31 @@ whitelistObjectNames:
   - "org.apache.activemq:type=Topic,brokerName=*"
 
 rules:
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Queue, destinationName=(\S*)><>((?:enqueue|dequeue|dispatch|expired|forward)_count)
+  name: activemq_queue_$3
+  attrNameSnakeCase: true
+  type: COUNTER
+  labels:
+    destination: $2
+
 - pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Queue, destinationName=(\S*)><>(\w+)
   name: activemq_queue_$3
   attrNameSnakeCase: true
+  type: GAUGE
+  labels:
+    destination: $2
+
+- pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Topic, destinationName=(\S*)><>((?:enqueue|dequeue|dispatch|expired|forward)_count)
+  name: activemq_topic_$3
+  attrNameSnakeCase: true
+  type: COUNTER
   labels:
     destination: $2
 
 - pattern: org.apache.activemq<type=Broker, brokerName=(\S*), destinationType=Topic, destinationName=(\S*)><>(\w+)
   name: activemq_topic_$3
   attrNameSnakeCase: true
+  type: GAUGE
   labels:
     destination: $2
 

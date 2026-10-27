@@ -2,15 +2,32 @@ lowercaseOutputName: true
 rules:
 - pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-(\w+)"><>(Count)'
   name: kafka_consumer_$1_$3_$4
+  type: COUNTER
   labels:
     thread: $2
-- pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)"><>(Count|Value)'
+- pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)"><>(Count)'
   name: kafka_consumer_$1_$5_$6
+  type: COUNTER
+  labels:
+    hostport: $3:$4
+    thread: $2
+- pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)"><>(Value)'
+  name: kafka_consumer_$1_$5_$6
+  type: GAUGE
   labels:
     hostport: $3:$4
     thread: $2
 - name: kafka_consumer_$1_$7_$8
-  pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count|Value)'
+  pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count)'
+  type: COUNTER
+  labels:
+    hostport: $3:$4
+    partition: $6
+    thread: $2
+    topic: $5
+- name: kafka_consumer_$1_$7_$8
+  pattern: '"kafka.consumer"<type="(.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Value)'
+  type: GAUGE
   labels:
     hostport: $3:$4
     partition: $6
@@ -18,11 +35,21 @@ rules:
     topic: $5
 - pattern: '"kafka.server"<type="(FetcherStats)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(\w+)PerSec"><>Count'
   name: kafka_server_$1_$5_total
+  type: COUNTER
   labels:
     hostport: $3:$4
     thread: $2
-- pattern: '"kafka.server"<type="(FetcherLag.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count|Value)'
+- pattern: '"kafka.server"<type="(FetcherLag.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Count)'
   name: kafka_server_$1_$7_$8
+  type: COUNTER
+  labels:
+    hostport: $3:$4
+    partition: $6
+    thread: $2
+    topic: $5
+- pattern: '"kafka.server"<type="(FetcherLag.+)", name="ReplicaFetcherThread-(\d+)-\d+-host_(.+?)-port_(\d+)-(.+)-(\d+)-(\w+)"><>(Value)'
+  name: kafka_server_$1_$7_$8
+  type: GAUGE
   labels:
     hostport: $3:$4
     partition: $6
@@ -30,11 +57,13 @@ rules:
     topic: $5
 - name: kafka_cluster_$1_$4
   pattern: '"kafka.cluster"<type="(.+)", name="(.+)-(\d+)-(\w+)"><>Value'
+  type: GAUGE
   labels:
     partition: $3
     topic: $2
 - pattern: '"kafka.log"<type="Log", name="(.+)-(\d+)-(\w+)"><>Value'
   name: kafka_log_$3
+  type: GAUGE
   labels:
     partition: $2
     topic: $1
@@ -43,17 +72,28 @@ rules:
   labels:
     topic: $2
   type: COUNTER
-- pattern: '"kafka.server"<type="(.+)", name="(.+)-(\w+)"><>(Count|Value)'
+- pattern: '"kafka.server"<type="(.+)", name="(.+)-(\w+)"><>(Count)'
   name: kafka_server_$1_$3_$4
+  type: COUNTER
+  labels:
+    topic: $2
+- pattern: '"kafka.server"<type="(.+)", name="(.+)-(\w+)"><>(Value)'
+  name: kafka_server_$1_$3_$4
+  type: GAUGE
   labels:
     topic: $2
 - pattern: '"kafka.network"<type="(.+)", name="Processor-(\d+)-(.+)"><>Value'
   name: kafka_network_$1_$3
+  type: GAUGE
   labels:
     processor: $2
 - pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)PerSec"><>Count'
   name: kafka_$1_$2_$3_total
   type: COUNTER
-- pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)"><>(Count|Value)'
+- pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)"><>(Count)'
   name: kafka_$1_$2_$3_$4
+  type: COUNTER
+- pattern: '"kafka.(\w+)"<type="(.+)", name="(.+)"><>(Value)'
+  name: kafka_$1_$2_$3_$4
+  type: GAUGE
 
