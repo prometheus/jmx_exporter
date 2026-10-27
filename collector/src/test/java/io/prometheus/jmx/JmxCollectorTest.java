@@ -649,7 +649,7 @@ public class JmxCollectorTest {
                     "my-app-consumer", "node-1"
                 });
 
-        assertThat(rateType).isEqualTo("UNKNOWN");
+        assertThat(rateType).isEqualTo("GAUGE");
     }
 
     @Test
@@ -671,9 +671,9 @@ public class JmxCollectorTest {
                 new String[] {"client_id", "node_id"},
                 new String[] {"my-app-consumer", "node-1"});
 
-        // With inferCounterTypeFromName=false, the type of `kafka_consumer_request` is UNKNOWN, so
-        // the final name will be `kafka_consumer_request`
-        assertThat(totalType).isEqualTo("UNKNOWN");
+        // With inferCounterTypeFromName=false, the type of `kafka_consumer_request` defaults to
+        // GAUGE, so the final name will be `kafka_consumer_request`
+        assertThat(totalType).isEqualTo("GAUGE");
 
         // inferCounterTypeFromName has no influence on the request-rate attribute
         String rateType =
@@ -681,7 +681,7 @@ public class JmxCollectorTest {
                     "my-app-consumer", "node-1"
                 });
 
-        assertThat(rateType).isEqualTo("UNKNOWN");
+        assertThat(rateType).isEqualTo("GAUGE");
     }
 
     @Test

@@ -188,7 +188,7 @@ public class SnapshotEquivalenceTest {
         assertThat(snapshots).hasSize(1);
 
         MetricSnapshot metric = snapshots.iterator().next();
-        assertThat(metric).isInstanceOf(UnknownSnapshot.class);
+        assertThat(metric).isInstanceOf(GaugeSnapshot.class);
         List<? extends DataPointSnapshot> dps = metric.getDataPoints();
         assertThat(dps).hasSize(2);
         for (DataPointSnapshot dp : dps) {

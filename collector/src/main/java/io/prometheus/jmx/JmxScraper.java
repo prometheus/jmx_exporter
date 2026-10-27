@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
+import javax.management.Descriptor;
 import javax.management.JMException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
@@ -111,6 +112,40 @@ class JmxScraper {
                 String attrType,
                 String attrDescription,
                 Object value);
+
+        /**
+         * Method to create a bean with an optional derived metric type.
+         *
+         * @param domain domain
+         * @param beanProperties beanProperties
+         * @param attributesAsLabelsWithValues attributesAsLabelsWithValues
+         * @param attrKeys attrKeys
+         * @param attrName attrName
+         * @param attrType attrType
+         * @param attrDescription attrDescription
+         * @param value value
+         * @param metricType derived metric type ("COUNTER" or "GAUGE"), or null if none
+         */
+        default void recordBean(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
+                List<String> attrKeys,
+                String attrName,
+                String attrType,
+                String attrDescription,
+                Object value,
+                String metricType) {
+            recordBean(
+                    domain,
+                    beanProperties,
+                    attributesAsLabelsWithValues,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    value);
+        }
     }
 
     private final MBeanReceiver receiver;
@@ -395,7 +430,8 @@ class JmxScraper {
                         extraMetric.name,
                         "UNKNOWN",
                         extraMetric.description,
-                        extraMetric.value);
+                        extraMetric.value,
+                        null);
             }
         }
 
@@ -435,7 +471,8 @@ class JmxScraper {
                         attributeName,
                         mBeanAttributeInfo.getType(),
                         mBeanAttributeInfo.getDescription(),
-                        attribute.getValue());
+                        attribute.getValue(),
+                        getDescriptorMetricType(mBeanAttributeInfo));
             } else if (object == null) {
                 LOGGER.trace("%s object is NULL, not an instance Attribute, skipping", mBeanName);
             } else {
@@ -508,8 +545,32 @@ class JmxScraper {
                     attributeName,
                     attr.getType(),
                     attr.getDescription(),
-                    value);
+                    value,
+                    getDescriptorMetricType(attr));
         }
+    }
+
+    // Extracts "COUNTER" or "GAUGE" from the JMX MBeanAttributeInfo descriptor's metricType field
+    // when present.
+    static String getDescriptorMetricType(MBeanAttributeInfo mBeanAttributeInfo) {
+        if (mBeanAttributeInfo == null) {
+            return null;
+        }
+        Descriptor descriptor = mBeanAttributeInfo.getDescriptor();
+        if (descriptor == null) {
+            return null;
+        }
+        Object metricType = descriptor.getFieldValue("metricType");
+        if (metricType instanceof String) {
+            String type = ((String) metricType).trim();
+            if ("counter".equalsIgnoreCase(type)) {
+                return "COUNTER";
+            }
+            if ("gauge".equalsIgnoreCase(type)) {
+                return "GAUGE";
+            }
+        }
+        return null;
     }
 
     /**
@@ -526,7 +587,8 @@ class JmxScraper {
             String attrName,
             String attrType,
             String attrDescription,
-            Object value) {
+            Object value,
+            String metricType) {
         if (value == null) {
             LOGGER.trace("%s%s%s scrape: null", domain, beanProperties, attrName);
         } else if (value instanceof Number
@@ -536,6 +598,11 @@ class JmxScraper {
             if (value instanceof Date) {
                 attrType = "java.lang.Double";
                 value = ((Date) value).getTime() / 1000.0;
+                if (metricType == null) {
+                    metricType = "GAUGE";
+                }
+            } else if (value instanceof Boolean && metricType == null) {
+                metricType = "GAUGE";
             }
             LOGGER.trace("%s%s%s scrape: %s", domain, beanProperties, attrName, value);
             this.receiver.recordBean(
@@ -546,7 +613,8 @@ class JmxScraper {
                     attrName,
                     attrType,
                     attrDescription,
-                    value);
+                    value,
+                    metricType);
         } else if (value instanceof CompositeData) {
             LOGGER.trace("%s%s%s scrape: compositedata", domain, beanProperties, attrName);
             CompositeData composite = (CompositeData) value;
@@ -565,7 +633,8 @@ class JmxScraper {
                         key,
                         typeName,
                         type.getDescription(),
-                        compositeValue);
+                        compositeValue,
+                        null);
             }
         } else if (value instanceof TabularData) {
             // I don't pretend to have a good understanding of TabularData.
@@ -644,7 +713,8 @@ class JmxScraper {
                                 name,
                                 typeName,
                                 type.getDescription(),
-                                composite.get(valueIdx));
+                                composite.get(valueIdx),
+                                null);
                     }
                 } else {
                     LOGGER.trace("%s scrape: not a correct tabulardata format", domain);
@@ -665,7 +735,8 @@ class JmxScraper {
                         attrName,
                         attrType,
                         attrDescription,
-                        optional.get());
+                        optional.get(),
+                        metricType);
             }
         } else if (value.getClass().isEnum()) {
             LOGGER.trace("%s%s%s scrape: %s", domain, beanProperties, attrName, value);
@@ -678,7 +749,8 @@ class JmxScraper {
                     attrName,
                     attrType,
                     attrDescription,
-                    value.toString());
+                    value.toString(),
+                    metricType);
         } else {
             objectNameAttributeFilter.add(objectName, attrName);
             LOGGER.trace("%s%s scrape: %s not exported", domain, beanProperties, attrType);

@@ -108,7 +108,7 @@ public class JmxCollector implements MultiCollector {
         String help;
         boolean attrNameSnakeCase;
         boolean cache = false;
-        String type = "UNKNOWN";
+        String type;
         ArrayList<String> labelNames;
         ArrayList<String> labelValues;
     }
@@ -193,7 +193,7 @@ public class JmxCollector implements MultiCollector {
         SslProperties sslProperties = new SslProperties();
         boolean lowercaseOutputName;
         boolean lowercaseOutputLabelNames;
-        boolean inferCounterTypeFromName;
+        boolean inferCounterTypeFromName = true;
         final List<ObjectName> includeObjectNames = new ArrayList<>();
         final List<ObjectName> excludeObjectNames = new ArrayList<>();
         ObjectNameAttributeFilter objectNameAttributeFilter;
@@ -847,6 +847,24 @@ public class JmxCollector implements MultiCollector {
             }
         }
 
+        // Resolves the metric type when a rule omits 'type' by checking MBean value/descriptor
+        // hints first, then '_total' counter name inference, and defaulting to GAUGE.
+        private String resolveType(String ruleType, String metricName, Object beanValue, String scraperMetricType) {
+            if (ruleType != null) {
+                return ruleType;
+            }
+            if (beanValue instanceof Boolean) {
+                return "GAUGE";
+            }
+            if (scraperMetricType != null) {
+                return scraperMetricType;
+            }
+            if (config.inferCounterTypeFromName && metricName.endsWith("_total")) {
+                return "COUNTER";
+            }
+            return "GAUGE";
+        }
+
         private MatchedRule defaultExport(
                 String matchName,
                 String domain,
@@ -856,7 +874,9 @@ public class JmxCollector implements MultiCollector {
                 String help,
                 Double value,
                 double valueFactor,
-                String type,
+                String ruleType,
+                Object beanValue,
+                String scraperMetricType,
                 Map<String, String> attributesAsLabelsWithValues) {
             StringBuilder name = new StringBuilder();
             name.append(domain);
@@ -876,9 +896,7 @@ public class JmxCollector implements MultiCollector {
                 fullname = fullname.toLowerCase();
             }
 
-            if (config.inferCounterTypeFromName && fullname.endsWith("_total")) {
-                type = "COUNTER";
-            }
+            String type = resolveType(ruleType, fullname, beanValue, scraperMetricType);
 
             List<String> labelNames = new ArrayList<>();
             List<String> labelValues = new ArrayList<>();
@@ -902,6 +920,7 @@ public class JmxCollector implements MultiCollector {
             return new MatchedRule(fullname, matchName, type, help, labelNames, labelValues, value, valueFactor);
         }
 
+        @Override
         public void recordBean(
                 String domain,
                 LinkedHashMap<String, String> beanProperties,
@@ -911,6 +930,29 @@ public class JmxCollector implements MultiCollector {
                 String attrType,
                 String attrDescription,
                 Object beanValue) {
+            recordBean(
+                    domain,
+                    beanProperties,
+                    attributesAsLabelsWithValues,
+                    attrKeys,
+                    attrName,
+                    attrType,
+                    attrDescription,
+                    beanValue,
+                    null);
+        }
+
+        @Override
+        public void recordBean(
+                String domain,
+                LinkedHashMap<String, String> beanProperties,
+                Map<String, String> attributesAsLabelsWithValues,
+                List<String> attrKeys,
+                String attrName,
+                String attrType,
+                String attrDescription,
+                Object beanValue,
+                String scraperMetricType) {
 
             MatchedRule matchedRule = MatchedRule.unmatched();
 
@@ -1038,6 +1080,8 @@ public class JmxCollector implements MultiCollector {
                                 value,
                                 rule.valueFactor,
                                 rule.type,
+                                beanValue,
+                                scraperMetricType,
                                 attributesAsLabelsWithValues);
                         if (rule.cache) {
                             addToCache(cacheKey, matchedRule);
@@ -1054,10 +1098,7 @@ public class JmxCollector implements MultiCollector {
                         name = name.toLowerCase();
                     }
 
-                    String type = rule.type;
-                    if (config.inferCounterTypeFromName && name.endsWith("_total")) {
-                        type = "COUNTER";
-                    }
+                    String type = resolveType(rule.type, name, beanValue, scraperMetricType);
 
                     // Set the help.
                     if (rule.help != null) {
