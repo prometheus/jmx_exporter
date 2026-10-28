@@ -15,7 +15,7 @@ Rules transform JMX MBean attributes into Prometheus metrics. Rules are evaluate
 | `labels` | Map of label names to label values. `name` must also be set. |
 | `help` | Metric help text. `name` must also be set. |
 | `cache` | Cache match and mismatch results for this rule. Default is `false`. Do not use for rules that match bean values. |
-| `type` | Metric type. Supported values include `GAUGE`, `COUNTER`, and `UNTYPED`; `UNTYPED` maps to the implementation's unknown type. |
+| `type` | Metric type. Supported values include `GAUGE`, `COUNTER`, and `UNTYPED`; `UNTYPED` maps to the implementation's unknown type. When omitted, the type is derived from the MBean attribute (`GAUGE` for `Boolean` and `Date` values, or `COUNTER`/`GAUGE` from the JMX `Descriptor` `metricType` field), inferred as `COUNTER` if `inferCounterTypeFromName` is enabled and the metric name ends in `_total`, or defaults to `GAUGE`. |
 | `attrNameSnakeCase` | Convert the attribute name to snake case before matching and default formatting. Default is `false`. |
 
 `help` or `labels` without `name` is invalid. `name` without `pattern` is invalid.

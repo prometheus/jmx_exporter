@@ -325,6 +325,52 @@ public class JmxCollectorConfigTest {
         }
 
         @Test
+        public void testInferCounterTypeFromNameByDefault() throws Exception {
+            new JmxCollector("---\n"
+                            + "rules:\n"
+                            + "- pattern: 'kafka.consumer<type=.+, client-id=(.+), node-id=(.+)><>(.+):'\n"
+                            + "  name: kafka_consumer_$3\n"
+                            + "  labels:\n"
+                            + "    client_id: $1\n"
+                            + "    node_id: $2")
+                    .register(prometheusRegistry);
+
+            String totalType = prometheusRegistryUtils.getSampleType(
+                    "kafka_consumer_request",
+                    new String[] {"client_id", "node_id"},
+                    new String[] {"my-app-consumer", "node-1"});
+
+            assertThat(totalType).isEqualTo("COUNTER");
+
+            String rateType = prometheusRegistryUtils.getSampleType(
+                    "kafka_consumer_request_rate",
+                    new String[] {"client_id", "node_id"},
+                    new String[] {"my-app-consumer", "node-1"});
+
+            assertThat(rateType).isEqualTo("GAUGE");
+        }
+
+        @Test
+        public void testExplicitRuleTypeOverridesInferCounterTypeFromName() throws Exception {
+            new JmxCollector("---\n"
+                            + "rules:\n"
+                            + "- pattern: 'kafka.consumer<type=.+, client-id=(.+), node-id=(.+)><>(.+):'\n"
+                            + "  name: kafka_consumer_$3\n"
+                            + "  type: GAUGE\n"
+                            + "  labels:\n"
+                            + "    client_id: $1\n"
+                            + "    node_id: $2")
+                    .register(prometheusRegistry);
+
+            String totalType = prometheusRegistryUtils.getSampleType(
+                    "kafka_consumer_request",
+                    new String[] {"client_id", "node_id"},
+                    new String[] {"my-app-consumer", "node-1"});
+
+            assertThat(totalType).isEqualTo("GAUGE");
+        }
+
+        @Test
         public void testInferCounterTypeFromNameDisabled() throws Exception {
             new JmxCollector("---\n"
                             + "inferCounterTypeFromName: false\n"
@@ -341,7 +387,7 @@ public class JmxCollectorConfigTest {
                     new String[] {"client_id", "node_id"},
                     new String[] {"my-app-consumer", "node-1"});
 
-            assertThat(totalType).isEqualTo("UNKNOWN");
+            assertThat(totalType).isEqualTo("GAUGE");
         }
     }
 

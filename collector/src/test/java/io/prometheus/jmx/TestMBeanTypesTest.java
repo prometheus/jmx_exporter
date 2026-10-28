@@ -57,6 +57,119 @@ public class TestMBeanTypesTest {
 
             assertThat(value).isNotNull();
             assertThat(value).isCloseTo(1700000000.0, org.assertj.core.data.Offset.offset(1.0));
+            assertThat(prometheusRegistryUtils.getSampleType(
+                            "io_prometheus_jmx_test_dateValue_Timestamp", new String[] {}, new String[] {}))
+                    .isEqualTo("GAUGE");
+        }
+
+        @Test
+        public void testDateValueWithTotalSuffixStillDerivesGauge() throws Exception {
+            new JmxCollector("---\n"
+                            + "includeObjectNames:\n"
+                            + "  - 'io.prometheus.jmx.test:type=dateValue'\n"
+                            + "rules:\n"
+                            + "  - pattern: 'io.prometheus.jmx.test<type=dateValue><>Timestamp:'\n"
+                            + "    name: date_timestamp_total")
+                    .register(prometheusRegistry);
+
+            assertThat(prometheusRegistryUtils.getSampleType("date_timestamp", new String[] {}, new String[] {}))
+                    .isEqualTo("GAUGE");
+        }
+    }
+
+    @Nested
+    class BooleanTypeDerivationTests {
+
+        @Test
+        public void testBooleanValueWithTotalSuffixStillDerivesGauge() throws Exception {
+            new JmxCollector("---\n"
+                            + "includeObjectNames:\n"
+                            + "  - 'boolean:Type=Test'\n"
+                            + "rules:\n"
+                            + "  - pattern: 'boolean<Type=Test><>True:'\n"
+                            + "    name: boolean_flag_total")
+                    .register(prometheusRegistry);
+
+            assertThat(prometheusRegistryUtils.getSampleType("boolean_flag", new String[] {}, new String[] {}))
+                    .isEqualTo("GAUGE");
+        }
+    }
+
+    @Nested
+    class DescriptorMetricTypeDerivationTests {
+
+        @Test
+        public void testDescriptorMetricTypeDerivesCounterAndGauge() throws Exception {
+            javax.management.MBeanServer mbs = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+            javax.management.ObjectName beanName =
+                    new javax.management.ObjectName("io.prometheus.jmx.test:type=descriptorMetrics");
+            javax.management.DynamicMBean descriptorBean = new javax.management.DynamicMBean() {
+                @Override
+                public Object getAttribute(String attribute) {
+                    return "requests".equals(attribute) ? 10L : 5L;
+                }
+
+                @Override
+                public void setAttribute(javax.management.Attribute attribute) {}
+
+                @Override
+                public javax.management.AttributeList getAttributes(String[] attributes) {
+                    javax.management.AttributeList list = new javax.management.AttributeList();
+                    for (String attr : attributes) {
+                        list.add(new javax.management.Attribute(attr, getAttribute(attr)));
+                    }
+                    return list;
+                }
+
+                @Override
+                public javax.management.AttributeList setAttributes(javax.management.AttributeList attributes) {
+                    return new javax.management.AttributeList();
+                }
+
+                @Override
+                public Object invoke(String actionName, Object[] params, String[] signature) {
+                    return null;
+                }
+
+                @Override
+                public javax.management.MBeanInfo getMBeanInfo() {
+                    javax.management.Descriptor counterDesc =
+                            new javax.management.ImmutableDescriptor("metricType=counter");
+                    javax.management.Descriptor gaugeDesc =
+                            new javax.management.ImmutableDescriptor("metricType=gauge");
+                    javax.management.MBeanAttributeInfo[] attrs = new javax.management.MBeanAttributeInfo[] {
+                        new javax.management.MBeanAttributeInfo(
+                                "requests", "long", "Total requests", true, false, false, counterDesc),
+                        new javax.management.MBeanAttributeInfo(
+                                "connections_total", "long", "Active connections", true, false, false, gaugeDesc)
+                    };
+                    return new javax.management.MBeanInfo(
+                            getClass().getName(), "Descriptor Test MBean", attrs, null, null, null);
+                }
+            };
+
+            mbs.registerMBean(descriptorBean, beanName);
+            try {
+                new JmxCollector("---\n" + "includeObjectNames:\n"
+                                + "  - 'io.prometheus.jmx.test:type=descriptorMetrics'")
+                        .register(prometheusRegistry);
+
+                // 'requests' has descriptor metricType=counter -> derived as COUNTER
+                assertThat(prometheusRegistryUtils.getSampleType(
+                                "io_prometheus_jmx_test_descriptorMetrics_requests", new String[] {}, new String[] {}))
+                        .isEqualTo("COUNTER");
+
+                // 'connections_total' has descriptor metricType=gauge -> derived as GAUGE despite _total suffix
+                assertThat(prometheusRegistryUtils.getSampleType(
+                                "io_prometheus_jmx_test_descriptorMetrics_connections",
+                                new String[] {},
+                                new String[] {}))
+                        .isEqualTo("GAUGE");
+            } finally {
+                if (mbs.isRegistered(beanName)) {
+                    mbs.unregisterMBean(beanName);
+                }
+            }
         }
     }
 

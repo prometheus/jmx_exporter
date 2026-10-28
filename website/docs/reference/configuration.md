@@ -11,7 +11,7 @@ This reference lists source-backed 1.7.0 exporter YAML keys. Guide pages explain
 | `startDelaySeconds` | Non-negative startup delay before serving non-empty metrics. Default `0`. |
 | `lowercaseOutputName` | Lowercase output metric names. Default `false`. |
 | `lowercaseOutputLabelNames` | Lowercase output label names. Default `false`. |
-| `inferCounterTypeFromName` | Infer counter type from metric names. Default `false`. |
+| `inferCounterTypeFromName` | Infer counter type from metric names ending in `_total` when rule `type` is omitted. Default `true`. |
 | `rules` | Ordered rule list. If omitted, one default rule is used. |
 | `excludeJvmMetrics` | Exclude common JVM ObjectNames when `true`; primarily for Java agent usage. |
 
@@ -48,7 +48,7 @@ This reference lists source-backed 1.7.0 exporter YAML keys. Guide pages explain
 | `labels` | Label map. Requires `name`. |
 | `help` | Help text. Requires `name`. |
 | `cache` | Cache rule match and mismatch results. Default `false`. |
-| `type` | `GAUGE`, `COUNTER`, or `UNTYPED`. |
+| `type` | `GAUGE`, `COUNTER`, or `UNTYPED`. Defaults to `GAUGE` when not derived from the MBean or metric name. |
 | `attrNameSnakeCase` | Convert attribute names to snake case. Default `false`. |
 
 ## Metric customizer keys
