@@ -240,7 +240,8 @@ public class PrometheusTestEnvironment implements AutoCloseable {
                 .bindDirectory(
                         TestSupport.resolveClasspathDirectory(testClass, prometheusYaml)
                                 .toString(),
-                        "/etc/prometheus/prometheus.yaml")
+                        "/etc/prometheus/prometheus.yaml",
+                        true)
                 .command(commands.toArray(new String[0]))
                 .exposePorts(9090)
                 .network(network, "prometheus")
@@ -254,7 +255,9 @@ public class PrometheusTestEnvironment implements AutoCloseable {
 
         if (webYaml != null) {
             containerSpecBuilder.bindDirectory(
-                    TestSupport.resolveClasspathDirectory(testClass, webYaml).toString(), "/etc/prometheus/web.yaml");
+                    TestSupport.resolveClasspathDirectory(testClass, webYaml).toString(),
+                    "/etc/prometheus/web.yaml",
+                    true);
         }
 
         ContainerSpec containerSpec = containerSpecBuilder.startupAttempts(3).build();

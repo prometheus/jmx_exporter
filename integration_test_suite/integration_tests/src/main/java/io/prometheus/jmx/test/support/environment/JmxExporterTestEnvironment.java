@@ -227,12 +227,14 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .bindDirectory(
                         TestSupport.resolveClasspathDirectory(testClass, "common")
                                 .toString(),
-                        "/common")
+                        "/common",
+                        true)
                 .bindDirectory(
-                        TestSupport.copyClasspathDirectoryToTemp(
+                        TestSupport.resolveClasspathDirectory(
                                         testClass, resolveModeResourceDirectory(JmxExporterMode.JavaAgent))
                                 .toString(),
-                        "/temp")
+                        "/temp",
+                        true)
                 .command("/bin/sh", "application.sh")
                 .exposePorts(8888)
                 .network(network, "application")
@@ -254,12 +256,14 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .bindDirectory(
                         TestSupport.resolveClasspathDirectory(testClass, "common")
                                 .toString(),
-                        "/common")
+                        "/common",
+                        true)
                 .bindDirectory(
-                        TestSupport.copyClasspathDirectoryToTemp(
+                        TestSupport.resolveClasspathDirectory(
                                         testClass, resolveModeResourceDirectory(JmxExporterMode.Standalone))
                                 .toString(),
-                        "/temp")
+                        "/temp",
+                        true)
                 .command("/bin/sh", "application.sh")
                 .exposePorts(9999)
                 .network(network, "application")
@@ -280,12 +284,14 @@ public class JmxExporterTestEnvironment implements AutoCloseable {
                 .bindDirectory(
                         TestSupport.resolveClasspathDirectory(testClass, "common")
                                 .toString(),
-                        "/common")
+                        "/common",
+                        true)
                 .bindDirectory(
-                        TestSupport.copyClasspathDirectoryToTemp(
+                        TestSupport.resolveClasspathDirectory(
                                         testClass, resolveModeResourceDirectory(JmxExporterMode.Standalone))
                                 .toString(),
-                        "/temp")
+                        "/temp",
+                        true)
                 .command("/bin/sh", "exporter.sh")
                 .exposePorts(8888)
                 .network(network, "exporter")

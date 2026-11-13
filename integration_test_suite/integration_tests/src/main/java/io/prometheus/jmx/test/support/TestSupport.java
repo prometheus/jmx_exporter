@@ -16,16 +16,9 @@
 
 package io.prometheus.jmx.test.support;
 
-import io.prometheus.jmx.test.support.environment.EnvironmentException;
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test support utilities for resolving classpath resources to filesystem paths, used by
@@ -71,96 +64,5 @@ public final class TestSupport {
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to resolve path for: " + resource, e);
         }
-    }
-
-    /**
-     * Copies a classpath directory resource to a fresh world-readable temp directory and returns its
-     * path.
-     *
-     * <p>The temp directory and its contents are registered with {@link File#deleteOnExit()}.
-     * Permissions are applied so directories and shell scripts are world-executable and all entries are
-     * world-readable; any permission operation that fails is reported via {@link EnvironmentException}.
-     *
-     * @param contextClass the class whose classloader should resolve the resource; must not be {@code
-     *     null}
-     * @param resource the classpath resource path; must not be {@code null}
-     * @return the path of the created temp directory
-     * @throws IllegalArgumentException if {@code contextClass} is {@code null} or the resource cannot be
-     *     resolved
-     * @throws EnvironmentException if the copy or permission application fails
-     */
-    public static Path copyClasspathDirectoryToTemp(Class<?> contextClass, String resource) {
-        Path source = resolveClasspathDirectory(contextClass, resource);
-        try {
-            Path tempDir = Files.createTempDirectory("docker-bind-");
-            tempDir.toFile().deleteOnExit();
-            copyTree(source, tempDir);
-            applyReadablePermissions(tempDir);
-            return tempDir;
-        } catch (IOException e) {
-            throw new EnvironmentException("Failed to copy classpath resource: " + resource, e);
-        }
-    }
-
-    /**
-     * Recursively copies a source directory tree to a target directory.
-     *
-     * @param source the source directory
-     * @param target the target directory
-     * @throws IOException if a file or directory cannot be copied
-     */
-    private static void copyTree(Path source, Path target) throws IOException {
-        try (var walk = Files.walk(source)) {
-            for (Path path : walk.toList()) {
-                Path dest = target.resolve(source.relativize(path));
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(dest);
-                } else {
-                    Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
-                    dest.toFile().deleteOnExit();
-                }
-            }
-        }
-    }
-
-    /**
-     * Makes the directory tree rooted at {@code root} world-readable, applying world-execute only to
-     * directories and shell scripts.
-     *
-     * <p>Any permission operation that returns {@code false} is collected; if any failures occur, an
-     * {@link EnvironmentException} listing them is thrown.
-     *
-     * @param root the root of the tree to chmod
-     * @throws IOException if the tree cannot be walked
-     * @throws EnvironmentException if any permission operation fails
-     */
-    private static void applyReadablePermissions(Path root) throws IOException {
-        List<String> failures = new ArrayList<>();
-        try (var walk = Files.walk(root)) {
-            for (Path path : walk.toList()) {
-                File file = path.toFile();
-                if (!file.setReadable(true, false)) {
-                    failures.add("setReadable " + file);
-                }
-                if (file.isDirectory() || isScript(file)) {
-                    if (!file.setExecutable(true, false)) {
-                        failures.add("setExecutable " + file);
-                    }
-                }
-            }
-        }
-        if (!failures.isEmpty()) {
-            throw new EnvironmentException("Failed to make bind directory world-readable: " + failures);
-        }
-    }
-
-    /**
-     * Returns whether the given file is a shell script by name convention.
-     *
-     * @param file the file to test
-     * @return {@code true} if the file name ends with {@code .sh}
-     */
-    private static boolean isScript(File file) {
-        return file.getName().endsWith(".sh");
     }
 }

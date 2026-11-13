@@ -202,11 +202,13 @@ public class IsolatorExporterTestEnvironment implements AutoCloseable {
                 .bindDirectory(
                         TestSupport.resolveClasspathDirectory(testClass, "common")
                                 .toString(),
-                        "/common")
+                        "/common",
+                        true)
                 .bindDirectory(
-                        TestSupport.copyClasspathDirectoryToTemp(testClass, resolveModeResourceDirectory())
+                        TestSupport.resolveClasspathDirectory(testClass, resolveModeResourceDirectory())
                                 .toString(),
-                        "/temp")
+                        "/temp",
+                        true)
                 .command("/bin/sh", "application.sh")
                 .exposePorts(BASE_PORT, BASE_PORT + 1, BASE_PORT + 2)
                 .network(network, "application")
