@@ -38,7 +38,7 @@
         <!-- Dependency versions -->
         <altcontainers.version>0.5.0</altcontainers.version>
         <assertj.version>3.27.7</assertj.version>
-        <ayza.version>10.1.0</ayza.version>
+        <ayza.version>10.1.1</ayza.version>
         <caffeine.version>2.9.3</caffeine.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <jmh.version>1.37</jmh.version>
@@ -77,7 +77,7 @@
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
         <spotless-maven-plugin.version>3.11.0</spotless-maven-plugin.version>
-        <versions-maven-plugin.version>2.25.1</versions-maven-plugin.version>
+        <versions-maven-plugin.version>2.25.2</versions-maven-plugin.version>
     </properties>
 
     <modules>
