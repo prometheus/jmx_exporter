@@ -2,7 +2,7 @@
 
 export RMI_REGISTRY_SSL_DISABLED=true
 
-java \
+exec java \
   -Xmx512M \
   -Djavax.net.ssl.keyStore=application.pkcs12 \
   -Djavax.net.ssl.keyStorePassword=changeit \

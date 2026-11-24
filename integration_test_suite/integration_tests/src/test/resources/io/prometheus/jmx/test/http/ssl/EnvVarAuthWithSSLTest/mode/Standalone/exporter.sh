@@ -3,7 +3,7 @@
 export TEST_USERNAME=Prometheus
 export TEST_PASSWORD=secret
 
-java \
+exec java \
   -Xmx512M \
   -Djavax.net.ssl.keyStore=keystore.jks \
   -Djavax.net.ssl.keyStorePassword=changeit \

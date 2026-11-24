@@ -30,6 +30,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +85,11 @@ public class MetricsAssertions {
             "sun_management_",
             "io_graalvm_",
             "org_graalvm_",
-            "jvm_runtime_info_",
 
             // JDK-version / module-specific
             "jdk_management_aotcache_",
             "jdk_management_crac_",
+            "jdk_crac_management_crac_",
             "jdk_management_jfr_",
             "jdk_management_virtualthreadscheduler_",
 
@@ -103,6 +104,10 @@ public class MetricsAssertions {
             "java_lang_Copy_",
             "java_lang_MarkSweepCompact_",
             "java_lang_Epsilon_",
+
+            // Azul Prime (Zing) GPGC collectors. LastGcInfo is only populated after each collector
+            // has completed a cycle, so its presence at scrape time is timing-dependent.
+            "java_lang_GPGC_",
 
             // Memory pool / memory manager names vary by GC and JDK
             "java_lang_MemoryPool_",
@@ -122,6 +127,12 @@ public class MetricsAssertions {
             "java_lang_Survivor_Space_",
             "java_lang_Tenured_Gen_",
             "java_lang_ZHeap_",
+
+            // Azul Prime (Zing) memory pools
+            "java_lang_GenPauseless_",
+            "java_lang_CodeCache_",
+            "java_lang_Native_Heap_",
+            "java_lang_NativeHeap_",
 
             // NIO buffer pools can vary by JDK/platform
             "java_nio_",
@@ -169,6 +180,9 @@ public class MetricsAssertions {
             "jmx_scrape_duration_",
             "jmx_scrape_cached_beans",
 
+            // Incremented only when the HTTP thread pool is saturated, which depends on load.
+            "jmx_http_requests_rejected_total",
+
             // Test/demo metrics that intentionally change.
             "io_prometheus_jmx_autoIncrementing_",
             "auto_increment_counter"));
@@ -181,10 +195,12 @@ public class MetricsAssertions {
      * labels prevents freshly generated assertion files from pinning a specific
      * exporter build or release version, which changes with every release. For
      * example, {@code jmx_exporter_build_info{name="jmx_prometheus_standalone",
-     * version="1.2.3"}} is written as {@code ...version="*"}.
+     * version="1.2.3"}} is written as {@code ...version="*"}. The JVM version reported by
+     * {@code jvm_runtime_info} is wildcarded for the same reason, because floating Docker image
+     * tags pick up JDK updates.
      */
     private static final Map<String, Set<String>> RUNTIME_SPECIFIC_LABEL_KEYS =
-            Map.of("jmx_exporter_build_info", Set.of("version"));
+            Map.of("jmx_exporter_build_info", Set.of("version"), "jvm_runtime_info", Set.of("version"));
 
     private static final double VALUE_TOLERANCE = 1e-10;
     private static final String WRITE_DIRECTORY_PROPERTY = "metricAssertions.write.dir";
@@ -648,19 +664,52 @@ public class MetricsAssertions {
                 .append(javaDockerImage)
                 .append("\n\n");
 
-        metrics.stream().filter(metric -> !isRuntimeNameExcluded(metric.name())).forEach(metric -> {
+        builder.append(formatMatchLines(metrics));
+
+        return builder.toString();
+    }
+
+    /**
+     * Formats {@code match} lines for the metrics that are not excluded.
+     *
+     * <p>Label values are canonicalized with {@link #canonicalizeLabelValue}. If suffix
+     * canonicalization would make the expectations of several metrics identical (for example,
+     * Azul Prime's {@code GenPauseless New Gen}, {@code GenPauseless Old Gen}, and {@code
+     * GenPauseless Perm Gen} pools all canonicalize to {@code *Gen}), each such expectation would
+     * match multiple metrics and fail verification. Those metrics keep their literal label
+     * values instead; runtime-specific labels are still wildcarded.
+     *
+     * @param metrics the metrics to format, in output order
+     * @return the formatted {@code match} lines, each terminated by a newline
+     */
+    static String formatMatchLines(Collection<Metric> metrics) {
+        List<Metric> included = metrics.stream()
+                .filter(metric -> !isRuntimeNameExcluded(metric.name()))
+                .collect(Collectors.toList());
+
+        Map<List<Object>, Integer> canonicalExpectationCounts = new HashMap<>();
+        for (Metric metric : included) {
+            canonicalExpectationCounts.merge(expectationKey(metric, writeLabels(metric, true)), 1, Integer::sum);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (Metric metric : included) {
+            Map<String, String> labels = writeLabels(metric, true);
+            if (canonicalExpectationCounts.get(expectationKey(metric, labels)) > 1) {
+                labels = writeLabels(metric, false);
+            }
+
             builder.append("match ").append(metric.type()).append(' ').append(metric.name());
-            if (!metric.labels().isEmpty()) {
+            if (!labels.isEmpty()) {
                 builder.append('{');
                 boolean first = true;
-                for (Map.Entry<String, String> entry : metric.labels().entrySet()) {
+                for (Map.Entry<String, String> entry : labels.entrySet()) {
                     if (!first) {
                         builder.append(',');
                     }
                     builder.append(entry.getKey())
                             .append("=\"")
-                            .append(escapeLabelValue(
-                                    canonicalizeLabelValue(metric.name(), entry.getKey(), entry.getValue())))
+                            .append(escapeLabelValue(entry.getValue()))
                             .append('"');
                     first = false;
                 }
@@ -673,9 +722,43 @@ public class MetricsAssertions {
                 builder.append(metric.value());
             }
             builder.append('\n');
-        });
+        }
 
         return builder.toString();
+    }
+
+    /**
+     * Returns the label values to write for a metric.
+     *
+     * @param metric the metric
+     * @param canonicalizeSuffixes whether to apply suffix canonicalization in addition to
+     *     wildcarding runtime-specific labels
+     * @return the label values to write, ordered by label key
+     */
+    private static Map<String, String> writeLabels(Metric metric, boolean canonicalizeSuffixes) {
+        Map<String, String> labels = new TreeMap<>();
+        for (Map.Entry<String, String> entry : metric.labels().entrySet()) {
+            String value = canonicalizeSuffixes
+                    ? canonicalizeLabelValue(metric.name(), entry.getKey(), entry.getValue())
+                    : isRuntimeSpecificLabel(metric.name(), entry.getKey()) ? "*" : entry.getValue();
+            labels.put(entry.getKey(), value);
+        }
+        return labels;
+    }
+
+    private static List<Object> expectationKey(Metric metric, Map<String, String> labels) {
+        return List.of(metric.type(), metric.name(), labels);
+    }
+
+    /**
+     * Parses assertion file content and verifies metrics against it.
+     *
+     * @param resourcePath the resource path used in failure messages
+     * @param content the assertion file content
+     * @param metrics the metrics to verify
+     */
+    static void verifyContent(String resourcePath, String content, Collection<Metric> metrics) {
+        parse(resourcePath, content).verify(metrics);
     }
 
     /**
@@ -763,7 +846,7 @@ public class MetricsAssertions {
         return false;
     }
 
-    private static boolean isRuntimeNameExcluded(String name) {
+    static boolean isRuntimeNameExcluded(String name) {
         String lowerName = name.toLowerCase();
         for (String prefix : EXCLUDE_METRIC_NAME_PREFIXES) {
             if (lowerName.startsWith(prefix.toLowerCase())) {

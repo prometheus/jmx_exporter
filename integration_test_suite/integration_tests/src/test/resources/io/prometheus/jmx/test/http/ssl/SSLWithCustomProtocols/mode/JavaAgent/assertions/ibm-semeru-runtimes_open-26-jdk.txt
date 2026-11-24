@@ -101,8 +101,6 @@ match GAUGE java_lang_Threading_ThreadCpuTimeEnabled *
 match GAUGE java_lang_Threading_ThreadCpuTimeSupported *
 match GAUGE java_lang_Threading_TotalStartedThreadCount *
 match GAUGE java_lang_Threading_TotalThreadAllocatedBytes *
-match GAUGE jdk_crac_management_CRaC_RestoreTime -1.0
-match GAUGE jdk_crac_management_CRaC_UptimeSinceRestore -1.0
 match COUNTER jmx_config_reload_failure_total 0.0
 match COUNTER jmx_config_reload_success_total 0.0
 match GAUGE jmx_exporter_build_info{name="jmx_prometheus_javaagent",version="*"} 1.0

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-java \
+exec java \
   -Xmx512M \
   -Djavax.net.ssl.keyStore=keystore.pkcs12 \
   -Djavax.net.ssl.keyStorePassword=changeit \
