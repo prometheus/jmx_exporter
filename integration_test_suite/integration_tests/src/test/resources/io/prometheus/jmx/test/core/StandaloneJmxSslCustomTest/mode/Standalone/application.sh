@@ -8,7 +8,7 @@ cp jmxremote.password ${TMPDIR}/jmxremote.password
 chmod go-rwx ${TMPDIR}/jmxremote.access
 chmod go-rwx ${TMPDIR}/jmxremote.password
 
-java \
+exec java \
   -Xmx512M \
   -Dcom.sun.management.jmxremote=true \
   -Dcom.sun.management.jmxremote.authenticate=true \

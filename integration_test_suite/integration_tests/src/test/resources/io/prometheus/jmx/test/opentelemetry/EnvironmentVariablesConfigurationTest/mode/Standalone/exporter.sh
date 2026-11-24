@@ -4,6 +4,6 @@ export OTEL_EXPORTER_OTLP_ENDPOINT="http://prometheus:9090/api/v1/otlp"
 export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 export OTEL_METRIC_EXPORT_INTERVAL="1"
 
-java \
+exec java \
   -Xmx512M \
   -jar /common/jmx_prometheus_standalone.jar 8888 exporter.yaml

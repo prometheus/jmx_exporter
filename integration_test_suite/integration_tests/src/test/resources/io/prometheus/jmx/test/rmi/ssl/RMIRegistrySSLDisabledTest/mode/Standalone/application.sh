@@ -10,7 +10,7 @@ chmod go-rwx ${TMPDIR}/jmxremote.password
 
 export RMI_REGISTRY_SSL_DISABLED=true
 
-java \
+exec java \
   -Xmx512M \
   -Dcom.sun.management.jmxremote=true \
   -Dcom.sun.management.jmxremote.authenticate=true \

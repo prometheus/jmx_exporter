@@ -22,8 +22,6 @@ match GAUGE io_prometheus_jmx_tabulardata_server_2_disk_usage_table_used{source=
 match GAUGE io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_activesessions 2.0
 match GAUGE io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstraps 4.0
 match GAUGE io_prometheus_jmx_test_performancemetricsmbean_performancemetrics_bootstrapsdeferred 6.0
-match GAUGE jdk_crac_management_crac_restoretime -1.0
-match GAUGE jdk_crac_management_crac_uptimesincerestore -1.0
 match COUNTER jmx_config_reload_failure_total 0.0
 match COUNTER jmx_config_reload_success_total 0.0
 match GAUGE jmx_exporter_build_info{name="jmx_prometheus_standalone",version="*"} 1.0
